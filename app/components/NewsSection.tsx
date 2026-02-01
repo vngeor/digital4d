@@ -14,9 +14,10 @@ interface NewsItem {
 
 interface NewsSectionProps {
     newsItems: NewsItem[]
+    showAllLink?: boolean
 }
 
-export function NewsSection({ newsItems }: NewsSectionProps) {
+export function NewsSection({ newsItems, showAllLink = false }: NewsSectionProps) {
     const t = useTranslations("news")
     const [selectedNews, setSelectedNews] = useState<{ item: NewsItem; index: number } | null>(null)
 
@@ -121,6 +122,21 @@ export function NewsSection({ newsItems }: NewsSectionProps) {
                             </article>
                         ))}
                     </div>
+
+                    {/* See All Button */}
+                    {showAllLink && (
+                        <div className="mt-12 text-center">
+                            <a
+                                href="/news"
+                                className="inline-flex items-center gap-2 px-8 py-4 glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-all"
+                            >
+                                {t("seeAll")}
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                </svg>
+                            </a>
+                        </div>
+                    )}
                 </div>
             </section>
 
