@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from "next/server"
+import prisma from "@/lib/prisma"
+import { auth } from "@/auth"
+
+async function requireAdminApi() {
+  const session = await auth()
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return null
+  }
+  return session
+}
+
+export async function GET(request: NextRequest) {
+  const session = await requireAdminApi()
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const searchParams = request.nextUrl.searchParams
+  const type = searchParams.get("type")
+
+  const content = await prisma.content.findMany({
+    where: type ? { type } : undefined,
+    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+  })
+
+  return NextResponse.json(content)
+}
+
+export async function POST(request: NextRequest) {
+  const session = await requireAdminApi()
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const data = await request.json()
+
+  const content = await prisma.content.create({
+    data: {
+      type: data.type,
+      titleBg: data.titleBg,
+      titleEn: data.titleEn,
+      titleEs: data.titleEs,
+      bodyBg: data.bodyBg || null,
+      bodyEn: data.bodyEn || null,
+      bodyEs: data.bodyEs || null,
+      image: data.image || null,
+      published: data.published || false,
+      order: data.order || 0,
+    },
+  })
+
+  return NextResponse.json(content, { status: 201 })
+}
+
+export async function PUT(request: NextRequest) {
+  const session = await requireAdminApi()
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const data = await request.json()
+
+  if (!data.id) {
+    return NextResponse.json({ error: "Content ID required" }, { status: 400 })
+  }
+
+  const content = await prisma.content.update({
+    where: { id: data.id },
+    data: {
+      type: data.type,
+      titleBg: data.titleBg,
+      titleEn: data.titleEn,
+      titleEs: data.titleEs,
+      bodyBg: data.bodyBg || null,
+      bodyEn: data.bodyEn || null,
+      bodyEs: data.bodyEs || null,
+      image: data.image || null,
+      published: data.published,
+      order: data.order,
+    },
+  })
+
+  return NextResponse.json(content)
+}
+
+export async function DELETE(request: NextRequest) {
+  const session = await requireAdminApi()
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const searchParams = request.nextUrl.searchParams
+  const id = searchParams.get("id")
+
+  if (!id) {
+    return NextResponse.json({ error: "Content ID required" }, { status: 400 })
+  }
+
+  await prisma.content.delete({
+    where: { id },
+  })
+
+  return NextResponse.json({ success: true })
+}
