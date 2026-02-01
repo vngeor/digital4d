@@ -10,10 +10,9 @@ export default async function Home() {
     const tFooter = await getTranslations("footer")
     const locale = await getLocale()
 
-    // Fetch published news from database
+    // Fetch all published content from database
     const dbNews = await prisma.content.findMany({
         where: {
-            type: "news",
             published: true,
         },
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
@@ -33,7 +32,7 @@ export default async function Home() {
                 month: "long",
                 day: "numeric",
             }),
-            category: item.type === "news" ? tNews("title") : item.type,
+            category: item.type.charAt(0).toUpperCase() + item.type.slice(1),
         }
     })
 
