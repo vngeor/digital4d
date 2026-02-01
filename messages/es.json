@@ -1,0 +1,73 @@
+{
+  "nav": {
+    "services": "Servicios",
+    "stl": "STL",
+    "upload": "Subir Archivo",
+    "news": "Noticias",
+    "contact": "Contacto",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión"
+  },
+  "hero": {
+    "badge": "Soluciones 3D Profesionales",
+    "title1": "Impresión 3D y",
+    "title2": "Modelado",
+    "description": "Convertimos tus ideas en realidad con servicios de impresión y modelado 3D de alta calidad. Rápido, preciso y asequible.",
+    "cta1": "Ver Servicios",
+    "cta2": "Contáctanos"
+  },
+  "news": {
+    "title": "Noticias",
+    "subtitle": "Últimas noticias del mundo de la impresión 3D",
+    "readMore": "Leer más",
+    "items": [
+      {
+        "title": "Las innovaciones en impresión 3D en 2026",
+        "description": "Las innovaciones en impresión 3D en 2026 revolucionan la fabricación con IA, multi-materiales y bioprinting. Reducen residuos, aceleran la producción y abren nuevas aplicaciones en medicina y automoción. IA y Automatización La IA optimiza automáticamente diseños para fuerza y eficiencia, mientras sensores IoT predicen mantenimiento. Robots gestionan todo el proceso desde diseño hasta posprocesado, reduciendo tiempo un 50%. Impresión Multi-Material Nuevas impresoras como AtomForm Palette 300 con 12 boquillas combinan hasta 36 colores o materiales (metales+polímeros) en un objeto, ahorrando 90% filamento. Bioprinting y Medicina Bioprinteras crean tejidos e implantes personalizados, pasando de laboratorios a clínicas. Impresión 4D y Materiales Sostenibles Materiales que cambian forma bajo estímulos (calor/luz) para piezas autoensamblables.",
+        "date": "28 de Enero, 2026",
+        "category": "Materiales"
+      },
+      {
+        "title": "20% de descuento en el primer pedido",
+        "description": "Los nuevos clientes obtienen un 20% de descuento en su primer pedido. Usa el código FIRST20 al hacer tu pedido.",
+        "date": "25 de Enero, 2024",
+        "category": "Promoción"
+      },
+      {
+        "title": "Ampliamos nuestra capacidad",
+        "description": "Añadimos 3 nuevas impresoras a nuestra flota. Ahora podemos cumplir pedidos más grandes en menos tiempo.",
+        "date": "20 de Enero, 2024",
+        "category": "Noticia"
+      }
+    ]
+  },
+  "contact": {
+    "title": "Contacto",
+    "subtitle": "Ponte en contacto con nosotros de la manera que prefieras",
+    "whatsapp": "WhatsApp",
+    "viber": "Viber",
+    "email": "Email"
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados."
+  },
+  "login": {
+    "title": "Inicia sesión en tu cuenta",
+    "continueWith": "Continuar con",
+    "google": "Google",
+    "apple": "Apple",
+    "facebook": "Facebook",
+    "or": "o",
+    "backHome": "Volver a la página principal",
+    "terms": "Al continuar, aceptas nuestros",
+    "termsLink": "Términos de Servicio",
+    "and": "y",
+    "privacyLink": "Política de Privacidad"
+  },
+  "language": {
+    "select": "Idioma",
+    "bg": "Български",
+    "en": "English",
+    "es": "Español"
+  }
+}

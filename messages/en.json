@@ -1,0 +1,73 @@
+{
+  "nav": {
+    "services": "Services",
+    "stl": "STL",
+    "upload": "Upload File",
+    "news": "News",
+    "contact": "Contact",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "hero": {
+    "badge": "Professional 3D Solutions",
+    "title1": "3D Printing &",
+    "title2": "Modeling",
+    "description": "We turn your ideas into reality with high-quality 3D printing and modeling services. Fast, precise, and affordable.",
+    "cta1": "View Services",
+    "cta2": "Contact Us"
+  },
+  "news": {
+    "title": "News",
+    "subtitle": "Latest news from the world of 3D printing",
+    "readMore": "Read more",
+    "items": [
+      {
+        "title": "Innovations in 3D Printing in 2026",
+        "description": "Innovations in 3D Printing in 2026 revolutionize manufacturing with AI, multi-materials, and bioprinting. They reduce waste, speed up production, and open new applications in medicine and automotive. AI and Automation AI automatically optimizes designs for strength and efficiency, while IoT sensors predict maintenance. Robots manage the entire process from design to post-processing, reducing time by 50%. Multi-Material Printing New printers like AtomForm Palette 300 with 12 nozzles combine up to 36 colors or materials (metals+polymers) in one object, saving 90% filament. Bioprinting and Medicine Bioprinters create tissues and custom implants, moving from labs to clinics. 4D Printing and Sustainable Materials Materials that change shape under stimuli (heat/light) for self-assembling parts",
+        "date": "January 28, 2026",
+        "category": "Materials"
+      },
+      {
+        "title": "20% discount for first order",
+        "description": "New customers get 20% off their first order. Use code FIRST20 when ordering.",
+        "date": "January 25, 2024",
+        "category": "Promotion"
+      },
+      {
+        "title": "Expanding our capacity",
+        "description": "We added 3 new printers to our fleet. Now we can fulfill larger orders in shorter timeframes.",
+        "date": "January 20, 2024",
+        "category": "News"
+      }
+    ]
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Get in touch with us in your preferred way",
+    "whatsapp": "WhatsApp",
+    "viber": "Viber",
+    "email": "Email"
+  },
+  "footer": {
+    "rights": "All rights reserved."
+  },
+  "login": {
+    "title": "Sign in to your account",
+    "continueWith": "Continue with",
+    "google": "Google",
+    "apple": "Apple",
+    "facebook": "Facebook",
+    "or": "or",
+    "backHome": "Back to homepage",
+    "terms": "By continuing, you agree to our",
+    "termsLink": "Terms of Service",
+    "and": "and",
+    "privacyLink": "Privacy Policy"
+  },
+  "language": {
+    "select": "Language",
+    "bg": "Български",
+    "en": "English",
+    "es": "Español"
+  }
+}
