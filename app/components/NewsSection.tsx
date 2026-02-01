@@ -35,12 +35,12 @@ export function NewsSection({ newsItems }: NewsSectionProps) {
                         {newsItems.map((item, index) => (
                             <article
                                 key={index}
-                                className="group glass rounded-2xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 cursor-pointer"
+                                className="group glass rounded-2xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 cursor-pointer flex flex-col h-[420px]"
                                 onClick={() => setSelectedNews({ item, index })}
                             >
                                 {/* Image */}
                                 {item.image && (
-                                    <div className="relative h-48 overflow-hidden">
+                                    <div className="relative h-40 flex-shrink-0 overflow-hidden">
                                         <img
                                             src={item.image}
                                             alt={item.title}
@@ -64,14 +64,14 @@ export function NewsSection({ newsItems }: NewsSectionProps) {
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-6">
-                                    <h3 className="text-xl font-bold mb-3 group-hover:text-emerald-400 transition-colors">
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <h3 className="text-xl font-bold mb-3 group-hover:text-emerald-400 transition-colors line-clamp-2">
                                         {item.title}
                                     </h3>
-                                    <p className="text-slate-400 text-sm mb-4 line-clamp-3">
+                                    <p className="text-slate-400 text-sm mb-4 line-clamp-3 flex-1">
                                         {item.description}
                                     </p>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between mt-auto">
                                         <span className="text-xs text-slate-500">{item.date}</span>
                                         <button
                                             className="text-emerald-400 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all"
@@ -89,7 +89,7 @@ export function NewsSection({ newsItems }: NewsSectionProps) {
                                 </div>
 
                                 {/* Decorative gradient line */}
-                                <div className={`h-1 w-full ${
+                                <div className={`h-1 w-full flex-shrink-0 ${
                                     index === 0
                                         ? "bg-gradient-to-r from-cyan-500 to-blue-500"
                                         : index === 1
