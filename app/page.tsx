@@ -1,19 +1,41 @@
-import { getTranslations } from "next-intl/server"
+import { getTranslations, getLocale } from "next-intl/server"
 import { Header } from "./components/Header"
 import { NewsSection } from "./components/NewsSection"
+import prisma from "@/lib/prisma"
 
 export default async function Home() {
     const t = await getTranslations("hero")
     const tNews = await getTranslations("news")
     const tContact = await getTranslations("contact")
     const tFooter = await getTranslations("footer")
+    const locale = await getLocale()
 
-    const newsItems = [0, 1, 2].map((i) => ({
-        title: tNews(`items.${i}.title`),
-        description: tNews(`items.${i}.description`),
-        date: tNews(`items.${i}.date`),
-        category: tNews(`items.${i}.category`),
-    }))
+    // Fetch published news from database
+    const dbNews = await prisma.content.findMany({
+        where: {
+            type: "news",
+            published: true,
+        },
+        orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+        take: 6,
+    })
+
+    // Map to locale-specific fields
+    const newsItems = dbNews.map((item) => {
+        const titleKey = `title${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof item
+        const bodyKey = `body${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof item
+
+        return {
+            title: (item[titleKey] as string) || item.titleEn,
+            description: (item[bodyKey] as string) || item.bodyEn || "",
+            date: new Date(item.createdAt).toLocaleDateString(locale === "bg" ? "bg-BG" : locale === "es" ? "es-ES" : "en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            }),
+            category: item.type === "news" ? tNews("title") : item.type,
+        }
+    })
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
