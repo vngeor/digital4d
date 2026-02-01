@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { locales, defaultLocale, countryToLocale, type Locale } from "./i18n/config"
-import { auth } from "./auth"
 
 function getLocaleFromCountry(countryCode: string | null): Locale {
   if (!countryCode) return defaultLocale
@@ -28,7 +27,7 @@ function getLocaleFromAcceptLanguage(acceptLanguage: string | null): Locale | nu
   return null
 }
 
-export default auth(async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Skip middleware for API routes, static files, etc.
@@ -40,19 +39,17 @@ export default auth(async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Admin route protection
+  // Admin route protection - check for session token cookie
   if (pathname.startsWith("/admin")) {
-    const session = (request as any).auth
+    const sessionToken = request.cookies.get("authjs.session-token")?.value ||
+                         request.cookies.get("__Secure-authjs.session-token")?.value
 
-    if (!session?.user) {
+    if (!sessionToken) {
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("callbackUrl", pathname)
       return NextResponse.redirect(loginUrl)
     }
-
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/", request.url))
-    }
+    // Note: Full role check happens in the admin layout server component
   }
 
   // Check if user already has a locale preference cookie
@@ -90,7 +87,7 @@ export default auth(async function middleware(request: NextRequest) {
   })
 
   return response
-})
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
