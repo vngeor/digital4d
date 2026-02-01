@@ -2,6 +2,13 @@ import { getTranslations } from "next-intl/server"
 import { Users, ShoppingCart, FileText, TrendingUp } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { StatsCard } from "../components/admin/StatsCard"
+import type { Order, User, OrderStatus } from "@prisma/client"
+
+type RecentOrder = Pick<Order, "id" | "customerName" | "customerEmail" | "status"> & {
+  user: Pick<User, "name" | "email"> | null
+}
+
+type RecentUser = Pick<User, "id" | "name" | "email" | "image" | "createdAt">
 
 async function getStats() {
   const [userCount, orderCount, contentCount, pendingOrders] = await Promise.all([
@@ -80,7 +87,7 @@ export default async function AdminDashboard() {
             <p className="text-gray-500">{t("dashboard.noOrders")}</p>
           ) : (
             <div className="space-y-4">
-              {stats.recentOrders.map((order) => (
+              {stats.recentOrders.map((order: RecentOrder) => (
                 <div
                   key={order.id}
                   className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5"
@@ -116,7 +123,7 @@ export default async function AdminDashboard() {
             <p className="text-gray-500">{t("dashboard.noUsers")}</p>
           ) : (
             <div className="space-y-4">
-              {stats.recentUsers.map((user) => (
+              {stats.recentUsers.map((user: RecentUser) => (
                 <div
                   key={user.id}
                   className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5"
