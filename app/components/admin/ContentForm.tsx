@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useTranslations } from "next-intl"
-import { X, Save, Loader2 } from "lucide-react"
+import { X, Save, Loader2, Upload, Image as ImageIcon } from "lucide-react"
 
 interface ContentFormData {
   id?: string
@@ -43,7 +43,9 @@ export function ContentForm({
 }: ContentFormProps) {
   const t = useTranslations("admin.content")
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState<ContentFormData>({
     id: initialData?.id,
     type: initialData?.type ?? "news",
@@ -70,6 +72,39 @@ export function ContentForm({
 
   const updateField = (field: keyof ContentFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(error.error || "Upload failed")
+        return
+      }
+
+      const data = await res.json()
+      updateField("image", data.url)
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("Failed to upload image")
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
   }
 
   const languageTabs = [
@@ -123,15 +158,60 @@ export function ContentForm({
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2">
-              {t("imageUrl")}
+              Image
             </label>
-            <input
-              type="url"
-              value={formData.image}
-              onChange={(e) => updateField("image", e.target.value)}
-              placeholder="https://..."
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
+            <div className="space-y-3">
+              {/* Image Preview */}
+              {formData.image && (
+                <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10">
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => updateField("image", "")}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 hover:bg-red-500/50 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <div className="flex gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  {uploading ? "Uploading..." : "Upload Image"}
+                </button>
+                <span className="text-gray-500 text-sm self-center">or</span>
+                <input
+                  type="url"
+                  value={formData.image}
+                  onChange={(e) => updateField("image", e.target.value)}
+                  placeholder="Paste image URL..."
+                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                />
+              </div>
+              <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
+            </div>
           </div>
 
           <div>

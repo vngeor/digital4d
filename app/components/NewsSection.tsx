@@ -9,6 +9,7 @@ interface NewsItem {
     description: string
     date: string
     category: string
+    image?: string | null
 }
 
 interface NewsSectionProps {
@@ -37,8 +38,20 @@ export function NewsSection({ newsItems }: NewsSectionProps) {
                                 className="group glass rounded-2xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 cursor-pointer"
                                 onClick={() => setSelectedNews({ item, index })}
                             >
+                                {/* Image */}
+                                {item.image && (
+                                    <div className="relative h-48 overflow-hidden">
+                                        <img
+                                            src={item.image}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
+                                    </div>
+                                )}
+
                                 {/* Category Badge */}
-                                <div className="p-6 pb-0">
+                                <div className={item.image ? "p-6 pb-0 -mt-8 relative z-10" : "p-6 pb-0"}>
                                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                                         index === 0
                                             ? "bg-cyan-500/20 text-cyan-300"

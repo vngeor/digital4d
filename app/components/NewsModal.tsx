@@ -7,6 +7,7 @@ interface NewsItem {
     description: string
     date: string
     category: string
+    image?: string | null
 }
 
 interface NewsModalProps {
@@ -73,8 +74,20 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                     </svg>
                 </button>
 
+                {/* Image */}
+                {news.image && (
+                    <div className="relative h-64 overflow-hidden">
+                        <img
+                            src={news.image}
+                            alt={news.title}
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
+                    </div>
+                )}
+
                 {/* Content */}
-                <div className="p-8 overflow-y-auto max-h-[calc(90vh-4px)]">
+                <div className={`p-8 overflow-y-auto max-h-[calc(90vh-4px)] ${news.image ? "-mt-16 relative z-10" : ""}`}>
                     {/* Category & Date */}
                     <div className="flex items-center gap-4 mb-6">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>
