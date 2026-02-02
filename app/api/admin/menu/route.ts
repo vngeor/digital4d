@@ -85,14 +85,11 @@ export async function POST(request: NextRequest) {
         order: data.order || 0,
         published: data.published ?? true,
       },
-      include: {
-        _count: {
-          select: { contents: true }
-        }
-      }
     })
 
-    return NextResponse.json(menuItem, { status: 201 })
+    // Manually add _count since new items have 0 contents
+    // (Neon HTTP mode doesn't support implicit transactions from include)
+    return NextResponse.json({ ...menuItem, _count: { contents: 0 } }, { status: 201 })
   } catch (error) {
     console.error("Error creating menu item:", error)
     return NextResponse.json(
@@ -148,14 +145,15 @@ export async function PUT(request: NextRequest) {
         order: data.order,
         published: data.published,
       },
-      include: {
-        _count: {
-          select: { contents: true }
-        }
-      }
     })
 
-    return NextResponse.json(menuItem)
+    // Fetch _count separately to avoid implicit transaction
+    // (Neon HTTP mode doesn't support transactions)
+    const count = await prisma.content.count({
+      where: { menuItemId: data.id }
+    })
+
+    return NextResponse.json({ ...menuItem, _count: { contents: count } })
   } catch (error) {
     console.error("Error updating menu item:", error)
     return NextResponse.json(

@@ -79,18 +79,19 @@ export async function POST(request: NextRequest) {
         order: data.order || 0,
         menuItemId: data.menuItemId || null,
       },
-      include: {
-        menuItem: {
-          select: {
-            id: true,
-            slug: true,
-            titleEn: true,
-          }
-        }
-      }
     })
 
-    return NextResponse.json(content, { status: 201 })
+    // Fetch menuItem separately if needed to avoid implicit transaction
+    // (Neon HTTP mode doesn't support transactions)
+    let menuItem = null
+    if (data.menuItemId) {
+      menuItem = await prisma.menuItem.findUnique({
+        where: { id: data.menuItemId },
+        select: { id: true, slug: true, titleEn: true }
+      })
+    }
+
+    return NextResponse.json({ ...content, menuItem }, { status: 201 })
   } catch (error) {
     console.error("Error creating content:", error)
     return NextResponse.json(
@@ -145,18 +146,19 @@ export async function PUT(request: NextRequest) {
         order: data.order,
         menuItemId: data.menuItemId || null,
       },
-      include: {
-        menuItem: {
-          select: {
-            id: true,
-            slug: true,
-            titleEn: true,
-          }
-        }
-      }
     })
 
-    return NextResponse.json(content)
+    // Fetch menuItem separately to avoid implicit transaction
+    // (Neon HTTP mode doesn't support transactions)
+    let menuItem = null
+    if (data.menuItemId) {
+      menuItem = await prisma.menuItem.findUnique({
+        where: { id: data.menuItemId },
+        select: { id: true, slug: true, titleEn: true }
+      })
+    }
+
+    return NextResponse.json({ ...content, menuItem })
   } catch (error) {
     console.error("Error updating content:", error)
     return NextResponse.json(
