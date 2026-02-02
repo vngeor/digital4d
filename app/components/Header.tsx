@@ -1,14 +1,62 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import Link from "next/link"
 import Image from "next/image"
 import { LanguageSwitcher } from "./LanguageSwitcher"
+import { ChevronDown } from "lucide-react"
+
+interface MenuContent {
+    id: string
+    slug: string | null
+    titleBg: string
+    titleEn: string
+    titleEs: string
+    image: string | null
+}
+
+interface MenuItem {
+    id: string
+    slug: string
+    titleBg: string
+    titleEn: string
+    titleEs: string
+    contents: MenuContent[]
+}
 
 export function Header() {
     const { data: session, status } = useSession()
     const t = useTranslations("nav")
+    const locale = useLocale()
+    const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+
+    useEffect(() => {
+        const fetchMenu = async () => {
+            try {
+                const res = await fetch("/api/menu")
+                if (res.ok) {
+                    const data = await res.json()
+                    setMenuItems(data)
+                }
+            } catch (error) {
+                console.error("Failed to fetch menu:", error)
+            }
+        }
+        fetchMenu()
+    }, [])
+
+    const getLocalizedTitle = (item: { titleBg: string; titleEn: string; titleEs: string }) => {
+        switch (locale) {
+            case "bg":
+                return item.titleBg
+            case "es":
+                return item.titleEs
+            default:
+                return item.titleEn
+        }
+    }
 
     return (
         <header className="glass sticky top-0 z-50 border-b border-white/10">
@@ -16,11 +64,36 @@ export function Header() {
                 <Link href="/" className="text-2xl font-bold tracking-tight">
                     digital<span className="text-emerald-400">4d</span>
                 </Link>
-                <nav className="hidden gap-8 text-sm md:flex">
-                    <a href="#services" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("services")}</a>
-                    <a href="#stl-store" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("stl")}</a>
-                    <a href="#quote" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("upload")}</a>
-                    <a href="#news" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("news")}</a>
+                <nav className="hidden gap-6 text-sm md:flex items-center">
+                    {menuItems.map((item) => (
+                        <div key={item.id} className="relative group">
+                            <Link
+                                href={`/${item.slug}`}
+                                className="flex items-center gap-1 text-slate-300 hover:text-emerald-400 transition-colors py-2"
+                            >
+                                {getLocalizedTitle(item)}
+                                {item.contents.length > 0 && (
+                                    <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+                                )}
+                            </Link>
+                            {item.contents.length > 0 && (
+                                <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                    <div className="glass-strong rounded-xl border border-white/10 py-2 min-w-[200px] shadow-xl">
+                                        {item.contents.map((content) => (
+                                            <Link
+                                                key={content.id}
+                                                href={content.slug ? `/${item.slug}/${content.slug}` : `/${item.slug}`}
+                                                className="block px-4 py-2 text-slate-300 hover:bg-white/10 hover:text-emerald-400 transition-colors"
+                                            >
+                                                {getLocalizedTitle(content)}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                    <Link href="/news" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("news")}</Link>
                     <a href="#contact" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("contact")}</a>
                 </nav>
                 <div className="flex items-center gap-3">

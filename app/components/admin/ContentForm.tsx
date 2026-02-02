@@ -1,12 +1,20 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { X, Save, Loader2, Upload, Image as ImageIcon } from "lucide-react"
+
+interface MenuItem {
+  id: string
+  slug: string
+  titleEn: string
+  titleBg: string
+}
 
 interface ContentFormData {
   id?: string
   type: string
+  slug: string
   titleBg: string
   titleEn: string
   titleEs: string
@@ -16,12 +24,14 @@ interface ContentFormData {
   image: string
   published: boolean
   order: number
+  menuItemId: string
 }
 
 interface ContentFormProps {
   initialData?: {
     id?: string
     type?: string
+    slug?: string | null
     titleBg?: string
     titleEn?: string
     titleEs?: string
@@ -31,9 +41,19 @@ interface ContentFormProps {
     image?: string | null
     published?: boolean
     order?: number
+    menuItemId?: string | null
   }
   onSubmit: (data: ContentFormData) => Promise<void>
   onCancel: () => void
+}
+
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
 }
 
 export function ContentForm({
@@ -46,9 +66,12 @@ export function ContentForm({
   const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [autoSlug, setAutoSlug] = useState(!initialData?.id)
   const [formData, setFormData] = useState<ContentFormData>({
     id: initialData?.id,
     type: initialData?.type ?? "news",
+    slug: initialData?.slug ?? "",
     titleBg: initialData?.titleBg ?? "",
     titleEn: initialData?.titleEn ?? "",
     titleEs: initialData?.titleEs ?? "",
@@ -58,7 +81,31 @@ export function ContentForm({
     image: initialData?.image ?? "",
     published: initialData?.published ?? false,
     order: initialData?.order ?? 0,
+    menuItemId: initialData?.menuItemId ?? "",
   })
+
+  // Fetch menu items for dropdown
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        const res = await fetch("/api/admin/menu")
+        if (res.ok) {
+          const data = await res.json()
+          setMenuItems(data)
+        }
+      } catch (error) {
+        console.error("Failed to fetch menu items:", error)
+      }
+    }
+    fetchMenuItems()
+  }, [])
+
+  // Auto-generate slug from English title
+  useEffect(() => {
+    if (autoSlug && formData.titleEn) {
+      setFormData(prev => ({ ...prev, slug: generateSlug(formData.titleEn) }))
+    }
+  }, [formData.titleEn, autoSlug])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,6 +119,9 @@ export function ContentForm({
 
   const updateField = (field: keyof ContentFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    if (field === 'slug') {
+      setAutoSlug(false)
+    }
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,6 +203,39 @@ export function ContentForm({
                 onChange={(e) => updateField("order", parseInt(e.target.value) || 0)}
                 className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {t("slug")}
+              </label>
+              <input
+                type="text"
+                value={formData.slug}
+                onChange={(e) => updateField("slug", e.target.value)}
+                placeholder="e.g., my-content-title"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+              />
+              <p className="text-xs text-gray-500 mt-1">{t("slugHelp")}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {t("menuItem")}
+              </label>
+              <select
+                value={formData.menuItemId}
+                onChange={(e) => updateField("menuItemId", e.target.value)}
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              >
+                <option value="">{t("noMenu")}</option>
+                {menuItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.titleEn} (/{item.slug})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

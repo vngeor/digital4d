@@ -54,6 +54,10 @@
   "footer": {
     "rights": "Todos los derechos reservados."
   },
+  "menu": {
+    "noContent": "No hay contenido disponible",
+    "backToMenu": "Volver a {menu}"
+  },
   "login": {
     "title": "Inicia sesión en tu cuenta",
     "createAccount": "Crea tu cuenta",
@@ -96,10 +100,34 @@
     "nav": {
       "adminPanel": "Panel de Admin",
       "dashboard": "Panel",
+      "menu": "Menú",
       "content": "Contenido",
       "orders": "Pedidos",
       "users": "Usuarios",
       "logout": "Cerrar sesión"
+    },
+    "menu": {
+      "title": "Gestión de Menú",
+      "subtitle": "Gestiona los elementos del menú de navegación",
+      "addMenuItem": "Añadir Elemento",
+      "editMenuItem": "Editar Elemento",
+      "slug": "Slug",
+      "slugHelp": "Identificador amigable para URL (ej. servicios)",
+      "title": "Título",
+      "order": "Orden",
+      "status": "Estado",
+      "linkedContent": "Contenido Enlazado",
+      "items": "elementos",
+      "published": "Publicado",
+      "draft": "Borrador",
+      "publish": "Publicar",
+      "unpublish": "Despublicar",
+      "actions": "Acciones",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "confirmDelete": "¿Estás seguro de que quieres eliminar este elemento?",
+      "searchPlaceholder": "Buscar elementos...",
+      "noMenuItems": "No se encontraron elementos"
     },
     "dashboard": {
       "title": "Panel",
@@ -126,6 +154,10 @@
       "body": "Cuerpo",
       "imageUrl": "URL de Imagen",
       "order": "Orden",
+      "slug": "Slug",
+      "slugHelp": "Identificador amigable para URL de este contenido",
+      "menuItem": "Elemento de Menú",
+      "noMenu": "Sin menú",
       "status": "Estado",
       "published": "Publicado",
       "draft": "Borrador",

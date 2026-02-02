@@ -22,6 +22,15 @@ export async function GET(request: NextRequest) {
   const content = await prisma.content.findMany({
     where: type ? { type } : undefined,
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    include: {
+      menuItem: {
+        select: {
+          id: true,
+          slug: true,
+          titleEn: true,
+        }
+      }
+    }
   })
 
   return NextResponse.json(content)
@@ -35,9 +44,21 @@ export async function POST(request: NextRequest) {
 
   const data = await request.json()
 
+  // Check for duplicate slug
+  if (data.slug) {
+    const existing = await prisma.content.findUnique({ where: { slug: data.slug } })
+    if (existing) {
+      return NextResponse.json(
+        { error: `Content with slug "${data.slug}" already exists.` },
+        { status: 400 }
+      )
+    }
+  }
+
   const content = await prisma.content.create({
     data: {
       type: data.type,
+      slug: data.slug || null,
       titleBg: data.titleBg,
       titleEn: data.titleEn,
       titleEs: data.titleEs,
@@ -47,7 +68,17 @@ export async function POST(request: NextRequest) {
       image: data.image || null,
       published: data.published || false,
       order: data.order || 0,
+      menuItemId: data.menuItemId || null,
     },
+    include: {
+      menuItem: {
+        select: {
+          id: true,
+          slug: true,
+          titleEn: true,
+        }
+      }
+    }
   })
 
   return NextResponse.json(content, { status: 201 })
@@ -65,10 +96,27 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Content ID required" }, { status: 400 })
   }
 
+  // Check for duplicate slug (if changing)
+  if (data.slug) {
+    const existing = await prisma.content.findFirst({
+      where: {
+        slug: data.slug,
+        NOT: { id: data.id }
+      }
+    })
+    if (existing) {
+      return NextResponse.json(
+        { error: `Content with slug "${data.slug}" already exists.` },
+        { status: 400 }
+      )
+    }
+  }
+
   const content = await prisma.content.update({
     where: { id: data.id },
     data: {
       type: data.type,
+      slug: data.slug || null,
       titleBg: data.titleBg,
       titleEn: data.titleEn,
       titleEs: data.titleEs,
@@ -78,7 +126,17 @@ export async function PUT(request: NextRequest) {
       image: data.image || null,
       published: data.published,
       order: data.order,
+      menuItemId: data.menuItemId || null,
     },
+    include: {
+      menuItem: {
+        select: {
+          id: true,
+          slug: true,
+          titleEn: true,
+        }
+      }
+    }
   })
 
   return NextResponse.json(content)

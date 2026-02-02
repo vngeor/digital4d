@@ -88,22 +88,43 @@ enum OrderStatus {
   CANCELLED
 }
 
-// Content model for multilingual news/services
-model Content {
-  id        String   @id @default(cuid())
-  type      String   // "news", "service"
+// MenuItem model for dynamic navigation
+model MenuItem {
+  id        String    @id @default(cuid())
+  slug      String    @unique  // URL-friendly identifier (e.g., "services")
   titleBg   String
   titleEn   String
   titleEs   String
-  bodyBg    String?  @db.Text
-  bodyEn    String?  @db.Text
-  bodyEs    String?  @db.Text
-  image     String?
-  published Boolean  @default(false)
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  order     Int       @default(0)
+  published Boolean   @default(true)
+  contents  Content[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([published])
+  @@index([order])
+}
+
+// Content model for multilingual news/services
+model Content {
+  id         String    @id @default(cuid())
+  type       String    // "news", "service"
+  slug       String?   @unique  // URL-friendly identifier for content
+  titleBg    String
+  titleEn    String
+  titleEs    String
+  bodyBg     String?   @db.Text
+  bodyEn     String?   @db.Text
+  bodyEs     String?   @db.Text
+  image      String?
+  published  Boolean   @default(false)
+  order      Int       @default(0)
+  menuItemId String?
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([type])
   @@index([published])
+  @@index([menuItemId])
 }

@@ -54,6 +54,10 @@
   "footer": {
     "rights": "All rights reserved."
   },
+  "menu": {
+    "noContent": "No content available",
+    "backToMenu": "Back to {menu}"
+  },
   "login": {
     "title": "Sign in to your account",
     "createAccount": "Create your account",
@@ -96,10 +100,34 @@
     "nav": {
       "adminPanel": "Admin Panel",
       "dashboard": "Dashboard",
+      "menu": "Menu",
       "content": "Content",
       "orders": "Orders",
       "users": "Users",
       "logout": "Logout"
+    },
+    "menu": {
+      "title": "Menu Management",
+      "subtitle": "Manage navigation menu items",
+      "addMenuItem": "Add Menu Item",
+      "editMenuItem": "Edit Menu Item",
+      "slug": "Slug",
+      "slugHelp": "URL-friendly identifier (e.g., services)",
+      "title": "Title",
+      "order": "Order",
+      "status": "Status",
+      "linkedContent": "Linked Content",
+      "items": "items",
+      "published": "Published",
+      "draft": "Draft",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "actions": "Actions",
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirmDelete": "Are you sure you want to delete this menu item?",
+      "searchPlaceholder": "Search menu items...",
+      "noMenuItems": "No menu items found"
     },
     "dashboard": {
       "title": "Dashboard",
@@ -126,6 +154,10 @@
       "body": "Body",
       "imageUrl": "Image URL",
       "order": "Order",
+      "slug": "Slug",
+      "slugHelp": "URL-friendly identifier for this content",
+      "menuItem": "Menu Item",
+      "noMenu": "No menu item",
       "status": "Status",
       "published": "Published",
       "draft": "Draft",

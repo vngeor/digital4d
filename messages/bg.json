@@ -54,6 +54,10 @@
   "footer": {
     "rights": "Всички права запазени."
   },
+  "menu": {
+    "noContent": "Няма налично съдържание",
+    "backToMenu": "Обратно към {menu}"
+  },
   "login": {
     "title": "Влезте в профила си",
     "createAccount": "Създайте профил",
@@ -96,10 +100,34 @@
     "nav": {
       "adminPanel": "Админ панел",
       "dashboard": "Табло",
+      "menu": "Меню",
       "content": "Съдържание",
       "orders": "Поръчки",
       "users": "Потребители",
       "logout": "Изход"
+    },
+    "menu": {
+      "title": "Управление на меню",
+      "subtitle": "Управлявайте навигационните елементи",
+      "addMenuItem": "Добави елемент",
+      "editMenuItem": "Редактирай елемент",
+      "slug": "Slug",
+      "slugHelp": "URL-friendly идентификатор (напр. услуги)",
+      "title": "Заглавие",
+      "order": "Ред",
+      "status": "Статус",
+      "linkedContent": "Свързано съдържание",
+      "items": "елемента",
+      "published": "Публикувано",
+      "draft": "Чернова",
+      "publish": "Публикувай",
+      "unpublish": "Скрий",
+      "actions": "Действия",
+      "save": "Запази",
+      "cancel": "Отказ",
+      "confirmDelete": "Сигурни ли сте, че искате да изтриете този елемент?",
+      "searchPlaceholder": "Търси елементи...",
+      "noMenuItems": "Няма намерени елементи"
     },
     "dashboard": {
       "title": "Табло",
@@ -126,6 +154,10 @@
       "body": "Съдържание",
       "imageUrl": "URL на изображение",
       "order": "Ред",
+      "slug": "Slug",
+      "slugHelp": "URL-friendly идентификатор за това съдържание",
+      "menuItem": "Елемент от меню",
+      "noMenu": "Без меню",
       "status": "Статус",
       "published": "Публикувано",
       "draft": "Чернова",

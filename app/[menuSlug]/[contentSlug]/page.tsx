@@ -1,0 +1,195 @@
+import { notFound } from "next/navigation"
+import { getTranslations, getLocale } from "next-intl/server"
+import Link from "next/link"
+import { Header } from "../../components/Header"
+import prisma from "@/lib/prisma"
+
+const RESERVED_SLUGS = ['news', 'admin', 'login', 'api', 'register']
+
+interface PageProps {
+    params: Promise<{ menuSlug: string; contentSlug: string }>
+}
+
+export default async function ContentPage({ params }: PageProps) {
+    const { menuSlug, contentSlug } = await params
+
+    // Skip if this is a reserved slug
+    if (RESERVED_SLUGS.includes(menuSlug)) {
+        notFound()
+    }
+
+    const t = await getTranslations()
+    const locale = await getLocale()
+
+    // Fetch the menu item
+    const menuItem = await prisma.menuItem.findUnique({
+        where: { slug: menuSlug, published: true },
+    })
+
+    if (!menuItem) {
+        notFound()
+    }
+
+    // Fetch the content
+    const content = await prisma.content.findFirst({
+        where: {
+            slug: contentSlug,
+            menuItemId: menuItem.id,
+            published: true,
+        }
+    })
+
+    if (!content) {
+        notFound()
+    }
+
+    const getLocalizedTitle = (item: { titleBg: string; titleEn: string; titleEs: string }) => {
+        switch (locale) {
+            case "bg":
+                return item.titleBg
+            case "es":
+                return item.titleEs
+            default:
+                return item.titleEn
+        }
+    }
+
+    const getLocalizedBody = (item: { bodyBg: string | null; bodyEn: string | null; bodyEs: string | null }) => {
+        switch (locale) {
+            case "bg":
+                return item.bodyBg
+            case "es":
+                return item.bodyEs
+            default:
+                return item.bodyEn
+        }
+    }
+
+    const menuTitle = getLocalizedTitle(menuItem)
+    const contentTitle = getLocalizedTitle(content)
+    const contentBody = getLocalizedBody(content)
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+            {/* Animated Background Orbs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />
+                <div className="absolute top-40 right-20 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl animate-pulse-glow animation-delay-1000" />
+                <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse-glow animation-delay-2000" />
+            </div>
+
+            <Header />
+
+            {/* Page Header */}
+            <section className="relative pt-32 pb-8 px-4">
+                <div className="mx-auto max-w-4xl">
+                    {/* Breadcrumb */}
+                    <div className="flex items-center gap-2 text-sm text-slate-400 mb-6">
+                        <Link href="/" className="hover:text-emerald-400 transition-colors">
+                            {t("news.backHome")}
+                        </Link>
+                        <span>/</span>
+                        <Link href={`/${menuSlug}`} className="hover:text-emerald-400 transition-colors">
+                            {menuTitle}
+                        </Link>
+                        <span>/</span>
+                        <span className="text-slate-300">{contentTitle}</span>
+                    </div>
+
+                    {/* Content Type Badge */}
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 ${
+                        content.type === "news"
+                            ? "bg-cyan-500/20 text-cyan-400"
+                            : "bg-purple-500/20 text-purple-400"
+                    }`}>
+                        {content.type.charAt(0).toUpperCase() + content.type.slice(1)}
+                    </span>
+
+                    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                        {contentTitle}
+                    </h1>
+
+                    <p className="text-slate-400 mt-4">
+                        {new Date(content.createdAt).toLocaleDateString(
+                            locale === "bg" ? "bg-BG" : locale === "es" ? "es-ES" : "en-US",
+                            { year: "numeric", month: "long", day: "numeric" }
+                        )}
+                    </p>
+                </div>
+            </section>
+
+            {/* Content */}
+            <section className="relative py-8 px-4">
+                <div className="mx-auto max-w-4xl">
+                    <article className="glass rounded-2xl border border-white/10 overflow-hidden">
+                        {content.image && (
+                            <div className="relative h-64 md:h-96 overflow-hidden">
+                                <img
+                                    src={content.image}
+                                    alt={contentTitle}
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent" />
+                            </div>
+                        )}
+                        <div className="p-8 md:p-12">
+                            {contentBody ? (
+                                <div className="prose prose-invert prose-lg max-w-none">
+                                    {contentBody.split('\n\n').map((paragraph, index) => (
+                                        <p key={index} className="text-slate-300 leading-relaxed mb-6">
+                                            {paragraph}
+                                        </p>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-slate-400 italic">{t("menu.noContent")}</p>
+                            )}
+                        </div>
+                    </article>
+
+                    {/* Back Link */}
+                    <div className="mt-8">
+                        <Link
+                            href={`/${menuSlug}`}
+                            className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            {t("menu.backToMenu", { menu: menuTitle })}
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="glass border-t border-white/10 py-8 mt-12">
+                <div className="mx-auto max-w-6xl px-4 text-center text-slate-400">
+                    <p>&copy; 2024 digital4d. {t("footer.rights")}</p>
+                </div>
+            </footer>
+        </div>
+    )
+}
+
+export async function generateStaticParams() {
+    const contents = await prisma.content.findMany({
+        where: {
+            published: true,
+            slug: { not: null },
+            menuItemId: { not: null }
+        },
+        include: {
+            menuItem: {
+                select: { slug: true }
+            }
+        }
+    })
+
+    return contents
+        .filter(content => content.menuItem !== null)
+        .map((content) => ({
+            menuSlug: content.menuItem!.slug,
+            contentSlug: content.slug!,
+        }))
+}
