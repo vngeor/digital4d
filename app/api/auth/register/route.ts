@@ -15,7 +15,16 @@ export async function POST(request: NextRequest) {
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
+        { error: "passwordTooShort" },
+        { status: 400 }
+      )
+    }
+
+    // Check for at least one special character
+    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/
+    if (!specialCharRegex.test(password)) {
+      return NextResponse.json(
+        { error: "passwordNoSpecialChar" },
         { status: 400 }
       )
     }
@@ -27,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User already exists" },
+        { error: "userExists" },
         { status: 400 }
       )
     }

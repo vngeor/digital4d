@@ -17,6 +17,30 @@ export default function LoginPage() {
     const handleFacebookSignIn = () => signIn("facebook", { callbackUrl: "/" })
     const handleGitHubSignIn = () => signIn("github", { callbackUrl: "/" })
 
+    const validatePassword = (pwd: string): string | null => {
+        if (pwd.length < 6) {
+            return t("passwordTooShort")
+        }
+        const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/
+        if (!specialCharRegex.test(pwd)) {
+            return t("passwordNoSpecialChar")
+        }
+        return null
+    }
+
+    const getErrorMessage = (errorCode: string): string => {
+        switch (errorCode) {
+            case "passwordTooShort":
+                return t("passwordTooShort")
+            case "passwordNoSpecialChar":
+                return t("passwordNoSpecialChar")
+            case "userExists":
+                return t("userExists")
+            default:
+                return errorCode
+        }
+    }
+
     const handleCredentialsSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError("")
@@ -24,6 +48,14 @@ export default function LoginPage() {
 
         try {
             if (isRegister) {
+                // Client-side validation
+                const validationError = validatePassword(password)
+                if (validationError) {
+                    setError(validationError)
+                    setLoading(false)
+                    return
+                }
+
                 // Register
                 const res = await fetch("/api/auth/register", {
                     method: "POST",
@@ -33,7 +65,7 @@ export default function LoginPage() {
                 const data = await res.json()
 
                 if (!res.ok) {
-                    setError(data.error || "Registration failed")
+                    setError(getErrorMessage(data.error))
                     setLoading(false)
                     return
                 }
@@ -46,7 +78,7 @@ export default function LoginPage() {
                 })
 
                 if (result?.error) {
-                    setError("Login failed after registration")
+                    setError(t("loginFailedAfterRegister"))
                 } else {
                     window.location.href = "/"
                 }
@@ -65,7 +97,7 @@ export default function LoginPage() {
                 }
             }
         } catch {
-            setError("Something went wrong")
+            setError(t("somethingWentWrong"))
         }
 
         setLoading(false)
@@ -171,8 +203,10 @@ export default function LoginPage() {
                                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
                                 placeholder={t("passwordPlaceholder")}
                                 required
-                                minLength={6}
                             />
+                            {isRegister && (
+                                <p className="text-xs text-slate-500 mt-1">{t("passwordRequirements")}</p>
+                            )}
                         </div>
 
                         {error && (
