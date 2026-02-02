@@ -8,9 +8,10 @@ export default async function NewsPage() {
     const tFooter = await getTranslations("footer")
     const locale = await getLocale()
 
-    // Fetch ALL published content from database (newest first)
+    // Fetch only news content from database (newest first)
     const dbNews = await prisma.content.findMany({
         where: {
+            type: "news",
             published: true,
         },
         orderBy: { createdAt: "desc" },

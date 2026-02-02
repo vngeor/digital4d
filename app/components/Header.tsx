@@ -11,6 +11,7 @@ import { ChevronDown } from "lucide-react"
 interface MenuContent {
     id: string
     slug: string | null
+    type: string
     titleBg: string
     titleEn: string
     titleEs: string
@@ -79,22 +80,27 @@ export function Header() {
                             {item.contents.length > 0 && (
                                 <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                                     <div className="glass-strong rounded-xl border border-white/10 py-2 min-w-[200px] shadow-xl">
-                                        {item.contents.map((content) => (
-                                            <Link
-                                                key={content.id}
-                                                href={content.slug ? `/${item.slug}/${content.slug}` : `/${item.slug}`}
-                                                className="block px-4 py-2 text-slate-300 hover:bg-white/10 hover:text-emerald-400 transition-colors"
-                                            >
-                                                {getLocalizedTitle(content)}
-                                            </Link>
-                                        ))}
+                                        {item.contents.map((content) => {
+                                            const href = content.slug
+                                                ? `/${item.slug}/${content.slug}`
+                                                : `/${item.slug}`
+                                            return (
+                                                <Link
+                                                    key={content.id}
+                                                    href={href}
+                                                    className="block px-4 py-2 text-slate-300 hover:bg-white/10 hover:text-emerald-400 transition-colors"
+                                                >
+                                                    {getLocalizedTitle(content)}
+                                                </Link>
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             )}
                         </div>
                     ))}
-                    <Link href="/news" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("news")}</Link>
-                    <a href="#contact" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("contact")}</a>
+                    <Link href="/#news" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("news")}</Link>
+                    <Link href="/#contact" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("contact")}</Link>
                 </nav>
                 <div className="flex items-center gap-3">
                     {/* Social Icons */}

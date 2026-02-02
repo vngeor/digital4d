@@ -58,6 +58,12 @@
     "noContent": "No content available",
     "backToMenu": "Back to {menu}"
   },
+  "services": {
+    "title": "Services",
+    "subtitle": "Explore our professional 3D printing and modeling services",
+    "badge": "Service",
+    "backToServices": "Back to Services"
+  },
   "login": {
     "title": "Sign in to your account",
     "createAccount": "Create your account",
@@ -102,6 +108,7 @@
       "dashboard": "Dashboard",
       "menu": "Menu",
       "content": "Content",
+      "types": "Types",
       "orders": "Orders",
       "users": "Users",
       "logout": "Logout"
@@ -114,6 +121,11 @@
       "slug": "Slug",
       "slugHelp": "URL-friendly identifier (e.g., services)",
       "title": "Title",
+      "type": "Type",
+      "typeGeneral": "General",
+      "typeServices": "Services",
+      "typeProducts": "Products",
+      "typeNews": "News",
       "order": "Order",
       "status": "Status",
       "linkedContent": "Linked Content",
@@ -147,6 +159,9 @@
       "addContent": "Add Content",
       "editContent": "Edit Content",
       "type": "Type",
+      "typeHelp": "News can be standalone. Services need a menu item.",
+      "customType": "Custom...",
+      "enterCustomType": "Enter custom type",
       "news": "News",
       "service": "Service",
       "all": "All",
@@ -156,7 +171,16 @@
       "order": "Order",
       "slug": "Slug",
       "slugHelp": "URL-friendly identifier for this content",
+      "slugRequired": "Slug is required",
+      "titleRequiredBg": "Title (BG) is required",
+      "titleRequiredEn": "Title (EN) is required",
+      "titleRequiredEs": "Title (ES) is required",
+      "contentRequiredBg": "Content (BG) is required",
+      "contentRequiredEn": "Content (EN) is required",
+      "contentRequiredEs": "Content (ES) is required",
+      "menuRequired": "Menu item is required",
       "menuItem": "Menu Item",
+      "selectMenu": "Select a menu item",
       "noMenu": "No menu item",
       "status": "Status",
       "published": "Published",
@@ -206,6 +230,25 @@
       "confirmDelete": "Are you sure you want to delete this user?",
       "searchPlaceholder": "Search users...",
       "noUsers": "No users found"
+    },
+    "types": {
+      "title": "Type Management",
+      "subtitle": "Manage content types and their display settings",
+      "addType": "Add Type",
+      "editType": "Edit Type",
+      "slug": "Slug",
+      "slugHelp": "URL-friendly identifier (e.g., news, service)",
+      "name": "Name",
+      "color": "Color",
+      "order": "Order",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirmDelete": "Are you sure you want to delete this type?",
+      "searchPlaceholder": "Search types...",
+      "noTypes": "No types found"
     }
   }
 }

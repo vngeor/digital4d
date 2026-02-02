@@ -58,6 +58,12 @@
     "noContent": "Няма налично съдържание",
     "backToMenu": "Обратно към {menu}"
   },
+  "services": {
+    "title": "Услуги",
+    "subtitle": "Разгледайте нашите професионални услуги за 3D печат и моделиране",
+    "badge": "Услуга",
+    "backToServices": "Обратно към Услуги"
+  },
   "login": {
     "title": "Влезте в профила си",
     "createAccount": "Създайте профил",
@@ -102,6 +108,7 @@
       "dashboard": "Табло",
       "menu": "Меню",
       "content": "Съдържание",
+      "types": "Типове",
       "orders": "Поръчки",
       "users": "Потребители",
       "logout": "Изход"
@@ -114,6 +121,11 @@
       "slug": "Slug",
       "slugHelp": "URL-friendly идентификатор (напр. услуги)",
       "title": "Заглавие",
+      "type": "Тип",
+      "typeGeneral": "Общо",
+      "typeServices": "Услуги",
+      "typeProducts": "Продукти",
+      "typeNews": "Новини",
       "order": "Ред",
       "status": "Статус",
       "linkedContent": "Свързано съдържание",
@@ -147,6 +159,9 @@
       "addContent": "Добави съдържание",
       "editContent": "Редактирай съдържание",
       "type": "Тип",
+      "typeHelp": "Новините могат да са самостоятелни. Услугите изискват меню.",
+      "customType": "Друг...",
+      "enterCustomType": "Въведете тип",
       "news": "Новина",
       "service": "Услуга",
       "all": "Всички",
@@ -156,7 +171,16 @@
       "order": "Ред",
       "slug": "Slug",
       "slugHelp": "URL-friendly идентификатор за това съдържание",
+      "slugRequired": "Slug е задължителен",
+      "titleRequiredBg": "Заглавие (BG) е задължително",
+      "titleRequiredEn": "Заглавие (EN) е задължително",
+      "titleRequiredEs": "Заглавие (ES) е задължително",
+      "contentRequiredBg": "Съдържание (BG) е задължително",
+      "contentRequiredEn": "Съдържание (EN) е задължително",
+      "contentRequiredEs": "Съдържание (ES) е задължително",
+      "menuRequired": "Елемент от меню е задължителен",
       "menuItem": "Елемент от меню",
+      "selectMenu": "Изберете меню",
       "noMenu": "Без меню",
       "status": "Статус",
       "published": "Публикувано",
@@ -206,6 +230,25 @@
       "confirmDelete": "Сигурни ли сте, че искате да изтриете този потребител?",
       "searchPlaceholder": "Търси потребители...",
       "noUsers": "Няма намерени потребители"
+    },
+    "types": {
+      "title": "Управление на типове",
+      "subtitle": "Управлявайте типове съдържание и техните настройки",
+      "addType": "Добави тип",
+      "editType": "Редактирай тип",
+      "slug": "Slug",
+      "slugHelp": "URL-friendly идентификатор (напр. news, service)",
+      "name": "Име",
+      "color": "Цвят",
+      "order": "Ред",
+      "actions": "Действия",
+      "edit": "Редактирай",
+      "delete": "Изтрий",
+      "save": "Запази",
+      "cancel": "Отказ",
+      "confirmDelete": "Сигурни ли сте, че искате да изтриете този тип?",
+      "searchPlaceholder": "Търси типове...",
+      "noTypes": "Няма намерени типове"
     }
   }
 }

@@ -10,9 +10,10 @@ export default async function Home() {
     const tFooter = await getTranslations("footer")
     const locale = await getLocale()
 
-    // Fetch latest 6 published content from database (newest first)
+    // Fetch latest 6 published NEWS from database (newest first)
     const dbNews = await prisma.content.findMany({
         where: {
+            type: "news",
             published: true,
         },
         orderBy: { createdAt: "desc" },

@@ -96,13 +96,13 @@ export default async function ContentPage({ params }: PageProps) {
                         <span className="text-slate-300">{contentTitle}</span>
                     </div>
 
-                    {/* Content Type Badge */}
+                    {/* Menu Type Badge */}
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 ${
-                        content.type === "news"
+                        menuItem.type === "news"
                             ? "bg-cyan-500/20 text-cyan-400"
                             : "bg-purple-500/20 text-purple-400"
                     }`}>
-                        {content.type.charAt(0).toUpperCase() + content.type.slice(1)}
+                        {menuItem.type.charAt(0).toUpperCase() + menuItem.type.slice(1)}
                     </span>
 
                     <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
@@ -134,12 +134,8 @@ export default async function ContentPage({ params }: PageProps) {
                         )}
                         <div className="p-8 md:p-12">
                             {contentBody ? (
-                                <div className="prose prose-invert prose-lg max-w-none">
-                                    {contentBody.split('\n\n').map((paragraph, index) => (
-                                        <p key={index} className="text-slate-300 leading-relaxed mb-6">
-                                            {paragraph}
-                                        </p>
-                                    ))}
+                                <div className="prose prose-invert prose-lg max-w-none text-slate-300 leading-relaxed whitespace-pre-line break-words">
+                                    {contentBody}
                                 </div>
                             ) : (
                                 <p className="text-slate-400 italic">{t("menu.noContent")}</p>

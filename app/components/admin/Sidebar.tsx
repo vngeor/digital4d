@@ -12,6 +12,7 @@ import {
   LogOut,
   Settings,
   Menu,
+  Tag,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
   { href: "/admin/menu", icon: Menu, labelKey: "menu" },
   { href: "/admin/content", icon: FileText, labelKey: "content" },
+  { href: "/admin/types", icon: Tag, labelKey: "types" },
   { href: "/admin/orders", icon: ShoppingCart, labelKey: "orders" },
   { href: "/admin/users", icon: Users, labelKey: "users" },
 ]

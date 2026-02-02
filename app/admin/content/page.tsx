@@ -25,19 +25,33 @@ interface Content {
 export default function ContentPage() {
   const t = useTranslations("admin.content")
   const [content, setContent] = useState<Content[]>([])
+  const [allTypes, setAllTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingContent, setEditingContent] = useState<Content | null>(null)
   const [filter, setFilter] = useState<string>("all")
+
+  const fetchAllTypes = async () => {
+    const res = await fetch("/api/admin/content")
+    const data = await res.json()
+    if (Array.isArray(data)) {
+      const types = [...new Set(data.map((item: Content) => item.type))] as string[]
+      setAllTypes(types.sort())
+    }
+  }
 
   const fetchContent = async () => {
     setLoading(true)
     const params = filter !== "all" ? `?type=${filter}` : ""
     const res = await fetch(`/api/admin/content${params}`)
     const data = await res.json()
-    setContent(data)
+    setContent(Array.isArray(data) ? data : [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchAllTypes()
+  }, [])
 
   useEffect(() => {
     fetchContent()
@@ -65,12 +79,14 @@ export default function ContentPage() {
     setShowForm(false)
     setEditingContent(null)
     fetchContent()
+    fetchAllTypes()
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm(t("confirmDelete"))) return
     await fetch(`/api/admin/content?id=${id}`, { method: "DELETE" })
     fetchContent()
+    fetchAllTypes()
   }
 
   const handleTogglePublish = async (item: Content) => {
@@ -192,18 +208,28 @@ export default function ContentPage() {
         </button>
       </div>
 
-      <div className="flex gap-2">
-        {["all", "news", "service"].map((type) => (
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={() => setFilter("all")}
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+            filter === "all"
+              ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          {t("all")}
+        </button>
+        {allTypes.map((type) => (
           <button
             key={type}
             onClick={() => setFilter(type)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all capitalize ${
               filter === type
                 ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                 : "text-gray-400 hover:text-white hover:bg-white/5"
             }`}
           >
-            {type === "all" ? t("all") : t(type)}
+            {type}
           </button>
         ))}
       </div>

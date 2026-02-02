@@ -7,6 +7,7 @@ import { X, Save, Loader2 } from "lucide-react"
 interface MenuItemFormData {
   id?: string
   slug: string
+  type: string
   titleBg: string
   titleEn: string
   titleEs: string
@@ -18,6 +19,7 @@ interface MenuItemFormProps {
   initialData?: {
     id?: string
     slug?: string
+    type?: string
     titleBg?: string
     titleEn?: string
     titleEs?: string
@@ -49,6 +51,7 @@ export function MenuItemForm({
   const [formData, setFormData] = useState<MenuItemFormData>({
     id: initialData?.id,
     slug: initialData?.slug ?? "",
+    type: initialData?.type ?? "general",
     titleBg: initialData?.titleBg ?? "",
     titleEn: initialData?.titleEn ?? "",
     titleEs: initialData?.titleEs ?? "",
@@ -102,20 +105,37 @@ export function MenuItemForm({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              {t("slug")}
-            </label>
-            <input
-              type="text"
-              value={formData.slug}
-              onChange={(e) => updateField("slug", e.target.value)}
-              placeholder="e.g., services"
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {t("slugHelp")}
-            </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {t("slug")}
+              </label>
+              <input
+                type="text"
+                value={formData.slug}
+                onChange={(e) => updateField("slug", e.target.value)}
+                placeholder="e.g., services"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {t("slugHelp")}
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {t("type")}
+              </label>
+              <select
+                value={formData.type}
+                onChange={(e) => updateField("type", e.target.value)}
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              >
+                <option value="general">{t("typeGeneral")}</option>
+                <option value="services">{t("typeServices")}</option>
+                <option value="products">{t("typeProducts")}</option>
+                <option value="news">{t("typeNews")}</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

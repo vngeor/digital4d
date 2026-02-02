@@ -58,6 +58,12 @@
     "noContent": "No hay contenido disponible",
     "backToMenu": "Volver a {menu}"
   },
+  "services": {
+    "title": "Servicios",
+    "subtitle": "Explora nuestros servicios profesionales de impresión y modelado 3D",
+    "badge": "Servicio",
+    "backToServices": "Volver a Servicios"
+  },
   "login": {
     "title": "Inicia sesión en tu cuenta",
     "createAccount": "Crea tu cuenta",
@@ -102,6 +108,7 @@
       "dashboard": "Panel",
       "menu": "Menú",
       "content": "Contenido",
+      "types": "Tipos",
       "orders": "Pedidos",
       "users": "Usuarios",
       "logout": "Cerrar sesión"
@@ -114,6 +121,11 @@
       "slug": "Slug",
       "slugHelp": "Identificador amigable para URL (ej. servicios)",
       "title": "Título",
+      "type": "Tipo",
+      "typeGeneral": "General",
+      "typeServices": "Servicios",
+      "typeProducts": "Productos",
+      "typeNews": "Noticias",
       "order": "Orden",
       "status": "Estado",
       "linkedContent": "Contenido Enlazado",
@@ -147,6 +159,9 @@
       "addContent": "Añadir Contenido",
       "editContent": "Editar Contenido",
       "type": "Tipo",
+      "typeHelp": "Las noticias pueden ser independientes. Los servicios necesitan un menú.",
+      "customType": "Otro...",
+      "enterCustomType": "Ingrese tipo personalizado",
       "news": "Noticia",
       "service": "Servicio",
       "all": "Todos",
@@ -156,7 +171,16 @@
       "order": "Orden",
       "slug": "Slug",
       "slugHelp": "Identificador amigable para URL de este contenido",
+      "slugRequired": "Slug es requerido",
+      "titleRequiredBg": "Título (BG) es requerido",
+      "titleRequiredEn": "Título (EN) es requerido",
+      "titleRequiredEs": "Título (ES) es requerido",
+      "contentRequiredBg": "Contenido (BG) es requerido",
+      "contentRequiredEn": "Contenido (EN) es requerido",
+      "contentRequiredEs": "Contenido (ES) es requerido",
+      "menuRequired": "Elemento de menú es requerido",
       "menuItem": "Elemento de Menú",
+      "selectMenu": "Seleccionar menú",
       "noMenu": "Sin menú",
       "status": "Estado",
       "published": "Publicado",
@@ -206,6 +230,25 @@
       "confirmDelete": "¿Estás seguro de que quieres eliminar este usuario?",
       "searchPlaceholder": "Buscar usuarios...",
       "noUsers": "No se encontraron usuarios"
+    },
+    "types": {
+      "title": "Gestión de Tipos",
+      "subtitle": "Gestiona tipos de contenido y su configuración",
+      "addType": "Añadir Tipo",
+      "editType": "Editar Tipo",
+      "slug": "Slug",
+      "slugHelp": "Identificador amigable para URL (ej. news, service)",
+      "name": "Nombre",
+      "color": "Color",
+      "order": "Orden",
+      "actions": "Acciones",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "confirmDelete": "¿Estás seguro de que quieres eliminar este tipo?",
+      "searchPlaceholder": "Buscar tipos...",
+      "noTypes": "No se encontraron tipos"
     }
   }
 }

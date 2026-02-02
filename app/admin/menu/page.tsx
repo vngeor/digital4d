@@ -9,6 +9,7 @@ import { MenuItemForm } from "@/app/components/admin/MenuItemForm"
 interface MenuItem {
   id: string
   slug: string
+  type: string
   titleBg: string
   titleEn: string
   titleEs: string
@@ -32,7 +33,7 @@ export default function MenuPage() {
     setLoading(true)
     const res = await fetch("/api/admin/menu")
     const data = await res.json()
-    setMenuItems(data)
+    setMenuItems(Array.isArray(data) ? data : [])
     setLoading(false)
   }
 
@@ -43,6 +44,7 @@ export default function MenuPage() {
   const handleSubmit = async (data: {
     id?: string
     slug: string
+    type: string
     titleBg: string
     titleEn: string
     titleEs: string

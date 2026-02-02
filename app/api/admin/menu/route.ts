@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
     const menuItem = await prisma.menuItem.create({
       data: {
         slug,
+        type: data.type || "general",
         titleBg: data.titleBg,
         titleEn: data.titleEn,
         titleEs: data.titleEs,
@@ -139,6 +140,7 @@ export async function PUT(request: NextRequest) {
       where: { id: data.id },
       data: {
         slug: data.slug,
+        type: data.type,
         titleBg: data.titleBg,
         titleEn: data.titleEn,
         titleEs: data.titleEs,

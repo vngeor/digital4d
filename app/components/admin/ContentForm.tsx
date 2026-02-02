@@ -11,6 +11,16 @@ interface MenuItem {
   titleBg: string
 }
 
+interface ContentType {
+  id: string
+  slug: string
+  nameBg: string
+  nameEn: string
+  nameEs: string
+  color: string
+  order: number
+}
+
 interface ContentFormData {
   id?: string
   type: string
@@ -67,6 +77,7 @@ export function ContentForm({
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [contentTypes, setContentTypes] = useState<ContentType[]>([])
   const [autoSlug, setAutoSlug] = useState(!initialData?.id)
   const [formData, setFormData] = useState<ContentFormData>({
     id: initialData?.id,
@@ -84,7 +95,7 @@ export function ContentForm({
     menuItemId: initialData?.menuItemId ?? "",
   })
 
-  // Fetch menu items for dropdown
+  // Fetch menu items and content types for dropdowns
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
@@ -97,7 +108,19 @@ export function ContentForm({
         console.error("Failed to fetch menu items:", error)
       }
     }
+    const fetchContentTypes = async () => {
+      try {
+        const res = await fetch("/api/admin/types")
+        if (res.ok) {
+          const data = await res.json()
+          setContentTypes(Array.isArray(data) ? data : [])
+        }
+      } catch (error) {
+        console.error("Failed to fetch content types:", error)
+      }
+    }
     fetchMenuItems()
+    fetchContentTypes()
   }, [])
 
   // Auto-generate slug from English title
@@ -107,8 +130,47 @@ export function ContentForm({
     }
   }, [formData.titleEn, autoSlug])
 
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.slug.trim()) {
+      newErrors.slug = t("slugRequired")
+    }
+    if (!formData.titleBg.trim()) {
+      newErrors.titleBg = t("titleRequiredBg")
+    }
+    if (!formData.titleEn.trim()) {
+      newErrors.titleEn = t("titleRequiredEn")
+    }
+    if (!formData.titleEs.trim()) {
+      newErrors.titleEs = t("titleRequiredEs")
+    }
+    if (!formData.bodyBg?.trim()) {
+      newErrors.bodyBg = t("contentRequiredBg")
+    }
+    if (!formData.bodyEn?.trim()) {
+      newErrors.bodyEn = t("contentRequiredEn")
+    }
+    if (!formData.bodyEs?.trim()) {
+      newErrors.bodyEs = t("contentRequiredEs")
+    }
+    if (!formData.menuItemId && formData.type !== "news") {
+      newErrors.menuItemId = t("menuRequired")
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
+
     setLoading(true)
     try {
       await onSubmit(formData)
@@ -182,16 +244,65 @@ export function ContentForm({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("type")}
+                {t("type")} <span className="text-red-400">*</span>
               </label>
-              <select
-                value={formData.type}
-                onChange={(e) => updateField("type", e.target.value)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-              >
-                <option value="news">{t("news")}</option>
-                <option value="service">{t("service")}</option>
-              </select>
+              <div className="flex gap-2">
+                {contentTypes.length > 0 ? (
+                  <>
+                    <select
+                      value={contentTypes.some(ct => ct.slug === formData.type) ? formData.type : "custom"}
+                      onChange={(e) => {
+                        if (e.target.value !== "custom") {
+                          updateField("type", e.target.value)
+                        }
+                      }}
+                      className={`${contentTypes.some(ct => ct.slug === formData.type) ? "w-full" : "w-1/2"} px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors`}
+                    >
+                      {contentTypes.map((ct) => (
+                        <option key={ct.id} value={ct.slug}>
+                          {activeTab === "bg" ? ct.nameBg : activeTab === "es" ? ct.nameEs : ct.nameEn}
+                        </option>
+                      ))}
+                      <option value="custom">{t("customType")}</option>
+                    </select>
+                    {!contentTypes.some(ct => ct.slug === formData.type) && (
+                      <input
+                        type="text"
+                        value={formData.type}
+                        onChange={(e) => updateField("type", e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                        placeholder={t("enterCustomType")}
+                        className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <select
+                      value={["news", "service"].includes(formData.type) ? formData.type : "custom"}
+                      onChange={(e) => {
+                        if (e.target.value !== "custom") {
+                          updateField("type", e.target.value)
+                        }
+                      }}
+                      className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    >
+                      <option value="news">{t("news")}</option>
+                      <option value="service">{t("service")}</option>
+                      <option value="custom">{t("customType")}</option>
+                    </select>
+                    {!["news", "service"].includes(formData.type) && (
+                      <input
+                        type="text"
+                        value={formData.type}
+                        onChange={(e) => updateField("type", e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                        placeholder={t("enterCustomType")}
+                        className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">{t("typeHelp")}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
@@ -209,33 +320,44 @@ export function ContentForm({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("slug")}
+                {t("slug")} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
                 value={formData.slug}
                 onChange={(e) => updateField("slug", e.target.value)}
                 placeholder="e.g., my-content-title"
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                  errors.slug ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+                }`}
               />
-              <p className="text-xs text-gray-500 mt-1">{t("slugHelp")}</p>
+              {errors.slug ? (
+                <p className="text-xs text-red-400 mt-1">{errors.slug}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">{t("slugHelp")}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("menuItem")}
+                {t("menuItem")} <span className="text-red-400">*</span>
               </label>
               <select
                 value={formData.menuItemId}
                 onChange={(e) => updateField("menuItemId", e.target.value)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors ${
+                  errors.menuItemId ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+                }`}
               >
-                <option value="">{t("noMenu")}</option>
+                <option value="">{t("selectMenu")}</option>
                 {menuItems.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.titleEn} (/{item.slug})
                   </option>
                 ))}
               </select>
+              {errors.menuItemId && (
+                <p className="text-xs text-red-400 mt-1">{errors.menuItemId}</p>
+              )}
             </div>
           </div>
 
@@ -299,26 +421,38 @@ export function ContentForm({
 
           <div>
             <div className="flex gap-2 mb-4">
-              {languageTabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    activeTab === tab.key
-                      ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              {languageTabs.map((tab) => {
+                const titleKey = `title${tab.key.charAt(0).toUpperCase() + tab.key.slice(1)}`
+                const bodyKey = `body${tab.key.charAt(0).toUpperCase() + tab.key.slice(1)}`
+                const hasError = errors[titleKey] || errors[bodyKey]
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all relative ${
+                      activeTab === tab.key
+                        ? hasError
+                          ? "bg-gradient-to-r from-red-500/20 to-red-500/20 text-red-400 border border-red-500/30"
+                          : "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+                        : hasError
+                          ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30"
+                          : "text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {tab.label}
+                    {hasError && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+                    )}
+                  </button>
+                )
+              })}
             </div>
 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("title")} ({activeTab.toUpperCase()})
+                  {t("title")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -333,12 +467,17 @@ export function ContentForm({
                       e.target.value
                     )
                   }
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors ${
+                    errors[`title${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+                  }`}
                 />
+                {errors[`title${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] && (
+                  <p className="text-xs text-red-400 mt-1">{errors[`title${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("body")} ({activeTab.toUpperCase()})
+                  {t("body")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   value={
@@ -353,8 +492,13 @@ export function ContentForm({
                     )
                   }
                   rows={6}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors resize-none ${
+                    errors[`body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+                  }`}
                 />
+                {errors[`body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] && (
+                  <p className="text-xs text-red-400 mt-1">{errors[`body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}</p>
+                )}
               </div>
             </div>
           </div>

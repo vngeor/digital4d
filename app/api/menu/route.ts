@@ -12,6 +12,7 @@ export async function GET() {
         select: {
           id: true,
           slug: true,
+          type: true,
           titleBg: true,
           titleEn: true,
           titleEs: true,

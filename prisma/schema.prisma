@@ -92,6 +92,7 @@ enum OrderStatus {
 model MenuItem {
   id        String    @id @default(cuid())
   slug      String    @unique  // URL-friendly identifier (e.g., "services")
+  type      String    @default("general")  // Type for content categorization (e.g., "services", "products", "news")
   titleBg   String
   titleEn   String
   titleEs   String
@@ -102,6 +103,22 @@ model MenuItem {
   updatedAt DateTime  @updatedAt
 
   @@index([published])
+  @@index([order])
+  @@index([type])
+}
+
+// ContentType model for managing content types
+model ContentType {
+  id        String    @id @default(cuid())
+  slug      String    @unique  // e.g., "news", "service", "products"
+  nameBg    String
+  nameEn    String
+  nameEs    String
+  color     String    @default("purple")  // Badge color: cyan, purple, emerald, amber, etc.
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
   @@index([order])
 }
 
