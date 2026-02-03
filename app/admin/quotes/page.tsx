@@ -1,0 +1,426 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
+import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye } from "lucide-react"
+import { DataTable } from "@/app/components/admin/DataTable"
+
+interface QuoteRequest {
+  id: string
+  productId: string | null
+  name: string
+  email: string
+  phone: string | null
+  message: string | null
+  fileName: string | null
+  fileUrl: string | null
+  fileSize: number | null
+  status: string
+  quotedPrice: string | null
+  adminNotes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+const STATUS_BADGES: Record<string, { label: string; color: string }> = {
+  pending: { label: "Pending", color: "bg-amber-500/20 text-amber-400" },
+  quoted: { label: "Quoted", color: "bg-blue-500/20 text-blue-400" },
+  accepted: { label: "Accepted", color: "bg-emerald-500/20 text-emerald-400" },
+  rejected: { label: "Rejected", color: "bg-red-500/20 text-red-400" },
+}
+
+export default function QuotesPage() {
+  const t = useTranslations("admin.quotes")
+  const [quotes, setQuotes] = useState<QuoteRequest[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+  const [viewingQuote, setViewingQuote] = useState<QuoteRequest | null>(null)
+  const [editForm, setEditForm] = useState({
+    status: "",
+    quotedPrice: "",
+    adminNotes: "",
+  })
+  const [saving, setSaving] = useState(false)
+
+  const fetchQuotes = async (status?: string | null) => {
+    setLoading(true)
+    const url = status
+      ? `/api/admin/quotes?status=${encodeURIComponent(status)}`
+      : "/api/admin/quotes"
+    const res = await fetch(url)
+    const data = await res.json()
+    setQuotes(Array.isArray(data) ? data : [])
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchQuotes()
+  }, [])
+
+  useEffect(() => {
+    fetchQuotes(selectedStatus)
+  }, [selectedStatus])
+
+  const handleView = (quote: QuoteRequest) => {
+    setViewingQuote(quote)
+    setEditForm({
+      status: quote.status,
+      quotedPrice: quote.quotedPrice || "",
+      adminNotes: quote.adminNotes || "",
+    })
+  }
+
+  const handleSave = async () => {
+    if (!viewingQuote) return
+
+    setSaving(true)
+    const res = await fetch("/api/admin/quotes", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: viewingQuote.id,
+        ...editForm,
+      }),
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      alert(error.error || "Failed to update quote")
+      setSaving(false)
+      return
+    }
+
+    setSaving(false)
+    setViewingQuote(null)
+    fetchQuotes(selectedStatus)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm(t("confirmDelete"))) return
+    await fetch(`/api/admin/quotes?id=${id}`, { method: "DELETE" })
+    fetchQuotes(selectedStatus)
+  }
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return "-"
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const columns = [
+    {
+      key: "customer",
+      header: t("customer"),
+      render: (item: QuoteRequest) => (
+        <div>
+          <p className="font-medium text-white">{item.name}</p>
+          <p className="text-xs text-gray-500">{item.email}</p>
+        </div>
+      ),
+    },
+    {
+      key: "message",
+      header: t("message"),
+      render: (item: QuoteRequest) => (
+        <div className="max-w-xs">
+          <p className="text-gray-400 text-sm truncate">
+            {item.message || "-"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "file",
+      header: t("file"),
+      render: (item: QuoteRequest) => (
+        <div>
+          {item.fileUrl ? (
+            <a
+              href={item.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300"
+            >
+              <Download className="w-4 h-4" />
+              <span className="text-sm">{item.fileName || "Download"}</span>
+            </a>
+          ) : (
+            <span className="text-gray-500 text-sm">-</span>
+          )}
+          {item.fileSize && (
+            <p className="text-xs text-gray-500">{formatFileSize(item.fileSize)}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: t("status"),
+      render: (item: QuoteRequest) => {
+        const badge = STATUS_BADGES[item.status] || STATUS_BADGES.pending
+        return (
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+            {badge.label}
+          </span>
+        )
+      },
+    },
+    {
+      key: "quotedPrice",
+      header: t("quotedPrice"),
+      render: (item: QuoteRequest) => (
+        <span className="text-white">
+          {item.quotedPrice ? `${parseFloat(item.quotedPrice).toFixed(2)} BGN` : "-"}
+        </span>
+      ),
+    },
+    {
+      key: "date",
+      header: t("date"),
+      render: (item: QuoteRequest) => (
+        <span className="text-gray-400 text-sm">
+          {new Date(item.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: t("actions"),
+      render: (item: QuoteRequest) => (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleView(item)
+            }}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            title={t("viewQuote")}
+          >
+            <Eye className="w-4 h-4 text-gray-400" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDelete(item.id)
+            }}
+            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4 text-red-400" />
+          </button>
+        </div>
+      ),
+    },
+  ]
+
+  const statusFilters = [
+    { key: null, label: t("all") },
+    { key: "pending", label: t("pending") },
+    { key: "quoted", label: t("quoted") },
+    { key: "accepted", label: t("accepted") },
+    { key: "rejected", label: t("rejected") },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
+          <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+        </div>
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {statusFilters.map((filter) => (
+          <button
+            key={filter.key || "all"}
+            onClick={() => setSelectedStatus(filter.key)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              selectedStatus === filter.key
+                ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+                : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        </div>
+      ) : (
+        <DataTable
+          data={quotes}
+          columns={columns}
+          searchPlaceholder={t("searchPlaceholder")}
+          emptyMessage={t("noQuotes")}
+        />
+      )}
+
+      {/* View/Edit Quote Modal */}
+      {viewingQuote && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-emerald-400" />
+                {t("viewQuote")}
+              </h2>
+              <button
+                onClick={() => setViewingQuote(null)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Customer Info */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                <h3 className="text-sm font-medium text-gray-300">{t("customer")}</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-500">{t("customer")}</p>
+                    <p className="text-white">{viewingQuote.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">{t("email")}</p>
+                    <p className="text-white">{viewingQuote.email}</p>
+                  </div>
+                  {viewingQuote.phone && (
+                    <div>
+                      <p className="text-gray-500">{t("phone")}</p>
+                      <p className="text-white">{viewingQuote.phone}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-gray-500">{t("date")}</p>
+                    <p className="text-white">
+                      {new Date(viewingQuote.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Message */}
+              {viewingQuote.message && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    {t("message")}
+                  </label>
+                  <p className="text-white bg-white/5 p-4 rounded-xl border border-white/10 whitespace-pre-wrap">
+                    {viewingQuote.message}
+                  </p>
+                </div>
+              )}
+
+              {/* File */}
+              {viewingQuote.fileUrl && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    {t("file")}
+                  </label>
+                  <a
+                    href={viewingQuote.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors"
+                  >
+                    <Download className="w-5 h-5 text-cyan-400" />
+                    <div>
+                      <p className="text-cyan-400 font-medium">{viewingQuote.fileName || "Download File"}</p>
+                      {viewingQuote.fileSize && (
+                        <p className="text-xs text-cyan-400/60">{formatFileSize(viewingQuote.fileSize)}</p>
+                      )}
+                    </div>
+                  </a>
+                </div>
+              )}
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  {t("status")}
+                </label>
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                >
+                  <option value="pending">{t("statusPending")}</option>
+                  <option value="quoted">{t("statusQuoted")}</option>
+                  <option value="accepted">{t("statusAccepted")}</option>
+                  <option value="rejected">{t("statusRejected")}</option>
+                </select>
+              </div>
+
+              {/* Quoted Price */}
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  {t("quotedPrice")}
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editForm.quotedPrice}
+                  onChange={(e) => setEditForm({ ...editForm, quotedPrice: e.target.value })}
+                  placeholder="0.00"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                />
+              </div>
+
+              {/* Admin Notes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  {t("adminNotes")}
+                </label>
+                <textarea
+                  value={editForm.adminNotes}
+                  onChange={(e) => setEditForm({ ...editForm, adminNotes: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setViewingQuote(null)}
+                  className="flex-1 px-6 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {saving ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
+                  {t("save")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

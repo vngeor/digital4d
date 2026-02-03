@@ -34,7 +34,7 @@ export default async function DynamicPage({ params }: PageProps) {
 
     // If no menu item, check if it's a content type
     let contentType = null
-    let typeContents: typeof menuItem.contents | null = null
+    let typeContents: NonNullable<typeof menuItem>["contents"] | null = null
 
     if (!menuItem) {
         contentType = await prisma.contentType.findUnique({

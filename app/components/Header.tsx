@@ -99,6 +99,7 @@ export function Header() {
                             )}
                         </div>
                     ))}
+                    <Link href="/products" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("products")}</Link>
                     <Link href="/#news" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("news")}</Link>
                     <Link href="/#contact" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("contact")}</Link>
                 </nav>

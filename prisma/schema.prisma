@@ -145,3 +145,92 @@ model Content {
   @@index([published])
   @@index([menuItemId])
 }
+
+// Product model for e-commerce catalog
+model Product {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  sku         String?   @unique
+  nameBg      String
+  nameEn      String
+  nameEs      String
+  descBg      String?   @db.Text
+  descEn      String?   @db.Text
+  descEs      String?   @db.Text
+  price       Decimal?  @db.Decimal(10, 2)
+  salePrice   Decimal?  @db.Decimal(10, 2)
+  onSale      Boolean   @default(false)
+  currency    String    @default("BGN")
+  priceType   String    @default("fixed")  // "fixed", "from", "quote"
+  category    String
+  tags        String[]
+  image       String?
+  gallery     String[]
+  fileUrl     String?   // For digital products
+  fileType    String?   // "digital", "physical", "service"
+  featured    Boolean   @default(false)
+  published   Boolean   @default(false)
+  inStock     Boolean   @default(true)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([category])
+  @@index([published])
+  @@index([featured])
+  @@index([order])
+}
+
+// Product category model
+model ProductCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  nameBg      String
+  nameEn      String
+  nameEs      String
+  descBg      String?
+  descEn      String?
+  descEs      String?
+  image       String?
+  color       String   @default("emerald")
+  order       Int      @default(0)
+
+  @@index([order])
+}
+
+// Quote request model for custom services
+model QuoteRequest {
+  id          String   @id @default(cuid())
+  productId   String?
+  name        String
+  email       String
+  phone       String?
+  message     String?  @db.Text
+  fileName    String?
+  fileUrl     String?
+  fileSize    Int?
+  status      String   @default("pending")  // "pending", "quoted", "accepted", "rejected"
+  quotedPrice Decimal? @db.Decimal(10, 2)
+  adminNotes  String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+// Digital purchase model for tracking downloads
+model DigitalPurchase {
+  id            String   @id @default(cuid())
+  productId     String
+  email         String
+  downloadToken String   @unique
+  downloadCount Int      @default(0)
+  maxDownloads  Int      @default(3)
+  expiresAt     DateTime
+  stripeSession String?
+  createdAt     DateTime @default(now())
+
+  @@index([downloadToken])
+  @@index([email])
+}
