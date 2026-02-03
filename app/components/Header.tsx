@@ -87,7 +87,7 @@ export function Header() {
     }
 
     return (
-        <header className="glass sticky top-0 z-50 border-b border-white/10">
+        <header className="glass sticky top-0 z-50 border-b border-white/10 relative">
             <div className="mx-auto flex max-w-6xl items-center justify-between p-4">
                 <Link href="/" className="text-2xl font-bold tracking-tight">
                     digital<span className="text-emerald-400">4d</span>
@@ -234,9 +234,15 @@ export function Header() {
             </div>
 
             {/* Mobile Menu */}
-            {mobileMenuOpen && (
-                <div className="lg:hidden bg-slate-900/98 backdrop-blur-xl border-t border-white/10 fixed left-0 right-0 top-[73px] bottom-0 overflow-y-auto z-50">
-                    <nav className="flex flex-col p-4 space-y-1">
+            <div
+                className={`lg:hidden bg-slate-900/98 backdrop-blur-xl border-t border-white/10 absolute left-0 right-0 top-full overflow-y-auto z-50 transition-all duration-300 ${
+                    mobileMenuOpen
+                        ? 'max-h-[calc(100vh-100%)] opacity-100 visible'
+                        : 'max-h-0 opacity-0 invisible overflow-hidden'
+                }`}
+                style={{ maxHeight: mobileMenuOpen ? 'calc(100vh - 73px)' : '0' }}
+            >
+                <nav className="flex flex-col p-4 space-y-1 pb-safe">
                         {menuItems.map((item) => (
                             <div key={item.id}>
                                 {item.contents.length > 0 ? (
@@ -331,7 +337,6 @@ export function Header() {
                         </div>
                     </nav>
                 </div>
-            )}
         </header>
     )
 }
