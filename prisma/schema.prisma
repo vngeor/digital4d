@@ -92,10 +92,13 @@ enum OrderStatus {
 model MenuItem {
   id        String    @id @default(cuid())
   slug      String    @unique  // URL-friendly identifier (e.g., "services")
-  type      String    @default("general")  // Type for content categorization (e.g., "services", "products", "news")
+  type      String    @default("general")  // Type for content categorization (e.g., "services", "products", "news", "landing")
   titleBg   String
   titleEn   String
   titleEs   String
+  bodyBg    String?   @db.Text
+  bodyEn    String?   @db.Text
+  bodyEs    String?   @db.Text
   order     Int       @default(0)
   published Boolean   @default(true)
   contents  Content[]

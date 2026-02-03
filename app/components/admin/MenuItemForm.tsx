@@ -11,6 +11,9 @@ interface MenuItemFormData {
   titleBg: string
   titleEn: string
   titleEs: string
+  bodyBg: string
+  bodyEn: string
+  bodyEs: string
   order: number
   published: boolean
 }
@@ -23,6 +26,9 @@ interface MenuItemFormProps {
     titleBg?: string
     titleEn?: string
     titleEs?: string
+    bodyBg?: string
+    bodyEn?: string
+    bodyEs?: string
     order?: number
     published?: boolean
   }
@@ -55,6 +61,9 @@ export function MenuItemForm({
     titleBg: initialData?.titleBg ?? "",
     titleEn: initialData?.titleEn ?? "",
     titleEs: initialData?.titleEs ?? "",
+    bodyBg: initialData?.bodyBg ?? "",
+    bodyEn: initialData?.bodyEn ?? "",
+    bodyEs: initialData?.bodyEs ?? "",
     order: initialData?.order ?? 0,
     published: initialData?.published ?? true,
   })
@@ -134,6 +143,7 @@ export function MenuItemForm({
                 <option value="services">{t("typeServices")}</option>
                 <option value="products">{t("typeProducts")}</option>
                 <option value="news">{t("typeNews")}</option>
+                <option value="landing">{t("typeLanding")}</option>
               </select>
             </div>
           </div>
@@ -201,6 +211,30 @@ export function MenuItemForm({
                 className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
+
+            {formData.type === "landing" && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  {t("body")} ({activeTab.toUpperCase()})
+                </label>
+                <textarea
+                  value={
+                    formData[
+                      `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof MenuItemFormData
+                    ] as string
+                  }
+                  onChange={(e) =>
+                    updateField(
+                      `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof MenuItemFormData,
+                      e.target.value
+                    )
+                  }
+                  rows={10}
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-y"
+                  placeholder={t("bodyPlaceholder")}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">
