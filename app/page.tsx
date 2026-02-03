@@ -35,6 +35,7 @@ export default async function Home() {
             }),
             category: item.type.charAt(0).toUpperCase() + item.type.slice(1),
             image: item.image,
+            slug: item.slug,
         }
     })
 

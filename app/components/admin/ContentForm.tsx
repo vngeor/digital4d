@@ -156,7 +156,7 @@ export function ContentForm({
     if (!formData.bodyEs?.trim()) {
       newErrors.bodyEs = t("contentRequiredEs")
     }
-    if (!formData.menuItemId && formData.type !== "news") {
+    if (!formData.menuItemId && formData.type === "service") {
       newErrors.menuItemId = t("menuRequired")
     }
 
@@ -246,62 +246,24 @@ export function ContentForm({
               <label className="block text-sm font-medium text-gray-400 mb-2">
                 {t("type")} <span className="text-red-400">*</span>
               </label>
-              <div className="flex gap-2">
-                {contentTypes.length > 0 ? (
-                  <>
-                    <select
-                      value={contentTypes.some(ct => ct.slug === formData.type) ? formData.type : "custom"}
-                      onChange={(e) => {
-                        if (e.target.value !== "custom") {
-                          updateField("type", e.target.value)
-                        }
-                      }}
-                      className={`${contentTypes.some(ct => ct.slug === formData.type) ? "w-full" : "w-1/2"} px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors`}
-                    >
-                      {contentTypes.map((ct) => (
-                        <option key={ct.id} value={ct.slug}>
-                          {activeTab === "bg" ? ct.nameBg : activeTab === "es" ? ct.nameEs : ct.nameEn}
-                        </option>
-                      ))}
-                      <option value="custom">{t("customType")}</option>
-                    </select>
-                    {!contentTypes.some(ct => ct.slug === formData.type) && (
-                      <input
-                        type="text"
-                        value={formData.type}
-                        onChange={(e) => updateField("type", e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                        placeholder={t("enterCustomType")}
-                        className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                      />
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <select
-                      value={["news", "service"].includes(formData.type) ? formData.type : "custom"}
-                      onChange={(e) => {
-                        if (e.target.value !== "custom") {
-                          updateField("type", e.target.value)
-                        }
-                      }}
-                      className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                    >
-                      <option value="news">{t("news")}</option>
-                      <option value="service">{t("service")}</option>
-                      <option value="custom">{t("customType")}</option>
-                    </select>
-                    {!["news", "service"].includes(formData.type) && (
-                      <input
-                        type="text"
-                        value={formData.type}
-                        onChange={(e) => updateField("type", e.target.value.toLowerCase().replace(/\s+/g, '-'))}
-                        placeholder={t("enterCustomType")}
-                        className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                      />
-                    )}
-                  </>
-                )}
-              </div>
+              <select
+                value={formData.type}
+                onChange={(e) => updateField("type", e.target.value)}
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              >
+                {/* Always show News and Service */}
+                <option value="news">{t("news")}</option>
+                <option value="service">{t("service")}</option>
+                {/* Plus any custom types from database (excluding news/service to avoid duplicates) */}
+                {contentTypes
+                  .filter(ct => ct.slug !== "news" && ct.slug !== "service")
+                  .map((ct) => (
+                    <option key={ct.id} value={ct.slug}>
+                      {activeTab === "bg" ? ct.nameBg : activeTab === "es" ? ct.nameEs : ct.nameEn}
+                    </option>
+                  ))
+                }
+              </select>
               <p className="text-xs text-gray-500 mt-1">{t("typeHelp")}</p>
             </div>
             <div>

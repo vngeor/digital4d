@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Plus, Edit2, Trash2, Loader2, Tag } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
-import { TypeForm } from "@/app/components/admin/TypeForm"
+import { TypeForm, COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 
 interface ContentType {
   id: string
@@ -96,11 +96,7 @@ export default function TypesPage() {
       header: t("color"),
       render: (item: ContentType) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium bg-${item.color}-500/20 text-${item.color}-400`}
-          style={{
-            backgroundColor: `rgb(var(--color-${item.color}-500) / 0.2)`,
-            color: `rgb(var(--color-${item.color}-400))`,
-          }}
+          className={`px-3 py-1 rounded-full text-xs font-medium ${COLOR_CLASSES[item.color] || "bg-gray-500/20 text-gray-400"}`}
         >
           {item.color}
         </span>

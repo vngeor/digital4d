@@ -5,6 +5,13 @@ import { useTranslations } from "next-intl"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2 } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ContentForm } from "@/app/components/admin/ContentForm"
+import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
+
+interface ContentType {
+  id: string
+  slug: string
+  color: string
+}
 
 interface Content {
   id: string
@@ -26,12 +33,24 @@ export default function ContentPage() {
   const t = useTranslations("admin.content")
   const [content, setContent] = useState<Content[]>([])
   const [allTypes, setAllTypes] = useState<string[]>([])
+  const [typeColors, setTypeColors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingContent, setEditingContent] = useState<Content | null>(null)
   const [filter, setFilter] = useState<string>("all")
 
   const fetchAllTypes = async () => {
+    // Fetch content types from the types API to get colors
+    const typesRes = await fetch("/api/admin/types")
+    const typesData = await typesRes.json()
+    if (Array.isArray(typesData)) {
+      const colorMap: Record<string, string> = {}
+      typesData.forEach((t: ContentType) => {
+        colorMap[t.slug] = t.color
+      })
+      setTypeColors(colorMap)
+    }
+
     const res = await fetch("/api/admin/content")
     const data = await res.json()
     if (Array.isArray(data)) {
@@ -98,17 +117,18 @@ export default function ContentPage() {
     fetchContent()
   }
 
+  const getTypeColorClass = (type: string) => {
+    const color = typeColors[type]
+    return COLOR_CLASSES[color] || "bg-gray-500/20 text-gray-400"
+  }
+
   const columns = [
     {
       key: "type",
       header: t("type"),
       render: (item: Content) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${
-            item.type === "news"
-              ? "bg-cyan-500/20 text-cyan-400"
-              : "bg-purple-500/20 text-purple-400"
-          }`}
+          className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeColorClass(item.type)}`}
         >
           {item.type}
         </span>

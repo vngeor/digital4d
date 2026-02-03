@@ -1,62 +1,20 @@
-import { notFound } from "next/navigation"
 import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../components/Header"
 import prisma from "@/lib/prisma"
 
-const RESERVED_SLUGS = ['news', 'admin', 'login', 'api', 'register', 'services']
-
-interface PageProps {
-    params: Promise<{ menuSlug: string }>
-}
-
-export default async function DynamicPage({ params }: PageProps) {
-    const { menuSlug } = await params
-
-    // Skip if this is a reserved slug (handled by other routes)
-    if (RESERVED_SLUGS.includes(menuSlug)) {
-        notFound()
-    }
-
+export default async function ServicesPage() {
     const t = await getTranslations()
     const locale = await getLocale()
 
-    // First, try to find a menu item with this slug
-    const menuItem = await prisma.menuItem.findUnique({
-        where: { slug: menuSlug, published: true },
-        include: {
-            contents: {
-                where: { published: true },
-                orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-            }
-        }
+    // Fetch only published services (type: "service")
+    const services = await prisma.content.findMany({
+        where: {
+            type: "service",
+            published: true,
+        },
+        orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     })
-
-    // If no menu item, check if it's a content type
-    let contentType = null
-    let typeContents: typeof menuItem.contents | null = null
-
-    if (!menuItem) {
-        contentType = await prisma.contentType.findUnique({
-            where: { slug: menuSlug }
-        })
-
-        if (contentType) {
-            // Fetch all content of this type
-            typeContents = await prisma.content.findMany({
-                where: {
-                    type: menuSlug,
-                    published: true
-                },
-                orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-            })
-        }
-    }
-
-    // If neither menu item nor content type found, 404
-    if (!menuItem && !contentType) {
-        notFound()
-    }
 
     const getLocalizedTitle = (item: { titleBg: string; titleEn: string; titleEs: string }) => {
         switch (locale) {
@@ -79,37 +37,6 @@ export default async function DynamicPage({ params }: PageProps) {
                 return item.bodyEn
         }
     }
-
-    // Get page title - from menu item or content type
-    const pageTitle = menuItem
-        ? getLocalizedTitle(menuItem)
-        : contentType
-            ? (locale === "bg" ? contentType.nameBg : locale === "es" ? contentType.nameEs : contentType.nameEn)
-            : menuSlug
-
-    // Get content list
-    const contents = menuItem ? menuItem.contents : (typeContents || [])
-
-    // Color classes for content type badge (all 16 colors)
-    const colorClasses: Record<string, string> = {
-        cyan: "bg-cyan-500/20 text-cyan-400",
-        purple: "bg-purple-500/20 text-purple-400",
-        emerald: "bg-emerald-500/20 text-emerald-400",
-        amber: "bg-amber-500/20 text-amber-400",
-        red: "bg-red-500/20 text-red-400",
-        blue: "bg-blue-500/20 text-blue-400",
-        pink: "bg-pink-500/20 text-pink-400",
-        orange: "bg-orange-500/20 text-orange-400",
-        teal: "bg-teal-500/20 text-teal-400",
-        indigo: "bg-indigo-500/20 text-indigo-400",
-        rose: "bg-rose-500/20 text-rose-400",
-        lime: "bg-lime-500/20 text-lime-400",
-        sky: "bg-sky-500/20 text-sky-400",
-        violet: "bg-violet-500/20 text-violet-400",
-        fuchsia: "bg-fuchsia-500/20 text-fuchsia-400",
-        yellow: "bg-yellow-500/20 text-yellow-400",
-    }
-    const badgeColor = contentType?.color || "purple"
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
@@ -135,37 +62,38 @@ export default async function DynamicPage({ params }: PageProps) {
                         {t("news.backHome")}
                     </Link>
                     <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                        {pageTitle}
+                        {t("services.title")}
                     </h1>
+                    <p className="text-slate-400 text-lg mt-4">{t("services.subtitle")}</p>
                 </div>
             </section>
 
-            {/* Content Grid */}
+            {/* Services Grid */}
             <section className="relative py-8 px-4">
                 <div className="mx-auto max-w-6xl">
-                    {contents.length === 0 ? (
+                    {services.length === 0 ? (
                         <div className="text-center py-12 text-slate-400">
                             <p>{t("menu.noContent")}</p>
                         </div>
                     ) : (
                         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                            {contents.map((content) => {
-                                const title = getLocalizedTitle(content)
-                                const body = getLocalizedBody(content)
-                                const contentUrl = content.slug
-                                    ? `/${menuSlug}/${content.slug}`
-                                    : `/${menuSlug}`
+                            {services.map((service) => {
+                                const title = getLocalizedTitle(service)
+                                const body = getLocalizedBody(service)
+                                const serviceUrl = service.slug
+                                    ? `/services/${service.slug}`
+                                    : "/services"
 
                                 return (
                                     <Link
-                                        key={content.id}
-                                        href={contentUrl}
+                                        key={service.id}
+                                        href={serviceUrl}
                                         className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all hover:shadow-lg hover:shadow-emerald-500/10"
                                     >
-                                        {content.image && (
+                                        {service.image && (
                                             <div className="relative h-48 overflow-hidden">
                                                 <img
-                                                    src={content.image}
+                                                    src={service.image}
                                                     alt={title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 />
@@ -173,11 +101,9 @@ export default async function DynamicPage({ params }: PageProps) {
                                             </div>
                                         )}
                                         <div className="p-6">
-                                            {contentType && (
-                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${colorClasses[badgeColor] || colorClasses.purple}`}>
-                                                    {pageTitle}
-                                                </span>
-                                            )}
+                                            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 bg-purple-500/20 text-purple-400">
+                                                {t("services.badge")}
+                                            </span>
                                             <h3 className="text-xl font-bold text-white group-hover:text-emerald-400 transition-colors mb-3">
                                                 {title}
                                             </h3>
@@ -209,25 +135,4 @@ export default async function DynamicPage({ params }: PageProps) {
             </footer>
         </div>
     )
-}
-
-export async function generateStaticParams() {
-    // Get menu items
-    const menuItems = await prisma.menuItem.findMany({
-        where: { published: true },
-        select: { slug: true }
-    })
-
-    // Get content types
-    const contentTypes = await prisma.contentType.findMany({
-        select: { slug: true }
-    })
-
-    // Combine both
-    const allSlugs = [
-        ...menuItems.map((item) => ({ menuSlug: item.slug })),
-        ...contentTypes.map((type) => ({ menuSlug: type.slug })),
-    ]
-
-    return allSlugs
 }
