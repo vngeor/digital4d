@@ -17,10 +17,30 @@ export default async function NewsPage() {
         orderBy: { createdAt: "desc" },
     })
 
+    // Fetch content types for localized category names
+    const contentTypes = await prisma.contentType.findMany()
+    const contentTypeMap = new Map(contentTypes.map(ct => [ct.slug, ct]))
+
+    // Fallback translations for common types
+    const typeTranslations: Record<string, Record<string, string>> = {
+        news: { bg: "Новина", en: "News", es: "Noticia" },
+        service: { bg: "Услуга", en: "Service", es: "Servicio" },
+    }
+
     // Map to locale-specific fields
     const newsItems = dbNews.map((item) => {
         const titleKey = `title${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof item
         const bodyKey = `body${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof item
+
+        // Get localized category name from ContentType or fallback
+        const contentType = contentTypeMap.get(item.type)
+        let categoryName = item.type.charAt(0).toUpperCase() + item.type.slice(1)
+        if (contentType) {
+            const nameKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof contentType
+            categoryName = (contentType[nameKey] as string) || contentType.nameEn
+        } else if (typeTranslations[item.type]) {
+            categoryName = typeTranslations[item.type][locale] || typeTranslations[item.type].en
+        }
 
         return {
             title: (item[titleKey] as string) || item.titleEn,
@@ -30,7 +50,7 @@ export default async function NewsPage() {
                 month: "long",
                 day: "numeric",
             }),
-            category: item.type.charAt(0).toUpperCase() + item.type.slice(1),
+            category: categoryName,
             image: item.image,
             slug: item.slug,
         }
@@ -49,26 +69,26 @@ export default async function NewsPage() {
             <Header />
 
             {/* Page Header */}
-            <section className="relative pt-32 pb-8 px-4">
+            <section className="relative pt-24 sm:pt-32 pb-6 sm:pb-8 px-4">
                 <div className="mx-auto max-w-6xl">
                     <a
                         href="/"
-                        className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors mb-6"
+                        className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors mb-4 sm:mb-6 text-sm sm:text-base"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         {t("backHome")}
                     </a>
-                    <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
                         {t("allNews")}
                     </h1>
-                    <p className="text-slate-400 text-lg mt-4">{t("subtitle")}</p>
+                    <p className="text-slate-400 text-sm sm:text-lg mt-3 sm:mt-4">{t("subtitle")}</p>
                 </div>
             </section>
 
             {/* News Section */}
-            <NewsSection newsItems={newsItems} />
+            <NewsSection newsItems={newsItems} initialLimit={6} loadMoreCount={6} />
 
             {/* Footer */}
             <footer className="glass border-t border-white/10 py-8 mt-12">

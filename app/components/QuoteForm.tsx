@@ -103,8 +103,8 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
     }
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+            <div className="glass-strong rounded-t-2xl sm:rounded-2xl border border-white/10 w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                     <div>
                         <h2 className="text-xl font-bold text-white">

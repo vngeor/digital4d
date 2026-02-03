@@ -134,28 +134,30 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                     </div>
 
                     {/* Category Filter */}
-                    <div className="flex flex-wrap gap-2">
-                        <button
-                            onClick={() => setSelectedCategory(null)}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedCategory === null
-                                    ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
-                                }`}
-                        >
-                            {t("allProducts")}
-                        </button>
-                        {categories.map((category) => (
+                    <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
+                        <div className="flex gap-2 sm:flex-wrap min-w-max sm:min-w-0">
                             <button
-                                key={category.id}
-                                onClick={() => setSelectedCategory(category.slug)}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedCategory === category.slug
+                                onClick={() => setSelectedCategory(null)}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === null
                                         ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                         : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                     }`}
                             >
-                                {getLocalizedName(category)}
+                                {t("allProducts")}
                             </button>
-                        ))}
+                            {categories.map((category) => (
+                                <button
+                                    key={category.id}
+                                    onClick={() => setSelectedCategory(category.slug)}
+                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === category.slug
+                                            ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+                                            : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
+                                        }`}
+                                >
+                                    {getLocalizedName(category)}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 

@@ -63,34 +63,34 @@ export default async function NewsDetailPage({ params }: PageProps) {
             <Header />
 
             {/* Page Header */}
-            <section className="relative pt-32 pb-8 px-4">
+            <section className="relative pt-24 sm:pt-32 pb-6 sm:pb-8 px-4">
                 <div className="mx-auto max-w-4xl">
-                    {/* Breadcrumb */}
-                    <div className="flex items-center gap-2 text-sm text-slate-400 mb-6">
-                        <Link href="/" className="hover:text-emerald-400 transition-colors">
+                    {/* Breadcrumb - simplified on mobile */}
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 mb-4 sm:mb-6 overflow-hidden">
+                        <Link href="/" className="hover:text-emerald-400 transition-colors shrink-0">
                             {t("news.backHome")}
                         </Link>
-                        <span>/</span>
-                        <Link href="/news" className="hover:text-emerald-400 transition-colors">
+                        <span className="shrink-0">/</span>
+                        <Link href="/news" className="hover:text-emerald-400 transition-colors shrink-0">
                             {t("news.title")}
                         </Link>
-                        <span>/</span>
-                        <span className="text-slate-300">{newsTitle}</span>
+                        <span className="hidden sm:inline shrink-0">/</span>
+                        <span className="hidden sm:inline text-slate-300 truncate">{newsTitle}</span>
                     </div>
 
                     {/* News Badge - Clickable */}
                     <Link
                         href="/news"
-                        className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 bg-cyan-500/20 text-cyan-400 hover:opacity-80 transition-opacity"
+                        className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 sm:mb-4 bg-cyan-500/20 text-cyan-400 hover:opacity-80 transition-opacity"
                     >
                         {t("news.title")}
                     </Link>
 
-                    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                    <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
                         {newsTitle}
                     </h1>
 
-                    <p className="text-slate-400 mt-4">
+                    <p className="text-slate-400 mt-3 sm:mt-4 text-sm sm:text-base">
                         {new Date(news.createdAt).toLocaleDateString(
                             locale === "bg" ? "bg-BG" : locale === "es" ? "es-ES" : "en-US",
                             { year: "numeric", month: "long", day: "numeric" }
@@ -100,11 +100,11 @@ export default async function NewsDetailPage({ params }: PageProps) {
             </section>
 
             {/* Content */}
-            <section className="relative py-8 px-4">
+            <section className="relative py-4 sm:py-8 px-4">
                 <div className="mx-auto max-w-4xl">
-                    <article className="glass rounded-2xl border border-white/10 overflow-hidden">
+                    <article className="glass rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden">
                         {news.image && (
-                            <div className="relative h-64 md:h-96 overflow-hidden">
+                            <div className="relative h-48 sm:h-64 md:h-96 overflow-hidden">
                                 <img
                                     src={news.image}
                                     alt={newsTitle}
@@ -113,9 +113,9 @@ export default async function NewsDetailPage({ params }: PageProps) {
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent" />
                             </div>
                         )}
-                        <div className="p-8 md:p-12">
+                        <div className="p-4 sm:p-8 md:p-12">
                             {newsBody ? (
-                                <div className="prose prose-invert prose-lg max-w-none text-slate-300 leading-relaxed whitespace-pre-line break-words">
+                                <div className="prose prose-invert prose-sm sm:prose-lg max-w-none text-slate-300 leading-relaxed whitespace-pre-line break-words">
                                     {newsBody}
                                 </div>
                             ) : (
