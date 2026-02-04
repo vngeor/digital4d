@@ -59,6 +59,34 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Create a message in the history for user responses
+    if (action === "accept") {
+      await prisma.quoteMessage.create({
+        data: {
+          quoteId,
+          senderType: "user",
+          message: "Accepted the offer",
+          quotedPrice: quote.quotedPrice ? Number(quote.quotedPrice) : null,
+        },
+      })
+    } else if (action === "decline") {
+      await prisma.quoteMessage.create({
+        data: {
+          quoteId,
+          senderType: "user",
+          message: message || "Declined the offer",
+        },
+      })
+    } else if (action === "counter_offer" && message) {
+      await prisma.quoteMessage.create({
+        data: {
+          quoteId,
+          senderType: "user",
+          message,
+        },
+      })
+    }
+
     return NextResponse.json(updatedQuote)
   } catch (error) {
     console.error("Error responding to quote:", error)

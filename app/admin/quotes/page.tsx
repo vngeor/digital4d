@@ -18,6 +18,14 @@ interface Product {
   currency: string
 }
 
+interface QuoteMessage {
+  id: string
+  senderType: string
+  message: string
+  quotedPrice: string | null
+  createdAt: string
+}
+
 interface QuoteRequest {
   id: string
   productId: string | null
@@ -35,6 +43,7 @@ interface QuoteRequest {
   userResponse: string | null
   createdAt: string
   updatedAt: string
+  messages?: QuoteMessage[]
 }
 
 const STATUS_BADGES: Record<string, { label: string; color: string }> = {
@@ -447,7 +456,7 @@ export default function QuotesPage() {
                 </div>
               )}
 
-              {/* User Response (Counter Offer) */}
+              {/* User Response (Counter Offer) - Legacy */}
               {viewingQuote.userResponse && (
                 <div>
                   <label className="block text-sm font-medium text-purple-400 mb-2">
@@ -456,6 +465,53 @@ export default function QuotesPage() {
                   <p className="text-white bg-purple-500/10 p-4 rounded-xl border border-purple-500/30 whitespace-pre-wrap">
                     {viewingQuote.userResponse}
                   </p>
+                </div>
+              )}
+
+              {/* Message History */}
+              {viewingQuote.messages && viewingQuote.messages.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-3">
+                    Conversation History
+                  </label>
+                  <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/10 max-h-60 overflow-y-auto">
+                    {viewingQuote.messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex ${msg.senderType === "admin" ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[80%] rounded-xl px-4 py-2 ${
+                            msg.senderType === "admin"
+                              ? "bg-blue-500/20 border border-blue-500/30"
+                              : "bg-emerald-500/20 border border-emerald-500/30"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs font-medium ${
+                              msg.senderType === "admin" ? "text-blue-400" : "text-emerald-400"
+                            }`}>
+                              {msg.senderType === "admin" ? "You" : "Customer"}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(msg.createdAt).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-white">{msg.message}</p>
+                          {msg.quotedPrice && (
+                            <p className="text-sm font-semibold text-emerald-400 mt-1">
+                              €{parseFloat(msg.quotedPrice).toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

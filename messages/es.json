@@ -8,7 +8,15 @@
     "contact": "Contacto",
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
-    "profile": "Mi Perfil"
+    "profile": "Mi Perfil",
+    "notifications": "Notificaciones",
+    "noNotifications": "No hay nuevas notificaciones",
+    "newQuoteReceived": "Nueva cotización recibida",
+    "viewAllInProfile": "Ver todo en el perfil",
+    "justNow": "Ahora mismo",
+    "minutesAgo": "hace {minutes}m",
+    "hoursAgo": "hace {hours}h",
+    "daysAgo": "hace {days}d"
   },
   "hero": {
     "badge": "Soluciones 3D Profesionales",
@@ -478,6 +486,11 @@
     "quoteUserDeclined": "Rechazado por Ti",
     "respondToOffer": "Responde a esta oferta",
     "counterOfferSent": "Tu contraoferta",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "newBadge": "Nuevo",
+    "conversationHistory": "Historial de conversación",
+    "you": "Tú",
+    "admin": "Admin",
+    "backToHome": "Volver al inicio"
   }
 }

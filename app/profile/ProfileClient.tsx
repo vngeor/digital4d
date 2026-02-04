@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { User, Mail, Phone, MapPin, Calendar, Package, Edit2, ArrowLeft, Globe, Building, Cake, MessageSquare } from "lucide-react"
+import { User, Mail, Phone, MapPin, Calendar, Package, Edit2, ArrowLeft, Globe, Building, Cake, MessageSquare, ChevronDown } from "lucide-react"
 import { ProfileEditForm } from "@/app/components/ProfileEditForm"
 
 interface UserData {
@@ -26,6 +26,14 @@ interface OrderData {
   createdAt: string
 }
 
+interface QuoteMessage {
+  id: string
+  senderType: string
+  message: string
+  quotedPrice: string | null
+  createdAt: string
+}
+
 interface QuoteData {
   id: string
   status: string
@@ -33,6 +41,7 @@ interface QuoteData {
   message: string | null
   adminNotes: string | null
   userResponse: string | null
+  viewedAt: string | null
   createdAt: string
   product: {
     nameEn: string
@@ -40,6 +49,7 @@ interface QuoteData {
     nameEs: string
     slug: string
   } | null
+  messages: QuoteMessage[]
 }
 
 interface ProfileClientProps {
@@ -104,6 +114,11 @@ interface ProfileClientProps {
     quoteUserDeclined: string
     respondToOffer: string
     counterOfferSent: string
+    newBadge: string
+    conversationHistory: string
+    you: string
+    admin: string
+    backToHome: string
   }
 }
 
@@ -129,6 +144,30 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
   const [respondingToQuote, setRespondingToQuote] = useState<string | null>(null)
   const [counterOfferMessage, setCounterOfferMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
+
+  // Mark unviewed quotes as viewed when the page loads
+  const markQuotesAsViewed = useCallback(async () => {
+    const unviewedQuotes = quotes.filter(q => q.status === "quoted" && !q.viewedAt)
+
+    for (const quote of unviewedQuotes) {
+      try {
+        await fetch(`/api/quotes/${quote.id}/view`, { method: "POST" })
+        // Update local state to reflect the view
+        setQuotes(prev => prev.map(q =>
+          q.id === quote.id ? { ...q, viewedAt: new Date().toISOString() } : q
+        ))
+      } catch (error) {
+        console.error("Error marking quote as viewed:", error)
+      }
+    }
+  }, [quotes])
+
+  useEffect(() => {
+    // Small delay to ensure user has time to see the "New" badge
+    const timer = setTimeout(markQuotesAsViewed, 2000)
+    return () => clearTimeout(timer)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleQuoteResponse = async (quoteId: string, action: "accept" | "decline" | "counter_offer", message?: string) => {
     setIsSubmitting(true)
@@ -213,7 +252,7 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
           className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Home
+          {t.backToHome}
         </Link>
 
         {/* Header */}
@@ -370,18 +409,26 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
                     >
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <div className="flex-1">
-                          {quote.product ? (
-                            <Link
-                              href={`/products/${quote.product.slug}`}
-                              className="text-white hover:text-emerald-400 transition-colors font-medium"
-                            >
-                              {quote.product.nameEn}
-                            </Link>
-                          ) : (
-                            <p className="text-white">
-                              {quote.message ? quote.message.slice(0, 50) + (quote.message.length > 50 ? "..." : "") : "Quote Request"}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {quote.product ? (
+                              <Link
+                                href={`/products/${quote.product.slug}`}
+                                className="text-white hover:text-emerald-400 transition-colors font-medium"
+                              >
+                                {quote.product.nameEn}
+                              </Link>
+                            ) : (
+                              <p className="text-white">
+                                {quote.message ? quote.message.slice(0, 50) + (quote.message.length > 50 ? "..." : "") : "Quote Request"}
+                              </p>
+                            )}
+                            {/* New badge for unviewed quoted responses */}
+                            {quote.status === "quoted" && !quote.viewedAt && (
+                              <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold animate-pulse">
+                                {t.newBadge}
+                              </span>
+                            )}
+                          </div>
                           {quote.quotedPrice && parseFloat(quote.quotedPrice) >= 0 && (
                             <p className="text-emerald-400 font-semibold mt-1">
                               {t.quotedPrice}: €{parseFloat(quote.quotedPrice).toFixed(2)}
@@ -469,6 +516,63 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
                         <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                           <p className="text-xs text-red-400 font-medium mb-1">{t.rejectionReason}:</p>
                           <p className="text-sm text-red-300">{quote.adminNotes}</p>
+                        </div>
+                      )}
+
+                      {/* Message History - Expandable */}
+                      {quote.messages && quote.messages.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-white/10">
+                          <button
+                            onClick={() => setExpandedHistory(expandedHistory === quote.id ? null : quote.id)}
+                            className="flex items-center justify-between w-full text-left group"
+                          >
+                            <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+                              <MessageSquare className="w-3 h-3" />
+                              {t.conversationHistory} ({quote.messages.length})
+                            </span>
+                            <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${expandedHistory === quote.id ? "rotate-180" : ""}`} />
+                          </button>
+
+                          {expandedHistory === quote.id && (
+                            <div className="mt-2 space-y-1.5 animate-in slide-in-from-top-2 duration-200">
+                              {quote.messages.map((msg) => (
+                                <div
+                                  key={msg.id}
+                                  className={`flex ${msg.senderType === "user" ? "justify-end" : "justify-start"}`}
+                                >
+                                  <div
+                                    className={`max-w-[75%] rounded-lg px-2.5 py-1.5 ${
+                                      msg.senderType === "user"
+                                        ? "bg-emerald-500/15 border border-emerald-500/20"
+                                        : "bg-blue-500/15 border border-blue-500/20"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                      <span className={`text-[10px] font-medium ${
+                                        msg.senderType === "user" ? "text-emerald-400" : "text-blue-400"
+                                      }`}>
+                                        {msg.senderType === "user" ? t.you : t.admin}
+                                      </span>
+                                      <span className="text-[10px] text-slate-500">
+                                        {new Date(msg.createdAt).toLocaleDateString(undefined, {
+                                          month: "short",
+                                          day: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-white leading-snug">{msg.message}</p>
+                                    {msg.quotedPrice && (
+                                      <p className="text-xs font-semibold text-emerald-400 mt-0.5">
+                                        €{parseFloat(msg.quotedPrice).toFixed(2)}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
 

@@ -53,6 +53,16 @@ export async function GET(request: NextRequest) {
             currency: true,
           },
         },
+        messages: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            senderType: true,
+            message: true,
+            quotedPrice: true,
+            createdAt: true,
+          },
+        },
       },
     })
 
@@ -87,14 +97,41 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Build update data
+    const updateData: {
+      status?: string
+      quotedPrice?: number | null
+      adminNotes?: string | null
+      quotedAt?: Date | null
+      viewedAt?: null
+    } = {
+      status: data.status,
+      quotedPrice: data.quotedPrice ? parseFloat(data.quotedPrice) : null,
+      adminNotes: data.adminNotes || null,
+    }
+
+    // Set quotedAt when status changes to "quoted" and reset viewedAt
+    if (data.status === "quoted") {
+      updateData.quotedAt = new Date()
+      updateData.viewedAt = null
+    }
+
     const quote = await prisma.quoteRequest.update({
       where: { id: data.id },
-      data: {
-        status: data.status,
-        quotedPrice: data.quotedPrice ? parseFloat(data.quotedPrice) : null,
-        adminNotes: data.adminNotes || null,
-      },
+      data: updateData,
     })
+
+    // Create a message in the history when admin sends a quote
+    if (data.status === "quoted" && (data.quotedPrice || data.adminNotes)) {
+      await prisma.quoteMessage.create({
+        data: {
+          quoteId: data.id,
+          senderType: "admin",
+          message: data.adminNotes || `Quoted price: €${parseFloat(data.quotedPrice).toFixed(2)}`,
+          quotedPrice: data.quotedPrice ? parseFloat(data.quotedPrice) : null,
+        },
+      })
+    }
 
     return NextResponse.json(quote)
   } catch (error) {

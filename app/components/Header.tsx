@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { LanguageSwitcher } from "./LanguageSwitcher"
+import { NotificationBell } from "./NotificationBell"
 import { ChevronDown, Menu, X } from "lucide-react"
 
 interface MenuContent {
@@ -160,6 +161,22 @@ export function Header() {
 
                     {/* Language Switcher */}
                     <LanguageSwitcher />
+
+                    {/* Notification Bell - Only for logged-in users */}
+                    {session && (
+                        <NotificationBell
+                            translations={{
+                                notifications: t("notifications"),
+                                noNotifications: t("noNotifications"),
+                                newQuoteReceived: t("newQuoteReceived"),
+                                viewAllInProfile: t("viewAllInProfile"),
+                                justNow: t("justNow"),
+                                minutesAgo: t.raw("minutesAgo"),
+                                hoursAgo: t.raw("hoursAgo"),
+                                daysAgo: t.raw("daysAgo"),
+                            }}
+                        />
+                    )}
 
                     {/* Auth Button */}
                     {status === "loading" ? (

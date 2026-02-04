@@ -8,7 +8,15 @@
     "contact": "Contact",
     "login": "Login",
     "logout": "Logout",
-    "profile": "My Profile"
+    "profile": "My Profile",
+    "notifications": "Notifications",
+    "noNotifications": "No new notifications",
+    "newQuoteReceived": "New quote received",
+    "viewAllInProfile": "View all in profile",
+    "justNow": "Just now",
+    "minutesAgo": "{minutes}m ago",
+    "hoursAgo": "{hours}h ago",
+    "daysAgo": "{days}d ago"
   },
   "hero": {
     "badge": "Professional 3D Solutions",
@@ -478,6 +486,11 @@
     "quoteUserDeclined": "Declined by You",
     "respondToOffer": "Respond to this offer",
     "counterOfferSent": "Your counter offer",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "newBadge": "New",
+    "conversationHistory": "Conversation History",
+    "you": "You",
+    "admin": "Admin",
+    "backToHome": "Back to Home"
   }
 }

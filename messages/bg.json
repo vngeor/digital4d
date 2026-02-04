@@ -8,7 +8,15 @@
     "contact": "Контакт",
     "login": "Вход",
     "logout": "Изход",
-    "profile": "Моят профил"
+    "profile": "Моят профил",
+    "notifications": "Известия",
+    "noNotifications": "Няма нови известия",
+    "newQuoteReceived": "Нова оферта получена",
+    "viewAllInProfile": "Виж всички в профила",
+    "justNow": "Току-що",
+    "minutesAgo": "преди {minutes} мин",
+    "hoursAgo": "преди {hours} ч",
+    "daysAgo": "преди {days} д"
   },
   "hero": {
     "badge": "Професионални 3D решения",
@@ -478,6 +486,11 @@
     "quoteUserDeclined": "Отказана от Вас",
     "respondToOffer": "Отговорете на тази оферта",
     "counterOfferSent": "Вашата контра оферта",
-    "cancel": "Отказ"
+    "cancel": "Отказ",
+    "newBadge": "Ново",
+    "conversationHistory": "История на разговора",
+    "you": "Вие",
+    "admin": "Админ",
+    "backToHome": "Към началото"
   }
 }

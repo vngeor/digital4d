@@ -223,12 +223,28 @@ model QuoteRequest {
   quotedPrice   Decimal? @db.Decimal(10, 2)
   adminNotes    String?  @db.Text
   userResponse  String?  @db.Text  // User's counter-offer or response message
+  quotedAt      DateTime?  // When admin set status to "quoted"
+  viewedAt      DateTime?  // When user viewed the quote response
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  messages      QuoteMessage[]
 
   @@index([status])
   @@index([email])
   @@index([productId])
+}
+
+// Quote message model for conversation history
+model QuoteMessage {
+  id            String   @id @default(cuid())
+  quoteId       String
+  quote         QuoteRequest @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  senderType    String   // "user" or "admin"
+  message       String   @db.Text
+  quotedPrice   Decimal? @db.Decimal(10, 2)  // If this message includes a price offer
+  createdAt     DateTime @default(now())
+
+  @@index([quoteId])
 }
 
 // Digital purchase model for tracking downloads

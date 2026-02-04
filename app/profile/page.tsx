@@ -55,6 +55,7 @@ export default async function ProfilePage() {
       message: true,
       adminNotes: true,
       userResponse: true,
+      viewedAt: true,
       createdAt: true,
       product: {
         select: {
@@ -62,6 +63,16 @@ export default async function ProfilePage() {
           nameBg: true,
           nameEs: true,
           slug: true,
+        },
+      },
+      messages: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          senderType: true,
+          message: true,
+          quotedPrice: true,
+          createdAt: true,
         },
       },
     },
@@ -125,6 +136,11 @@ export default async function ProfilePage() {
     quoteUserDeclined: t("quoteUserDeclined"),
     respondToOffer: t("respondToOffer"),
     counterOfferSent: t("counterOfferSent"),
+    newBadge: t("newBadge"),
+    conversationHistory: t("conversationHistory"),
+    you: t("you"),
+    admin: t("admin"),
+    backToHome: t("backToHome"),
   }
 
   return (
