@@ -168,9 +168,16 @@ export default async function ProductDetailPage({ params }: PageProps) {
                             {/* Badges */}
                             <div className="flex flex-wrap gap-2">
                                 {product.onSale && (
-                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-500/20 text-red-400">
-                                        {t("products.onSale")}
-                                    </span>
+                                    <>
+                                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-500/20 text-red-400">
+                                            {t("products.onSale")}
+                                        </span>
+                                        {product.price && product.salePrice && (
+                                            <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-500 text-white">
+                                                -{Math.round((1 - parseFloat(product.salePrice.toString()) / parseFloat(product.price.toString())) * 100)}%
+                                            </span>
+                                        )}
+                                    </>
                                 )}
                                 {product.inStock ? (
                                     <span className="px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-400">
