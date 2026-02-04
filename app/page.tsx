@@ -100,6 +100,7 @@ export default async function Home() {
             onSale: product.onSale,
             currency: product.currency,
             priceType: product.priceType,
+            fileType: product.fileType,
             category: product.category,
             categoryColor: category?.color || "emerald",
             categoryName,

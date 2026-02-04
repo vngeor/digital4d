@@ -34,6 +34,7 @@ interface Product {
     onSale: boolean
     currency: string
     priceType: string
+    fileType: string | null
     category: string
     categoryColor: string
     categoryName: string
@@ -136,34 +137,47 @@ export function HomeProductsSection({ products }: HomeProductsSectionProps) {
                                     {/* Price Row */}
                                     <div className="flex items-center justify-between mt-2">
                                         <div className="flex items-center gap-1.5">
-                                            {product.priceType === "quote" ? (
+                                            {product.fileType === "digital" ? (
+                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-medium">
+                                                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                    </svg>
+                                                    {tProducts("buyNow")}
+                                                </span>
+                                            ) : product.fileType === "service" || product.priceType === "quote" ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-[10px] sm:text-xs font-medium">
                                                     <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                                     </svg>
                                                     {tProducts("getQuote")}
                                                 </span>
-                                            ) : product.onSale && product.salePrice ? (
-                                                <>
-                                                    <span className="text-sm sm:text-base font-bold text-emerald-400">
-                                                        {product.salePrice} {product.currency}
-                                                    </span>
-                                                    <span className="text-[10px] sm:text-xs text-slate-500 line-through">
-                                                        {product.price} {product.currency}
-                                                    </span>
-                                                </>
                                             ) : (
-                                                <span className="text-sm sm:text-base font-bold text-white">
-                                                    {product.price} {product.currency}
+                                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-purple-500/20 text-purple-400 text-[10px] sm:text-xs font-medium">
+                                                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                    </svg>
+                                                    {tProducts("orderNow")}
                                                 </span>
                                             )}
                                         </div>
-                                        {product.priceType !== "quote" && (
-                                            <span className="p-1.5 sm:p-2 rounded-lg bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30 group-hover:scale-110 transition-all">
-                                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                </svg>
-                                            </span>
+                                        {/* Price display */}
+                                        {product.priceType !== "quote" && product.fileType !== "service" && (
+                                            <div className="text-right">
+                                                {product.onSale && product.salePrice ? (
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-sm sm:text-base font-bold text-emerald-400">
+                                                            {product.salePrice} {product.currency}
+                                                        </span>
+                                                        <span className="text-[10px] sm:text-xs text-slate-500 line-through">
+                                                            {product.price} {product.currency}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm sm:text-base font-bold text-white">
+                                                        {product.priceType === "from" ? `${tProducts("from")} ` : ""}{product.price} {product.currency}
+                                                    </span>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
