@@ -229,11 +229,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
                             <div className="grid gap-6 md:grid-cols-3">
                                 {relatedProducts.map((related: Product) => {
                                     const relatedName = getLocalizedName(related)
-                                    const relatedPrice = related.priceType === "quote"
-                                        ? t("products.requestQuote")
-                                        : related.price
-                                            ? `${parseFloat(related.price.toString()).toFixed(2)} ${related.currency}`
-                                            : "-"
+                                    const relatedPrice = related.price
+                                        ? `${parseFloat(related.price.toString()).toFixed(2)} ${related.currency}`
+                                        : "-"
 
                                     return (
                                         <Link
@@ -260,7 +258,16 @@ export default async function ProductDetailPage({ params }: PageProps) {
                                                 <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors">
                                                     {relatedName}
                                                 </h3>
-                                                <p className="text-emerald-400 mt-1">{relatedPrice}</p>
+                                                {related.priceType === "quote" ? (
+                                                    <span className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium">
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                        </svg>
+                                                        {t("products.getQuote")}
+                                                    </span>
+                                                ) : (
+                                                    <p className="text-emerald-400 mt-1">{relatedPrice}</p>
+                                                )}
                                             </div>
                                         </Link>
                                     )
