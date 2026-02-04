@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { X, Upload, File, Loader2, CheckCircle } from "lucide-react"
 
@@ -25,6 +25,27 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
         phone: "",
         message: "",
     })
+
+    // Auto-fill form with user profile data if logged in
+    useEffect(() => {
+        async function fetchUserProfile() {
+            try {
+                const res = await fetch("/api/user/profile")
+                if (res.ok) {
+                    const user = await res.json()
+                    setFormData(prev => ({
+                        ...prev,
+                        name: user.name || prev.name,
+                        email: user.email || prev.email,
+                        phone: user.phone || prev.phone,
+                    }))
+                }
+            } catch {
+                // User not logged in or error fetching profile - ignore
+            }
+        }
+        fetchUserProfile()
+    }, [])
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault()
@@ -133,7 +154,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                             onClick={onClose}
                             className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
                         >
-                            Close
+                            {t("close")}
                         </button>
                     </div>
                 ) : (

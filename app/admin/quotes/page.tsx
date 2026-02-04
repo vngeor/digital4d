@@ -5,9 +5,23 @@ import { useTranslations } from "next-intl"
 import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 
+interface Product {
+  id: string
+  slug: string
+  sku: string | null
+  nameEn: string
+  nameBg: string
+  nameEs: string
+  price: string | null
+  salePrice: string | null
+  onSale: boolean
+  currency: string
+}
+
 interface QuoteRequest {
   id: string
   productId: string | null
+  product: Product | null
   name: string
   email: string
   phone: string | null
@@ -18,6 +32,7 @@ interface QuoteRequest {
   status: string
   quotedPrice: string | null
   adminNotes: string | null
+  userResponse: string | null
   createdAt: string
   updatedAt: string
 }
@@ -27,6 +42,8 @@ const STATUS_BADGES: Record<string, { label: string; color: string }> = {
   quoted: { label: "Quoted", color: "bg-blue-500/20 text-blue-400" },
   accepted: { label: "Accepted", color: "bg-emerald-500/20 text-emerald-400" },
   rejected: { label: "Rejected", color: "bg-red-500/20 text-red-400" },
+  counter_offer: { label: "Counter Offer", color: "bg-purple-500/20 text-purple-400" },
+  user_declined: { label: "User Declined", color: "bg-gray-500/20 text-gray-400" },
 }
 
 export default function QuotesPage() {
@@ -93,12 +110,16 @@ export default function QuotesPage() {
     setSaving(false)
     setViewingQuote(null)
     fetchQuotes(selectedStatus)
+    // Notify sidebar to update pending count
+    window.dispatchEvent(new Event("quoteUpdated"))
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm(t("confirmDelete"))) return
     await fetch(`/api/admin/quotes?id=${id}`, { method: "DELETE" })
     fetchQuotes(selectedStatus)
+    // Notify sidebar to update pending count
+    window.dispatchEvent(new Event("quoteUpdated"))
   }
 
   const formatFileSize = (bytes: number | null) => {
@@ -118,6 +139,45 @@ export default function QuotesPage() {
           <p className="text-xs text-gray-500">{item.email}</p>
         </div>
       ),
+    },
+    {
+      key: "product",
+      header: t("product"),
+      render: (item: QuoteRequest) => {
+        const product = item.product
+        if (!product) return <span className="text-gray-500 text-sm">-</span>
+
+        const hasDiscount = product.onSale && product.salePrice && product.price
+        const discountPercent = hasDiscount
+          ? Math.round((1 - parseFloat(product.salePrice!) / parseFloat(product.price!)) * 100)
+          : 0
+
+        return (
+          <div>
+            <p className="text-white text-sm">{product.nameEn}</p>
+            {product.sku && (
+              <p className="text-xs text-gray-500 font-mono">{product.sku}</p>
+            )}
+            {hasDiscount ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-emerald-400 font-medium">
+                  {parseFloat(product.salePrice!).toFixed(2)} {product.currency}
+                </span>
+                <span className="text-xs text-gray-500 line-through">
+                  {parseFloat(product.price!).toFixed(2)}
+                </span>
+                <span className="text-xs text-red-400 font-medium">
+                  -{discountPercent}%
+                </span>
+              </div>
+            ) : product.price ? (
+              <p className="text-xs text-emerald-400">
+                {parseFloat(product.price).toFixed(2)} {product.currency}
+              </p>
+            ) : null}
+          </div>
+        )
+      },
     },
     {
       key: "message",
@@ -159,10 +219,19 @@ export default function QuotesPage() {
       header: t("status"),
       render: (item: QuoteRequest) => {
         const badge = STATUS_BADGES[item.status] || STATUS_BADGES.pending
+        // Show counter offer badge for: pending with userResponse OR old counter_offer status
+        const hasCounterOffer = (item.status === "pending" && item.userResponse) || item.status === "counter_offer"
         return (
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.color}`}>
-            {badge.label}
-          </span>
+          <div className="flex flex-col gap-1">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+              {badge.label}
+            </span>
+            {hasCounterOffer && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
+                + Counter Offer
+              </span>
+            )}
+          </div>
         )
       },
     },
@@ -171,7 +240,9 @@ export default function QuotesPage() {
       header: t("quotedPrice"),
       render: (item: QuoteRequest) => (
         <span className="text-white">
-          {item.quotedPrice ? `${parseFloat(item.quotedPrice).toFixed(2)} BGN` : "-"}
+          {item.quotedPrice && parseFloat(item.quotedPrice) >= 0
+            ? `€${parseFloat(item.quotedPrice).toFixed(2)}`
+            : "-"}
         </span>
       ),
     },
@@ -222,7 +293,9 @@ export default function QuotesPage() {
     { key: null, label: t("all") },
     { key: "pending", label: t("pending") },
     { key: "quoted", label: t("quoted") },
+    { key: "counter_offer", label: "Counter Offer" },
     { key: "accepted", label: t("accepted") },
+    { key: "user_declined", label: "User Declined" },
     { key: "rejected", label: t("rejected") },
   ]
 
@@ -283,6 +356,52 @@ export default function QuotesPage() {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Product Info */}
+              {viewingQuote.product && (() => {
+                const product = viewingQuote.product
+                const hasDiscount = product.onSale && product.salePrice && product.price
+                const discountPercent = hasDiscount
+                  ? Math.round((1 - parseFloat(product.salePrice!) / parseFloat(product.price!)) * 100)
+                  : 0
+
+                return (
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
+                    <h3 className="text-sm font-medium text-emerald-400">{t("product")}</h3>
+                    <p className="text-white font-medium text-lg">{product.nameEn}</p>
+                    {product.sku && (
+                      <p className="text-gray-400 text-sm">
+                        SKU: <span className="text-white font-mono">{product.sku}</span>
+                      </p>
+                    )}
+                    {hasDiscount ? (
+                      <div className="flex items-center gap-3">
+                        <span className="text-emerald-400 font-bold text-xl">
+                          {parseFloat(product.salePrice!).toFixed(2)} {product.currency}
+                        </span>
+                        <span className="text-gray-500 line-through text-lg">
+                          {parseFloat(product.price!).toFixed(2)}
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-sm font-medium">
+                          -{discountPercent}%
+                        </span>
+                      </div>
+                    ) : product.price ? (
+                      <p className="text-emerald-400 font-bold text-xl">
+                        {parseFloat(product.price).toFixed(2)} {product.currency}
+                      </p>
+                    ) : null}
+                    <a
+                      href={`/products/${product.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm"
+                    >
+                      <span>View Product →</span>
+                    </a>
+                  </div>
+                )
+              })()}
+
               {/* Customer Info */}
               <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
                 <h3 className="text-sm font-medium text-gray-300">{t("customer")}</h3>
@@ -324,6 +443,18 @@ export default function QuotesPage() {
                   </label>
                   <p className="text-white bg-white/5 p-4 rounded-xl border border-white/10 whitespace-pre-wrap">
                     {viewingQuote.message}
+                  </p>
+                </div>
+              )}
+
+              {/* User Response (Counter Offer) */}
+              {viewingQuote.userResponse && (
+                <div>
+                  <label className="block text-sm font-medium text-purple-400 mb-2">
+                    Customer Response
+                  </label>
+                  <p className="text-white bg-purple-500/10 p-4 rounded-xl border border-purple-500/30 whitespace-pre-wrap">
+                    {viewingQuote.userResponse}
                   </p>
                 </div>
               )}
@@ -371,13 +502,20 @@ export default function QuotesPage() {
               {/* Quoted Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("quotedPrice")}
+                  {t("quotedPrice")} (€)
                 </label>
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={editForm.quotedPrice}
-                  onChange={(e) => setEditForm({ ...editForm, quotedPrice: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    // Prevent negative values
+                    if (value === "" || parseFloat(value) >= 0) {
+                      setEditForm({ ...editForm, quotedPrice: value })
+                    }
+                  }}
                   placeholder="0.00"
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />

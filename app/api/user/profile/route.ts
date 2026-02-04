@@ -15,7 +15,10 @@ export async function GET() {
       name: true,
       email: true,
       phone: true,
+      country: true,
+      city: true,
       address: true,
+      birthDate: true,
       image: true,
       createdAt: true,
     },
@@ -35,7 +38,7 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json()
-  const { phone, address } = body
+  const { phone, country, city, address, birthDate } = body
 
   if (!phone || typeof phone !== "string" || phone.trim() === "") {
     return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
@@ -45,14 +48,20 @@ export async function PUT(request: Request) {
     where: { id: session.user.id },
     data: {
       phone: phone.trim(),
+      country: country?.trim() || null,
+      city: city?.trim() || null,
       address: address?.trim() || null,
+      birthDate: birthDate ? new Date(birthDate) : null,
     },
     select: {
       id: true,
       name: true,
       email: true,
       phone: true,
+      country: true,
+      city: true,
       address: true,
+      birthDate: true,
       image: true,
       createdAt: true,
     },

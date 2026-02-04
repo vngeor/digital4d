@@ -53,21 +53,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check for existing SKU if provided
-    if (data.sku) {
-      const existingSku = await prisma.product.findUnique({ where: { sku: data.sku } })
-      if (existingSku) {
-        return NextResponse.json(
-          { error: `A product with SKU "${data.sku}" already exists.` },
-          { status: 400 }
-        )
-      }
+    // Auto-generate SKU if not provided
+    let sku = data.sku
+    if (!sku) {
+      // Get the count of products to generate unique SKU
+      const count = await prisma.product.count()
+      const timestamp = Date.now().toString(36).toUpperCase()
+      sku = `D4D-${(count + 1).toString().padStart(4, "0")}-${timestamp.slice(-4)}`
+    }
+
+    // Check for existing SKU
+    const existingSku = await prisma.product.findUnique({ where: { sku } })
+    if (existingSku) {
+      return NextResponse.json(
+        { error: `A product with SKU "${sku}" already exists.` },
+        { status: 400 }
+      )
     }
 
     const product = await prisma.product.create({
       data: {
         slug: data.slug,
-        sku: data.sku || null,
+        sku,
         nameBg: data.nameBg,
         nameEn: data.nameEn,
         nameEs: data.nameEs,

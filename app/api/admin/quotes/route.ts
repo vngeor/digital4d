@@ -23,6 +23,37 @@ export async function GET(request: NextRequest) {
     const quotes = await prisma.quoteRequest.findMany({
       where: status ? { status } : undefined,
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        productId: true,
+        name: true,
+        email: true,
+        phone: true,
+        message: true,
+        fileName: true,
+        fileUrl: true,
+        fileSize: true,
+        status: true,
+        quotedPrice: true,
+        adminNotes: true,
+        userResponse: true,
+        createdAt: true,
+        updatedAt: true,
+        product: {
+          select: {
+            id: true,
+            slug: true,
+            sku: true,
+            nameEn: true,
+            nameBg: true,
+            nameEs: true,
+            price: true,
+            salePrice: true,
+            onSale: true,
+            currency: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json(quotes)
@@ -46,6 +77,14 @@ export async function PUT(request: NextRequest) {
 
     if (!data.id) {
       return NextResponse.json({ error: "Quote ID required" }, { status: 400 })
+    }
+
+    // Validate quoted price is not negative
+    if (data.quotedPrice) {
+      const price = parseFloat(data.quotedPrice)
+      if (isNaN(price) || price < 0) {
+        return NextResponse.json({ error: "Quoted price cannot be negative" }, { status: 400 })
+      }
     }
 
     const quote = await prisma.quoteRequest.update({

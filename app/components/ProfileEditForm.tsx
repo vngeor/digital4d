@@ -6,15 +6,23 @@ import { X } from "lucide-react"
 
 interface ProfileEditFormProps {
   phone: string | null
+  country: string | null
+  city: string | null
   address: string | null
+  birthDate: string | null
   onClose: () => void
   translations: {
     editProfileTitle: string
     phone: string
     phonePlaceholder: string
     phoneRequired: string
+    country: string
+    countryPlaceholder: string
+    city: string
+    cityPlaceholder: string
     address: string
     addressPlaceholder: string
+    birthDate: string
     save: string
     saving: string
     cancel: string
@@ -23,11 +31,26 @@ interface ProfileEditFormProps {
   }
 }
 
-export function ProfileEditForm({ phone, address, onClose, translations: t }: ProfileEditFormProps) {
+export function ProfileEditForm({ phone, country, city, address, birthDate, onClose, translations: t }: ProfileEditFormProps) {
   const router = useRouter()
+
+  // Format birthDate to YYYY-MM-DD for the date input
+  const formatDateForInput = (dateStr: string | null): string => {
+    if (!dateStr) return ""
+    try {
+      const date = new Date(dateStr)
+      return date.toISOString().split("T")[0]
+    } catch {
+      return ""
+    }
+  }
+
   const [formData, setFormData] = useState({
     phone: phone || "",
+    country: country || "",
+    city: city || "",
     address: address || "",
+    birthDate: formatDateForInput(birthDate),
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -73,7 +96,7 @@ export function ProfileEditForm({ phone, address, onClose, translations: t }: Pr
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md glass-strong rounded-2xl border border-white/10 p-6 shadow-2xl">
+      <div className="relative w-full max-w-md glass-strong rounded-2xl border border-white/10 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors"
@@ -104,14 +127,52 @@ export function ProfileEditForm({ phone, address, onClose, translations: t }: Pr
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
+              {t.country}
+            </label>
+            <input
+              type="text"
+              value={formData.country}
+              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+              placeholder={t.countryPlaceholder}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              {t.city}
+            </label>
+            <input
+              type="text"
+              value={formData.city}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              placeholder={t.cityPlaceholder}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               {t.address}
             </label>
-            <textarea
+            <input
+              type="text"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder={t.addressPlaceholder}
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              {t.birthDate}
+            </label>
+            <input
+              type="date"
+              value={formData.birthDate}
+              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors [color-scheme:dark]"
             />
           </div>
 

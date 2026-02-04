@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -31,7 +32,7 @@ const navItems = [
   { href: "/admin/content", icon: FileText, labelKey: "content" },
   { href: "/admin/types", icon: Tag, labelKey: "types" },
   { href: "/admin/products", icon: Package, labelKey: "products" },
-  { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes" },
+  { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes", showBadge: true },
   { href: "/admin/orders", icon: ShoppingCart, labelKey: "orders" },
   { href: "/admin/users", icon: Users, labelKey: "users" },
 ]
@@ -39,6 +40,31 @@ const navItems = [
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const t = useTranslations("admin.nav")
+  const [pendingQuotesCount, setPendingQuotesCount] = useState(0)
+
+  useEffect(() => {
+    async function fetchPendingQuotes() {
+      try {
+        const res = await fetch("/api/admin/quotes?status=pending")
+        if (res.ok) {
+          const quotes = await res.json()
+          setPendingQuotesCount(Array.isArray(quotes) ? quotes.length : 0)
+        }
+      } catch {
+        // Ignore errors
+      }
+    }
+    fetchPendingQuotes()
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchPendingQuotes, 30000)
+    // Listen for quote updates
+    const handleQuoteUpdate = () => fetchPendingQuotes()
+    window.addEventListener("quoteUpdated", handleQuoteUpdate)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("quoteUpdated", handleQuoteUpdate)
+    }
+  }, [])
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 glass-strong border-r border-white/10 flex flex-col">
@@ -61,6 +87,7 @@ export function Sidebar({ user }: SidebarProps) {
               ? pathname === "/admin"
               : pathname.startsWith(item.href)
           const Icon = item.icon
+          const showBadge = item.showBadge && pendingQuotesCount > 0
 
           return (
             <Link
@@ -73,7 +100,12 @@ export function Sidebar({ user }: SidebarProps) {
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="font-medium">{t(item.labelKey)}</span>
+              <span className="font-medium flex-1">{t(item.labelKey)}</span>
+              {showBadge && (
+                <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-red-500 text-white">
+                  {pendingQuotesCount}
+                </span>
+              )}
             </Link>
           )
         })}

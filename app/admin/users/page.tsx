@@ -9,6 +9,7 @@ interface User {
   id: string
   name: string | null
   email: string | null
+  phone: string | null
   image: string | null
   role: "USER" | "ADMIN"
   createdAt: string
@@ -80,6 +81,7 @@ export default function UsersPage() {
           <div>
             <p className="font-medium text-white">{item.name || "Anonymous"}</p>
             <p className="text-xs text-gray-500">{item.email}</p>
+            {item.phone && <p className="text-xs text-gray-400">{item.phone}</p>}
           </div>
         </div>
       ),
