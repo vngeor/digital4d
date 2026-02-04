@@ -160,8 +160,8 @@ export function HomeProductsSection({ products }: HomeProductsSectionProps) {
                                                 </span>
                                             )}
                                         </div>
-                                        {/* Price display */}
-                                        {product.priceType !== "quote" && product.fileType !== "service" && (
+                                        {/* Price display - show for all except pure quote products */}
+                                        {product.priceType !== "quote" && (
                                             <div className="text-right">
                                                 {product.onSale && product.salePrice ? (
                                                     <div className="flex flex-col items-end">
