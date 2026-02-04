@@ -7,7 +7,8 @@
     "news": "Новини",
     "contact": "Контакт",
     "login": "Вход",
-    "logout": "Изход"
+    "logout": "Изход",
+    "profile": "Моят профил"
   },
   "hero": {
     "badge": "Професионални 3D решения",
@@ -417,5 +418,37 @@
       "tryAgain": "Опитай отново",
       "backToProducts": "Обратно към продукти"
     }
+  },
+  "profile": {
+    "title": "Моят профил",
+    "subtitle": "Управлявайте настройките на профила и вижте историята на поръчките",
+    "personalInfo": "Лична информация",
+    "name": "Име",
+    "email": "Имейл",
+    "phone": "Телефон",
+    "address": "Адрес",
+    "noPhone": "Няма телефонен номер",
+    "noAddress": "Няма въведен адрес",
+    "memberSince": "Член от",
+    "editProfile": "Редактирай профил",
+    "editProfileTitle": "Редактиране на профил",
+    "phonePlaceholder": "+359 888 123 456",
+    "addressPlaceholder": "Въведете вашия адрес",
+    "phoneRequired": "Телефонният номер е задължителен",
+    "save": "Запази промените",
+    "saving": "Запазване...",
+    "cancel": "Отказ",
+    "updateSuccess": "Профилът е актуализиран успешно",
+    "updateError": "Неуспешно актуализиране на профила",
+    "orderHistory": "История на поръчките",
+    "noOrders": "Все още няма поръчки",
+    "noOrdersDescription": "Когато направите поръчки, те ще се появят тук.",
+    "orderDate": "Дата",
+    "orderStatus": "Статус",
+    "orderDescription": "Описание",
+    "statusPending": "Изчакваща",
+    "statusInProgress": "В процес",
+    "statusCompleted": "Завършена",
+    "statusCancelled": "Отказана"
   }
 }

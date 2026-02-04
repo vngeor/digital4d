@@ -53,6 +53,8 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // For email/password login
+  phone         String?   // Required for orders, but can be added later
+  address       String?   @db.Text
   role          Role      @default(USER)
   accounts      Account[]
   sessions      Session[]

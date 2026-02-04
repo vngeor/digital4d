@@ -7,7 +7,8 @@
     "news": "Noticias",
     "contact": "Contacto",
     "login": "Iniciar sesión",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "profile": "Mi Perfil"
   },
   "hero": {
     "badge": "Soluciones 3D Profesionales",
@@ -417,5 +418,37 @@
       "tryAgain": "Intentar de Nuevo",
       "backToProducts": "Volver a Productos"
     }
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "subtitle": "Administra la configuración de tu cuenta y consulta el historial de pedidos",
+    "personalInfo": "Información Personal",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "address": "Dirección",
+    "noPhone": "Sin número de teléfono",
+    "noAddress": "Sin dirección proporcionada",
+    "memberSince": "Miembro desde",
+    "editProfile": "Editar Perfil",
+    "editProfileTitle": "Editar Perfil",
+    "phonePlaceholder": "+359 888 123 456",
+    "addressPlaceholder": "Ingresa tu dirección",
+    "phoneRequired": "El número de teléfono es requerido",
+    "save": "Guardar Cambios",
+    "saving": "Guardando...",
+    "cancel": "Cancelar",
+    "updateSuccess": "Perfil actualizado correctamente",
+    "updateError": "Error al actualizar el perfil",
+    "orderHistory": "Historial de Pedidos",
+    "noOrders": "Aún no hay pedidos",
+    "noOrdersDescription": "Cuando realices pedidos, aparecerán aquí.",
+    "orderDate": "Fecha",
+    "orderStatus": "Estado",
+    "orderDescription": "Descripción",
+    "statusPending": "Pendiente",
+    "statusInProgress": "En Proceso",
+    "statusCompleted": "Completado",
+    "statusCancelled": "Cancelado"
   }
 }

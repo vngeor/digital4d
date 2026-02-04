@@ -197,6 +197,13 @@ export function Header() {
                                         <p className="text-sm font-medium truncate">{session.user?.name}</p>
                                         <p className="text-xs text-slate-400 truncate">{session.user?.email}</p>
                                     </div>
+                                    <Link
+                                        href="/profile"
+                                        onClick={() => setUserDropdownOpen(false)}
+                                        className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                                    >
+                                        {t("profile")}
+                                    </Link>
                                     <button
                                         onClick={() => {
                                             setUserDropdownOpen(false)
@@ -302,8 +309,15 @@ export function Header() {
                             {t("contact")}
                         </Link>
 
-                        {/* Mobile Login Button */}
-                        {!session && (
+                        {/* Mobile Profile & Login Buttons */}
+                        {session ? (
+                            <Link
+                                href="/profile"
+                                className="mt-4 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation"
+                            >
+                                {t("profile")}
+                            </Link>
+                        ) : (
                             <Link
                                 href="/login"
                                 className="mt-4 py-3 text-center rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 font-semibold text-white touch-manipulation"

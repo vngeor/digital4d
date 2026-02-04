@@ -7,7 +7,8 @@
     "news": "News",
     "contact": "Contact",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "profile": "My Profile"
   },
   "hero": {
     "badge": "Professional 3D Solutions",
@@ -417,5 +418,37 @@
       "tryAgain": "Try Again",
       "backToProducts": "Back to Products"
     }
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your account settings and view order history",
+    "personalInfo": "Personal Information",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "noPhone": "No phone number",
+    "noAddress": "No address provided",
+    "memberSince": "Member since",
+    "editProfile": "Edit Profile",
+    "editProfileTitle": "Edit Profile",
+    "phonePlaceholder": "+359 888 123 456",
+    "addressPlaceholder": "Enter your address",
+    "phoneRequired": "Phone number is required",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "updateSuccess": "Profile updated successfully",
+    "updateError": "Failed to update profile",
+    "orderHistory": "Order History",
+    "noOrders": "No orders yet",
+    "noOrdersDescription": "When you place orders, they will appear here.",
+    "orderDate": "Date",
+    "orderStatus": "Status",
+    "orderDescription": "Description",
+    "statusPending": "Pending",
+    "statusInProgress": "In Progress",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled"
   }
 }
