@@ -104,7 +104,6 @@ interface ProfileClientProps {
     quoteUserDeclined: string
     respondToOffer: string
     counterOfferSent: string
-    cancel: string
   }
 }
 

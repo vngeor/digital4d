@@ -125,7 +125,6 @@ export default async function ProfilePage() {
     quoteUserDeclined: t("quoteUserDeclined"),
     respondToOffer: t("respondToOffer"),
     counterOfferSent: t("counterOfferSent"),
-    cancel: t("cancel"),
   }
 
   return (
