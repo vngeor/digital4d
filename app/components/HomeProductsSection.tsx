@@ -95,10 +95,17 @@ export function HomeProductsSection({ products }: HomeProductsSectionProps) {
                                         </div>
                                     )}
 
-                                    {/* Discount Badge */}
-                                    {product.onSale && discountPercent > 0 && (
-                                        <div className="absolute top-2 right-2 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                                            -{discountPercent}%
+                                    {/* Sale Badge */}
+                                    {product.onSale && (
+                                        <div className="absolute top-2 right-2 flex gap-1">
+                                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
+                                                {tProducts("onSale")}
+                                            </span>
+                                            {discountPercent > 0 && (
+                                                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
+                                                    -{discountPercent}%
+                                                </span>
+                                            )}
                                         </div>
                                     )}
 

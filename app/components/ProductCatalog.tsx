@@ -176,6 +176,11 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                             const categoryName = getCategoryName(product.category)
                             const price = formatPrice(product)
 
+                            // Calculate discount percentage
+                            const discountPercent = product.onSale && product.price && product.salePrice
+                                ? Math.round((1 - parseFloat(product.salePrice) / parseFloat(product.price)) * 100)
+                                : 0
+
                             return (
                                 <Link
                                     key={product.id}
@@ -206,9 +211,16 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                                 </span>
                                             )}
                                             {product.onSale && (
-                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
-                                                    {t("onSale")}
-                                                </span>
+                                                <>
+                                                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-500 text-white">
+                                                        {t("onSale")}
+                                                    </span>
+                                                    {discountPercent > 0 && (
+                                                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-500 text-white">
+                                                            -{discountPercent}%
+                                                        </span>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
 
@@ -268,9 +280,22 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                                 )}
                                             </div>
                                             {product.priceType !== "quote" && (
-                                                <span className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30 group-hover:scale-110 transition-all">
-                                                    <ShoppingCart className="w-4 h-4" />
-                                                </span>
+                                                product.fileType === "digital" ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium group-hover:bg-emerald-500/30 transition-all">
+                                                        <ShoppingCart className="w-3.5 h-3.5" />
+                                                        {t("buyNow")}
+                                                    </span>
+                                                ) : product.fileType === "service" ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium group-hover:bg-amber-500/30 transition-all">
+                                                        <MessageSquare className="w-3.5 h-3.5" />
+                                                        {t("getQuote")}
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium group-hover:bg-purple-500/30 transition-all">
+                                                        <Package className="w-3.5 h-3.5" />
+                                                        {t("orderNow")}
+                                                    </span>
+                                                )
                                             )}
                                         </div>
                                     </div>

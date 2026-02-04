@@ -26,6 +26,7 @@ declare module "next-auth" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
+  trustHost: true, // Required for Vercel and serverless deployments
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -98,6 +99,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login", // Redirect to login page on error
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Handle OAuth sign-in - ensure user creation doesn't fail silently
+      if (account?.provider === "google" || account?.provider === "github") {
+        try {
+          // Check if user exists, if not the adapter will create them
+          // This pre-flight check helps warm up the database connection
+          if (user.email) {
+            await prisma.user.findUnique({
+              where: { email: user.email },
+              select: { id: true },
+            })
+          }
+        } catch (error) {
+          console.error("Error in signIn callback:", error)
+          // Return true anyway - let the adapter handle user creation
+          // Returning false would block sign-in entirely
+        }
+      }
+      return true
+    },
     async jwt({ token, user, account }) {
       // Initial sign in
       if (account && user) {
@@ -106,7 +127,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       // Fetch role from database if not present (for OAuth users)
-      if (token.email && !token.role) {
+      // Set default role first to prevent Configuration error if DB is slow on first request
+      if (!token.role) {
+        token.role = "USER"
+      }
+
+      if (token.email && token.role === "USER") {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { email: token.email },
@@ -118,7 +144,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         } catch (error) {
           console.error("Error fetching user role:", error)
-          // Continue without role, will default to USER
+          // Continue with default USER role - token.role already set above
         }
       }
 
