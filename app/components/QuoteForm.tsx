@@ -103,7 +103,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
     }
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
             <div className="glass-strong rounded-t-2xl sm:rounded-2xl border border-white/10 w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                     <div>
@@ -180,7 +180,12 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                             <input
                                 type="tel"
                                 value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                onChange={(e) => {
+                                    // Only allow numbers, spaces, +, -, and ()
+                                    const value = e.target.value.replace(/[^0-9+\-\s()]/g, "")
+                                    setFormData({ ...formData, phone: value })
+                                }}
+                                pattern="[0-9+\-\s()]{6,20}"
                                 placeholder={t("phonePlaceholder")}
                                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                             />

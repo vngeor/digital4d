@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
-import { Search, Star, Package, ShoppingCart } from "lucide-react"
+import { Search, Star, Package, ShoppingCart, MessageSquare } from "lucide-react"
 
 interface Product {
     id: string
@@ -247,7 +247,12 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                         {/* Price */}
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                {product.onSale && product.salePrice ? (
+                                                {product.priceType === "quote" ? (
+                                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-sm font-medium">
+                                                        <MessageSquare className="w-4 h-4" />
+                                                        {t("getQuote")}
+                                                    </span>
+                                                ) : product.onSale && product.salePrice ? (
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xl font-bold text-emerald-400">
                                                             {parseFloat(product.salePrice).toFixed(2)} {product.currency}
@@ -262,9 +267,11 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30 group-hover:scale-110 transition-all">
-                                                <ShoppingCart className="w-4 h-4" />
-                                            </span>
+                                            {product.priceType !== "quote" && (
+                                                <span className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30 group-hover:scale-110 transition-all">
+                                                    <ShoppingCart className="w-4 h-4" />
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </Link>

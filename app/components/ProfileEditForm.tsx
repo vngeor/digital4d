@@ -91,7 +91,12 @@ export function ProfileEditForm({ phone, address, onClose, translations: t }: Pr
             <input
               type="tel"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) => {
+                // Only allow numbers, spaces, +, -, and ()
+                const value = e.target.value.replace(/[^0-9+\-\s()]/g, "")
+                setFormData({ ...formData, phone: value })
+              }}
+              pattern="[0-9+\-\s()]{6,20}"
               placeholder={t.phonePlaceholder}
               className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
             />
