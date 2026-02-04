@@ -99,6 +99,7 @@ export default async function Home() {
             salePrice: product.salePrice?.toString() || null,
             onSale: product.onSale,
             currency: product.currency,
+            priceType: product.priceType,
             category: product.category,
             categoryColor: category?.color || "emerald",
             categoryName,
