@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
-import { X, Save, Loader2 } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { useTranslations, useLocale } from "next-intl"
+import { X, Save, Loader2, Upload } from "lucide-react"
 
 interface ProductFormData {
   id?: string
@@ -92,7 +92,7 @@ const PRICE_TYPES = [
   { value: "quote", labelKey: "priceTypeQuote" },
 ]
 
-const CURRENCIES = ["BGN", "EUR", "USD"]
+const CURRENCIES = ["EUR", "BGN", "USD"]
 
 export function ProductForm({
   initialData,
@@ -101,7 +101,10 @@ export function ProductForm({
   onCancel,
 }: ProductFormProps) {
   const t = useTranslations("admin.products")
+  const locale = useLocale()
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const [autoSlug, setAutoSlug] = useState(!initialData?.id)
   const [formData, setFormData] = useState<ProductFormData>({
@@ -117,7 +120,7 @@ export function ProductForm({
     price: initialData?.price || "",
     salePrice: initialData?.salePrice || "",
     onSale: initialData?.onSale ?? false,
-    currency: initialData?.currency ?? "BGN",
+    currency: initialData?.currency ?? "EUR",
     priceType: initialData?.priceType ?? "fixed",
     category: initialData?.category ?? (categories[0]?.slug || ""),
     tags: initialData?.tags ?? [],
@@ -181,6 +184,39 @@ export function ProductForm({
     setFormData((prev) => ({ ...prev, [field]: value }))
     if (field === 'slug') {
       setAutoSlug(false)
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const uploadData = new FormData()
+      uploadData.append("file", file)
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(error.error || "Upload failed")
+        return
+      }
+
+      const data = await res.json()
+      updateField("image", data.url)
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("Failed to upload image")
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
     }
   }
 
@@ -256,11 +292,15 @@ export function ProductForm({
                 {categories.length === 0 && (
                   <option value="">No categories available</option>
                 )}
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.slug}>
-                    {cat.nameEn}
-                  </option>
-                ))}
+                {categories.map((cat) => {
+                  const nameKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof cat
+                  const categoryName = (cat[nameKey] as string) || cat.nameEn
+                  return (
+                    <option key={cat.id} value={cat.slug}>
+                      {categoryName}
+                    </option>
+                  )
+                })}
               </select>
               {errors.category && (
                 <p className="text-xs text-red-400 mt-1">{errors.category}</p>
@@ -443,35 +483,78 @@ export function ProductForm({
           </div>
 
           {/* Media */}
-          <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              {t("image")}
+            </label>
+            <div className="space-y-3">
+              {/* Image Preview */}
+              {formData.image && (
+                <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10">
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => updateField("image", "")}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 hover:bg-red-500/50 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <div className="flex gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  {uploading ? "Uploading..." : "Upload Image"}
+                </button>
+                <span className="text-gray-500 text-sm self-center">or</span>
+                <input
+                  type="url"
+                  value={formData.image}
+                  onChange={(e) => updateField("image", e.target.value)}
+                  placeholder="Paste image URL..."
+                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                />
+              </div>
+              <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
+            </div>
+          </div>
+
+          {formData.fileType === "digital" && (
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("image")}
+                {t("fileUrl")}
               </label>
               <input
                 type="text"
-                value={formData.image}
-                onChange={(e) => updateField("image", e.target.value)}
+                value={formData.fileUrl}
+                onChange={(e) => updateField("fileUrl", e.target.value)}
                 placeholder="https://..."
                 className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            {formData.fileType === "digital" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("fileUrl")}
-                </label>
-                <input
-                  type="text"
-                  value={formData.fileUrl}
-                  onChange={(e) => updateField("fileUrl", e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                />
-              </div>
-            )}
-          </div>
-
+          )}
           {/* Settings */}
           <div className="grid grid-cols-4 gap-4">
             <div>

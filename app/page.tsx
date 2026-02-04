@@ -1,6 +1,7 @@
 import { getTranslations, getLocale } from "next-intl/server"
 import { Header } from "./components/Header"
 import { NewsSection } from "./components/NewsSection"
+import { HomeProductsSection } from "./components/HomeProductsSection"
 import prisma from "@/lib/prisma"
 
 export default async function Home() {
@@ -8,6 +9,7 @@ export default async function Home() {
     const tNews = await getTranslations("news")
     const tContact = await getTranslations("contact")
     const tFooter = await getTranslations("footer")
+    const tProducts = await getTranslations("homeProducts")
     const locale = await getLocale()
 
     // Fetch latest 6 published NEWS from database (newest first)
@@ -23,6 +25,22 @@ export default async function Home() {
     // Fetch content types for localized category names
     const contentTypes = await prisma.contentType.findMany()
     const contentTypeMap = new Map(contentTypes.map(ct => [ct.slug, ct]))
+
+    // Fetch 8 published products (featured first, then by order)
+    const dbProducts = await prisma.product.findMany({
+        where: {
+            published: true,
+        },
+        orderBy: [
+            { featured: "desc" },
+            { order: "asc" },
+        ],
+        take: 8,
+    })
+
+    // Fetch product categories for badge colors
+    const productCategories = await prisma.productCategory.findMany()
+    const categoryMap = new Map(productCategories.map(cat => [cat.slug, cat]))
 
     // Fallback translations for common types
     const typeTranslations: Record<string, Record<string, string>> = {
@@ -54,8 +72,38 @@ export default async function Home() {
                 day: "numeric",
             }),
             category: categoryName,
+            categoryColor: contentType?.color || "cyan",
             image: item.image,
             slug: item.slug,
+        }
+    })
+
+    // Map products to locale-specific fields
+    const products = dbProducts.map((product) => {
+        const nameKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof product
+        const descKey = `desc${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof product
+
+        // Get category info
+        const category = categoryMap.get(product.category)
+        const categoryNameKey = category ? `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof category : null
+        const categoryName = category && categoryNameKey
+            ? (category[categoryNameKey] as string) || category.nameEn
+            : product.category.charAt(0).toUpperCase() + product.category.slice(1)
+
+        return {
+            id: product.id,
+            slug: product.slug,
+            name: (product[nameKey] as string) || product.nameEn,
+            description: (product[descKey] as string) || product.descEn || "",
+            price: product.price?.toString() || "0",
+            salePrice: product.salePrice?.toString() || null,
+            onSale: product.onSale,
+            currency: product.currency,
+            category: product.category,
+            categoryColor: category?.color || "emerald",
+            categoryName,
+            image: product.image,
+            featured: product.featured,
         }
     })
 
@@ -144,6 +192,9 @@ export default async function Home() {
                     </div>
                 </div>
             </section>
+
+            {/* Products Section */}
+            <HomeProductsSection products={products} />
 
             {/* News Section */}
             <NewsSection newsItems={newsItems} showAllLink={true} compact={true} />

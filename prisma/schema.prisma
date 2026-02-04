@@ -163,7 +163,7 @@ model Product {
   price       Decimal?  @db.Decimal(10, 2)
   salePrice   Decimal?  @db.Decimal(10, 2)
   onSale      Boolean   @default(false)
-  currency    String    @default("BGN")
+  currency    String    @default("EUR")
   priceType   String    @default("fixed")  // "fixed", "from", "quote"
   category    String
   tags        String[]

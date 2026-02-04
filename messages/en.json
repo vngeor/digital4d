@@ -398,6 +398,11 @@
     "successMessage": "We'll review your request and get back to you within 24 hours.",
     "error": "Failed to submit quote request. Please try again."
   },
+  "homeProducts": {
+    "title": "Our Products",
+    "subtitle": "Explore our range of 3D printing products",
+    "viewAll": "View All Products"
+  },
   "checkout": {
     "title": "Checkout",
     "success": {

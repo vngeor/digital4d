@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
-import { Search, Star, Package } from "lucide-react"
+import { Search, Star, Package, ShoppingCart } from "lucide-react"
 
 interface Product {
     id: string
@@ -262,8 +262,8 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-emerald-400 text-sm font-medium group-hover:translate-x-1 transition-transform">
-                                                &rarr;
+                                            <span className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30 group-hover:scale-110 transition-all">
+                                                <ShoppingCart className="w-4 h-4" />
                                             </span>
                                         </div>
                                     </div>

@@ -398,6 +398,11 @@
     "successMessage": "Revisaremos tu solicitud y te responderemos en 24 horas.",
     "error": "Error al enviar la solicitud. Por favor, intenta de nuevo."
   },
+  "homeProducts": {
+    "title": "Nuestros Productos",
+    "subtitle": "Explora nuestra gama de productos de impresión 3D",
+    "viewAll": "Ver Todos los Productos"
+  },
   "checkout": {
     "title": "Checkout",
     "success": {

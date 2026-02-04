@@ -51,6 +51,7 @@ export default async function NewsPage() {
                 day: "numeric",
             }),
             category: categoryName,
+            categoryColor: contentType?.color || "cyan",
             image: item.image,
             slug: item.slug,
         }

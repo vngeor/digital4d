@@ -4,12 +4,14 @@ import { useState } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { NewsModal } from "./NewsModal"
+import { getColorClass } from "@/lib/colors"
 
 interface NewsItem {
     title: string
     description: string
     date: string
     category: string
+    categoryColor?: string
     image?: string | null
     slug?: string | null
 }
@@ -60,7 +62,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
 
             {/* Category Badge */}
             <div className={`${compact ? 'px-3 sm:px-4 pt-2' : 'px-6 pt-4'} -mt-4 relative z-10`}>
-                <span className={`inline-block px-2 py-0.5 rounded-full ${compact ? 'text-[10px] sm:text-xs' : 'text-xs'} font-semibold bg-cyan-500/20 text-cyan-300`}>
+                <span className={`inline-block px-2 py-0.5 rounded-full ${compact ? 'text-[10px] sm:text-xs' : 'text-xs'} font-semibold ${getColorClass(item.categoryColor || 'cyan')}`}>
                     {item.category}
                 </span>
             </div>

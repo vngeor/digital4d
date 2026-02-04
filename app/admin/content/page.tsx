@@ -117,8 +117,14 @@ export default function ContentPage() {
     fetchContent()
   }
 
+  // Default colors for built-in types (used when not defined in ContentType table)
+  const defaultTypeColors: Record<string, string> = {
+    news: "cyan",
+    service: "purple",
+  }
+
   const getTypeColorClass = (type: string) => {
-    const color = typeColors[type]
+    const color = typeColors[type] || defaultTypeColors[type]
     return COLOR_CLASSES[color] || "bg-gray-500/20 text-gray-400"
   }
 
