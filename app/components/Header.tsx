@@ -169,7 +169,7 @@ export function Header() {
                                 notifications: t("notifications"),
                                 noNotifications: t("noNotifications"),
                                 newQuoteReceived: t("newQuoteReceived"),
-                                viewAllInProfile: t("viewAllInProfile"),
+                                viewAllInOrders: t("viewAllInOrders"),
                                 justNow: t("justNow"),
                                 minutesAgo: t.raw("minutesAgo"),
                                 hoursAgo: t.raw("hoursAgo"),

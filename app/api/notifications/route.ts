@@ -9,18 +9,18 @@ export async function GET() {
       return NextResponse.json({ count: 0, notifications: [] })
     }
 
-    // Get unread quotes (status="quoted" AND viewedAt IS NULL)
+    // Get all quoted quotes — counter persists until user acts (accept/decline/counter)
     const notifications = await prisma.quoteRequest.findMany({
       where: {
         email: session.user.email,
         status: "quoted",
-        viewedAt: null,
       },
       orderBy: { quotedAt: "desc" },
       select: {
         id: true,
         quotedPrice: true,
         quotedAt: true,
+        viewedAt: true,
         product: {
           select: {
             nameEn: true,
@@ -38,6 +38,7 @@ export async function GET() {
         id: n.id,
         quotedPrice: n.quotedPrice?.toString() || null,
         quotedAt: n.quotedAt?.toISOString() || null,
+        viewedAt: n.viewedAt?.toISOString() || null,
         productName: n.product?.nameEn || "Quote Request",
         productSlug: n.product?.slug || null,
       })),

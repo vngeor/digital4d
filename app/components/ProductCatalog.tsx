@@ -184,7 +184,7 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                 onClick={() => { setSaleFilter(!saleFilter); setSelectedCategory(null) }}
                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center gap-1.5 ${saleFilter
                                         ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
-                                        : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
+                                        : "text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20"
                                     }`}
                             >
                                 <Tag className="w-3.5 h-3.5" />

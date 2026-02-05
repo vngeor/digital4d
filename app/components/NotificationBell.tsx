@@ -8,6 +8,7 @@ interface Notification {
   id: string
   quotedPrice: string | null
   quotedAt: string | null
+  viewedAt: string | null
   productName: string
   productSlug: string | null
 }
@@ -17,7 +18,7 @@ interface NotificationBellProps {
     notifications: string
     noNotifications: string
     newQuoteReceived: string
-    viewAllInProfile: string
+    viewAllInOrders: string
     justNow: string
     minutesAgo: string
     hoursAgo: string
@@ -66,9 +67,12 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
   const handleNotificationClick = async (notificationId: string) => {
     try {
       await fetch(`/api/quotes/${notificationId}/view`, { method: "POST" })
-      // Remove from local state
-      setNotifications(prev => prev.filter(n => n.id !== notificationId))
-      setCount(prev => Math.max(0, prev - 1))
+      // Mark as viewed in local state (stops pulse, but keeps counter)
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId ? { ...n, viewedAt: new Date().toISOString() } : n
+        )
+      )
     } catch (error) {
       console.error("Error marking notification as viewed:", error)
     }
@@ -100,7 +104,7 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
       >
         <Bell className="w-5 h-5 text-slate-300" />
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold animate-pulse">
+          <span className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold${notifications.some(n => n.viewedAt === null) ? " animate-pulse" : ""}`}>
             {count > 9 ? "9+" : count}
           </span>
         )}
@@ -131,7 +135,7 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
               notifications.map((notification) => (
                 <Link
                   key={notification.id}
-                  href="/profile"
+                  href="/my-orders"
                   onClick={() => handleNotificationClick(notification.id)}
                   className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0"
                 >
@@ -163,11 +167,11 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
           {notifications.length > 0 && (
             <div className="px-4 py-3 border-t border-white/10">
               <Link
-                href="/profile"
+                href="/my-orders"
                 onClick={() => setIsOpen(false)}
                 className="block text-center text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
               >
-                {t.viewAllInProfile}
+                {t.viewAllInOrders}
               </Link>
             </div>
           )}
