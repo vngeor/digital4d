@@ -131,18 +131,18 @@ export default async function ProductDetailPage({ params }: PageProps) {
             {/* Product Content */}
             <section className="relative py-8 px-4">
                 <div className="mx-auto max-w-6xl">
-                    <div className="grid lg:grid-cols-2 gap-12">
+                    <div className="grid grid-cols-2 gap-3 md:gap-12">
                         {/* Image */}
-                        <div className="glass rounded-2xl border border-white/10 overflow-hidden">
+                        <div className="glass rounded-xl md:rounded-2xl border border-white/10 overflow-hidden">
                             {product.image ? (
                                 <img
                                     src={product.image}
                                     alt={productName}
-                                    className="w-full h-full object-cover min-h-[400px]"
+                                    className="w-full h-full object-cover min-h-[180px] md:min-h-[400px]"
                                 />
                             ) : (
-                                <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-white/5">
-                                    <svg className="w-24 h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-full h-full min-h-[180px] md:min-h-[400px] flex items-center justify-center bg-white/5">
+                                    <svg className="w-12 h-12 md:w-24 md:h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                     </svg>
                                 </div>
@@ -150,59 +150,62 @@ export default async function ProductDetailPage({ params }: PageProps) {
                         </div>
 
                         {/* Details */}
-                        <div className="space-y-6">
+                        <div className="space-y-2 md:space-y-6">
                             {/* Category Badge */}
                             <Link
                                 href={`/products?category=${product.category}`}
-                                className={`inline-block px-3 py-1 rounded-full text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"
+                                className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"
                                     }`}
                             >
                                 {categoryName}
                             </Link>
 
                             {/* Name */}
-                            <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                            <h1 className="text-base md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent leading-tight">
                                 {productName}
                             </h1>
 
                             {/* Badges */}
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-1 md:gap-2">
                                 {product.onSale && (
                                     <>
-                                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-500/20 text-red-400">
+                                        <Link
+                                            href="/products?sale=true"
+                                            className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer"
+                                        >
                                             {t("products.onSale")}
-                                        </span>
+                                        </Link>
                                         {product.price && product.salePrice && (
-                                            <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-500 text-white">
+                                            <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500 text-white">
                                                 -{Math.round((1 - parseFloat(product.salePrice.toString()) / parseFloat(product.price.toString())) * 100)}%
                                             </span>
                                         )}
                                     </>
                                 )}
                                 {product.inStock ? (
-                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-400">
+                                    <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-emerald-500/20 text-emerald-400">
                                         {t("products.inStock")}
                                     </span>
                                 ) : (
-                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-500/20 text-gray-400">
+                                    <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-gray-500/20 text-gray-400">
                                         {t("products.outOfStock")}
                                     </span>
                                 )}
                             </div>
 
                             {/* Price */}
-                            <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+                            <div className="p-2 md:p-6 rounded-lg md:rounded-xl bg-white/5 border border-white/10">
                                 {product.onSale && product.salePrice ? (
-                                    <div className="flex items-baseline gap-4">
-                                        <span className="text-4xl font-bold text-emerald-400">
+                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
+                                        <span className="text-lg md:text-4xl font-bold text-emerald-400">
                                             {parseFloat(product.salePrice.toString()).toFixed(2)} {product.currency}
                                         </span>
-                                        <span className="text-xl text-gray-500 line-through">
+                                        <span className="text-xs md:text-xl text-gray-500 line-through">
                                             {price}
                                         </span>
                                     </div>
                                 ) : (
-                                    <span className="text-4xl font-bold text-white">
+                                    <span className="text-lg md:text-4xl font-bold text-white">
                                         {price || "-"}
                                     </span>
                                 )}
@@ -213,27 +216,28 @@ export default async function ProductDetailPage({ params }: PageProps) {
                                 product={JSON.parse(JSON.stringify(product))}
                             />
 
-                            {/* Description */}
-                            {productDesc && (
-                                <div>
-                                    <h2 className="text-lg font-semibold text-white mb-3">
-                                        {t("products.description")}
-                                    </h2>
-                                    <div className="prose prose-invert prose-slate max-w-none text-slate-300 leading-relaxed whitespace-pre-line">
-                                        {productDesc}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
 
+                    {/* Description - full width below the grid */}
+                    {productDesc && (
+                        <div className="mt-6 md:mt-10">
+                            <h2 className="text-base md:text-lg font-semibold text-white mb-2 md:mb-3">
+                                {t("products.description")}
+                            </h2>
+                            <div className="prose prose-invert prose-slate max-w-none text-sm md:text-base text-slate-300 leading-relaxed whitespace-pre-line break-words overflow-hidden">
+                                {productDesc}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Related Products */}
                     {relatedProducts.length > 0 && (
-                        <div className="mt-16">
-                            <h2 className="text-2xl font-bold text-white mb-8">
+                        <div className="mt-8 md:mt-16">
+                            <h2 className="text-lg md:text-2xl font-bold text-white mb-4 md:mb-8">
                                 {t("products.relatedProducts")}
                             </h2>
-                            <div className="grid gap-6 md:grid-cols-3">
+                            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6">
                                 {relatedProducts.map((related: Product) => {
                                     const relatedName = getLocalizedName(related)
                                     const relatedPrice = related.price
@@ -249,9 +253,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
                                         <Link
                                             key={related.id}
                                             href={`/products/${related.slug}`}
-                                            className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all"
+                                            className="group glass rounded-xl md:rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all"
                                         >
-                                            <div className="relative h-40 overflow-hidden bg-white/5">
+                                            <div className="relative h-28 md:h-40 overflow-hidden bg-white/5">
                                                 {related.image ? (
                                                     <img
                                                         src={related.image}
@@ -279,27 +283,48 @@ export default async function ProductDetailPage({ params }: PageProps) {
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="p-4">
-                                                <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                                            <div className="p-2 md:p-4">
+                                                <h3 className="font-semibold text-xs md:text-base text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
                                                     {relatedName}
                                                 </h3>
+                                                {/* Price */}
+                                                <div className="mt-1 md:mt-2">
+                                                    {related.priceType === "quote" ? (
+                                                        <span className="text-[10px] md:text-sm text-amber-400 font-medium">
+                                                            {t("products.requestQuote")}
+                                                        </span>
+                                                    ) : related.onSale && related.salePrice ? (
+                                                        <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2">
+                                                            <span className="text-xs md:text-base font-bold text-emerald-400">
+                                                                {parseFloat(related.salePrice.toString()).toFixed(2)} {related.currency}
+                                                            </span>
+                                                            <span className="text-[10px] md:text-xs text-gray-500 line-through">
+                                                                {relatedPrice}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs md:text-base font-bold text-white">
+                                                            {relatedPrice}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 {related.fileType === "digital" ? (
-                                                    <span className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium">
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <span className="inline-flex items-center gap-1 md:gap-1.5 mt-1 md:mt-2 px-1.5 md:px-2 py-0.5 md:py-1 rounded-md md:rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] md:text-xs font-medium">
+                                                        <svg className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                                         </svg>
                                                         {t("products.buyNow")}
                                                     </span>
                                                 ) : related.fileType === "service" || related.priceType === "quote" ? (
-                                                    <span className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium">
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <span className="inline-flex items-center gap-1 md:gap-1.5 mt-1 md:mt-2 px-1.5 md:px-2 py-0.5 md:py-1 rounded-md md:rounded-lg bg-amber-500/20 text-amber-400 text-[10px] md:text-xs font-medium">
+                                                        <svg className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                                         </svg>
                                                         {t("products.getQuote")}
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium">
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <span className="inline-flex items-center gap-1 md:gap-1.5 mt-1 md:mt-2 px-1.5 md:px-2 py-0.5 md:py-1 rounded-md md:rounded-lg bg-purple-500/20 text-purple-400 text-[10px] md:text-xs font-medium">
+                                                        <svg className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                                         </svg>
                                                         {t("products.orderNow")}

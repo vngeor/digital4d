@@ -381,6 +381,8 @@
     "inStock": "В наличност",
     "outOfStock": "Изчерпан",
     "onSale": "Промоция",
+    "saleTitle": "Продукти в промоция",
+    "saleSubtitle": "Разгледайте нашите най-добри оферти и намалени продукти",
     "description": "Описание",
     "specifications": "Спецификации",
     "relatedProducts": "Свързани продукти",

@@ -381,6 +381,8 @@
     "inStock": "In Stock",
     "outOfStock": "Out of Stock",
     "onSale": "Sale",
+    "saleTitle": "Sale Products",
+    "saleSubtitle": "Browse our best deals and discounted products",
     "description": "Description",
     "specifications": "Specifications",
     "relatedProducts": "Related Products",

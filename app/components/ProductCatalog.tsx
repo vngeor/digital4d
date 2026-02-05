@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Search, Star, Package, ShoppingCart, MessageSquare } from "lucide-react"
+import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X } from "lucide-react"
 
 interface Product {
     id: string
@@ -62,8 +63,20 @@ const COLOR_CLASSES: Record<string, string> = {
 
 export function ProductCatalog({ products, categories, locale }: ProductCatalogProps) {
     const t = useTranslations("products")
+    const searchParams = useSearchParams()
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
+    const [saleFilter, setSaleFilter] = useState(false)
+
+    useEffect(() => {
+        if (searchParams.get("sale") === "true") {
+            setSaleFilter(true)
+        }
+        const categoryParam = searchParams.get("category")
+        if (categoryParam) {
+            setSelectedCategory(categoryParam)
+        }
+    }, [searchParams])
 
     const getLocalizedName = (item: { nameBg: string; nameEn: string; nameEs: string }) => {
         switch (locale) {
@@ -93,9 +106,10 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
             const matchesSearch = !searchQuery ||
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase())
-            return matchesCategory && matchesSearch
+            const matchesSale = !saleFilter || product.onSale
+            return matchesCategory && matchesSearch && matchesSale
         })
-    }, [products, selectedCategory, searchQuery])
+    }, [products, selectedCategory, searchQuery, saleFilter])
 
     const getCategoryColor = (categorySlug: string) => {
         const category = categories.find((c) => c.slug === categorySlug)
@@ -119,6 +133,27 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
     return (
         <section className="relative py-8 px-4">
             <div className="mx-auto max-w-6xl">
+                {/* Sale Banner */}
+                {saleFilter && (
+                    <div className="mb-6 p-4 md:p-6 rounded-xl bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg md:text-2xl font-bold text-red-400 flex items-center gap-2">
+                                    <Tag className="w-5 h-5 md:w-6 md:h-6" />
+                                    {t("saleTitle")}
+                                </h2>
+                                <p className="text-sm md:text-base text-slate-400 mt-1">{t("saleSubtitle")}</p>
+                            </div>
+                            <button
+                                onClick={() => setSaleFilter(false)}
+                                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
                     {/* Search */}
@@ -137,18 +172,28 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                     <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
                         <div className="flex gap-2 sm:flex-wrap min-w-max sm:min-w-0">
                             <button
-                                onClick={() => setSelectedCategory(null)}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === null
+                                onClick={() => { setSelectedCategory(null); setSaleFilter(false) }}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === null && !saleFilter
                                         ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                         : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                     }`}
                             >
                                 {t("allProducts")}
                             </button>
+                            <button
+                                onClick={() => { setSaleFilter(!saleFilter); setSelectedCategory(null) }}
+                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center gap-1.5 ${saleFilter
+                                        ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
+                                        : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
+                                    }`}
+                            >
+                                <Tag className="w-3.5 h-3.5" />
+                                {t("onSale")}
+                            </button>
                             {categories.map((category) => (
                                 <button
                                     key={category.id}
-                                    onClick={() => setSelectedCategory(category.slug)}
+                                    onClick={() => { setSelectedCategory(category.slug); setSaleFilter(false) }}
                                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === category.slug
                                             ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                             : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
@@ -168,7 +213,7 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                         <p>{t("noProducts")}</p>
                     </div>
                 ) : (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {filteredProducts.map((product) => {
                             const name = getLocalizedName(product)
                             const desc = getLocalizedDesc(product)
@@ -188,7 +233,7 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                     className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all hover:shadow-lg hover:shadow-emerald-500/10"
                                 >
                                     {/* Image */}
-                                    <div className="relative h-48 overflow-hidden bg-white/5">
+                                    <div className="relative h-32 sm:h-48 overflow-hidden bg-white/5">
                                         {product.image ? (
                                             <img
                                                 src={product.image}
@@ -235,7 +280,7 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                     </div>
 
                                     {/* Content */}
-                                    <div className="p-5">
+                                    <div className="p-3 sm:p-5">
                                         {/* Category Badge */}
                                         <span
                                             className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"
@@ -245,13 +290,13 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                         </span>
 
                                         {/* Name */}
-                                        <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors mb-2">
+                                        <h3 className="text-sm sm:text-lg font-bold text-white group-hover:text-emerald-400 transition-colors mb-2">
                                             {name}
                                         </h3>
 
                                         {/* Description */}
                                         {desc && (
-                                            <p className="text-slate-400 text-sm line-clamp-2 mb-4">
+                                            <p className="text-slate-400 text-sm line-clamp-2 mb-4 hidden sm:block">
                                                 {desc}
                                             </p>
                                         )}
@@ -266,15 +311,15 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                                     </span>
                                                 ) : product.onSale && product.salePrice ? (
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xl font-bold text-emerald-400">
+                                                        <span className="text-base sm:text-xl font-bold text-emerald-400">
                                                             {parseFloat(product.salePrice).toFixed(2)} {product.currency}
                                                         </span>
-                                                        <span className="text-sm text-gray-500 line-through">
+                                                        <span className="text-xs sm:text-sm text-gray-500 line-through">
                                                             {price}
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xl font-bold text-white">
+                                                    <span className="text-base sm:text-xl font-bold text-white">
                                                         {price || "-"}
                                                     </span>
                                                 )}
