@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
         quotedPrice: true,
         adminNotes: true,
         userResponse: true,
+        viewedAt: true,
+        quotedAt: true,
         createdAt: true,
         updatedAt: true,
         product: {

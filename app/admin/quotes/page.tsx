@@ -42,6 +42,8 @@ interface QuoteRequest {
   quotedPrice: string | null
   adminNotes: string | null
   userResponse: string | null
+  viewedAt: string | null
+  quotedAt: string | null
   createdAt: string
   updatedAt: string
   messages?: QuoteMessage[]
@@ -68,6 +70,7 @@ export default function QuotesPage() {
     adminNotes: "",
   })
   const [saving, setSaving] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
 
   const fetchQuotes = async (status?: string | null) => {
     setLoading(true)
@@ -76,7 +79,13 @@ export default function QuotesPage() {
       : "/api/admin/quotes"
     const res = await fetch(url)
     const data = await res.json()
-    setQuotes(Array.isArray(data) ? data : [])
+    const quotesData = Array.isArray(data) ? data : []
+    setQuotes(quotesData)
+    if (!status) {
+      setPendingCount(quotesData.filter((q: QuoteRequest) => q.status === "pending").length)
+    } else if (status === "pending") {
+      setPendingCount(quotesData.length)
+    }
     setLoading(false)
   }
 
@@ -130,6 +139,19 @@ export default function QuotesPage() {
     fetchQuotes(selectedStatus)
     // Notify sidebar to update pending count
     window.dispatchEvent(new Event("quoteUpdated"))
+  }
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+    if (diffMins < 1) return "Just now"
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    return `${diffDays}d ago`
   }
 
   const formatFileSize = (bytes: number | null) => {
@@ -265,6 +287,22 @@ export default function QuotesPage() {
                 + Counter Offer
               </span>
             )}
+            {item.status === "quoted" && (
+              <>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                  item.viewedAt
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "bg-amber-500/20 text-amber-400 animate-pulse"
+                }`}>
+                  {item.viewedAt ? "Seen" : "Not seen yet"}
+                </span>
+                {item.quotedAt && (
+                  <span className="text-[10px] text-gray-500">
+                    {formatTimeAgo(item.quotedAt)}
+                  </span>
+                )}
+              </>
+            )}
           </div>
         )
       },
@@ -355,6 +393,11 @@ export default function QuotesPage() {
             }`}
           >
             {filter.label}
+            {filter.key === "pending" && pendingCount > 0 && (
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 animate-pulse">
+                {pendingCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
