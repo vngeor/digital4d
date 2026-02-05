@@ -144,7 +144,24 @@ export default function QuotesPage() {
       key: "quoteNumber",
       header: "#",
       render: (item: QuoteRequest) => (
-        <span className="font-mono text-sm text-blue-400">{item.quoteNumber}</span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            navigator.clipboard.writeText(item.quoteNumber)
+            const btn = e.currentTarget
+            btn.classList.add("scale-95")
+            const orig = btn.textContent
+            btn.textContent = "Copied!"
+            setTimeout(() => {
+              btn.textContent = orig
+              btn.classList.remove("scale-95")
+            }, 1000)
+          }}
+          className="font-mono text-sm text-blue-400 hover:text-blue-300 hover:underline cursor-pointer transition-all"
+          title="Click to copy"
+        >
+          {item.quoteNumber}
+        </button>
       ),
     },
     {
