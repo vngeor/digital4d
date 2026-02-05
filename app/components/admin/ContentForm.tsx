@@ -3,6 +3,11 @@
 import { useState, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { X, Save, Loader2, Upload, Image as ImageIcon } from "lucide-react"
+import { RichTextEditor } from "./RichTextEditor"
+
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim()
+}
 
 interface MenuItem {
   id: string
@@ -147,13 +152,13 @@ export function ContentForm({
     if (!formData.titleEs.trim()) {
       newErrors.titleEs = t("titleRequiredEs")
     }
-    if (!formData.bodyBg?.trim()) {
+    if (!stripHtmlTags(formData.bodyBg || "")) {
       newErrors.bodyBg = t("contentRequiredBg")
     }
-    if (!formData.bodyEn?.trim()) {
+    if (!stripHtmlTags(formData.bodyEn || "")) {
       newErrors.bodyEn = t("contentRequiredEn")
     }
-    if (!formData.bodyEs?.trim()) {
+    if (!stripHtmlTags(formData.bodyEs || "")) {
       newErrors.bodyEs = t("contentRequiredEs")
     }
     if (!formData.menuItemId && formData.type === "service") {
@@ -378,6 +383,7 @@ export function ContentForm({
                 />
               </div>
               <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
+              <p className="text-xs text-emerald-400/70">Recommended: 1200 x 630px (1.9:1 ratio - social media friendly)</p>
             </div>
           </div>
 
@@ -441,22 +447,19 @@ export function ContentForm({
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("body")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
                 </label>
-                <textarea
+                <RichTextEditor
                   value={
                     formData[
                       `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof ContentFormData
                     ] as string
                   }
-                  onChange={(e) =>
+                  onChange={(html) =>
                     updateField(
                       `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof ContentFormData,
-                      e.target.value
+                      html
                     )
                   }
-                  rows={6}
-                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors resize-none ${
-                    errors[`body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
-                  }`}
+                  error={!!errors[`body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}
                 />
                 {errors[`body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] && (
                   <p className="text-xs text-red-400 mt-1">{errors[`body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}</p>

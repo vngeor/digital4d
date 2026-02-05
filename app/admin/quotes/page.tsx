@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye } from "lucide-react"
+import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 
 interface Product {
@@ -210,7 +210,17 @@ export default function QuotesPage() {
 
         return (
           <div>
-            <p className="text-white text-sm">{product.nameEn}</p>
+            <a
+              href={`/products/${product.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 group hover:bg-white/5 px-1.5 py-0.5 -mx-1.5 -my-0.5 rounded transition-colors w-fit"
+            >
+              <LinkIcon className="w-3.5 h-3.5 text-gray-500 group-hover:text-emerald-400 shrink-0" />
+              <span className="text-white text-sm group-hover:text-emerald-300">{product.nameEn}</span>
+              <ExternalLink className="w-3 h-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            </a>
             {product.sku && (
               <p className="text-xs text-gray-500 font-mono">{product.sku}</p>
             )}
@@ -444,7 +454,15 @@ export default function QuotesPage() {
                 return (
                   <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
                     <h3 className="text-sm font-medium text-emerald-400">{t("product")}</h3>
-                    <p className="text-white font-medium text-lg">{product.nameEn}</p>
+                    <a
+                      href={`/products/${product.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-white font-medium text-lg hover:text-emerald-300 transition-colors group"
+                    >
+                      {product.nameEn}
+                      <ExternalLink className="w-4 h-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
                     {product.sku && (
                       <p className="text-gray-400 text-sm">
                         SKU: <span className="text-white font-mono">{product.sku}</span>

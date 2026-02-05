@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useTranslations, useLocale } from "next-intl"
-import { X, Save, Loader2, Upload } from "lucide-react"
+import { X, Save, Loader2, Upload, Sparkles } from "lucide-react"
 
 interface ProductFormData {
   id?: string
@@ -78,6 +78,27 @@ function generateSlug(name: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .trim()
+}
+
+function generateSku(category: string, name: string): string {
+  // Get category prefix (first 3 letters uppercase)
+  const catPrefix = category
+    .replace(/[^a-zA-Z]/g, '')
+    .substring(0, 3)
+    .toUpperCase() || 'PRD'
+
+  // Get name initials (first letter of each word, max 3)
+  const nameInitials = name
+    .split(/\s+/)
+    .filter(word => word.length > 0)
+    .slice(0, 3)
+    .map(word => word[0].toUpperCase())
+    .join('')
+
+  // Random 4-digit number
+  const randomNum = Math.floor(1000 + Math.random() * 9000)
+
+  return `${catPrefix}-${nameInitials || 'X'}-${randomNum}`
 }
 
 const FILE_TYPES = [
@@ -267,13 +288,23 @@ export function ProductForm({
               <label className="block text-sm font-medium text-gray-400 mb-2">
                 {t("sku")}
               </label>
-              <input
-                type="text"
-                value={formData.sku}
-                onChange={(e) => updateField("sku", e.target.value)}
-                placeholder="e.g., PROD-001"
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={formData.sku}
+                  onChange={(e) => updateField("sku", e.target.value)}
+                  placeholder="e.g., PROD-001"
+                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => updateField("sku", generateSku(formData.category, formData.nameEn))}
+                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all"
+                  title="Generate SKU"
+                >
+                  <Sparkles className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -538,6 +569,7 @@ export function ProductForm({
                 />
               </div>
               <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
+              <p className="text-xs text-emerald-400/70">Recommended: 800 x 600px (4:3 ratio)</p>
             </div>
           </div>
 

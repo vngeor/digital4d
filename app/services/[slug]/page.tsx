@@ -115,9 +115,10 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                         )}
                         <div className="p-8 md:p-12">
                             {serviceBody ? (
-                                <div className="prose prose-invert prose-lg max-w-none text-slate-300 leading-relaxed whitespace-pre-line break-words">
-                                    {serviceBody}
-                                </div>
+                                <div
+                                    className="prose prose-invert prose-lg max-w-none text-slate-300 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: serviceBody }}
+                                />
                             ) : (
                                 <p className="text-slate-400 italic">{t("menu.noContent")}</p>
                             )}

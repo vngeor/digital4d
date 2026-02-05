@@ -305,6 +305,7 @@ export function ProductCategoryForm({
                 />
               </div>
               <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
+              <p className="text-xs text-emerald-400/70">Recommended: 400 x 400px (1:1 square)</p>
             </div>
           </div>
 

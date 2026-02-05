@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
-import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, X, Save, Upload, Image as ImageIcon } from "lucide-react"
+import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, X, Save, Upload, Image as ImageIcon, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 
 interface Banner {
@@ -152,6 +152,28 @@ export default function BannersPage() {
           {getTypeLabel(item.type)}
         </span>
       ),
+    },
+    {
+      key: "link",
+      header: t("link"),
+      render: (item: Banner) => {
+        if (!item.link) {
+          return <span className="text-gray-500 text-sm">—</span>
+        }
+        return (
+          <a
+            href={item.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-2 group hover:bg-white/5 px-2 py-1 -mx-2 -my-1 rounded-lg transition-colors max-w-[200px]"
+          >
+            <LinkIcon className="w-4 h-4 text-gray-500 group-hover:text-emerald-400 shrink-0" />
+            <span className="font-mono text-sm text-cyan-400 group-hover:text-cyan-300 truncate">{item.link}</span>
+            <ExternalLink className="w-3 h-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          </a>
+        )
+      },
     },
     {
       key: "published",
@@ -466,6 +488,16 @@ function BannerForm({
                   className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
+              <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
+              {formData.type === "hero" && (
+                <p className="text-xs text-emerald-400/70">Hero: 1920 x 1080px (16:9 Full HD)</p>
+              )}
+              {formData.type === "card" && (
+                <p className="text-xs text-emerald-400/70">Card: 800 x 450px (16:9 ratio)</p>
+              )}
+              {formData.type === "promo" && (
+                <p className="text-xs text-amber-400/70">Promo strip uses text only - image optional</p>
+              )}
             </div>
           </div>
 

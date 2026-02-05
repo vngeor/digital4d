@@ -103,14 +103,11 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                             {news.title}
                         </h2>
 
-                        {/* Description - render with line breaks */}
-                        <div className="text-slate-300 leading-relaxed space-y-4 pb-4">
-                            {news.description.split("\n\n").map((paragraph, index) => (
-                                <p key={index} className={paragraph.length < 50 && !paragraph.includes(".") ? "text-lg font-semibold text-white mt-6" : ""}>
-                                    {paragraph}
-                                </p>
-                            ))}
-                        </div>
+                        {/* Description - render HTML content */}
+                        <div
+                            className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed pb-4"
+                            dangerouslySetInnerHTML={{ __html: news.description }}
+                        />
                     </div>
                 </div>
             </div>

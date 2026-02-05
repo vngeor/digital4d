@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { Plus, Edit2, Trash2, Loader2, Tag } from "lucide-react"
+import { Plus, Edit2, Trash2, Loader2, Tag, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { TypeForm, COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 
@@ -75,10 +75,17 @@ export default function TypesPage() {
       key: "slug",
       header: t("slug"),
       render: (item: ContentType) => (
-        <div className="flex items-center gap-2">
-          <Tag className="w-4 h-4 text-gray-500" />
-          <span className="font-mono text-sm text-cyan-400">{item.slug}</span>
-        </div>
+        <a
+          href={`/${item.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-2 group hover:bg-white/5 px-2 py-1 -mx-2 -my-1 rounded-lg transition-colors"
+        >
+          <LinkIcon className="w-4 h-4 text-gray-500 group-hover:text-emerald-400" />
+          <span className="font-mono text-sm text-cyan-400 group-hover:text-cyan-300">/{item.slug}</span>
+          <ExternalLink className="w-3 h-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </a>
       ),
     },
     {

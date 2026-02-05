@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { X, Save, Loader2 } from "lucide-react"
+import { RichTextEditor } from "./RichTextEditor"
 
 interface MenuItemFormData {
   id?: string
@@ -217,21 +218,18 @@ export function MenuItemForm({
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("body")} ({activeTab.toUpperCase()})
                 </label>
-                <textarea
+                <RichTextEditor
                   value={
                     formData[
                       `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof MenuItemFormData
                     ] as string
                   }
-                  onChange={(e) =>
+                  onChange={(html) =>
                     updateField(
                       `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof MenuItemFormData,
-                      e.target.value
+                      html
                     )
                   }
-                  rows={10}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-y"
-                  placeholder={t("bodyPlaceholder")}
                 />
               </div>
             )}

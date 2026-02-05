@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { Plus, Edit2, Trash2, Loader2, Package, FolderOpen, Star, Eye, EyeOff } from "lucide-react"
+import { Plus, Edit2, Trash2, Loader2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ProductForm } from "@/app/components/admin/ProductForm"
@@ -172,7 +172,17 @@ export default function ProductsPage() {
               <p className="font-medium text-white">{item.nameEn}</p>
               {item.featured && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
             </div>
-            <p className="text-xs text-gray-500">{item.slug}</p>
+            <a
+              href={`/products/${item.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 group hover:bg-white/5 px-1.5 py-0.5 -mx-1.5 -my-0.5 rounded transition-colors w-fit"
+            >
+              <LinkIcon className="w-3 h-3 text-gray-500 group-hover:text-emerald-400" />
+              <span className="text-xs text-cyan-400 group-hover:text-cyan-300">/{item.slug}</span>
+              <ExternalLink className="w-2.5 h-2.5 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </a>
           </div>
         </div>
       ),
@@ -188,6 +198,27 @@ export default function ProductsPage() {
           >
             {item.category}
           </span>
+        )
+      },
+    },
+    {
+      key: "sku",
+      header: t("sku"),
+      render: (item: Product) => {
+        if (!item.sku) {
+          return <span className="text-gray-500 text-sm">—</span>
+        }
+        return (
+          <a
+            href={`/products/${item.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 group hover:bg-white/5 px-2 py-1 -mx-2 -my-1 rounded-lg transition-colors w-fit"
+          >
+            <span className="font-mono text-sm text-amber-400 group-hover:text-amber-300">{item.sku}</span>
+            <ExternalLink className="w-3 h-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </a>
         )
       },
     },

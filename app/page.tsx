@@ -2,7 +2,6 @@ import { getTranslations, getLocale } from "next-intl/server"
 import { Header } from "./components/Header"
 import { NewsSection } from "./components/NewsSection"
 import { HomeProductsSection } from "./components/HomeProductsSection"
-import { PromoStrip } from "./components/PromoStrip"
 import { HeroCarousel } from "./components/HeroCarousel"
 import { FeaturedCards } from "./components/FeaturedCards"
 import prisma from "@/lib/prisma"
@@ -56,11 +55,6 @@ export default async function Home() {
         title: (b[`title${localeKey}` as keyof typeof b] as string) || b.titleEn,
         subtitle: (b[`subtitle${localeKey}` as keyof typeof b] as string) || b.subtitleEn,
         image: b.image,
-        link: b.link,
-        linkText: (b[`linkText${localeKey}` as keyof typeof b] as string) || b.linkTextEn,
-    }))
-    const promoBanners = dbBanners.filter(b => b.type === "promo").map(b => ({
-        title: (b[`title${localeKey}` as keyof typeof b] as string) || b.titleEn,
         link: b.link,
         linkText: (b[`linkText${localeKey}` as keyof typeof b] as string) || b.linkTextEn,
     }))
@@ -166,9 +160,6 @@ export default async function Home() {
                     <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 rounded-full shadow-lg shadow-amber-500/30" />
                 </div>
             </div>
-
-            {/* Promo Strip */}
-            {promoBanners.length > 0 && <PromoStrip banners={promoBanners} />}
 
             {/* Navbar */}
             <Header />

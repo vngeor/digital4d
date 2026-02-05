@@ -115,9 +115,10 @@ export default async function NewsDetailPage({ params }: PageProps) {
                         )}
                         <div className="p-4 sm:p-8 md:p-12">
                             {newsBody ? (
-                                <div className="prose prose-invert prose-sm sm:prose-lg max-w-none text-slate-300 leading-relaxed whitespace-pre-line break-words">
-                                    {newsBody}
-                                </div>
+                                <div
+                                    className="prose prose-invert prose-sm sm:prose-lg max-w-none text-slate-300 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: newsBody }}
+                                />
                             ) : (
                                 <p className="text-slate-400 italic">{t("menu.noContent")}</p>
                             )}

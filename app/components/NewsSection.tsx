@@ -72,14 +72,17 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                 <h3 className={`${compact ? 'text-base sm:text-lg' : 'text-base sm:text-xl'} font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2`}>
                     {item.title}
                 </h3>
-                {/* Description - truncated to 200 chars */}
-                {item.description && (
-                    <p className={`${compact ? 'text-xs sm:text-sm line-clamp-2' : 'text-xs sm:text-sm line-clamp-3'} text-slate-400 mb-2`}>
-                        {item.description.length > 200
-                            ? item.description.substring(0, 200) + '...'
-                            : item.description}
-                    </p>
-                )}
+                {/* Description - strip HTML tags and truncate to 200 chars */}
+                {item.description && (() => {
+                    const plainText = item.description.replace(/<[^>]*>/g, "")
+                    return plainText ? (
+                        <p className={`${compact ? 'text-xs sm:text-sm line-clamp-2' : 'text-xs sm:text-sm line-clamp-3'} text-slate-400 mb-2`}>
+                            {plainText.length > 200
+                                ? plainText.substring(0, 200) + '...'
+                                : plainText}
+                        </p>
+                    ) : null
+                })()}
                 <div className="flex items-center justify-between mt-2">
                     <span className={`${compact ? 'text-[10px] sm:text-xs' : 'text-[10px] sm:text-xs'} text-slate-500`}>{item.date}</span>
                     <span className={`text-emerald-400 ${compact ? 'text-xs sm:text-sm' : 'text-xs sm:text-sm'} font-semibold flex items-center gap-1 group-hover:gap-2 transition-all`}>

@@ -39,25 +39,28 @@ export function FeaturedCards({ cards }: { cards: CardBanner[] }) {
                   </p>
                 )}
                 {card.link && card.linkText && (
-                  <Link
-                    href={card.link}
-                    className="inline-flex items-center text-xs sm:text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
-                  >
-                    {card.linkText}
-                    <svg
-                      className="w-4 h-4 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div className="flex justify-center mt-2">
+                    <Link
+                      href={card.link}
+                      className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </Link>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"
+                        />
+                        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+                      </svg>
+                      {card.linkText}
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2 } from "lucide-react"
+import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ContentForm } from "@/app/components/admin/ContentForm"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
@@ -16,6 +16,7 @@ interface ContentType {
 interface Content {
   id: string
   type: string
+  slug: string | null
   titleBg: string
   titleEn: string
   titleEs: string
@@ -149,6 +150,34 @@ export default function ContentPage() {
           <p className="text-xs text-gray-500">{item.titleBg}</p>
         </div>
       ),
+    },
+    {
+      key: "slug",
+      header: t("slug"),
+      render: (item: Content) => {
+        if (!item.slug) {
+          return <span className="text-gray-500 text-sm">—</span>
+        }
+        // Determine the URL based on content type
+        const getUrl = () => {
+          if (item.type === "news") return `/news/${item.slug}`
+          if (item.type === "service") return `/services/${item.slug}`
+          return `/${item.slug}`
+        }
+        return (
+          <a
+            href={getUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-2 group hover:bg-white/5 px-2 py-1 -mx-2 -my-1 rounded-lg transition-colors"
+          >
+            <LinkIcon className="w-4 h-4 text-gray-500 group-hover:text-emerald-400" />
+            <span className="font-mono text-sm text-cyan-400 group-hover:text-cyan-300">/{item.slug}</span>
+            <ExternalLink className="w-3 h-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </a>
+        )
+      },
     },
     {
       key: "published",

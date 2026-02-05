@@ -115,7 +115,7 @@ export default async function DynamicPage({ params }: PageProps) {
                 {/* Landing Page Content */}
                 <section className="relative py-8 px-4">
                     <div className="mx-auto max-w-4xl">
-                        <article className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white break-words whitespace-pre-wrap">
+                        <article className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white">
                             <div dangerouslySetInnerHTML={{ __html: body || '' }} />
                         </article>
                     </div>
