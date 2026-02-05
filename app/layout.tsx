@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "./providers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default async function RootLayout({
       >
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>
+          <SpeedInsights />
         </NextIntlClientProvider>
       </body>
     </html>
