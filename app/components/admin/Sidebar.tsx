@@ -16,6 +16,7 @@ import {
   Tag,
   Package,
   MessageSquare,
+  Presentation,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
   { href: "/admin/menu", icon: Menu, labelKey: "menu" },
   { href: "/admin/content", icon: FileText, labelKey: "content" },
+  { href: "/admin/banners", icon: Presentation, labelKey: "banners" },
   { href: "/admin/types", icon: Tag, labelKey: "types" },
   { href: "/admin/products", icon: Package, labelKey: "products" },
   { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes", showBadge: true },

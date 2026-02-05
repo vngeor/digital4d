@@ -2,6 +2,9 @@ import { getTranslations, getLocale } from "next-intl/server"
 import { Header } from "./components/Header"
 import { NewsSection } from "./components/NewsSection"
 import { HomeProductsSection } from "./components/HomeProductsSection"
+import { PromoStrip } from "./components/PromoStrip"
+import { HeroCarousel } from "./components/HeroCarousel"
+import { FeaturedCards } from "./components/FeaturedCards"
 import prisma from "@/lib/prisma"
 
 export default async function Home() {
@@ -41,6 +44,33 @@ export default async function Home() {
     // Fetch product categories for badge colors
     const productCategories = await prisma.productCategory.findMany()
     const categoryMap = new Map(productCategories.map(cat => [cat.slug, cat]))
+
+    // Fetch published banners
+    const dbBanners = await prisma.banner.findMany({
+        where: { published: true },
+        orderBy: { order: "asc" },
+    })
+
+    const localeKey = locale.charAt(0).toUpperCase() + locale.slice(1)
+    const heroBanners = dbBanners.filter(b => b.type === "hero").map(b => ({
+        title: (b[`title${localeKey}` as keyof typeof b] as string) || b.titleEn,
+        subtitle: (b[`subtitle${localeKey}` as keyof typeof b] as string) || b.subtitleEn,
+        image: b.image,
+        link: b.link,
+        linkText: (b[`linkText${localeKey}` as keyof typeof b] as string) || b.linkTextEn,
+    }))
+    const promoBanners = dbBanners.filter(b => b.type === "promo").map(b => ({
+        title: (b[`title${localeKey}` as keyof typeof b] as string) || b.titleEn,
+        link: b.link,
+        linkText: (b[`linkText${localeKey}` as keyof typeof b] as string) || b.linkTextEn,
+    }))
+    const cardBanners = dbBanners.filter(b => b.type === "card").map(b => ({
+        title: (b[`title${localeKey}` as keyof typeof b] as string) || b.titleEn,
+        subtitle: (b[`subtitle${localeKey}` as keyof typeof b] as string) || b.subtitleEn,
+        image: b.image,
+        link: b.link,
+        linkText: (b[`linkText${localeKey}` as keyof typeof b] as string) || b.linkTextEn,
+    }))
 
     // Fallback translations for common types
     const typeTranslations: Record<string, Record<string, string>> = {
@@ -137,63 +167,73 @@ export default async function Home() {
                 </div>
             </div>
 
+            {/* Promo Strip */}
+            {promoBanners.length > 0 && <PromoStrip banners={promoBanners} />}
+
             {/* Navbar */}
             <Header />
 
             {/* Hero Section */}
-            <section className="relative flex flex-col items-center justify-center text-center py-32 px-4">
-                <div className="animate-fade-in-up">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 text-sm text-emerald-300">
-                        <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                        {t("badge")}
-                    </div>
-                </div>
-
-                <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up animation-delay-200">
-                    <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                        {t("title1")}
-                    </span>
-                    <br />
-                    <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-                        {t("title2")}
-                    </span>
-                </h1>
-
-                <p className="max-w-2xl mb-10 text-lg text-slate-300 animate-fade-in-up animation-delay-400">
-                    {t("description")}
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up animation-delay-600">
-                    <a href="#services" className="group relative px-8 py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full font-semibold text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 transition-all">
-                        {t("cta1")}
-                        <span className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
-                    <a href="#contact" className="px-8 py-4 glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-all">
-                        {t("cta2")}
-                    </a>
-                </div>
-
-                {/* 3D Printer Illustration */}
-                <div className="mt-20 relative animate-fade-in-up animation-delay-600">
-                    <div className="w-64 h-64 md:w-80 md:h-80 relative">
-                        {/* Base */}
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-4 bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg shadow-xl" />
-                        {/* Printer Body */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-40 h-32 glass-strong rounded-xl">
-                            <div className="absolute top-2 left-2 right-2 h-2 bg-emerald-500/50 rounded-full" />
-                            <div className="absolute top-6 left-4 w-3 h-3 bg-emerald-400 rounded-full animate-pulse" />
-                        </div>
-                        {/* Print Head */}
-                        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-8 h-8 bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-lg shadow-lg shadow-emerald-500/50 animate-float" />
-                        {/* Frame */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-44 h-48 border-2 border-slate-600/50 rounded-t-xl" style={{ borderBottom: 'none' }} />
-                        {/* Printing Object */}
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-                            <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-lg rotate-45 shadow-lg shadow-cyan-500/30 animate-pulse" />
+            {heroBanners.length > 0 ? (
+                <HeroCarousel banners={heroBanners} />
+            ) : (
+                <section className="relative flex flex-col items-center justify-center text-center py-32 px-4">
+                    <div className="animate-fade-in-up">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 text-sm text-emerald-300">
+                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                            {t("badge")}
                         </div>
                     </div>
-                </div>
-            </section>
+
+                    <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up animation-delay-200">
+                        <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                            {t("title1")}
+                        </span>
+                        <br />
+                        <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                            {t("title2")}
+                        </span>
+                    </h1>
+
+                    <p className="max-w-2xl mb-10 text-lg text-slate-300 animate-fade-in-up animation-delay-400">
+                        {t("description")}
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up animation-delay-600">
+                        <a href="#services" className="group relative px-8 py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full font-semibold text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 transition-all">
+                            {t("cta1")}
+                            <span className="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                        <a href="#contact" className="px-8 py-4 glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-all">
+                            {t("cta2")}
+                        </a>
+                    </div>
+
+                    {/* 3D Printer Illustration */}
+                    <div className="mt-20 relative animate-fade-in-up animation-delay-600">
+                        <div className="w-64 h-64 md:w-80 md:h-80 relative">
+                            {/* Base */}
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-4 bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg shadow-xl" />
+                            {/* Printer Body */}
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-40 h-32 glass-strong rounded-xl">
+                                <div className="absolute top-2 left-2 right-2 h-2 bg-emerald-500/50 rounded-full" />
+                                <div className="absolute top-6 left-4 w-3 h-3 bg-emerald-400 rounded-full animate-pulse" />
+                            </div>
+                            {/* Print Head */}
+                            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-8 h-8 bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-lg shadow-lg shadow-emerald-500/50 animate-float" />
+                            {/* Frame */}
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-44 h-48 border-2 border-slate-600/50 rounded-t-xl" style={{ borderBottom: 'none' }} />
+                            {/* Printing Object */}
+                            <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+                                <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-lg rotate-45 shadow-lg shadow-cyan-500/30 animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* Featured Cards */}
+            {cardBanners.length > 0 && <FeaturedCards cards={cardBanners} />}
 
             {/* Products Section */}
             <HomeProductsSection products={products} />

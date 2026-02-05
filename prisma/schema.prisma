@@ -264,3 +264,27 @@ model DigitalPurchase {
   @@index([downloadToken])
   @@index([email])
 }
+
+// Banner model for homepage hero carousel, promo strip, and featured cards
+model Banner {
+  id          String   @id @default(cuid())
+  type        String   // "hero" | "promo" | "card"
+  titleBg     String
+  titleEn     String
+  titleEs     String
+  subtitleBg  String?  @db.Text
+  subtitleEn  String?  @db.Text
+  subtitleEs  String?  @db.Text
+  image       String?
+  link        String?
+  linkTextBg  String?
+  linkTextEn  String?
+  linkTextEs  String?
+  published   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type, published])
+  @@index([order])
+}
