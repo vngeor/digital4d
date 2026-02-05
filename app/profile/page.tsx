@@ -63,6 +63,7 @@ export default async function ProfilePage() {
           nameBg: true,
           nameEs: true,
           slug: true,
+          image: true,
         },
       },
       messages: {
@@ -141,6 +142,8 @@ export default async function ProfilePage() {
     you: t("you"),
     admin: t("admin"),
     backToHome: t("backToHome"),
+    seeMore: t("seeMore"),
+    showLess: t("showLess"),
   }
 
   return (

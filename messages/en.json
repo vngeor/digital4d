@@ -493,6 +493,8 @@
     "conversationHistory": "Conversation History",
     "you": "You",
     "admin": "Admin",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "seeMore": "See More",
+    "showLess": "Show Less"
   }
 }

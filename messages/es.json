@@ -493,6 +493,8 @@
     "conversationHistory": "Historial de conversación",
     "you": "Tú",
     "admin": "Admin",
-    "backToHome": "Volver al inicio"
+    "backToHome": "Volver al inicio",
+    "seeMore": "Ver más",
+    "showLess": "Ver menos"
   }
 }

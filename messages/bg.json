@@ -493,6 +493,8 @@
     "conversationHistory": "История на разговора",
     "you": "Вие",
     "admin": "Админ",
-    "backToHome": "Към началото"
+    "backToHome": "Към началото",
+    "seeMore": "Виж повече",
+    "showLess": "Покажи по-малко"
   }
 }

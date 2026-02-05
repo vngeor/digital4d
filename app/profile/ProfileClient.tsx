@@ -48,6 +48,7 @@ interface QuoteData {
     nameBg: string
     nameEs: string
     slug: string
+    image: string | null
   } | null
   messages: QuoteMessage[]
 }
@@ -119,6 +120,8 @@ interface ProfileClientProps {
     you: string
     admin: string
     backToHome: string
+    seeMore: string
+    showLess: string
   }
 }
 
@@ -145,6 +148,8 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
   const [counterOfferMessage, setCounterOfferMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
+  const [showAllQuotes, setShowAllQuotes] = useState(false)
+  const [showAllOrders, setShowAllOrders] = useState(false)
 
   // Mark unviewed quotes as viewed when the page loads
   const markQuotesAsViewed = useCallback(async () => {
@@ -394,7 +399,7 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {quotes.map((quote) => (
+                  {(showAllQuotes ? quotes : quotes.slice(0, 3)).map((quote) => (
                     <div
                       key={quote.id}
                       className={`p-4 rounded-xl border ${
@@ -407,43 +412,63 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
                           : "bg-white/5 border-white/5"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            {quote.product ? (
-                              <Link
-                                href={`/products/${quote.product.slug}`}
-                                className="text-white hover:text-emerald-400 transition-colors font-medium"
-                              >
-                                {quote.product.nameEn}
-                              </Link>
+                      <div className="flex items-start gap-3 mb-2">
+                        {/* Product Image */}
+                        {quote.product && (
+                          <Link href={`/products/${quote.product.slug}`} className="shrink-0">
+                            {quote.product.image ? (
+                              <img
+                                src={quote.product.image}
+                                alt={quote.product.nameEn}
+                                className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover border border-white/10 hover:border-emerald-500/30 transition-colors"
+                              />
                             ) : (
-                              <p className="text-white">
-                                {quote.message ? quote.message.slice(0, 50) + (quote.message.length > 50 ? "..." : "") : "Quote Request"}
-                              </p>
+                              <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:border-emerald-500/30 transition-colors">
+                                <Package className="w-5 h-5 text-slate-600" />
+                              </div>
                             )}
-                            {/* New badge for unviewed quoted responses */}
-                            {quote.status === "quoted" && !quote.viewedAt && (
-                              <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold animate-pulse">
-                                {t.newBadge}
-                              </span>
-                            )}
+                          </Link>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                {quote.product ? (
+                                  <Link
+                                    href={`/products/${quote.product.slug}`}
+                                    className="text-white hover:text-emerald-400 transition-colors font-medium truncate"
+                                  >
+                                    {quote.product.nameEn}
+                                  </Link>
+                                ) : (
+                                  <p className="text-white truncate">
+                                    {quote.message ? quote.message.slice(0, 50) + (quote.message.length > 50 ? "..." : "") : "Quote Request"}
+                                  </p>
+                                )}
+                                {/* New badge for unviewed quoted responses */}
+                                {quote.status === "quoted" && !quote.viewedAt && (
+                                  <span className="shrink-0 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold animate-pulse">
+                                    {t.newBadge}
+                                  </span>
+                                )}
+                              </div>
+                              {quote.quotedPrice && parseFloat(quote.quotedPrice) >= 0 && (
+                                <p className="text-emerald-400 font-semibold text-sm mt-1">
+                                  {t.quotedPrice}: €{parseFloat(quote.quotedPrice).toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                            <span
+                              className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
+                                quote.status === "pending" && quote.userResponse
+                                  ? quoteStatusColors.counter_offer
+                                  : quoteStatusColors[quote.status] || quoteStatusColors.pending
+                              }`}
+                            >
+                              {getQuoteStatusLabel(quote.status, !!quote.userResponse)}
+                            </span>
                           </div>
-                          {quote.quotedPrice && parseFloat(quote.quotedPrice) >= 0 && (
-                            <p className="text-emerald-400 font-semibold mt-1">
-                              {t.quotedPrice}: €{parseFloat(quote.quotedPrice).toFixed(2)}
-                            </p>
-                          )}
                         </div>
-                        <span
-                          className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
-                            quote.status === "pending" && quote.userResponse
-                              ? quoteStatusColors.counter_offer
-                              : quoteStatusColors[quote.status] || quoteStatusColors.pending
-                          }`}
-                        >
-                          {getQuoteStatusLabel(quote.status, !!quote.userResponse)}
-                        </span>
                       </div>
 
                       {/* Response buttons for quoted status */}
@@ -581,6 +606,15 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
                       </p>
                     </div>
                   ))}
+                  {quotes.length > 3 && (
+                    <button
+                      onClick={() => setShowAllQuotes(!showAllQuotes)}
+                      className="w-full py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2"
+                    >
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showAllQuotes ? "rotate-180" : ""}`} />
+                      {showAllQuotes ? t.showLess : `${t.seeMore} (${quotes.length - 3})`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -600,7 +634,7 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {orders.map((order) => (
+                  {(showAllOrders ? orders : orders.slice(0, 3)).map((order) => (
                     <div
                       key={order.id}
                       className="p-4 rounded-xl bg-white/5 border border-white/5"
@@ -618,6 +652,15 @@ export function ProfileClient({ user, orders, quotes: initialQuotes, translation
                       </p>
                     </div>
                   ))}
+                  {orders.length > 3 && (
+                    <button
+                      onClick={() => setShowAllOrders(!showAllOrders)}
+                      className="w-full py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2"
+                    >
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showAllOrders ? "rotate-180" : ""}`} />
+                      {showAllOrders ? t.showLess : `${t.seeMore} (${orders.length - 3})`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
