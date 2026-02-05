@@ -33,52 +33,6 @@ export default async function ProfilePage() {
     redirect("/login")
   }
 
-  const orders = await prisma.order.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      description: true,
-      status: true,
-      createdAt: true,
-    },
-  })
-
-  // Fetch quote requests by user email
-  const quotes = await prisma.quoteRequest.findMany({
-    where: { email: user.email },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      status: true,
-      quotedPrice: true,
-      message: true,
-      adminNotes: true,
-      userResponse: true,
-      viewedAt: true,
-      createdAt: true,
-      product: {
-        select: {
-          nameEn: true,
-          nameBg: true,
-          nameEs: true,
-          slug: true,
-          image: true,
-        },
-      },
-      messages: {
-        orderBy: { createdAt: "asc" },
-        select: {
-          id: true,
-          senderType: true,
-          message: true,
-          quotedPrice: true,
-          createdAt: true,
-        },
-      },
-    },
-  })
-
   const translations = {
     title: t("title"),
     subtitle: t("subtitle"),
@@ -108,49 +62,12 @@ export default async function ProfilePage() {
     cancel: t("cancel"),
     updateSuccess: t("updateSuccess"),
     updateError: t("updateError"),
-    orderHistory: t("orderHistory"),
-    noOrders: t("noOrders"),
-    noOrdersDescription: t("noOrdersDescription"),
-    orderDate: t("orderDate"),
-    orderStatus: t("orderStatus"),
-    orderDescription: t("orderDescription"),
-    statusPending: t("statusPending"),
-    statusInProgress: t("statusInProgress"),
-    statusCompleted: t("statusCompleted"),
-    statusCancelled: t("statusCancelled"),
-    quoteRequests: t("quoteRequests"),
-    noQuotes: t("noQuotes"),
-    noQuotesDescription: t("noQuotesDescription"),
-    quotePending: t("quotePending"),
-    quoteQuoted: t("quoteQuoted"),
-    quoteAccepted: t("quoteAccepted"),
-    quoteRejected: t("quoteRejected"),
-    quotedPrice: t("quotedPrice"),
-    viewProduct: t("viewProduct"),
-    rejectionReason: t("rejectionReason"),
-    acceptOffer: t("acceptOffer"),
-    declineOffer: t("declineOffer"),
-    counterOffer: t("counterOffer"),
-    yourMessage: t("yourMessage"),
-    sendCounterOffer: t("sendCounterOffer"),
-    quoteCounterOffer: t("quoteCounterOffer"),
-    quoteUserDeclined: t("quoteUserDeclined"),
-    respondToOffer: t("respondToOffer"),
-    counterOfferSent: t("counterOfferSent"),
-    newBadge: t("newBadge"),
-    conversationHistory: t("conversationHistory"),
-    you: t("you"),
-    admin: t("admin"),
     backToHome: t("backToHome"),
-    seeMore: t("seeMore"),
-    showLess: t("showLess"),
   }
 
   return (
     <ProfileClient
       user={JSON.parse(JSON.stringify(user))}
-      orders={JSON.parse(JSON.stringify(orders))}
-      quotes={JSON.parse(JSON.stringify(quotes))}
       translations={translations}
     />
   )

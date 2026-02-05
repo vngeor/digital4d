@@ -18,6 +18,7 @@ import { DataTable } from "@/app/components/admin/DataTable"
 
 interface Order {
   id: string
+  orderNumber: string
   customerName: string
   customerEmail: string
   phone: string | null
@@ -98,6 +99,13 @@ export default function OrdersPage() {
   }
 
   const columns = [
+    {
+      key: "orderNumber",
+      header: "#",
+      render: (item: Order) => (
+        <span className="font-mono text-sm text-emerald-400">{item.orderNumber}</span>
+      ),
+    },
     {
       key: "customerName",
       header: t("customer"),

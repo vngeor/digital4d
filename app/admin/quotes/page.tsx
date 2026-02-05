@@ -28,6 +28,7 @@ interface QuoteMessage {
 
 interface QuoteRequest {
   id: string
+  quoteNumber: string
   productId: string | null
   product: Product | null
   name: string
@@ -139,6 +140,13 @@ export default function QuotesPage() {
   }
 
   const columns = [
+    {
+      key: "quoteNumber",
+      header: "#",
+      render: (item: QuoteRequest) => (
+        <span className="font-mono text-sm text-blue-400">{item.quoteNumber}</span>
+      ),
+    },
     {
       key: "customer",
       header: t("customer"),

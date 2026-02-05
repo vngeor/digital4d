@@ -74,6 +74,7 @@ enum Role {
 // Order model for tracking customer requests
 model Order {
   id            String      @id @default(cuid())
+  orderNumber   String      @unique @default("")
   userId        String?
   user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   customerName  String
@@ -210,6 +211,7 @@ model ProductCategory {
 // Quote request model for custom services
 model QuoteRequest {
   id            String   @id @default(cuid())
+  quoteNumber   String   @unique @default("")
   productId     String?
   product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   name          String

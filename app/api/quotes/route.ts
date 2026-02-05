@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { put } from "@vercel/blob"
 import prisma from "@/lib/prisma"
+import { generateQuoteNumber } from "@/lib/generateCode"
 
 export async function POST(request: NextRequest) {
   try {
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
     // Create quote request
     const quote = await prisma.quoteRequest.create({
       data: {
+        quoteNumber: generateQuoteNumber(),
         productId: productId || null,
         name,
         email,

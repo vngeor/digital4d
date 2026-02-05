@@ -221,6 +221,14 @@ export function Header() {
                                     >
                                         {t("profile")}
                                     </Link>
+                                    <Link
+                                        href="/my-orders"
+                                        onClick={() => setUserDropdownOpen(false)}
+                                        className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                                    >
+                                        {t("myOrders")}
+                                    </Link>
+                                    <div className="border-t border-white/10 my-1" />
                                     <button
                                         onClick={() => {
                                             setUserDropdownOpen(false)
@@ -328,12 +336,26 @@ export function Header() {
 
                         {/* Mobile Profile & Login Buttons */}
                         {session ? (
-                            <Link
-                                href="/profile"
-                                className="mt-4 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation"
-                            >
-                                {t("profile")}
-                            </Link>
+                            <>
+                                <Link
+                                    href="/profile"
+                                    className="mt-4 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation"
+                                >
+                                    {t("profile")}
+                                </Link>
+                                <Link
+                                    href="/my-orders"
+                                    className="mt-2 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation"
+                                >
+                                    {t("myOrders")}
+                                </Link>
+                                <button
+                                    onClick={() => signOut()}
+                                    className="mt-2 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-slate-400 hover:text-white touch-manipulation"
+                                >
+                                    {t("logout")}
+                                </button>
+                            </>
                         ) : (
                             <Link
                                 href="/login"

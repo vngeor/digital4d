@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
+import { generateOrderNumber } from "@/lib/generateCode"
 
 async function requireAdminApi() {
   const session = await auth()
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
 
     const order = await prisma.order.create({
       data: {
+        orderNumber: generateOrderNumber(),
         customerName: data.customerName,
         customerEmail: data.customerEmail,
         phone: data.phone || null,

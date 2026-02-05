@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        quoteNumber: true,
         productId: true,
         name: true,
         email: true,
