@@ -123,6 +123,9 @@ model ContentType {
   nameBg    String
   nameEn    String
   nameEs    String
+  descBg    String?   @db.Text  // Rich text description for listing page
+  descEn    String?   @db.Text
+  descEs    String?   @db.Text
   color     String    @default("purple")  // Badge color: cyan, purple, emerald, amber, etc.
   order     Int       @default(0)
   createdAt DateTime  @default(now())
