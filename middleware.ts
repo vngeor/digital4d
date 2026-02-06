@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { locales, defaultLocale, countryToLocale, type Locale } from "./i18n/config"
+
+// Inline config to avoid import bundling issues with edge runtime
+const locales = ["bg", "en", "es"] as const
+type Locale = (typeof locales)[number]
+const defaultLocale: Locale = "bg"
+
+const countryToLocale: Record<string, Locale> = {
+  BG: "bg",
+  ES: "es", MX: "es", AR: "es", CO: "es", CL: "es", PE: "es", VE: "es",
+  EC: "es", GT: "es", CU: "es", BO: "es", DO: "es", HN: "es", PY: "es",
+  SV: "es", NI: "es", CR: "es", PA: "es", UY: "es",
+}
 
 function getLocaleFromCountry(countryCode: string | null): Locale {
   if (!countryCode) return defaultLocale
