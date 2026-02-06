@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { Plus, Edit2, Trash2, Loader2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink } from "lucide-react"
+import { Plus, Edit2, Trash2, Loader2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ProductForm } from "@/app/components/admin/ProductForm"
@@ -55,16 +55,48 @@ const FILE_TYPE_BADGES: Record<string, { label: string; color: string }> = {
 export default function ProductsPage() {
   const t = useTranslations("admin.products")
   const [products, setProducts] = useState<Product[]>([])
+  const [allProducts, setAllProducts] = useState<Product[]>([]) // For computing homepage positions
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
+  // Compute which products appear on homepage (top 8 published, sorted by featured then order)
+  const homepageProductIds = new Set(
+    [...allProducts]
+      .filter(p => p.published)
+      .sort((a, b) => {
+        // Featured first (desc), then by order (asc)
+        if (a.featured !== b.featured) return b.featured ? 1 : -1
+        return a.order - b.order
+      })
+      .slice(0, 8)
+      .map(p => p.id)
+  )
+
+  const getHomepagePosition = (productId: string): number | null => {
+    const sorted = [...allProducts]
+      .filter(p => p.published)
+      .sort((a, b) => {
+        if (a.featured !== b.featured) return b.featured ? 1 : -1
+        return a.order - b.order
+      })
+      .slice(0, 8)
+    const index = sorted.findIndex(p => p.id === productId)
+    return index >= 0 ? index + 1 : null
+  }
+
   const fetchCategories = async () => {
     const res = await fetch("/api/admin/products/categories")
     const data = await res.json()
     setCategories(Array.isArray(data) ? data : [])
+  }
+
+  const fetchAllProducts = async () => {
+    const res = await fetch("/api/admin/products")
+    const data = await res.json()
+    setAllProducts(Array.isArray(data) ? data : [])
   }
 
   const fetchProducts = async (category?: string | null) => {
@@ -75,12 +107,16 @@ export default function ProductsPage() {
     const res = await fetch(url)
     const data = await res.json()
     setProducts(Array.isArray(data) ? data : [])
+    if (!category) {
+      setAllProducts(Array.isArray(data) ? data : [])
+    }
     setLoading(false)
   }
 
   useEffect(() => {
     fetchCategories()
     fetchProducts()
+    fetchAllProducts()
   }, [])
 
   useEffect(() => {
@@ -129,16 +165,22 @@ export default function ProductsPage() {
     setShowForm(false)
     setEditingProduct(null)
     fetchProducts(selectedCategory)
+    fetchAllProducts() // Refresh homepage positions
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm(t("confirmDelete"))) return
     await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" })
     fetchProducts(selectedCategory)
+    fetchAllProducts() // Refresh homepage positions
   }
 
   const handleReorder = async (items: Product[]) => {
     setProducts(items)
+    // Also update allProducts if not filtering
+    if (!selectedCategory) {
+      setAllProducts(items)
+    }
     await fetch("/api/admin/products", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -146,6 +188,10 @@ export default function ProductsPage() {
         items: items.map((item, index) => ({ id: item.id, order: index })),
       }),
     })
+    // Refresh allProducts to update homepage positions
+    if (selectedCategory) {
+      fetchAllProducts()
+    }
   }
 
   const getCategoryColor = (categorySlug: string) => {
@@ -197,6 +243,25 @@ export default function ProductsPage() {
           </div>
         </div>
       ),
+    },
+    {
+      key: "homepage",
+      header: "Homepage",
+      render: (item: Product) => {
+        const position = getHomepagePosition(item.id)
+        if (!item.published) {
+          return <span className="text-gray-600 text-xs">Draft</span>
+        }
+        if (position) {
+          return (
+            <div className="flex items-center gap-1.5">
+              <Home className="w-4 h-4 text-emerald-400" />
+              <span className="text-emerald-400 font-medium text-sm">#{position}</span>
+            </div>
+          )
+        }
+        return <span className="text-gray-500 text-xs">—</span>
+      },
     },
     {
       key: "category",
