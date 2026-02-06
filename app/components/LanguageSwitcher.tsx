@@ -57,7 +57,7 @@ export function LanguageSwitcher() {
               key={locale}
               onClick={() => changeLocale(locale)}
               disabled={isPending || locale === currentLocale}
-              className={`w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors touch-manipulation ${
+              className={`w-full flex items-center gap-3 px-4 py-2 text-sm whitespace-nowrap transition-colors touch-manipulation ${
                 locale === currentLocale
                   ? "bg-emerald-500/20 text-emerald-400"
                   : "text-slate-300 hover:bg-white/10 hover:text-white"
