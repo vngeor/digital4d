@@ -230,7 +230,15 @@ export default function ProductsPage() {
               <p className="font-medium text-white text-sm truncate">{item.nameEn}</p>
               {item.featured && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />}
             </div>
-            <span className="text-xs text-cyan-400 truncate block">/{item.slug}</span>
+            <a
+              href={`/products/${item.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate block"
+            >
+              /{item.slug}
+            </a>
           </div>
         </div>
       ),
@@ -300,14 +308,43 @@ export default function ProductsPage() {
       key: "price",
       header: t("price"),
       className: "whitespace-nowrap text-right",
-      render: (item: Product) => (
-        <div className="text-right">
-          <p className="text-white text-sm">{formatPrice(item)}</p>
-          {item.onSale && item.salePrice && (
-            <p className="text-xs text-emerald-400">{parseFloat(item.salePrice).toFixed(2)}</p>
-          )}
-        </div>
-      ),
+      render: (item: Product) => {
+        if (item.priceType === "quote") {
+          return <span className="text-amber-400 text-sm">{t("priceTypeQuote")}</span>
+        }
+        if (!item.price) {
+          return <span className="text-gray-500 text-sm">—</span>
+        }
+        const originalPrice = parseFloat(item.price)
+        const hasDiscount = item.onSale && item.salePrice
+        const salePrice = hasDiscount ? parseFloat(item.salePrice!) : null
+        const discountPercent = hasDiscount ? Math.round((1 - salePrice! / originalPrice) * 100) : 0
+        const prefix = item.priceType === "from" ? t("priceTypeFrom") + " " : ""
+
+        return (
+          <div className="text-right">
+            {hasDiscount ? (
+              <>
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-gray-500 text-xs line-through">
+                    {prefix}{originalPrice.toFixed(2)}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-medium">
+                    -{discountPercent}%
+                  </span>
+                </div>
+                <p className="text-emerald-400 text-sm font-medium">
+                  {prefix}{salePrice!.toFixed(2)} {item.currency}
+                </p>
+              </>
+            ) : (
+              <p className="text-white text-sm">
+                {prefix}{originalPrice.toFixed(2)} {item.currency}
+              </p>
+            )}
+          </div>
+        )
+      },
     },
     {
       key: "status",
