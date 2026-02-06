@@ -193,6 +193,38 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+// PATCH - Bulk update order
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await requireAdminApi()
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { items } = await request.json()
+
+    if (!Array.isArray(items)) {
+      return NextResponse.json({ error: "Items array required" }, { status: 400 })
+    }
+
+    // Update all items (Neon HTTP mode doesn't support transactions, so update one by one)
+    for (const item of items) {
+      await prisma.product.update({
+        where: { id: item.id },
+        data: { order: item.order },
+      })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error reordering products:", error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     const session = await requireAdminApi()

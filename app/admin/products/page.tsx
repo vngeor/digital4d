@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Plus, Edit2, Trash2, Loader2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink } from "lucide-react"
 import Link from "next/link"
-import { DataTable } from "@/app/components/admin/DataTable"
+import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ProductForm } from "@/app/components/admin/ProductForm"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 
@@ -135,6 +135,17 @@ export default function ProductsPage() {
     if (!confirm(t("confirmDelete"))) return
     await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" })
     fetchProducts(selectedCategory)
+  }
+
+  const handleReorder = async (items: Product[]) => {
+    setProducts(items)
+    await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: items.map((item, index) => ({ id: item.id, order: index })),
+      }),
+    })
   }
 
   const getCategoryColor = (categorySlug: string) => {
@@ -356,11 +367,12 @@ export default function ProductsPage() {
           <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
         </div>
       ) : (
-        <DataTable
+        <SortableDataTable
           data={products}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noProducts")}
+          onReorder={handleReorder}
         />
       )}
 
