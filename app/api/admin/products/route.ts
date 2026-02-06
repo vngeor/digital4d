@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
+import { deleteBlobsBatch } from "@/lib/blob"
 
 async function requireAdminApi() {
   const session = await auth()
@@ -239,9 +240,29 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Product ID required" }, { status: 400 })
     }
 
+    // Fetch the product to get all associated file URLs before deletion
+    const product = await prisma.product.findUnique({
+      where: { id },
+      select: { image: true, gallery: true, fileUrl: true }
+    })
+
+    // Delete the database record
     await prisma.product.delete({
       where: { id },
     })
+
+    // Delete all associated blob files (non-blocking)
+    if (product) {
+      const urlsToDelete = [
+        product.image,
+        product.fileUrl,
+        ...(product.gallery || [])
+      ]
+
+      deleteBlobsBatch(urlsToDelete).catch(err => {
+        console.error("Failed to delete product file blobs:", err)
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

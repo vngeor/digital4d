@@ -1,8 +1,39 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import { isVercelBlobUrl } from "@/lib/blob"
+import { readFile } from "fs/promises"
+import path from "path"
 
 interface RouteContext {
   params: Promise<{ token: string }>
+}
+
+/**
+ * Extract filename from URL or path
+ */
+function getFilename(url: string): string {
+  const urlPath = url.startsWith("/") ? url : new URL(url).pathname
+  return path.basename(urlPath) || "download"
+}
+
+/**
+ * Get content type based on file extension
+ */
+function getContentType(filename: string): string {
+  const ext = path.extname(filename).toLowerCase()
+  const mimeTypes: Record<string, string> = {
+    ".pdf": "application/pdf",
+    ".zip": "application/zip",
+    ".stl": "model/stl",
+    ".obj": "model/obj",
+    ".3mf": "model/3mf",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+  }
+  return mimeTypes[ext] || "application/octet-stream"
 }
 
 export async function GET(
@@ -50,8 +81,47 @@ export async function GET(
       data: { downloadCount: purchase.downloadCount + 1 }
     })
 
-    // Redirect to the file URL
-    return NextResponse.redirect(product.fileUrl)
+    const filename = getFilename(product.fileUrl)
+    const contentType = getContentType(filename)
+
+    // Proxy the download instead of redirecting (prevents hotlinking)
+    let fileBuffer: Buffer
+
+    if (isVercelBlobUrl(product.fileUrl)) {
+      // Fetch from Vercel Blob
+      const response = await fetch(product.fileUrl)
+      if (!response.ok) {
+        return NextResponse.json({ error: "Failed to fetch file" }, { status: 500 })
+      }
+      fileBuffer = Buffer.from(await response.arrayBuffer())
+    } else if (product.fileUrl.startsWith("/uploads/")) {
+      // Read from local storage
+      const localPath = path.join(process.cwd(), "public", product.fileUrl)
+      fileBuffer = await readFile(localPath)
+    } else {
+      // External URL - fetch it
+      const response = await fetch(product.fileUrl)
+      if (!response.ok) {
+        return NextResponse.json({ error: "Failed to fetch file" }, { status: 500 })
+      }
+      fileBuffer = Buffer.from(await response.arrayBuffer())
+    }
+
+    // Return the file with proper headers
+    // Convert Buffer to Uint8Array for NextResponse compatibility
+    const responseBody = new Uint8Array(fileBuffer)
+
+    return new NextResponse(responseBody, {
+      headers: {
+        "Content-Type": contentType,
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Length": fileBuffer.length.toString(),
+        // Private, no caching for paid downloads
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
+    })
   } catch (error) {
     console.error("Download error:", error)
     return NextResponse.json(

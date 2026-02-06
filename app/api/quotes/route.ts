@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { put } from "@vercel/blob"
 import prisma from "@/lib/prisma"
 import { generateQuoteNumber } from "@/lib/generateCode"
+import { uploadBlob } from "@/lib/blob"
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,16 +56,12 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Upload to Vercel Blob
+      // Upload file with automatic fallback to local storage
       const timestamp = Date.now()
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
-      const blobPath = `quotes/${timestamp}-${sanitizedName}`
+      const filename = `${timestamp}-${sanitizedName}`
 
-      const blob = await put(blobPath, file, {
-        access: "public",
-      })
-
-      fileUrl = blob.url
+      fileUrl = await uploadBlob(file, filename, { folder: "quotes" })
       fileName = file.name
       fileSize = file.size
     }

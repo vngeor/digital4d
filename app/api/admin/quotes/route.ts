@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
+import { deleteBlobSafe } from "@/lib/blob"
 
 async function requireAdminApi() {
   const session = await auth()
@@ -160,9 +161,23 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Quote ID required" }, { status: 400 })
     }
 
+    // Fetch the quote to get the fileUrl before deletion
+    const quote = await prisma.quoteRequest.findUnique({
+      where: { id },
+      select: { fileUrl: true }
+    })
+
+    // Delete the database record
     await prisma.quoteRequest.delete({
       where: { id },
     })
+
+    // Delete the associated blob file (non-blocking)
+    if (quote?.fileUrl) {
+      deleteBlobSafe(quote.fileUrl).catch(err => {
+        console.error("Failed to delete quote file blob:", err)
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
