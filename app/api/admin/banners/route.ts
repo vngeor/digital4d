@@ -130,15 +130,13 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Items array required" }, { status: 400 })
     }
 
-    // Update all items in a transaction
-    await prisma.$transaction(
-      items.map((item: { id: string; order: number }) =>
-        prisma.banner.update({
-          where: { id: item.id },
-          data: { order: item.order },
-        })
-      )
-    )
+    // Update all items (Neon HTTP mode doesn't support transactions, so update one by one)
+    for (const item of items) {
+      await prisma.banner.update({
+        where: { id: item.id },
+        data: { order: item.order },
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
