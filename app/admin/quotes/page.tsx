@@ -219,9 +219,22 @@ export default function QuotesPage() {
               {product.nameEn}
             </a>
             {product.price && (
-              <p className="text-xs text-emerald-400">
-                {parseFloat(product.price).toFixed(2)} {product.currency}
-              </p>
+              <div className="flex items-center gap-2">
+                {product.onSale && product.salePrice ? (
+                  <>
+                    <span className="text-xs text-gray-500 line-through">
+                      {parseFloat(product.price).toFixed(2)}
+                    </span>
+                    <span className="text-xs text-emerald-400">
+                      {parseFloat(product.salePrice).toFixed(2)} {product.currency}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-emerald-400">
+                    {parseFloat(product.price).toFixed(2)} {product.currency}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         )

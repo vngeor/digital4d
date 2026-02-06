@@ -423,6 +423,10 @@ export default function ProductsPage() {
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noProducts")}
           onReorder={handleReorder}
+          onRowClick={(item) => {
+            setEditingProduct(item)
+            setShowForm(true)
+          }}
         />
       )}
 
