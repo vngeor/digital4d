@@ -94,6 +94,7 @@ export default function MenuPage() {
     {
       key: "slug",
       header: t("slug"),
+      className: "min-w-[120px]",
       render: (item: MenuItem) => (
         <a
           href={`/${item.slug}`}
@@ -111,6 +112,7 @@ export default function MenuPage() {
     {
       key: "titleEn",
       header: t("title"),
+      className: "min-w-[180px]",
       render: (item: MenuItem) => (
         <div>
           <p className="font-medium text-white">{item.titleEn}</p>
@@ -121,6 +123,7 @@ export default function MenuPage() {
     {
       key: "contents",
       header: t("linkedContent"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: MenuItem) => (
         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
           item._count.contents > 0
@@ -134,6 +137,7 @@ export default function MenuPage() {
     {
       key: "published",
       header: t("status"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: MenuItem) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -149,6 +153,7 @@ export default function MenuPage() {
     {
       key: "order",
       header: t("order"),
+      className: "whitespace-nowrap w-[60px]",
       render: (item: MenuItem) => (
         <span className="text-gray-400">{item.order}</span>
       ),
@@ -156,6 +161,7 @@ export default function MenuPage() {
     {
       key: "actions",
       header: t("actions"),
+      className: "w-[120px]",
       render: (item: MenuItem) => (
         <div className="flex items-center gap-2">
           <button

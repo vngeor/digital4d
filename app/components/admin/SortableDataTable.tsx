@@ -203,7 +203,7 @@ export function SortableDataTable<T extends { id: string; order: number }>({
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <table className="w-full">
+          <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-white/10">
                 <th className="px-2 py-4 w-10"></th>

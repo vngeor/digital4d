@@ -102,6 +102,7 @@ export default function OrdersPage() {
     {
       key: "orderNumber",
       header: "#",
+      className: "whitespace-nowrap w-[130px]",
       render: (item: Order) => (
         <button
           onClick={(e) => {
@@ -126,6 +127,7 @@ export default function OrdersPage() {
     {
       key: "customerName",
       header: t("customer"),
+      className: "min-w-[150px]",
       render: (item: Order) => (
         <div>
           <p className="font-medium text-white">{item.customerName}</p>
@@ -136,6 +138,7 @@ export default function OrdersPage() {
     {
       key: "description",
       header: t("description"),
+      className: "min-w-[200px] max-w-[300px]",
       render: (item: Order) => (
         <p className="text-gray-300 truncate max-w-xs">{item.description}</p>
       ),
@@ -143,6 +146,7 @@ export default function OrdersPage() {
     {
       key: "status",
       header: t("status"),
+      className: "whitespace-nowrap w-[120px]",
       render: (item: Order) => {
         const config = statusConfig[item.status]
         const Icon = config.icon
@@ -167,6 +171,7 @@ export default function OrdersPage() {
     {
       key: "createdAt",
       header: t("date"),
+      className: "whitespace-nowrap w-[90px]",
       render: (item: Order) => (
         <span className="text-gray-400">
           {new Date(item.createdAt).toLocaleDateString()}
@@ -176,6 +181,7 @@ export default function OrdersPage() {
     {
       key: "actions",
       header: t("actions"),
+      className: "w-[80px]",
       render: (item: Order) => (
         <div className="flex items-center gap-2">
           <button

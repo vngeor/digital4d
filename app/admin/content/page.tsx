@@ -177,6 +177,7 @@ export default function ContentPage() {
     {
       key: "type",
       header: t("type"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: Content) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeColorClass(item.type)}`}
@@ -188,6 +189,7 @@ export default function ContentPage() {
     {
       key: "homepage",
       header: "Homepage",
+      className: "whitespace-nowrap w-[90px]",
       render: (item: Content) => {
         if (item.type !== "news") {
           return <span className="text-gray-600 text-xs">—</span>
@@ -210,6 +212,7 @@ export default function ContentPage() {
     {
       key: "titleEn",
       header: t("title"),
+      className: "min-w-[180px]",
       render: (item: Content) => (
         <div>
           <p className="font-medium text-white">{item.titleEn}</p>
@@ -220,6 +223,7 @@ export default function ContentPage() {
     {
       key: "slug",
       header: t("slug"),
+      className: "min-w-[140px]",
       render: (item: Content) => {
         if (!item.slug) {
           return <span className="text-gray-500 text-sm">—</span>
@@ -248,6 +252,7 @@ export default function ContentPage() {
     {
       key: "published",
       header: t("status"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: Content) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -263,6 +268,7 @@ export default function ContentPage() {
     {
       key: "order",
       header: t("order"),
+      className: "whitespace-nowrap w-[60px]",
       render: (item: Content) => (
         <span className="text-gray-400">{item.order}</span>
       ),
@@ -270,6 +276,7 @@ export default function ContentPage() {
     {
       key: "actions",
       header: t("actions"),
+      className: "w-[120px]",
       render: (item: Content) => (
         <div className="flex items-center gap-2">
           <button

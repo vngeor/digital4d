@@ -65,6 +65,7 @@ export default function UsersPage() {
     {
       key: "user",
       header: t("user"),
+      className: "min-w-[200px]",
       render: (item: User) => (
         <div className="flex items-center gap-3">
           {item.image ? (
@@ -89,6 +90,7 @@ export default function UsersPage() {
     {
       key: "role",
       header: t("role"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: User) => (
         <select
           value={item.role}
@@ -110,6 +112,7 @@ export default function UsersPage() {
     {
       key: "orders",
       header: t("orders"),
+      className: "whitespace-nowrap w-[80px]",
       render: (item: User) => (
         <span className="text-gray-400">{item._count.orders}</span>
       ),
@@ -117,6 +120,7 @@ export default function UsersPage() {
     {
       key: "createdAt",
       header: t("joined"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: User) => (
         <span className="text-gray-400">
           {new Date(item.createdAt).toLocaleDateString()}
@@ -126,6 +130,7 @@ export default function UsersPage() {
     {
       key: "actions",
       header: t("actions"),
+      className: "w-[60px]",
       render: (item: User) => (
         <div className="flex items-center gap-2">
           <button

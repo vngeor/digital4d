@@ -80,6 +80,7 @@ export default function TypesPage() {
     {
       key: "slug",
       header: t("slug"),
+      className: "min-w-[120px]",
       render: (item: ContentType) => (
         <a
           href={`/${item.slug}`}
@@ -97,6 +98,7 @@ export default function TypesPage() {
     {
       key: "nameEn",
       header: t("name"),
+      className: "min-w-[180px]",
       render: (item: ContentType) => (
         <div>
           <p className="font-medium text-white">{item.nameEn}</p>
@@ -107,6 +109,7 @@ export default function TypesPage() {
     {
       key: "color",
       header: t("color"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: ContentType) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${COLOR_CLASSES[item.color] || "bg-gray-500/20 text-gray-400"}`}
@@ -118,10 +121,12 @@ export default function TypesPage() {
     {
       key: "order",
       header: t("order"),
+      className: "whitespace-nowrap w-[60px]",
     },
     {
       key: "actions",
       header: t("actions"),
+      className: "w-[80px]",
       render: (item: ContentType) => (
         <div className="flex items-center gap-2">
           <button

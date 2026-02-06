@@ -138,6 +138,7 @@ export default function BannersPage() {
     {
       key: "image",
       header: t("image"),
+      className: "w-[60px]",
       render: (item: Banner) => (
         <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5 flex items-center justify-center">
           {item.image ? (
@@ -151,6 +152,7 @@ export default function BannersPage() {
     {
       key: "titleEn",
       header: t("titleField"),
+      className: "min-w-[180px]",
       render: (item: Banner) => (
         <div>
           <p className="font-medium text-white">{item.titleEn}</p>
@@ -161,6 +163,7 @@ export default function BannersPage() {
     {
       key: "type",
       header: t("type"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: Banner) => (
         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeBadgeClass(item.type)}`}>
           {getTypeLabel(item.type)}
@@ -170,6 +173,7 @@ export default function BannersPage() {
     {
       key: "link",
       header: t("link"),
+      className: "min-w-[150px] max-w-[200px]",
       render: (item: Banner) => {
         if (!item.link) {
           return <span className="text-gray-500 text-sm">—</span>
@@ -192,6 +196,7 @@ export default function BannersPage() {
     {
       key: "published",
       header: t("status"),
+      className: "whitespace-nowrap w-[100px]",
       render: (item: Banner) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -207,6 +212,7 @@ export default function BannersPage() {
     {
       key: "order",
       header: t("order"),
+      className: "whitespace-nowrap w-[60px]",
       render: (item: Banner) => (
         <span className="text-gray-400">{item.order}</span>
       ),
@@ -214,6 +220,7 @@ export default function BannersPage() {
     {
       key: "actions",
       header: t("actions"),
+      className: "w-[120px]",
       render: (item: Banner) => (
         <div className="flex items-center gap-2">
           <button

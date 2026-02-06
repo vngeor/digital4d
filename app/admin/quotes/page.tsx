@@ -165,6 +165,7 @@ export default function QuotesPage() {
     {
       key: "quoteNumber",
       header: "#",
+      className: "whitespace-nowrap w-[120px]",
       render: (item: QuoteRequest) => (
         <button
           onClick={(e) => {
@@ -179,7 +180,7 @@ export default function QuotesPage() {
               btn.classList.remove("scale-95")
             }, 1000)
           }}
-          className="font-mono text-sm text-blue-400 hover:text-blue-300 hover:underline cursor-pointer transition-all"
+          className="font-mono text-xs text-blue-400 hover:text-blue-300 hover:underline cursor-pointer transition-all"
           title="Click to copy"
         >
           {item.quoteNumber}
@@ -189,24 +190,21 @@ export default function QuotesPage() {
     {
       key: "customer",
       header: t("customer"),
+      className: "min-w-[150px]",
       render: (item: QuoteRequest) => (
         <div>
-          <p className="font-medium text-white">{item.name}</p>
-          <p className="text-xs text-gray-500">{item.email}</p>
+          <p className="font-medium text-white text-sm truncate max-w-[150px]">{item.name}</p>
+          <p className="text-xs text-gray-500 truncate max-w-[150px]">{item.email}</p>
         </div>
       ),
     },
     {
       key: "product",
       header: t("product"),
+      className: "min-w-[140px] max-w-[180px]",
       render: (item: QuoteRequest) => {
         const product = item.product
         if (!product) return <span className="text-gray-500 text-sm">-</span>
-
-        const hasDiscount = product.onSale && product.salePrice && product.price
-        const discountPercent = hasDiscount
-          ? Math.round((1 - parseFloat(product.salePrice!) / parseFloat(product.price!)) * 100)
-          : 0
 
         return (
           <div>
@@ -215,50 +213,24 @@ export default function QuotesPage() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 group hover:bg-white/5 px-1.5 py-0.5 -mx-1.5 -my-0.5 rounded transition-colors w-fit"
+              className="text-white text-sm hover:text-emerald-300 truncate block max-w-[160px]"
+              title={product.nameEn}
             >
-              <LinkIcon className="w-3.5 h-3.5 text-gray-500 group-hover:text-emerald-400 shrink-0" />
-              <span className="text-white text-sm group-hover:text-emerald-300">{product.nameEn}</span>
-              <ExternalLink className="w-3 h-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              {product.nameEn}
             </a>
-            {product.sku && (
-              <p className="text-xs text-gray-500 font-mono">{product.sku}</p>
-            )}
-            {hasDiscount ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-emerald-400 font-medium">
-                  {parseFloat(product.salePrice!).toFixed(2)} {product.currency}
-                </span>
-                <span className="text-xs text-gray-500 line-through">
-                  {parseFloat(product.price!).toFixed(2)}
-                </span>
-                <span className="text-xs text-red-400 font-medium">
-                  -{discountPercent}%
-                </span>
-              </div>
-            ) : product.price ? (
+            {product.price && (
               <p className="text-xs text-emerald-400">
                 {parseFloat(product.price).toFixed(2)} {product.currency}
               </p>
-            ) : null}
+            )}
           </div>
         )
       },
     },
     {
-      key: "message",
-      header: t("message"),
-      render: (item: QuoteRequest) => (
-        <div className="max-w-xs">
-          <p className="text-gray-400 text-sm truncate">
-            {item.message || "-"}
-          </p>
-        </div>
-      ),
-    },
-    {
       key: "file",
       header: t("file"),
+      className: "whitespace-nowrap",
       render: (item: QuoteRequest) => (
         <div>
           {item.fileUrl ? (
@@ -266,16 +238,14 @@ export default function QuotesPage() {
               href={item.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300"
+              className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300"
+              title={item.fileName || "Download"}
             >
-              <Download className="w-4 h-4" />
-              <span className="text-sm">{item.fileName || "Download"}</span>
+              <Download className="w-4 h-4 shrink-0" />
+              <span className="text-xs truncate max-w-[80px]">{item.fileName || "File"}</span>
             </a>
           ) : (
             <span className="text-gray-500 text-sm">-</span>
-          )}
-          {item.fileSize && (
-            <p className="text-xs text-gray-500">{formatFileSize(item.fileSize)}</p>
           )}
         </div>
       ),
@@ -283,35 +253,28 @@ export default function QuotesPage() {
     {
       key: "status",
       header: t("status"),
+      className: "whitespace-nowrap",
       render: (item: QuoteRequest) => {
         const badge = STATUS_BADGES[item.status] || STATUS_BADGES.pending
-        // Show counter offer badge for: pending with userResponse OR old counter_offer status
         const hasCounterOffer = (item.status === "pending" && item.userResponse) || item.status === "counter_offer"
         return (
           <div className="flex flex-col gap-1">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium w-fit ${badge.color}`}>
               {badge.label}
             </span>
             {hasCounterOffer && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
-                + Counter Offer
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/20 text-purple-400 w-fit">
+                Counter
               </span>
             )}
             {item.status === "quoted" && (
-              <>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                  item.viewedAt
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-amber-500/20 text-amber-400 animate-pulse"
-                }`}>
-                  {item.viewedAt ? "Seen" : "Not seen yet"}
-                </span>
-                {item.quotedAt && (
-                  <span className="text-[10px] text-gray-500">
-                    {formatTimeAgo(item.quotedAt)}
-                  </span>
-                )}
-              </>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${
+                item.viewedAt
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "bg-amber-500/20 text-amber-400"
+              }`}>
+                {item.viewedAt ? "Seen" : "Unseen"}
+              </span>
             )}
           </div>
         )
@@ -320,8 +283,9 @@ export default function QuotesPage() {
     {
       key: "quotedPrice",
       header: t("quotedPrice"),
+      className: "whitespace-nowrap text-right",
       render: (item: QuoteRequest) => (
-        <span className="text-white">
+        <span className="text-white font-medium">
           {item.quotedPrice && parseFloat(item.quotedPrice) >= 0
             ? `€${parseFloat(item.quotedPrice).toFixed(2)}`
             : "-"}
@@ -331,10 +295,10 @@ export default function QuotesPage() {
     {
       key: "date",
       header: t("date"),
+      className: "whitespace-nowrap",
       render: (item: QuoteRequest) => (
-        <span className="text-gray-400 text-sm">
+        <span className="text-gray-400 text-xs">
           {new Date(item.createdAt).toLocaleDateString("en-US", {
-            year: "numeric",
             month: "short",
             day: "numeric",
           })}
@@ -343,15 +307,16 @@ export default function QuotesPage() {
     },
     {
       key: "actions",
-      header: t("actions"),
+      header: "",
+      className: "w-[80px]",
       render: (item: QuoteRequest) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={(e) => {
               e.stopPropagation()
               handleView(item)
             }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
             title={t("viewQuote")}
           >
             <Eye className="w-4 h-4 text-gray-400" />
@@ -361,7 +326,7 @@ export default function QuotesPage() {
               e.stopPropagation()
               handleDelete(item.id)
             }}
-            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
             title="Delete"
           >
             <Trash2 className="w-4 h-4 text-red-400" />
