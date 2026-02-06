@@ -175,9 +175,10 @@ export default async function ContentDetailPage({ params }: PageProps) {
                         )}
                         <div className="p-8 md:p-12">
                             {contentBody ? (
-                                <div className="prose prose-invert prose-lg max-w-none text-slate-300 leading-relaxed whitespace-pre-line break-words">
-                                    {contentBody}
-                                </div>
+                                <div
+                                    className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white"
+                                    dangerouslySetInnerHTML={{ __html: contentBody }}
+                                />
                             ) : (
                                 <p className="text-slate-400 italic">{t("menu.noContent")}</p>
                             )}

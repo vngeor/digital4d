@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { LanguageSwitcher } from "./LanguageSwitcher"
+import { locales, localeFlags, type Locale } from "@/i18n/config"
 import { NotificationBell } from "./NotificationBell"
 import { ChevronDown, Menu, X } from "lucide-react"
 
@@ -32,7 +33,8 @@ interface MenuItem {
 export function Header() {
     const { data: session, status } = useSession()
     const t = useTranslations("nav")
-    const locale = useLocale()
+    const tLang = useTranslations("language")
+    const locale = useLocale() as Locale
     const pathname = usePathname()
     const [menuItems, setMenuItems] = useState<MenuItem[]>([])
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -95,12 +97,12 @@ export function Header() {
                 </Link>
 
                 {/* Desktop Navigation */}
-                <nav className="hidden gap-4 text-sm lg:flex items-center">
+                <nav className="hidden gap-2 xl:gap-4 text-xs xl:text-sm lg:flex items-center">
                     {menuItems.map((item) => (
                         <div key={item.id} className="relative group">
                             <Link
                                 href={`/${item.slug}`}
-                                className="flex items-center gap-1 text-slate-300 hover:text-emerald-400 transition-colors py-2"
+                                className="flex items-center gap-1 text-slate-300 hover:text-emerald-400 transition-colors py-2 whitespace-nowrap"
                             >
                                 {getLocalizedTitle(item)}
                                 {item.contents.length > 0 && (
@@ -129,9 +131,9 @@ export function Header() {
                             )}
                         </div>
                     ))}
-                    <Link href="/products" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("products")}</Link>
-                    <Link href="/#news" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("news")}</Link>
-                    <Link href="/#contact" className="text-slate-300 hover:text-emerald-400 transition-colors">{t("contact")}</Link>
+                    <Link href="/products" className="text-slate-300 hover:text-emerald-400 transition-colors whitespace-nowrap">{t("products")}</Link>
+                    <Link href="/#news" className="text-slate-300 hover:text-emerald-400 transition-colors whitespace-nowrap">{t("news")}</Link>
+                    <Link href="/#contact" className="text-slate-300 hover:text-emerald-400 transition-colors whitespace-nowrap">{t("contact")}</Link>
                 </nav>
 
                 <div className="flex items-center gap-3">
@@ -364,6 +366,30 @@ export function Header() {
                                 {t("login")}
                             </Link>
                         )}
+
+                        {/* Mobile Language Selector */}
+                        <div className="pt-4 mt-4 border-t border-white/10">
+                            <p className="text-xs text-slate-500 mb-2 text-center">{tLang("select")}</p>
+                            <div className="flex items-center justify-center gap-2">
+                                {locales.map((loc) => (
+                                    <button
+                                        key={loc}
+                                        onClick={() => {
+                                            document.cookie = `NEXT_LOCALE=${loc};path=/;max-age=${60 * 60 * 24 * 365}`
+                                            window.location.reload()
+                                        }}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                                            locale === loc
+                                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                                : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+                                        }`}
+                                    >
+                                        <span>{localeFlags[loc]}</span>
+                                        <span>{loc.toUpperCase()}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         {/* Mobile Social Links */}
                         <div className="flex items-center justify-center gap-6 pt-4 mt-4 border-t border-white/10">

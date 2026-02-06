@@ -6,6 +6,8 @@ import prisma from "@/lib/prisma"
 
 const RESERVED_SLUGS = ['news', 'admin', 'login', 'api', 'register', 'services']
 
+const stripHtmlTags = (html: string) => html.replace(/<[^>]*>/g, "").trim()
+
 interface PageProps {
     params: Promise<{ menuSlug: string }>
 }
@@ -234,7 +236,7 @@ export default async function DynamicPage({ params }: PageProps) {
                                             </h3>
                                             {body && (
                                                 <p className="text-slate-400 line-clamp-3">
-                                                    {body}
+                                                    {stripHtmlTags(body)}
                                                 </p>
                                             )}
                                             <span className="inline-flex items-center gap-2 mt-4 text-emerald-400 font-medium">

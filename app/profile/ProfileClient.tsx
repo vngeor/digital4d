@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { User, Mail, Phone, MapPin, Calendar, Edit2, ArrowLeft, Globe, Building, Cake } from "lucide-react"
 import { ProfileEditForm } from "@/app/components/ProfileEditForm"
+import { Header } from "@/app/components/Header"
 
 interface UserData {
   id: string
@@ -75,22 +76,32 @@ export function ProfileClient({ user, translations: t }: ProfileClientProps) {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
-      <div className="mx-auto max-w-4xl px-4">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.backToHome}
-        </Link>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+      {/* Animated Background Orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />
+        <div className="absolute top-40 right-20 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl animate-pulse-glow animation-delay-1000" />
+        <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse-glow animation-delay-2000" />
+      </div>
 
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">{t.title}</h1>
-          <p className="text-slate-400">{t.subtitle}</p>
-        </div>
+      <Header />
+
+      <div className="relative pt-8 pb-16">
+        <div className="mx-auto max-w-4xl px-4">
+          {/* Back link */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors mb-8"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t.backToHome}
+          </Link>
+
+          {/* Page Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent mb-3">{t.title}</h1>
+            <p className="text-slate-400">{t.subtitle}</p>
+          </div>
 
         <div className="grid gap-8 md:grid-cols-3">
           {/* Profile Card */}
@@ -210,7 +221,15 @@ export function ProfileClient({ user, translations: t }: ProfileClientProps) {
             </div>
           </div>
         </div>
+        </div>
       </div>
+
+      {/* Footer */}
+      <footer className="glass border-t border-white/10 py-8 mt-12">
+        <div className="mx-auto max-w-6xl px-4 text-center text-slate-400">
+          <p>&copy; 2024 digital4d. All rights reserved.</p>
+        </div>
+      </footer>
 
       {/* Edit Modal */}
       {isEditModalOpen && (

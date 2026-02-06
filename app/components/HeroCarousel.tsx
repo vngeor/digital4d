@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface HeroBanner {
@@ -55,10 +56,13 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
           {/* Background Image */}
           {banner.image && (
             <div className="absolute inset-0">
-              <img
+              <Image
                 src={banner.image}
                 alt=""
-                className="w-full h-full object-cover"
+                fill
+                sizes="100vw"
+                priority={i === 0}
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/50 to-slate-950/80" />
             </div>
