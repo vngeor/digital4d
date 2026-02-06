@@ -13,6 +13,9 @@ interface MenuItem {
   titleBg: string
   titleEn: string
   titleEs: string
+  bodyBg: string | null
+  bodyEn: string | null
+  bodyEs: string | null
   order: number
   published: boolean
   createdAt: string
@@ -48,6 +51,9 @@ export default function MenuPage() {
     titleBg: string
     titleEn: string
     titleEs: string
+    bodyBg: string
+    bodyEn: string
+    bodyEs: string
     order: number
     published: boolean
   }) => {

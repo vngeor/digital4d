@@ -27,6 +27,7 @@ export async function GET() {
             nameBg: true,
             nameEs: true,
             slug: true,
+            image: true,
           },
         },
       },
@@ -41,6 +42,7 @@ export async function GET() {
         viewedAt: n.viewedAt?.toISOString() || null,
         productName: n.product?.nameEn || "Quote Request",
         productSlug: n.product?.slug || null,
+        productImage: n.product?.image || null,
       })),
     })
   } catch (error) {

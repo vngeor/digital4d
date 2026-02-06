@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { X, Save, Loader2 } from "lucide-react"
 import { COLOR_CLASSES, COLOR_OPTIONS } from "@/lib/colors"
+import { RichTextEditor } from "./RichTextEditor"
 
 // Re-export for backwards compatibility
 export { COLOR_CLASSES, COLOR_OPTIONS }
@@ -14,6 +15,9 @@ interface TypeFormData {
   nameBg: string
   nameEn: string
   nameEs: string
+  descBg: string
+  descEn: string
+  descEs: string
   color: string
   order: number
 }
@@ -25,6 +29,9 @@ interface TypeFormProps {
     nameBg?: string
     nameEn?: string
     nameEs?: string
+    descBg?: string | null
+    descEn?: string | null
+    descEs?: string | null
     color?: string
     order?: number
   }
@@ -56,6 +63,9 @@ export function TypeForm({
     nameBg: initialData?.nameBg ?? "",
     nameEn: initialData?.nameEn ?? "",
     nameEs: initialData?.nameEs ?? "",
+    descBg: initialData?.descBg ?? "",
+    descEn: initialData?.descEn ?? "",
+    descEs: initialData?.descEs ?? "",
     color: initialData?.color ?? "cyan",
     order: initialData?.order ?? 0,
   })
@@ -236,6 +246,26 @@ export function TypeForm({
               {errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] && (
                 <p className="text-xs text-red-400 mt-1">{errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}</p>
               )}
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {t("description")} ({activeTab.toUpperCase()})
+              </label>
+              <RichTextEditor
+                value={
+                  formData[
+                    `desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof TypeFormData
+                  ] as string
+                }
+                onChange={(html) =>
+                  updateField(
+                    `desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof TypeFormData,
+                    html
+                  )
+                }
+              />
+              <p className="text-xs text-gray-500 mt-1">Optional intro text shown on the listing page</p>
             </div>
           </div>
 

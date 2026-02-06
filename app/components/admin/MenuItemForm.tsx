@@ -27,9 +27,9 @@ interface MenuItemFormProps {
     titleBg?: string
     titleEn?: string
     titleEs?: string
-    bodyBg?: string
-    bodyEn?: string
-    bodyEs?: string
+    bodyBg?: string | null
+    bodyEn?: string | null
+    bodyEs?: string | null
     order?: number
     published?: boolean
   }
@@ -213,26 +213,27 @@ export function MenuItemForm({
               />
             </div>
 
-            {formData.type === "landing" && (
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("body")} ({activeTab.toUpperCase()})
-                </label>
-                <RichTextEditor
-                  value={
-                    formData[
-                      `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof MenuItemFormData
-                    ] as string
-                  }
-                  onChange={(html) =>
-                    updateField(
-                      `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof MenuItemFormData,
-                      html
-                    )
-                  }
-                />
-              </div>
-            )}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {formData.type === "landing" ? t("body") : "Page Description"} ({activeTab.toUpperCase()})
+              </label>
+              <RichTextEditor
+                value={
+                  formData[
+                    `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof MenuItemFormData
+                  ] as string
+                }
+                onChange={(html) =>
+                  updateField(
+                    `body${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof MenuItemFormData,
+                    html
+                  )
+                }
+              />
+              {formData.type !== "landing" && (
+                <p className="text-xs text-gray-500 mt-1">Optional intro text shown on the page before content list</p>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">

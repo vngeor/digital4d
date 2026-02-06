@@ -11,6 +11,7 @@ interface Notification {
   viewedAt: string | null
   productName: string
   productSlug: string | null
+  productImage: string | null
 }
 
 interface NotificationBellProps {
@@ -139,9 +140,17 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
                   onClick={() => handleNotificationClick(notification.id)}
                   className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0"
                 >
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-blue-400" />
-                  </div>
+                  {notification.productImage ? (
+                    <img
+                      src={notification.productImage}
+                      alt={notification.productName}
+                      className="shrink-0 w-10 h-10 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <MessageSquare className="w-5 h-5 text-blue-400" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white font-medium truncate">
                       {t.newQuoteReceived}

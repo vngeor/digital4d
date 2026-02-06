@@ -12,6 +12,9 @@ interface ContentType {
   nameBg: string
   nameEn: string
   nameEs: string
+  descBg: string | null
+  descEn: string | null
+  descEs: string | null
   color: string
   order: number
   createdAt: string
@@ -43,6 +46,9 @@ export default function TypesPage() {
     nameBg: string
     nameEn: string
     nameEs: string
+    descBg: string
+    descEn: string
+    descEs: string
     color: string
     order: number
   }) => {

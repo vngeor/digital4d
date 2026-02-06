@@ -14,13 +14,13 @@ export default async function Home() {
     const tProducts = await getTranslations("homeProducts")
     const locale = await getLocale()
 
-    // Fetch latest 6 published NEWS from database (newest first)
+    // Fetch top 4 published NEWS from database (by order, then newest)
     const dbNews = await prisma.content.findMany({
         where: {
             type: "news",
             published: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ order: "asc" }, { createdAt: "desc" }],
         take: 4,
     })
 

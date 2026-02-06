@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, ExternalLink } from "lucide-react"
+import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ContentForm } from "@/app/components/admin/ContentForm"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
@@ -33,12 +33,24 @@ interface Content {
 export default function ContentPage() {
   const t = useTranslations("admin.content")
   const [content, setContent] = useState<Content[]>([])
+  const [allContent, setAllContent] = useState<Content[]>([]) // For computing homepage positions
   const [allTypes, setAllTypes] = useState<string[]>([])
   const [typeColors, setTypeColors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingContent, setEditingContent] = useState<Content | null>(null)
   const [filter, setFilter] = useState<string>("all")
+
+  // Get homepage position for news items (top 4 news appear on homepage)
+  const getHomepagePosition = (item: Content): number | null => {
+    if (item.type !== "news" || !item.published) return null
+    const newsItems = [...allContent]
+      .filter(c => c.type === "news" && c.published)
+      .sort((a, b) => a.order - b.order)
+      .slice(0, 4)
+    const index = newsItems.findIndex(n => n.id === item.id)
+    return index >= 0 ? index + 1 : null
+  }
 
   const fetchAllTypes = async () => {
     // Fetch content types from the types API to get colors
@@ -60,17 +72,27 @@ export default function ContentPage() {
     }
   }
 
+  const fetchAllContent = async () => {
+    const res = await fetch("/api/admin/content")
+    const data = await res.json()
+    setAllContent(Array.isArray(data) ? data : [])
+  }
+
   const fetchContent = async () => {
     setLoading(true)
     const params = filter !== "all" ? `?type=${filter}` : ""
     const res = await fetch(`/api/admin/content${params}`)
     const data = await res.json()
     setContent(Array.isArray(data) ? data : [])
+    if (filter === "all") {
+      setAllContent(Array.isArray(data) ? data : [])
+    }
     setLoading(false)
   }
 
   useEffect(() => {
     fetchAllTypes()
+    fetchAllContent()
   }, [])
 
   useEffect(() => {
@@ -100,6 +122,7 @@ export default function ContentPage() {
     setEditingContent(null)
     fetchContent()
     fetchAllTypes()
+    fetchAllContent() // Refresh homepage positions
   }
 
   const handleDelete = async (id: string) => {
@@ -107,6 +130,7 @@ export default function ContentPage() {
     await fetch(`/api/admin/content?id=${id}`, { method: "DELETE" })
     fetchContent()
     fetchAllTypes()
+    fetchAllContent() // Refresh homepage positions
   }
 
   const handleTogglePublish = async (item: Content) => {
@@ -116,10 +140,15 @@ export default function ContentPage() {
       body: JSON.stringify({ ...item, published: !item.published }),
     })
     fetchContent()
+    fetchAllContent() // Refresh homepage positions
   }
 
   const handleReorder = async (items: Content[]) => {
     setContent(items)
+    // Also update allContent if not filtering
+    if (filter === "all") {
+      setAllContent(items)
+    }
     await fetch("/api/admin/content", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -127,6 +156,10 @@ export default function ContentPage() {
         items: items.map((item, index) => ({ id: item.id, order: index })),
       }),
     })
+    // Refresh allContent if filtering to update homepage positions
+    if (filter !== "all") {
+      fetchAllContent()
+    }
   }
 
   // Default colors for built-in types (used when not defined in ContentType table)
@@ -151,6 +184,28 @@ export default function ContentPage() {
           {item.type}
         </span>
       ),
+    },
+    {
+      key: "homepage",
+      header: "Homepage",
+      render: (item: Content) => {
+        if (item.type !== "news") {
+          return <span className="text-gray-600 text-xs">—</span>
+        }
+        if (!item.published) {
+          return <span className="text-gray-600 text-xs">Draft</span>
+        }
+        const position = getHomepagePosition(item)
+        if (position) {
+          return (
+            <div className="flex items-center gap-1.5">
+              <Home className="w-4 h-4 text-emerald-400" />
+              <span className="text-emerald-400 font-medium text-sm">#{position}</span>
+            </div>
+          )
+        }
+        return <span className="text-gray-500 text-xs">—</span>
+      },
     },
     {
       key: "titleEn",
