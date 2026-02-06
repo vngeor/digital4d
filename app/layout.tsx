@@ -5,6 +5,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import { GlobalPromoStrip } from "./components/GlobalPromoStrip";
 
 const exo2 = Exo_2({
@@ -96,6 +97,7 @@ export default async function RootLayout({
             {children}
           </Providers>
           <SpeedInsights />
+          <Analytics />
         </NextIntlClientProvider>
       </body>
     </html>
