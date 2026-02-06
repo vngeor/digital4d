@@ -18,9 +18,62 @@ const inter = Inter({
   subsets: ["latin", "cyrillic"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://digital4d.com";
+
 export const metadata: Metadata = {
-  title: "digital4d - 3D Печат и Моделиране",
-  description: "Професионални услуги за 3D печат и моделиране",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "digital4d - 3D Печат и Моделиране",
+    template: "%s | digital4d",
+  },
+  description: "Професионални услуги за 3D печат, моделиране и прототипиране. Висококачествени 3D принтери, материали и персонализирани решения за вашите проекти.",
+  keywords: ["3D печат", "3D принтиране", "3D моделиране", "прототипиране", "3D принтер", "PLA", "ABS", "PETG", "digital4d"],
+  authors: [{ name: "digital4d" }],
+  creator: "digital4d",
+  publisher: "digital4d",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "bg_BG",
+    alternateLocale: ["en_US", "es_ES"],
+    url: siteUrl,
+    siteName: "digital4d",
+    title: "digital4d - 3D Печат и Моделиране",
+    description: "Професионални услуги за 3D печат, моделиране и прототипиране. Висококачествени решения за вашите проекти.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "digital4d - 3D Печат и Моделиране",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "digital4d - 3D Печат и Моделиране",
+    description: "Професионални услуги за 3D печат, моделиране и прототипиране.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default async function RootLayout({

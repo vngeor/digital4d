@@ -5,9 +5,52 @@ import { Header } from "../../components/Header"
 import { ProductActions } from "../../components/ProductActions"
 import prisma from "@/lib/prisma"
 import type { Product } from "@prisma/client"
+import type { Metadata } from "next"
 
 interface PageProps {
     params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { slug } = await params
+    const locale = await getLocale()
+
+    const product = await prisma.product.findFirst({
+        where: { slug, published: true }
+    })
+
+    if (!product) {
+        return { title: "Product Not Found" }
+    }
+
+    const name = locale === "bg" ? product.nameBg : locale === "es" ? product.nameEs : product.nameEn
+    const desc = locale === "bg" ? product.descBg : locale === "es" ? product.descEs : product.descEn
+    const description = desc ? desc.slice(0, 160).replace(/<[^>]*>/g, "") : `${name} - digital4d`
+
+    return {
+        title: name,
+        description,
+        openGraph: {
+            title: `${name} | digital4d`,
+            description,
+            type: "website",
+            locale: locale === "bg" ? "bg_BG" : locale === "es" ? "es_ES" : "en_US",
+            images: product.image ? [
+                {
+                    url: product.image,
+                    width: 800,
+                    height: 600,
+                    alt: name,
+                }
+            ] : undefined,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: name,
+            description,
+            images: product.image ? [product.image] : undefined,
+        },
+    }
 }
 
 const COLOR_CLASSES: Record<string, string> = {

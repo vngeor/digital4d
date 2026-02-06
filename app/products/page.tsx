@@ -3,6 +3,25 @@ import Link from "next/link"
 import { Header } from "../components/Header"
 import prisma from "@/lib/prisma"
 import { ProductCatalog } from "../components/ProductCatalog"
+import type { Metadata } from "next"
+
+export async function generateMetadata(): Promise<Metadata> {
+    const t = await getTranslations("products")
+    const locale = await getLocale()
+
+    const title = t("title")
+    const description = t("subtitle")
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title: `${title} | digital4d`,
+            description,
+            locale: locale === "bg" ? "bg_BG" : locale === "es" ? "es_ES" : "en_US",
+        },
+    }
+}
 
 export default async function ProductsPage() {
     const t = await getTranslations()

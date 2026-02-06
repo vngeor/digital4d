@@ -3,9 +3,53 @@ import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../../components/Header"
 import prisma from "@/lib/prisma"
+import type { Metadata } from "next"
 
 interface PageProps {
     params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { slug } = await params
+    const locale = await getLocale()
+
+    const news = await prisma.content.findFirst({
+        where: { slug, type: "news", published: true }
+    })
+
+    if (!news) {
+        return { title: "News Not Found" }
+    }
+
+    const title = locale === "bg" ? news.titleBg : locale === "es" ? news.titleEs : news.titleEn
+    const body = locale === "bg" ? news.bodyBg : locale === "es" ? news.bodyEs : news.bodyEn
+    const description = body ? body.slice(0, 160).replace(/<[^>]*>/g, "") : title
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title: `${title} | digital4d`,
+            description,
+            type: "article",
+            publishedTime: news.createdAt.toISOString(),
+            locale: locale === "bg" ? "bg_BG" : locale === "es" ? "es_ES" : "en_US",
+            images: news.image ? [
+                {
+                    url: news.image,
+                    width: 1200,
+                    height: 630,
+                    alt: title,
+                }
+            ] : undefined,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: news.image ? [news.image] : undefined,
+        },
+    }
 }
 
 export default async function NewsDetailPage({ params }: PageProps) {
