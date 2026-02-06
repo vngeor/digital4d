@@ -3,6 +3,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../../components/Header"
 import prisma from "@/lib/prisma"
+import { ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
 
 interface PageProps {
@@ -107,10 +108,17 @@ export default async function NewsDetailPage({ params }: PageProps) {
             <Header />
 
             {/* Page Header */}
-            <section className="relative pt-24 sm:pt-32 pb-6 sm:pb-8 px-4">
+            <section className="relative pt-16 sm:pt-24 md:pt-32 pb-6 sm:pb-8 px-4">
                 <div className="mx-auto max-w-4xl">
-                    {/* Breadcrumb - simplified on mobile */}
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 mb-4 sm:mb-6 overflow-hidden">
+                    {/* Mobile: Simple back arrow */}
+                    <Link
+                        href="/news"
+                        className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    {/* Desktop: Full breadcrumb */}
+                    <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 mb-6">
                         <Link href="/" className="hover:text-emerald-400 transition-colors shrink-0">
                             {t("news.backHome")}
                         </Link>
@@ -118,8 +126,8 @@ export default async function NewsDetailPage({ params }: PageProps) {
                         <Link href="/news" className="hover:text-emerald-400 transition-colors shrink-0">
                             {t("news.title")}
                         </Link>
-                        <span className="hidden sm:inline shrink-0">/</span>
-                        <span className="hidden sm:inline text-slate-300 truncate">{newsTitle}</span>
+                        <span className="shrink-0">/</span>
+                        <span className="text-slate-300 truncate">{newsTitle}</span>
                     </div>
 
                     {/* News Badge - Clickable */}

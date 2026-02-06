@@ -2,6 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../components/Header"
 import prisma from "@/lib/prisma"
+import { ArrowLeft } from "lucide-react"
 
 export default async function ServicesPage() {
     const t = await getTranslations()
@@ -50,18 +51,15 @@ export default async function ServicesPage() {
             <Header />
 
             {/* Page Header */}
-            <section className="relative pt-32 pb-8 px-4">
+            <section className="relative pt-16 sm:pt-24 md:pt-32 pb-8 px-4">
                 <div className="mx-auto max-w-6xl">
                     <Link
                         href="/"
-                        className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors mb-6"
+                        className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3 sm:mb-6"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        {t("news.backHome")}
+                        <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
                         {t("services.title")}
                     </h1>
                     <p className="text-slate-400 text-lg mt-4">{t("services.subtitle")}</p>

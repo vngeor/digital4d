@@ -45,7 +45,7 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
 
             <Header />
 
-            <section className="relative pt-32 pb-16 px-4">
+            <section className="relative pt-16 sm:pt-24 md:pt-32 pb-16 px-4">
                 <div className="mx-auto max-w-2xl">
                     <div className="glass rounded-2xl border border-white/10 p-8 md:p-12 text-center">
                         {/* Success Icon */}

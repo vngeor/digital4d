@@ -191,15 +191,14 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
 
       <Header />
 
-      <div className="relative pt-8 pb-16">
+      <div className="relative pt-16 sm:pt-20 md:pt-24 pb-16">
         <div className="mx-auto max-w-4xl px-4">
           {/* Back link */}
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors mb-8"
+            className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3 sm:mb-8"
           >
-            <ArrowLeft className="w-4 h-4" />
-            {t.backToHome}
+            <ArrowLeft className="w-5 h-5" />
           </Link>
 
           {/* Page Header */}

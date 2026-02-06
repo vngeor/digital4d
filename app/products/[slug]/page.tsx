@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Header } from "../../components/Header"
 import { ProductActions } from "../../components/ProductActions"
 import prisma from "@/lib/prisma"
+import { ArrowLeft } from "lucide-react"
 import type { Product } from "@prisma/client"
 import type { Metadata } from "next"
 
@@ -154,10 +155,17 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <Header />
 
             {/* Page Header */}
-            <section className="relative pt-32 pb-8 px-4">
+            <section className="relative pt-16 sm:pt-24 md:pt-32 pb-8 px-4">
                 <div className="mx-auto max-w-6xl">
-                    {/* Breadcrumb */}
-                    <div className="flex items-center gap-2 text-sm text-slate-400 mb-6">
+                    {/* Mobile: Simple back arrow */}
+                    <Link
+                        href="/products"
+                        className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </Link>
+                    {/* Desktop: Full breadcrumb */}
+                    <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 mb-6">
                         <Link href="/" className="hover:text-emerald-400 transition-colors">
                             {t("news.backHome")}
                         </Link>
