@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, ExternalLink } from "lucide-react"
-import { DataTable } from "@/app/components/admin/DataTable"
+import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ContentForm } from "@/app/components/admin/ContentForm"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 
@@ -116,6 +116,17 @@ export default function ContentPage() {
       body: JSON.stringify({ ...item, published: !item.published }),
     })
     fetchContent()
+  }
+
+  const handleReorder = async (items: Content[]) => {
+    setContent(items)
+    await fetch("/api/admin/content", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: items.map((item, index) => ({ id: item.id, order: index })),
+      }),
+    })
   }
 
   // Default colors for built-in types (used when not defined in ContentType table)
@@ -294,11 +305,12 @@ export default function ContentPage() {
           <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
         </div>
       ) : (
-        <DataTable
+        <SortableDataTable
           data={content}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noContent")}
+          onReorder={handleReorder}
         />
       )}
 

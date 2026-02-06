@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, X, Save, Upload, Image as ImageIcon, Link as LinkIcon, ExternalLink } from "lucide-react"
-import { DataTable } from "@/app/components/admin/DataTable"
+import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 
 interface Banner {
   id: string
@@ -89,6 +89,20 @@ export default function BannersPage() {
       body: JSON.stringify({ ...item, published: !item.published }),
     })
     fetchBanners()
+  }
+
+  const handleReorder = async (items: Banner[]) => {
+    // Optimistically update local state
+    setBanners(items)
+
+    // Send reorder request to API
+    await fetch("/api/admin/banners", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: items.map((item, index) => ({ id: item.id, order: index }))
+      }),
+    })
   }
 
   const getTypeBadgeClass = (type: string) => {
@@ -280,11 +294,12 @@ export default function BannersPage() {
           <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
         </div>
       ) : (
-        <DataTable
+        <SortableDataTable
           data={banners}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noBanners")}
+          onReorder={handleReorder}
         />
       )}
 
