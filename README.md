@@ -216,6 +216,243 @@ npm run start
    ```
 3. Access admin at `/admin`
 
+---
+
+## Admin Panel Guide
+
+The admin panel (`/admin`) provides full control over all aspects of the platform.
+
+### Dashboard (`/admin`)
+
+Overview with key statistics:
+- Total users, orders, pending orders, content items
+- Recent orders with status badges
+- Recent user registrations
+
+---
+
+### Products (`/admin/products`)
+
+Manage your product catalog with full e-commerce features.
+
+**Features:**
+- Drag-and-drop reordering
+- Category filtering tabs
+- Homepage position indicator (top 8 published products shown on homepage)
+- Clickable slugs and SKUs with external links
+
+**Product Fields:**
+| Field | Description |
+|-------|-------------|
+| Slug | URL-friendly identifier (e.g., `my-product`) |
+| SKU | Auto-generated or custom stock keeping unit |
+| Name | Multilingual (BG/EN/ES) |
+| Description | Rich text with TipTap editor |
+| Price | Fixed price with currency selection |
+| Sale Price | Discounted price (when "On Sale" enabled) |
+| Price Type | `Fixed`, `From` (starting price), or `Quote` (request quote) |
+| Category | Product category assignment |
+| Tags | Multiple tags for filtering |
+| Image | Main product image (auto-compressed) |
+| Gallery | Multiple additional images |
+| File URL | Digital download file (for digital products) |
+| File Type | `Digital`, `Physical`, or `Service` |
+| Featured | Star badge, prioritized on homepage |
+| Published | Visible on frontend |
+| In Stock | Availability status |
+
+**Categories** (`/admin/products/categories`):
+- Create/edit product categories
+- Multilingual names and descriptions
+- Color-coded badges
+- Category images
+
+---
+
+### Orders (`/admin/orders`)
+
+Track and manage customer orders.
+
+**Features:**
+- Status filter tabs: All, Pending, In Progress, Completed, Cancelled
+- Quick status change dropdown in table
+- Click-to-copy order numbers
+
+**Order Fields:**
+| Field | Description |
+|-------|-------------|
+| Order Number | Auto-generated unique ID (e.g., `ORD-XXXX@D4D`) |
+| Customer Name | Customer's full name |
+| Customer Email | Contact email |
+| Phone | Optional phone number |
+| Description | Order details/requirements |
+| Status | `PENDING` → `IN_PROGRESS` → `COMPLETED` or `CANCELLED` |
+| Notes | Internal admin notes |
+
+---
+
+### Quotes (`/admin/quotes`)
+
+Handle quote requests for custom 3D printing services.
+
+**Features:**
+- Status filter tabs with pending count badge
+- File downloads (STL/OBJ/3MF)
+- Conversation history with customer
+- "Seen/Not seen" status for sent quotes
+
+**Quote Statuses:**
+| Status | Description |
+|--------|-------------|
+| Pending | New request awaiting review |
+| Quoted | Price sent to customer |
+| Accepted | Customer accepted the quote |
+| Rejected | Admin rejected the request |
+| Counter Offer | Customer proposed different price |
+| User Declined | Customer declined the quote |
+
+**Quote Fields:**
+| Field | Description |
+|-------|-------------|
+| Quote Number | Auto-generated (e.g., `QUO-XXXX@D4D`) |
+| Customer Info | Name, email, phone |
+| Product | Linked product (optional) |
+| Message | Customer's requirements |
+| File | Uploaded 3D model file |
+| Quoted Price | Your price offer |
+| Admin Notes | Message to customer with quote |
+
+---
+
+### Banners (`/admin/banners`)
+
+Manage homepage visual elements.
+
+**Banner Types:**
+| Type | Description | Recommended Size |
+|------|-------------|------------------|
+| Hero | Full-width carousel slides | 1920 x 1080px (16:9) |
+| Promo | Announcement strip below header | Text only (image optional) |
+| Card | Featured content cards | 800 x 450px (16:9) |
+
+**Features:**
+- Drag-and-drop reordering
+- Type filter tabs
+- Quick publish/unpublish toggle
+- Image upload with preview
+
+**Banner Fields:**
+| Field | Description |
+|-------|-------------|
+| Type | Hero, Promo, or Card |
+| Title | Multilingual headline |
+| Subtitle | Multilingual description |
+| Image | Banner image |
+| Link | Click destination URL |
+| Link Text | Button/link label (multilingual) |
+| Published | Visible on homepage |
+| Order | Display order within type |
+
+---
+
+### Content (`/admin/content`)
+
+Manage news articles and service pages.
+
+**Features:**
+- Type filter tabs (dynamically from your content)
+- Drag-and-drop reordering
+- Homepage position for news (top 4 shown)
+- Rich text editor (TipTap)
+
+**Content Fields:**
+| Field | Description |
+|-------|-------------|
+| Type | Content type (e.g., `news`, `service`) |
+| Slug | URL path (e.g., `/news/my-article`) |
+| Title | Multilingual headline |
+| Body | Rich text content (multilingual) |
+| Image | Featured image |
+| Menu Item | Link to navigation menu |
+| Published | Visible on frontend |
+| Order | Display order |
+
+---
+
+### Menu (`/admin/menu`)
+
+Configure navigation menu items.
+
+**Features:**
+- Linked content count indicator
+- Quick publish toggle
+- Rich text body for landing pages
+
+**Menu Item Fields:**
+| Field | Description |
+|-------|-------------|
+| Slug | URL path (e.g., `services` → `/services`) |
+| Type | Categorization for content linking |
+| Title | Multilingual menu label |
+| Body | Landing page content (multilingual, rich text) |
+| Published | Visible in navigation |
+| Order | Menu display order |
+
+---
+
+### Content Types (`/admin/types`)
+
+Define content categories with custom styling.
+
+**Fields:**
+| Field | Description |
+|-------|-------------|
+| Slug | Type identifier (e.g., `news`, `service`) |
+| Name | Multilingual display name |
+| Description | Type description for listing pages |
+| Color | Badge color (cyan, purple, emerald, amber, etc.) |
+| Order | Display order |
+
+---
+
+### Users (`/admin/users`)
+
+Manage user accounts and roles.
+
+**Features:**
+- User statistics (total, admins, regular users)
+- Role filter tabs
+- Quick role change dropdown
+- Order count per user
+
+**User Fields:**
+| Field | Description |
+|-------|-------------|
+| Name | Display name |
+| Email | Account email |
+| Phone | Contact phone |
+| Image | Profile picture (from OAuth) |
+| Role | `USER` or `ADMIN` |
+| Orders | Count of orders placed |
+
+---
+
+### Common Admin Features
+
+All admin tables include:
+- **Search** - Filter by text content
+- **Sorting** - Click column headers
+- **Pagination** - Automatic for large datasets
+- **Bulk Actions** - Delete with confirmation
+- **Responsive** - Works on mobile devices
+
+### Keyboard Shortcuts
+
+- Click order/quote numbers to copy to clipboard
+- External link icons on slugs open in new tab
+
+---
+
 ## License
 
 Private - All rights reserved
