@@ -187,9 +187,37 @@ export default async function DynamicPage({ params }: PageProps) {
                         </svg>
                         {t("news.backHome")}
                     </Link>
-                    <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
                         {pageTitle}
                     </h1>
+                    {/* Page Description (from MenuItem body or ContentType desc) */}
+                    {(() => {
+                        // For MenuItems (non-landing), show the body as page intro
+                        if (menuItem && menuItem.type !== "landing") {
+                            const body = getLocalizedBody(menuItem)
+                            if (body) {
+                                return (
+                                    <div
+                                        className="mt-6 prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white"
+                                        dangerouslySetInnerHTML={{ __html: body }}
+                                    />
+                                )
+                            }
+                        }
+                        // For ContentTypes, show the desc
+                        if (contentType) {
+                            const desc = locale === "bg" ? contentType.descBg : locale === "es" ? contentType.descEs : contentType.descEn
+                            if (desc) {
+                                return (
+                                    <div
+                                        className="mt-6 prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white"
+                                        dangerouslySetInnerHTML={{ __html: desc }}
+                                    />
+                                )
+                            }
+                        }
+                        return null
+                    })()}
                 </div>
             </section>
 
