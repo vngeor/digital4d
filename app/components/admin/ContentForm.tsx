@@ -268,6 +268,16 @@ export function ContentForm({
                     </option>
                   ))
                 }
+                {/* Show orphaned type if formData.type doesn't match any known option */}
+                {formData.type !== "news" &&
+                  formData.type !== "service" &&
+                  !contentTypes.some(ct => ct.slug === formData.type) &&
+                  formData.type && (
+                    <option value={formData.type}>
+                      {formData.type} ⚠️ (Unknown type)
+                    </option>
+                  )
+                }
               </select>
               <p className="text-xs text-gray-500 mt-1">{t("typeHelp")}</p>
             </div>

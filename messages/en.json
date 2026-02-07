@@ -528,5 +528,12 @@
     "backToHome": "Back to Home",
     "seeMore": "See More",
     "showLess": "Show Less"
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "Page Not Found",
+    "description": "The page you are looking for doesn't exist or has been moved.",
+    "backHome": "Back to Home",
+    "browseProducts": "Browse Products"
   }
 }

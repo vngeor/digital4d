@@ -35,14 +35,29 @@ export default async function DynamicPage({ params }: PageProps) {
         }
     })
 
+    // Fetch all content types for badge rendering
+    const allContentTypes = await prisma.contentType.findMany()
+    const localeKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as "nameBg" | "nameEn" | "nameEs"
+    const typeMap = Object.fromEntries(
+        allContentTypes.map(ct => [ct.slug, { name: ct[localeKey], color: ct.color }])
+    )
+
+    // Fallback for hardcoded types not in ContentType table
+    if (!typeMap["news"]) {
+        const fallback: Record<string, string> = { bg: "Новина", en: "News", es: "Noticia" }
+        typeMap["news"] = { name: fallback[locale] || fallback.en, color: "cyan" }
+    }
+    if (!typeMap["service"]) {
+        const fallback: Record<string, string> = { bg: "Услуга", en: "Service", es: "Servicio" }
+        typeMap["service"] = { name: fallback[locale] || fallback.en, color: "purple" }
+    }
+
     // If no menu item, check if it's a content type
     let contentType = null
     let typeContents: NonNullable<typeof menuItem>["contents"] | null = null
 
     if (!menuItem) {
-        contentType = await prisma.contentType.findUnique({
-            where: { slug: menuSlug }
-        })
+        contentType = allContentTypes.find(ct => ct.slug === menuSlug) ?? null
 
         if (contentType) {
             // Fetch all content of this type
@@ -160,8 +175,6 @@ export default async function DynamicPage({ params }: PageProps) {
         fuchsia: "bg-fuchsia-500/20 text-fuchsia-400",
         yellow: "bg-yellow-500/20 text-yellow-400",
     }
-    const badgeColor = contentType?.color || "purple"
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
             {/* Animated Background Orbs */}
@@ -249,9 +262,9 @@ export default async function DynamicPage({ params }: PageProps) {
                                             </div>
                                         )}
                                         <div className="p-6">
-                                            {contentType && (
-                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${colorClasses[badgeColor] || colorClasses.purple}`}>
-                                                    {pageTitle}
+                                            {typeMap[content.type] && (
+                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${colorClasses[typeMap[content.type].color] || colorClasses.purple}`}>
+                                                    {typeMap[content.type].name}
                                                 </span>
                                             )}
                                             <h3 className="text-xl font-bold text-white group-hover:text-emerald-400 transition-colors mb-3">

@@ -27,12 +27,27 @@ export default async function ContentDetailPage({ params }: PageProps) {
         where: { slug: menuSlug, published: true },
     })
 
+    // Fetch all content types for badge rendering
+    const allContentTypes = await prisma.contentType.findMany()
+    const localeKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as "nameBg" | "nameEn" | "nameEs"
+    const typeMap = Object.fromEntries(
+        allContentTypes.map(ct => [ct.slug, { name: ct[localeKey], color: ct.color }])
+    )
+
+    // Fallback for hardcoded types not in ContentType table
+    if (!typeMap["news"]) {
+        const fallback: Record<string, string> = { bg: "Новина", en: "News", es: "Noticia" }
+        typeMap["news"] = { name: fallback[locale] || fallback.en, color: "cyan" }
+    }
+    if (!typeMap["service"]) {
+        const fallback: Record<string, string> = { bg: "Услуга", en: "Service", es: "Servicio" }
+        typeMap["service"] = { name: fallback[locale] || fallback.en, color: "purple" }
+    }
+
     // Try to find content type if no menu item
     let contentType = null
     if (!menuItem) {
-        contentType = await prisma.contentType.findUnique({
-            where: { slug: menuSlug }
-        })
+        contentType = allContentTypes.find(ct => ct.slug === menuSlug) ?? null
     }
 
     // If neither exists, 404
@@ -110,7 +125,8 @@ export default async function ContentDetailPage({ params }: PageProps) {
         fuchsia: "bg-fuchsia-500/20 text-fuchsia-400",
         yellow: "bg-yellow-500/20 text-yellow-400",
     }
-    const badgeColor = contentType?.color || (menuItem?.type === "news" ? "cyan" : "purple")
+    // Badge from content's actual type
+    const typeBadge = typeMap[content.type]
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
@@ -147,12 +163,14 @@ export default async function ContentDetailPage({ params }: PageProps) {
                     </div>
 
                     {/* Type Badge - Clickable */}
-                    <Link
-                        href={`/${menuSlug}`}
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 hover:opacity-80 transition-opacity ${colorClasses[badgeColor] || colorClasses.purple}`}
-                    >
-                        {sectionTitle}
-                    </Link>
+                    {typeBadge && (
+                        <Link
+                            href={`/${menuSlug}`}
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 hover:opacity-80 transition-opacity ${colorClasses[typeBadge.color] || colorClasses.purple}`}
+                        >
+                            {typeBadge.name}
+                        </Link>
+                    )}
 
                     <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
                         {contentTitle}

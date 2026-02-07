@@ -528,5 +528,12 @@
     "backToHome": "Volver al inicio",
     "seeMore": "Ver más",
     "showLess": "Ver menos"
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "Pagina no encontrada",
+    "description": "La pagina que buscas no existe o ha sido movida.",
+    "backHome": "Volver al inicio",
+    "browseProducts": "Ver productos"
   }
 }
