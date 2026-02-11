@@ -121,7 +121,7 @@ export default async function DynamicPage({ params }: PageProps) {
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
-                        <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
                             {getLocalizedTitle(menuItem)}
                         </h1>
                     </div>

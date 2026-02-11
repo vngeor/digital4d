@@ -99,7 +99,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                         </div>
 
                         {/* Title */}
-                        <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                        <h2 className="text-2xl sm:text-3xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent break-words">
                             {news.title}
                         </h2>
 

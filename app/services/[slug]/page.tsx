@@ -94,7 +94,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                         {t("services.badge")}
                     </Link>
 
-                    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
                         {serviceTitle}
                     </h1>
 

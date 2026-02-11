@@ -101,7 +101,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
             <section id="news" className={`relative ${compact ? 'py-10 sm:py-12' : 'py-24'} px-4`}>
                 <div className={`mx-auto ${compact ? 'max-w-4xl' : 'max-w-6xl'}`}>
                     <div className={`text-center ${compact ? 'mb-6 sm:mb-8' : 'mb-16'}`}>
-                        <h2 className={`${compact ? 'text-2xl sm:text-3xl' : 'text-4xl'} font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent`}>
+                        <h2 className={`${compact ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl'} font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent`}>
                             {t("title")}
                         </h2>
                         <p className={`text-slate-400 ${compact ? 'text-sm sm:text-base' : 'text-lg'}`}>{t("subtitle")}</p>

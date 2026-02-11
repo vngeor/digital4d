@@ -45,20 +45,11 @@ export const metadata: Metadata = {
     siteName: "digital4d",
     title: "digital4d - 3D Печат и Моделиране",
     description: "Професионални услуги за 3D печат, моделиране и прототипиране. Висококачествени решения за вашите проекти.",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "digital4d - 3D Печат и Моделиране",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "digital4d - 3D Печат и Моделиране",
     description: "Професионални услуги за 3D печат, моделиране и прототипиране.",
-    images: ["/og-image.png"],
   },
   robots: {
     index: true,
