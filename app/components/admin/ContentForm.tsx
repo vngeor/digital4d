@@ -58,6 +58,7 @@ interface ContentFormProps {
     order?: number
     menuItemId?: string | null
   }
+  defaultType?: string
   onSubmit: (data: ContentFormData) => Promise<void>
   onCancel: () => void
 }
@@ -73,6 +74,7 @@ function generateSlug(title: string): string {
 
 export function ContentForm({
   initialData,
+  defaultType,
   onSubmit,
   onCancel,
 }: ContentFormProps) {
@@ -86,7 +88,7 @@ export function ContentForm({
   const [autoSlug, setAutoSlug] = useState(!initialData?.id)
   const [formData, setFormData] = useState<ContentFormData>({
     id: initialData?.id,
-    type: initialData?.type ?? "news",
+    type: initialData?.type ?? defaultType ?? "news",
     slug: initialData?.slug ?? "",
     titleBg: initialData?.titleBg ?? "",
     titleEn: initialData?.titleEn ?? "",

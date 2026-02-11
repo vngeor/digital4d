@@ -113,11 +113,16 @@ export default function ContentPage() {
     order: number
   }) => {
     const method = data.id ? "PUT" : "POST"
-    await fetch("/api/admin/content", {
+    const res = await fetch("/api/admin/content", {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      alert(err.error || "Failed to save content")
+      return
+    }
     setShowForm(false)
     setEditingContent(null)
     fetchContent()
@@ -127,18 +132,28 @@ export default function ContentPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm(t("confirmDelete"))) return
-    await fetch(`/api/admin/content?id=${id}`, { method: "DELETE" })
+    const res = await fetch(`/api/admin/content?id=${id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      alert(err.error || "Failed to delete content")
+      return
+    }
     fetchContent()
     fetchAllTypes()
     fetchAllContent() // Refresh homepage positions
   }
 
   const handleTogglePublish = async (item: Content) => {
-    await fetch("/api/admin/content", {
+    const res = await fetch("/api/admin/content", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...item, published: !item.published }),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      alert(err.error || "Failed to update content")
+      return
+    }
     fetchContent()
     fetchAllContent() // Refresh homepage positions
   }
@@ -379,6 +394,7 @@ export default function ContentPage() {
       {showForm && (
         <ContentForm
           initialData={editingContent || undefined}
+          defaultType={filter !== "all" ? filter : undefined}
           onSubmit={handleSubmit}
           onCancel={() => {
             setShowForm(false)

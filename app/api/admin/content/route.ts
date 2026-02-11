@@ -57,8 +57,9 @@ export async function POST(request: NextRequest) {
     if (data.slug) {
       const existing = await prisma.content.findUnique({ where: { slug: data.slug } })
       if (existing) {
+        const status = existing.published ? "published" : "draft"
         return NextResponse.json(
-          { error: `Content with slug "${data.slug}" already exists.` },
+          { error: `Content with slug "${data.slug}" already exists (type: ${existing.type}, ${status}). Check the "${existing.type}" filter tab.` },
           { status: 400 }
         )
       }
@@ -123,8 +124,9 @@ export async function PUT(request: NextRequest) {
         }
       })
       if (existing) {
+        const status = existing.published ? "published" : "draft"
         return NextResponse.json(
-          { error: `Content with slug "${data.slug}" already exists.` },
+          { error: `Content with slug "${data.slug}" already exists (type: ${existing.type}, ${status}). Check the "${existing.type}" filter tab.` },
           { status: 400 }
         )
       }
