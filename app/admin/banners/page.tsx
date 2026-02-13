@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, X, Save, Upload, Image as ImageIcon, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
+import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 
 interface Banner {
   id: string
@@ -50,6 +52,7 @@ export default function BannersPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null)
   const [filter, setFilter] = useState<string>("all")
+  const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
 
   const fetchBanners = async () => {
     setLoading(true)
@@ -73,12 +76,19 @@ export default function BannersPage() {
     })
     setShowForm(false)
     setEditingBanner(null)
+    toast.success(t("savedSuccess"))
     fetchBanners()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete"))) return
-    await fetch(`/api/admin/banners?id=${id}`, { method: "DELETE" })
+  const handleDelete = (id: string, name: string) => {
+    setDeleteItem({ id, name })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteItem) return
+    await fetch(`/api/admin/banners?id=${deleteItem.id}`, { method: "DELETE" })
+    setDeleteItem(null)
+    toast.success(t("deletedSuccess"))
     fetchBanners()
   }
 
@@ -250,7 +260,7 @@ export default function BannersPage() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              handleDelete(item.id)
+              handleDelete(item.id, item.titleEn)
             }}
             className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
           >
@@ -320,6 +330,14 @@ export default function BannersPage() {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={!!deleteItem}
+        title={t("confirmDeleteTitle")}
+        message={t("confirmDeleteMessage", { name: deleteItem?.name ?? "" })}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteItem(null)}
+      />
     </div>
   )
 }
@@ -387,7 +405,7 @@ function BannerForm({
 
       if (!res.ok) {
         const error = await res.json()
-        alert(error.error || "Upload failed")
+        toast.error(error.error || t("uploadFailed"))
         return
       }
 
@@ -395,7 +413,7 @@ function BannerForm({
       updateField("image", data.url)
     } catch (error) {
       console.error("Upload error:", error)
-      alert("Failed to upload image")
+      toast.error(t("uploadImageFailed"))
     } finally {
       setUploading(false)
       if (fileInputRef.current) {

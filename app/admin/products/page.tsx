@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Loader2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ProductForm } from "@/app/components/admin/ProductForm"
+import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 
 interface Product {
@@ -61,6 +63,7 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
 
   // Compute which products appear on homepage (top 8 published, sorted by featured then order)
   const homepageProductIds = new Set(
@@ -158,19 +161,26 @@ export default function ProductsPage() {
 
     if (!res.ok) {
       const error = await res.json()
-      alert(error.error || "Failed to save product")
+      toast.error(error.error || t("saveFailed"))
       return
     }
 
     setShowForm(false)
     setEditingProduct(null)
+    toast.success(t("savedSuccess"))
     fetchProducts(selectedCategory)
     fetchAllProducts() // Refresh homepage positions
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete"))) return
-    await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" })
+  const handleDelete = (id: string, name: string) => {
+    setDeleteItem({ id, name })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteItem) return
+    await fetch(`/api/admin/products?id=${deleteItem.id}`, { method: "DELETE" })
+    setDeleteItem(null)
+    toast.success(t("deletedSuccess"))
     fetchProducts(selectedCategory)
     fetchAllProducts() // Refresh homepage positions
   }
@@ -382,7 +392,7 @@ export default function ProductsPage() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              handleDelete(item.id)
+              handleDelete(item.id, item.nameEn)
             }}
             className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
             title={t("delete")}
@@ -478,6 +488,14 @@ export default function ProductsPage() {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={!!deleteItem}
+        title={t("confirmDeleteTitle")}
+        message={t("confirmDeleteMessage", { name: deleteItem?.name ?? "" })}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteItem(null)}
+      />
     </div>
   )
 }

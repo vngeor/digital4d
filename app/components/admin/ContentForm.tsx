@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { X, Save, Loader2, Upload, Image as ImageIcon } from "lucide-react"
 import { RichTextEditor } from "./RichTextEditor"
 
@@ -79,6 +80,7 @@ export function ContentForm({
   onCancel,
 }: ContentFormProps) {
   const t = useTranslations("admin.content")
+  const tc = useTranslations("admin.common")
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
@@ -209,7 +211,7 @@ export function ContentForm({
 
       if (!res.ok) {
         const error = await res.json()
-        alert(error.error || "Upload failed")
+        toast.error(error.error || tc("uploadFailed"))
         return
       }
 
@@ -217,7 +219,7 @@ export function ContentForm({
       updateField("image", data.url)
     } catch (error) {
       console.error("Upload error:", error)
-      alert("Failed to upload image")
+      toast.error(tc("uploadImageFailed"))
     } finally {
       setUploading(false)
       if (fileInputRef.current) {

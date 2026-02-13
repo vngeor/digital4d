@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import {
   Plus,
   Edit2,
@@ -15,6 +16,7 @@ import {
   PlayCircle,
 } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
+import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 
 interface Order {
   id: string
@@ -45,6 +47,7 @@ export default function OrdersPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [filter, setFilter] = useState<string>("all")
+  const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
 
   const fetchOrders = async () => {
     setLoading(true)
@@ -80,12 +83,19 @@ export default function OrdersPage() {
     })
     setShowForm(false)
     setEditingOrder(null)
+    toast.success(t("savedSuccess"))
     fetchOrders()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete"))) return
-    await fetch(`/api/admin/orders?id=${id}`, { method: "DELETE" })
+  const handleDelete = (id: string, name: string) => {
+    setDeleteItem({ id, name })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteItem) return
+    await fetch(`/api/admin/orders?id=${deleteItem.id}`, { method: "DELETE" })
+    setDeleteItem(null)
+    toast.success(t("deletedSuccess"))
     fetchOrders()
   }
 
@@ -197,7 +207,7 @@ export default function OrdersPage() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              handleDelete(item.id)
+              handleDelete(item.id, item.orderNumber)
             }}
             className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
           >
@@ -381,6 +391,14 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteItem}
+        title={t("confirmDeleteTitle")}
+        message={t("confirmDeleteMessage", { name: deleteItem?.name ?? "" })}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteItem(null)}
+      />
     </div>
   )
 }

@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ContentForm } from "@/app/components/admin/ContentForm"
+import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 
 interface ContentType {
@@ -40,6 +42,7 @@ export default function ContentPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingContent, setEditingContent] = useState<Content | null>(null)
   const [filter, setFilter] = useState<string>("all")
+  const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
 
   // Get homepage position for news items (top 4 news appear on homepage)
   const getHomepagePosition = (item: Content): number | null => {
@@ -120,24 +123,32 @@ export default function ContentPage() {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "An error occurred" }))
-      alert(err.error || "Failed to save content")
+      toast.error(err.error || t("saveFailed"))
       return
     }
     setShowForm(false)
     setEditingContent(null)
+    toast.success(t("savedSuccess"))
     fetchContent()
     fetchAllTypes()
     fetchAllContent() // Refresh homepage positions
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete"))) return
-    const res = await fetch(`/api/admin/content?id=${id}`, { method: "DELETE" })
+  const handleDelete = (id: string, name: string) => {
+    setDeleteItem({ id, name })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteItem) return
+    const res = await fetch(`/api/admin/content?id=${deleteItem.id}`, { method: "DELETE" })
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "An error occurred" }))
-      alert(err.error || "Failed to delete content")
+      toast.error(err.error || t("deleteFailed"))
+      setDeleteItem(null)
       return
     }
+    setDeleteItem(null)
+    toast.success(t("deletedSuccess"))
     fetchContent()
     fetchAllTypes()
     fetchAllContent() // Refresh homepage positions
@@ -151,9 +162,10 @@ export default function ContentPage() {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: "An error occurred" }))
-      alert(err.error || "Failed to update content")
+      toast.error(err.error || t("updateFailed"))
       return
     }
+    toast.success(item.published ? t("unpublishedSuccess") : t("publishedSuccess"))
     fetchContent()
     fetchAllContent() // Refresh homepage positions
   }
@@ -321,7 +333,7 @@ export default function ContentPage() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              handleDelete(item.id)
+              handleDelete(item.id, item.titleEn)
             }}
             className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
           >
@@ -402,6 +414,14 @@ export default function ContentPage() {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={!!deleteItem}
+        title={t("confirmDeleteTitle")}
+        message={t("confirmDeleteMessage", { name: deleteItem?.name ?? "" })}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteItem(null)}
+      />
     </div>
   )
 }

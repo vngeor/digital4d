@@ -8,6 +8,8 @@ import Color from "@tiptap/extension-color"
 import { TextStyle } from "@tiptap/extension-text-style"
 import Underline from "@tiptap/extension-underline"
 import { useEffect, useRef, useCallback } from "react"
+import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import {
   Bold,
   Italic,
@@ -30,6 +32,7 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, error }: RichTextEditorProps) {
+  const tc = useTranslations("admin.common")
   const colorInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const uploadingRef = useRef(false)
@@ -119,7 +122,7 @@ export function RichTextEditor({ value, onChange, error }: RichTextEditorProps) 
 
         if (!res.ok) {
           const error = await res.json()
-          alert(error.error || "Upload failed")
+          toast.error(error.error || tc("uploadFailed"))
           return
         }
 
@@ -127,7 +130,7 @@ export function RichTextEditor({ value, onChange, error }: RichTextEditorProps) 
         editor.chain().focus().setImage({ src: data.url }).run()
       } catch (err) {
         console.error("Upload error:", err)
-        alert("Failed to upload image")
+        toast.error(tc("uploadImageFailed"))
       } finally {
         uploadingRef.current = false
         if (fileInputRef.current) {

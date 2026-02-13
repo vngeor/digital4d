@@ -51,7 +51,7 @@ export function LanguageSwitcher() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-40 py-2 glass-strong rounded-xl z-[60] border border-white/10">
+        <div className="absolute right-0 mt-2 w-40 py-2 bg-slate-900/95 backdrop-blur-xl rounded-xl z-[60] border border-white/10 shadow-xl">
           {locales.map((locale) => (
             <button
               key={locale}

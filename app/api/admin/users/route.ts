@@ -10,11 +10,87 @@ async function requireAdminApi() {
   return session
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await requireAdminApi()
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const searchParams = request.nextUrl.searchParams
+    const id = searchParams.get("id")
+
+    if (id) {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          image: true,
+          role: true,
+          country: true,
+          city: true,
+          address: true,
+          birthDate: true,
+          createdAt: true,
+          orders: {
+            select: {
+              id: true,
+              orderNumber: true,
+              customerName: true,
+              customerEmail: true,
+              phone: true,
+              status: true,
+              description: true,
+              notes: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      })
+
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 })
+      }
+
+      // Fetch quote requests by user email
+      const quoteRequests = await prisma.quoteRequest.findMany({
+        where: { email: user.email },
+        select: {
+          id: true,
+          quoteNumber: true,
+          status: true,
+          message: true,
+          fileName: true,
+          fileUrl: true,
+          quotedPrice: true,
+          adminNotes: true,
+          userResponse: true,
+          quotedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          product: {
+            select: { nameEn: true },
+          },
+          messages: {
+            select: {
+              id: true,
+              senderType: true,
+              message: true,
+              quotedPrice: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      })
+
+      return NextResponse.json({ ...user, quoteRequests })
     }
 
     const users = await prisma.user.findMany({
@@ -57,24 +133,36 @@ export async function PUT(request: NextRequest) {
     }
 
     // Prevent admin from demoting themselves
-    if (data.id === session.user.id && data.role !== "ADMIN") {
+    if (data.role && data.id === session.user.id && data.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Cannot demote yourself" },
         { status: 400 }
       )
     }
 
+    const updateData: Record<string, unknown> = {}
+    if (data.role !== undefined) updateData.role = data.role
+    if (data.name !== undefined) updateData.name = data.name
+    if (data.phone !== undefined) updateData.phone = data.phone
+    if (data.country !== undefined) updateData.country = data.country
+    if (data.city !== undefined) updateData.city = data.city
+    if (data.address !== undefined) updateData.address = data.address
+    if (data.birthDate !== undefined) updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null
+
     const user = await prisma.user.update({
       where: { id: data.id },
-      data: {
-        role: data.role,
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
+        phone: true,
         image: true,
         role: true,
+        country: true,
+        city: true,
+        address: true,
+        birthDate: true,
         createdAt: true,
       },
     })

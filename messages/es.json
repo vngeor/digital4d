@@ -153,7 +153,13 @@
       "confirmDelete": "¿Estás seguro de que quieres eliminar este banner?",
       "noBanners": "No se encontraron banners",
       "searchPlaceholder": "Buscar banners...",
-      "all": "Todos"
+      "all": "Todos",
+      "savedSuccess": "Banner guardado correctamente",
+      "deletedSuccess": "Banner eliminado",
+      "uploadFailed": "Error al subir",
+      "uploadImageFailed": "Error al subir la imagen",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
     },
     "menu": {
       "title": "Gestión de Menú",
@@ -184,7 +190,12 @@
       "cancel": "Cancelar",
       "confirmDelete": "¿Estás seguro de que quieres eliminar este elemento?",
       "searchPlaceholder": "Buscar elementos...",
-      "noMenuItems": "No se encontraron elementos"
+      "noMenuItems": "No se encontraron elementos",
+      "savedSuccess": "Elemento de menú guardado correctamente",
+      "deletedSuccess": "Elemento de menú eliminado",
+      "saveFailed": "Error al guardar el elemento de menú",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
     },
     "dashboard": {
       "title": "Panel",
@@ -237,7 +248,16 @@
       "cancel": "Cancelar",
       "confirmDelete": "¿Estás seguro de que quieres eliminar este contenido?",
       "searchPlaceholder": "Buscar contenido...",
-      "noContent": "No se encontró contenido"
+      "noContent": "No se encontró contenido",
+      "savedSuccess": "Contenido guardado correctamente",
+      "deletedSuccess": "Contenido eliminado",
+      "saveFailed": "Error al guardar el contenido",
+      "deleteFailed": "Error al eliminar el contenido",
+      "publishedSuccess": "Publicado",
+      "unpublishedSuccess": "Despublicado",
+      "updateFailed": "Error al actualizar el contenido",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
     },
     "orders": {
       "title": "Gestión de Pedidos",
@@ -258,7 +278,11 @@
       "cancel": "Cancelar",
       "confirmDelete": "¿Estás seguro de que quieres eliminar este pedido?",
       "searchPlaceholder": "Buscar pedidos...",
-      "noOrders": "No se encontraron pedidos"
+      "noOrders": "No se encontraron pedidos",
+      "savedSuccess": "Pedido guardado correctamente",
+      "deletedSuccess": "Pedido eliminado",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
     },
     "users": {
       "title": "Gestión de Usuarios",
@@ -274,7 +298,49 @@
       "all": "Todos",
       "confirmDelete": "¿Estás seguro de que quieres eliminar este usuario?",
       "searchPlaceholder": "Buscar usuarios...",
-      "noUsers": "No se encontraron usuarios"
+      "noUsers": "No se encontraron usuarios",
+      "deletedSuccess": "Usuario eliminado",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
+      "viewUser": "Detalles del Usuario",
+      "personalInfo": "Información Personal",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "country": "País",
+      "city": "Ciudad",
+      "address": "Dirección",
+      "birthDate": "Fecha de nacimiento",
+      "orderHistory": "Historial de Pedidos",
+      "orderNumber": "Pedido #",
+      "orderStatus": "Estado",
+      "orderDate": "Fecha",
+      "orderDescription": "Descripción",
+      "orderNotes": "Notas",
+      "orderCustomer": "Cliente",
+      "orderPhone": "Teléfono",
+      "orderUpdated": "Actualizado",
+      "noOrders": "Aún no hay pedidos",
+      "notProvided": "No proporcionado",
+      "close": "Cerrar",
+      "editUser": "Editar Usuario",
+      "name": "Nombre",
+      "save": "Guardar",
+      "savedSuccess": "Usuario actualizado correctamente",
+      "saveFailed": "Error al actualizar usuario",
+      "quoteHistory": "Historial de Cotizaciones",
+      "quoteNumber": "Cotización #",
+      "quoteStatus": "Estado",
+      "quoteDate": "Fecha",
+      "quotedPrice": "Precio",
+      "quoteProduct": "Producto",
+      "quoteMessage": "Mensaje",
+      "quoteFile": "Archivo adjunto",
+      "quoteAdminNotes": "Notas del Admin",
+      "quoteUserResponse": "Respuesta del Usuario",
+      "quoteQuotedAt": "Cotizado el",
+      "quoteUpdated": "Actualizado",
+      "noQuotes": "Aún no hay cotizaciones",
+      "conversation": "Conversación"
     },
     "types": {
       "title": "Gestión de Tipos",
@@ -293,7 +359,12 @@
       "cancel": "Cancelar",
       "confirmDelete": "¿Estás seguro de que quieres eliminar este tipo?",
       "searchPlaceholder": "Buscar tipos...",
-      "noTypes": "No se encontraron tipos"
+      "noTypes": "No se encontraron tipos",
+      "savedSuccess": "Tipo guardado correctamente",
+      "deletedSuccess": "Tipo eliminado",
+      "saveFailed": "Error al guardar el tipo",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
     },
     "products": {
       "title": "Gestión de Productos",
@@ -338,7 +409,12 @@
       "noProducts": "No se encontraron productos",
       "all": "Todos",
       "categories": "Categorías",
-      "manageCategories": "Gestionar Categorías"
+      "manageCategories": "Gestionar Categorías",
+      "savedSuccess": "Producto guardado correctamente",
+      "deletedSuccess": "Producto eliminado",
+      "saveFailed": "Error al guardar el producto",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
     },
     "productCategories": {
       "title": "Categorías de Productos",
@@ -359,7 +435,12 @@
       "cancel": "Cancelar",
       "confirmDelete": "¿Estás seguro de que quieres eliminar esta categoría?",
       "searchPlaceholder": "Buscar categorías...",
-      "noCategories": "No se encontraron categorías"
+      "noCategories": "No se encontraron categorías",
+      "savedSuccess": "Categoría guardada correctamente",
+      "deletedSuccess": "Categoría eliminada",
+      "saveFailed": "Error al guardar la categoría",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
     },
     "quotes": {
       "title": "Solicitudes de Cotización",
@@ -390,7 +471,16 @@
       "quoted": "Cotizados",
       "accepted": "Aceptados",
       "rejected": "Rechazados",
-      "downloadFile": "Descargar Archivo"
+      "downloadFile": "Descargar Archivo",
+      "updatedSuccess": "Cotización actualizada correctamente",
+      "deletedSuccess": "Cotización eliminada",
+      "updateFailed": "Error al actualizar la cotización",
+      "confirmDeleteTitle": "Confirmar eliminación",
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
+    },
+    "common": {
+      "uploadFailed": "Error al subir",
+      "uploadImageFailed": "Error al subir la imagen"
     }
   },
   "products": {
@@ -416,7 +506,9 @@
     "description": "Descripción",
     "specifications": "Especificaciones",
     "relatedProducts": "Productos Relacionados",
-    "backToProducts": "Volver a Productos"
+    "backToProducts": "Volver a Productos",
+    "checkoutFailed": "Error al crear la sesión de pago",
+    "checkoutError": "Error al iniciar el pago"
   },
   "quotes": {
     "title": "Solicitar Cotización",

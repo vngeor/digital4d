@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useTranslations, useLocale } from "next-intl"
+import { toast } from "sonner"
 import { X, Save, Loader2, Upload, Sparkles } from "lucide-react"
 
 interface ProductFormData {
@@ -122,6 +123,7 @@ export function ProductForm({
   onCancel,
 }: ProductFormProps) {
   const t = useTranslations("admin.products")
+  const tc = useTranslations("admin.common")
   const locale = useLocale()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -224,7 +226,7 @@ export function ProductForm({
 
       if (!res.ok) {
         const error = await res.json()
-        alert(error.error || "Upload failed")
+        toast.error(error.error || tc("uploadFailed"))
         return
       }
 
@@ -232,7 +234,7 @@ export function ProductForm({
       updateField("image", data.url)
     } catch (error) {
       console.error("Upload error:", error)
-      alert("Failed to upload image")
+      toast.error(tc("uploadImageFailed"))
     } finally {
       setUploading(false)
       if (fileInputRef.current) {

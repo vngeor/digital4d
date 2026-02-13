@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { ShoppingCart, MessageSquare, Send, Loader2 } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
 
@@ -36,7 +37,7 @@ export function ProductActions({ product }: ProductActionsProps) {
             const data = await res.json()
 
             if (!res.ok) {
-                alert(data.error || "Failed to create checkout session")
+                toast.error(data.error || t("checkoutFailed"))
                 return
             }
 
@@ -46,7 +47,7 @@ export function ProductActions({ product }: ProductActionsProps) {
             }
         } catch (error) {
             console.error("Checkout error:", error)
-            alert("Failed to initiate checkout")
+            toast.error(t("checkoutError"))
         } finally {
             setLoading(false)
         }

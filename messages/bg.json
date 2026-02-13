@@ -153,7 +153,13 @@
       "confirmDelete": "Сигурни ли сте, че искате да изтриете този банер?",
       "noBanners": "Няма намерени банери",
       "searchPlaceholder": "Търси банери...",
-      "all": "Всички"
+      "all": "Всички",
+      "savedSuccess": "Банерът е запазен успешно",
+      "deletedSuccess": "Банерът е изтрит",
+      "uploadFailed": "Качването не успя",
+      "uploadImageFailed": "Неуспешно качване на изображение",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
     },
     "menu": {
       "title": "Управление на меню",
@@ -184,7 +190,12 @@
       "cancel": "Отказ",
       "confirmDelete": "Сигурни ли сте, че искате да изтриете този елемент?",
       "searchPlaceholder": "Търси елементи...",
-      "noMenuItems": "Няма намерени елементи"
+      "noMenuItems": "Няма намерени елементи",
+      "savedSuccess": "Елементът от менюто е запазен успешно",
+      "deletedSuccess": "Елементът от менюто е изтрит",
+      "saveFailed": "Неуспешно запазване на елемент от менюто",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
     },
     "dashboard": {
       "title": "Табло",
@@ -237,7 +248,16 @@
       "cancel": "Отказ",
       "confirmDelete": "Сигурни ли сте, че искате да изтриете това съдържание?",
       "searchPlaceholder": "Търси съдържание...",
-      "noContent": "Няма намерено съдържание"
+      "noContent": "Няма намерено съдържание",
+      "savedSuccess": "Съдържанието е запазено успешно",
+      "deletedSuccess": "Съдържанието е изтрито",
+      "saveFailed": "Неуспешно запазване на съдържание",
+      "deleteFailed": "Неуспешно изтриване на съдържание",
+      "publishedSuccess": "Публикувано",
+      "unpublishedSuccess": "Скрито",
+      "updateFailed": "Неуспешно обновяване на съдържание",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
     },
     "orders": {
       "title": "Управление на поръчки",
@@ -258,7 +278,11 @@
       "cancel": "Отказ",
       "confirmDelete": "Сигурни ли сте, че искате да изтриете тази поръчка?",
       "searchPlaceholder": "Търси поръчки...",
-      "noOrders": "Няма намерени поръчки"
+      "noOrders": "Няма намерени поръчки",
+      "savedSuccess": "Поръчката е запазена успешно",
+      "deletedSuccess": "Поръчката е изтрита",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
     },
     "users": {
       "title": "Управление на потребители",
@@ -274,7 +298,49 @@
       "all": "Всички",
       "confirmDelete": "Сигурни ли сте, че искате да изтриете този потребител?",
       "searchPlaceholder": "Търси потребители...",
-      "noUsers": "Няма намерени потребители"
+      "noUsers": "Няма намерени потребители",
+      "deletedSuccess": "Потребителят е изтрит",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
+      "viewUser": "Детайли за потребител",
+      "personalInfo": "Лична информация",
+      "email": "Имейл",
+      "phone": "Телефон",
+      "country": "Държава",
+      "city": "Град",
+      "address": "Адрес",
+      "birthDate": "Дата на раждане",
+      "orderHistory": "История на поръчките",
+      "orderNumber": "Поръчка №",
+      "orderStatus": "Статус",
+      "orderDate": "Дата",
+      "orderDescription": "Описание",
+      "orderNotes": "Бележки",
+      "orderCustomer": "Клиент",
+      "orderPhone": "Телефон",
+      "orderUpdated": "Обновена",
+      "noOrders": "Все още няма поръчки",
+      "notProvided": "Не е предоставено",
+      "close": "Затвори",
+      "editUser": "Редактирай потребител",
+      "name": "Име",
+      "save": "Запази",
+      "savedSuccess": "Потребителят е обновен успешно",
+      "saveFailed": "Неуспешно обновяване на потребител",
+      "quoteHistory": "История на офертите",
+      "quoteNumber": "Оферта №",
+      "quoteStatus": "Статус",
+      "quoteDate": "Дата",
+      "quotedPrice": "Цена",
+      "quoteProduct": "Продукт",
+      "quoteMessage": "Съобщение",
+      "quoteFile": "Прикачен файл",
+      "quoteAdminNotes": "Бележки от админ",
+      "quoteUserResponse": "Отговор на потребител",
+      "quoteQuotedAt": "Офертирана на",
+      "quoteUpdated": "Обновена",
+      "noQuotes": "Все още няма оферти",
+      "conversation": "Разговор"
     },
     "types": {
       "title": "Управление на типове",
@@ -293,7 +359,12 @@
       "cancel": "Отказ",
       "confirmDelete": "Сигурни ли сте, че искате да изтриете този тип?",
       "searchPlaceholder": "Търси типове...",
-      "noTypes": "Няма намерени типове"
+      "noTypes": "Няма намерени типове",
+      "savedSuccess": "Типът е запазен успешно",
+      "deletedSuccess": "Типът е изтрит",
+      "saveFailed": "Неуспешно запазване на тип",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
     },
     "products": {
       "title": "Управление на продукти",
@@ -338,7 +409,12 @@
       "noProducts": "Няма намерени продукти",
       "all": "Всички",
       "categories": "Категории",
-      "manageCategories": "Управление на категории"
+      "manageCategories": "Управление на категории",
+      "savedSuccess": "Продуктът е запазен успешно",
+      "deletedSuccess": "Продуктът е изтрит",
+      "saveFailed": "Неуспешно запазване на продукт",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
     },
     "productCategories": {
       "title": "Категории продукти",
@@ -359,7 +435,12 @@
       "cancel": "Отказ",
       "confirmDelete": "Сигурни ли сте, че искате да изтриете тази категория?",
       "searchPlaceholder": "Търси категории...",
-      "noCategories": "Няма намерени категории"
+      "noCategories": "Няма намерени категории",
+      "savedSuccess": "Категорията е запазена успешно",
+      "deletedSuccess": "Категорията е изтрита",
+      "saveFailed": "Неуспешно запазване на категория",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
     },
     "quotes": {
       "title": "Заявки за оферти",
@@ -390,7 +471,16 @@
       "quoted": "Офертирани",
       "accepted": "Приети",
       "rejected": "Отхвърлени",
-      "downloadFile": "Свали файл"
+      "downloadFile": "Свали файл",
+      "updatedSuccess": "Офертата е обновена успешно",
+      "deletedSuccess": "Офертата е изтрита",
+      "updateFailed": "Неуспешно обновяване на оферта",
+      "confirmDeleteTitle": "Потвърждаване на изтриване",
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
+    },
+    "common": {
+      "uploadFailed": "Качването не успя",
+      "uploadImageFailed": "Неуспешно качване на изображение"
     }
   },
   "products": {
@@ -416,7 +506,9 @@
     "description": "Описание",
     "specifications": "Спецификации",
     "relatedProducts": "Свързани продукти",
-    "backToProducts": "Обратно към продукти"
+    "backToProducts": "Обратно към продукти",
+    "checkoutFailed": "Неуспешно създаване на платежна сесия",
+    "checkoutError": "Неуспешно стартиране на плащане"
   },
   "quotes": {
     "title": "Заявка за оферта",

@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Loader2, ArrowLeft, FolderOpen } from "lucide-react"
 import Link from "next/link"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ProductCategoryForm } from "@/app/components/admin/ProductCategoryForm"
+import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 
 interface ProductCategory {
@@ -28,6 +30,7 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null)
+  const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
 
   const fetchCategories = async () => {
     setLoading(true)
@@ -63,18 +66,25 @@ export default function CategoriesPage() {
 
     if (!res.ok) {
       const error = await res.json()
-      alert(error.error || "Failed to save category")
+      toast.error(error.error || t("saveFailed"))
       return
     }
 
     setShowForm(false)
     setEditingCategory(null)
+    toast.success(t("savedSuccess"))
     fetchCategories()
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete"))) return
-    await fetch(`/api/admin/products/categories?id=${id}`, { method: "DELETE" })
+  const handleDelete = (id: string, name: string) => {
+    setDeleteItem({ id, name })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteItem) return
+    await fetch(`/api/admin/products/categories?id=${deleteItem.id}`, { method: "DELETE" })
+    setDeleteItem(null)
+    toast.success(t("deletedSuccess"))
     fetchCategories()
   }
 
@@ -133,7 +143,7 @@ export default function CategoriesPage() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              handleDelete(item.id)
+              handleDelete(item.id, item.nameEn)
             }}
             className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
             title={t("delete")}
@@ -194,6 +204,14 @@ export default function CategoriesPage() {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={!!deleteItem}
+        title={t("confirmDeleteTitle")}
+        message={t("confirmDeleteMessage", { name: deleteItem?.name ?? "" })}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteItem(null)}
+      />
     </div>
   )
 }

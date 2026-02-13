@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { X, Save, Loader2, Upload } from "lucide-react"
 import { COLOR_CLASSES } from "./TypeForm"
 
@@ -71,6 +72,7 @@ export function ProductCategoryForm({
   onCancel,
 }: ProductCategoryFormProps) {
   const t = useTranslations("admin.productCategories")
+  const tc = useTranslations("admin.common")
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -156,7 +158,7 @@ export function ProductCategoryForm({
 
       if (!res.ok) {
         const error = await res.json()
-        alert(error.error || "Upload failed")
+        toast.error(error.error || tc("uploadFailed"))
         return
       }
 
@@ -164,7 +166,7 @@ export function ProductCategoryForm({
       updateField("image", data.url)
     } catch (error) {
       console.error("Upload error:", error)
-      alert("Failed to upload image")
+      toast.error(tc("uploadImageFailed"))
     } finally {
       setUploading(false)
       if (fileInputRef.current) {

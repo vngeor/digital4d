@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
+import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 
 interface Product {
   id: string
@@ -71,6 +73,7 @@ export default function QuotesPage() {
   })
   const [saving, setSaving] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
+  const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
 
   const fetchQuotes = async (status?: string | null) => {
     setLoading(true)
@@ -121,21 +124,28 @@ export default function QuotesPage() {
 
     if (!res.ok) {
       const error = await res.json()
-      alert(error.error || "Failed to update quote")
+      toast.error(error.error || t("updateFailed"))
       setSaving(false)
       return
     }
 
     setSaving(false)
     setViewingQuote(null)
+    toast.success(t("updatedSuccess"))
     fetchQuotes(selectedStatus)
     // Notify sidebar to update pending count
     window.dispatchEvent(new Event("quoteUpdated"))
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete"))) return
-    await fetch(`/api/admin/quotes?id=${id}`, { method: "DELETE" })
+  const handleDelete = (id: string, name: string) => {
+    setDeleteItem({ id, name })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteItem) return
+    await fetch(`/api/admin/quotes?id=${deleteItem.id}`, { method: "DELETE" })
+    setDeleteItem(null)
+    toast.success(t("deletedSuccess"))
     fetchQuotes(selectedStatus)
     // Notify sidebar to update pending count
     window.dispatchEvent(new Event("quoteUpdated"))
@@ -337,7 +347,7 @@ export default function QuotesPage() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              handleDelete(item.id)
+              handleDelete(item.id, item.quoteNumber)
             }}
             className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
             title="Delete"
@@ -679,6 +689,14 @@ export default function QuotesPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteItem}
+        title={t("confirmDeleteTitle")}
+        message={t("confirmDeleteMessage", { name: deleteItem?.name ?? "" })}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteItem(null)}
+      />
     </div>
   )
 }

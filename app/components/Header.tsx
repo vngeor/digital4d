@@ -111,7 +111,7 @@ export function Header() {
                             </Link>
                             {item.contents.length > 0 && (
                                 <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                                    <div className="glass-strong rounded-xl border border-white/10 py-2 min-w-[200px] shadow-xl">
+                                    <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 py-2 min-w-[200px] shadow-xl">
                                         {item.contents.map((content) => {
                                             const href = content.slug
                                                 ? `/${item.slug}/${content.slug}`
@@ -211,7 +211,7 @@ export function Header() {
                             </button>
                             {/* Dropdown */}
                             {userDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 py-2 glass-strong rounded-xl border border-white/10 shadow-xl">
+                                <div className="absolute right-0 mt-2 w-48 py-2 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl">
                                     <div className="px-4 py-2 border-b border-white/10">
                                         <p className="text-sm font-medium truncate">{session.user?.name}</p>
                                         <p className="text-xs text-slate-400 truncate">{session.user?.email}</p>

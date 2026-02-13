@@ -153,7 +153,13 @@
       "confirmDelete": "Are you sure you want to delete this banner?",
       "noBanners": "No banners found",
       "searchPlaceholder": "Search banners...",
-      "all": "All"
+      "all": "All",
+      "savedSuccess": "Banner saved successfully",
+      "deletedSuccess": "Banner deleted",
+      "uploadFailed": "Upload failed",
+      "uploadImageFailed": "Failed to upload image",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
     },
     "menu": {
       "title": "Menu Management",
@@ -184,7 +190,12 @@
       "cancel": "Cancel",
       "confirmDelete": "Are you sure you want to delete this menu item?",
       "searchPlaceholder": "Search menu items...",
-      "noMenuItems": "No menu items found"
+      "noMenuItems": "No menu items found",
+      "savedSuccess": "Menu item saved successfully",
+      "deletedSuccess": "Menu item deleted",
+      "saveFailed": "Failed to save menu item",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
     },
     "dashboard": {
       "title": "Dashboard",
@@ -237,7 +248,16 @@
       "cancel": "Cancel",
       "confirmDelete": "Are you sure you want to delete this content?",
       "searchPlaceholder": "Search content...",
-      "noContent": "No content found"
+      "noContent": "No content found",
+      "savedSuccess": "Content saved successfully",
+      "deletedSuccess": "Content deleted",
+      "saveFailed": "Failed to save content",
+      "deleteFailed": "Failed to delete content",
+      "publishedSuccess": "Published",
+      "unpublishedSuccess": "Unpublished",
+      "updateFailed": "Failed to update content",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
     },
     "orders": {
       "title": "Order Management",
@@ -258,7 +278,11 @@
       "cancel": "Cancel",
       "confirmDelete": "Are you sure you want to delete this order?",
       "searchPlaceholder": "Search orders...",
-      "noOrders": "No orders found"
+      "noOrders": "No orders found",
+      "savedSuccess": "Order saved successfully",
+      "deletedSuccess": "Order deleted",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
     },
     "users": {
       "title": "User Management",
@@ -274,7 +298,49 @@
       "all": "All",
       "confirmDelete": "Are you sure you want to delete this user?",
       "searchPlaceholder": "Search users...",
-      "noUsers": "No users found"
+      "noUsers": "No users found",
+      "deletedSuccess": "User deleted",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
+      "viewUser": "User Details",
+      "personalInfo": "Personal Information",
+      "email": "Email",
+      "phone": "Phone",
+      "country": "Country",
+      "city": "City",
+      "address": "Address",
+      "birthDate": "Birth Date",
+      "orderHistory": "Order History",
+      "orderNumber": "Order #",
+      "orderStatus": "Status",
+      "orderDate": "Date",
+      "orderDescription": "Description",
+      "orderNotes": "Notes",
+      "orderCustomer": "Customer",
+      "orderPhone": "Phone",
+      "orderUpdated": "Updated",
+      "noOrders": "No orders yet",
+      "notProvided": "Not provided",
+      "close": "Close",
+      "editUser": "Edit User",
+      "name": "Name",
+      "save": "Save",
+      "savedSuccess": "User updated successfully",
+      "saveFailed": "Failed to update user",
+      "quoteHistory": "Quote History",
+      "quoteNumber": "Quote #",
+      "quoteStatus": "Status",
+      "quoteDate": "Date",
+      "quotedPrice": "Price",
+      "quoteProduct": "Product",
+      "quoteMessage": "Message",
+      "quoteFile": "Attached File",
+      "quoteAdminNotes": "Admin Notes",
+      "quoteUserResponse": "User Response",
+      "quoteQuotedAt": "Quoted At",
+      "quoteUpdated": "Updated",
+      "noQuotes": "No quotes yet",
+      "conversation": "Conversation"
     },
     "types": {
       "title": "Type Management",
@@ -293,7 +359,12 @@
       "cancel": "Cancel",
       "confirmDelete": "Are you sure you want to delete this type?",
       "searchPlaceholder": "Search types...",
-      "noTypes": "No types found"
+      "noTypes": "No types found",
+      "savedSuccess": "Type saved successfully",
+      "deletedSuccess": "Type deleted",
+      "saveFailed": "Failed to save type",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
     },
     "products": {
       "title": "Product Management",
@@ -338,7 +409,12 @@
       "noProducts": "No products found",
       "all": "All",
       "categories": "Categories",
-      "manageCategories": "Manage Categories"
+      "manageCategories": "Manage Categories",
+      "savedSuccess": "Product saved successfully",
+      "deletedSuccess": "Product deleted",
+      "saveFailed": "Failed to save product",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
     },
     "productCategories": {
       "title": "Product Categories",
@@ -359,7 +435,12 @@
       "cancel": "Cancel",
       "confirmDelete": "Are you sure you want to delete this category?",
       "searchPlaceholder": "Search categories...",
-      "noCategories": "No categories found"
+      "noCategories": "No categories found",
+      "savedSuccess": "Category saved successfully",
+      "deletedSuccess": "Category deleted",
+      "saveFailed": "Failed to save category",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
     },
     "quotes": {
       "title": "Quote Requests",
@@ -390,7 +471,16 @@
       "quoted": "Quoted",
       "accepted": "Accepted",
       "rejected": "Rejected",
-      "downloadFile": "Download File"
+      "downloadFile": "Download File",
+      "updatedSuccess": "Quote updated successfully",
+      "deletedSuccess": "Quote deleted",
+      "updateFailed": "Failed to update quote",
+      "confirmDeleteTitle": "Confirm Delete",
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
+    },
+    "common": {
+      "uploadFailed": "Upload failed",
+      "uploadImageFailed": "Failed to upload image"
     }
   },
   "products": {
@@ -416,7 +506,9 @@
     "description": "Description",
     "specifications": "Specifications",
     "relatedProducts": "Related Products",
-    "backToProducts": "Back to Products"
+    "backToProducts": "Back to Products",
+    "checkoutFailed": "Failed to create checkout session",
+    "checkoutError": "Failed to initiate checkout"
   },
   "quotes": {
     "title": "Request a Quote",
