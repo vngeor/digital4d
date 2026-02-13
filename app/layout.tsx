@@ -19,7 +19,7 @@ const inter = Inter({
   subsets: ["latin", "cyrillic"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://digital4d.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.digital4d.eu";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

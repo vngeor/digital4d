@@ -8,6 +8,26 @@ import type { Role } from "@prisma/client"
 import type { Adapter } from "next-auth/adapters"
 import bcrypt from "bcryptjs"
 
+// Wrap PrismaAdapter methods with retry logic to handle Neon cold starts.
+// On first request after inactivity, Neon's compute may fail/timeout.
+// Retrying once lets the warmed-up connection succeed.
+function withRetry(adapter: Adapter): Adapter {
+  const wrapped = { ...adapter }
+  for (const [key, value] of Object.entries(wrapped)) {
+    if (typeof value === "function") {
+      ;(wrapped as Record<string, unknown>)[key] = async (...args: unknown[]) => {
+        try {
+          return await (value as (...a: unknown[]) => Promise<unknown>)(...args)
+        } catch (error) {
+          console.warn(`[Auth] Retrying adapter.${key} after error:`, error)
+          return await (value as (...a: unknown[]) => Promise<unknown>)(...args)
+        }
+      }
+    }
+  }
+  return wrapped
+}
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -25,7 +45,7 @@ declare module "next-auth" {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma) as Adapter,
+  adapter: withRetry(PrismaAdapter(prisma) as Adapter),
   trustHost: true, // Required for Vercel and serverless deployments
   session: {
     strategy: "jwt",
@@ -99,24 +119,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login", // Redirect to login page on error
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // Handle OAuth sign-in - ensure user creation doesn't fail silently
-      if (account?.provider === "google" || account?.provider === "github") {
-        try {
-          // Check if user exists, if not the adapter will create them
-          // This pre-flight check helps warm up the database connection
-          if (user.email) {
-            await prisma.user.findUnique({
-              where: { email: user.email },
-              select: { id: true },
-            })
-          }
-        } catch (error) {
-          console.error("Error in signIn callback:", error)
-          // Return true anyway - let the adapter handle user creation
-          // Returning false would block sign-in entirely
-        }
-      }
+    async signIn() {
       return true
     },
     async jwt({ token, user, account }) {
