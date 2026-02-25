@@ -9,6 +9,7 @@ import { DataTable } from "@/app/components/admin/DataTable"
 import { ProductCategoryForm } from "@/app/components/admin/ProductCategoryForm"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface ProductCategory {
   id: string
@@ -26,6 +27,7 @@ interface ProductCategory {
 
 export default function CategoriesPage() {
   const t = useTranslations("admin.productCategories")
+  const { can } = useAdminPermissions()
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -82,7 +84,13 @@ export default function CategoriesPage() {
 
   const confirmDelete = async () => {
     if (!deleteItem) return
-    await fetch(`/api/admin/products/categories?id=${deleteItem.id}`, { method: "DELETE" })
+    const res = await fetch(`/api/admin/products/categories?id=${deleteItem.id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      toast.error(err.error || t("deleteFailed"))
+      setDeleteItem(null)
+      return
+    }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
     fetchCategories()
@@ -129,27 +137,31 @@ export default function CategoriesPage() {
       header: t("actions"),
       render: (item: ProductCategory) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setEditingCategory(item)
-              setShowForm(true)
-            }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            title={t("edit")}
-          >
-            <Edit2 className="w-4 h-4 text-gray-400" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(item.id, item.nameEn)
-            }}
-            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
-            title={t("delete")}
-          >
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          {can("categories", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingCategory(item)
+                setShowForm(true)
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              title={t("edit")}
+            >
+              <Edit2 className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          {can("categories", "delete") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(item.id, item.nameEn)
+              }}
+              className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+              title={t("delete")}
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -169,16 +181,18 @@ export default function CategoriesPage() {
           <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
           <p className="text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingCategory(null)
-            setShowForm(true)
-          }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          {t("addCategory")}
-        </button>
+        {can("categories", "create") && (
+          <button
+            onClick={() => {
+              setEditingCategory(null)
+              setShowForm(true)
+            }}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            {t("addCategory")}
+          </button>
+        )}
       </div>
 
       {loading ? (

@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, X, Save, Upload, Image as ImageIcon, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface Banner {
   id: string
@@ -47,6 +48,7 @@ interface BannerFormData {
 
 export default function BannersPage() {
   const t = useTranslations("admin.banners")
+  const { can } = useAdminPermissions()
   const [banners, setBanners] = useState<Banner[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -86,7 +88,13 @@ export default function BannersPage() {
 
   const confirmDelete = async () => {
     if (!deleteItem) return
-    await fetch(`/api/admin/banners?id=${deleteItem.id}`, { method: "DELETE" })
+    const res = await fetch(`/api/admin/banners?id=${deleteItem.id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      toast.error(err.error || t("deleteFailed"))
+      setDeleteItem(null)
+      return
+    }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
     fetchBanners()
@@ -233,39 +241,45 @@ export default function BannersPage() {
       className: "w-[120px]",
       render: (item: Banner) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleTogglePublish(item)
-            }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            title={item.published ? t("unpublish") : t("publish")}
-          >
-            {item.published ? (
-              <EyeOff className="w-4 h-4 text-gray-400" />
-            ) : (
-              <Eye className="w-4 h-4 text-gray-400" />
-            )}
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setEditingBanner(item)
-              setShowForm(true)
-            }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <Edit2 className="w-4 h-4 text-gray-400" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(item.id, item.titleEn)
-            }}
-            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
-          >
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          {can("banners", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleTogglePublish(item)
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              title={item.published ? t("unpublish") : t("publish")}
+            >
+              {item.published ? (
+                <EyeOff className="w-4 h-4 text-gray-400" />
+              ) : (
+                <Eye className="w-4 h-4 text-gray-400" />
+              )}
+            </button>
+          )}
+          {can("banners", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingBanner(item)
+                setShowForm(true)
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <Edit2 className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          {can("banners", "delete") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(item.id, item.titleEn)
+              }}
+              className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -278,16 +292,18 @@ export default function BannersPage() {
           <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
           <p className="text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingBanner(null)
-            setShowForm(true)
-          }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          {t("addBanner")}
-        </button>
+        {can("banners", "create") && (
+          <button
+            onClick={() => {
+              setEditingBanner(null)
+              setShowForm(true)
+            }}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            {t("addBanner")}
+          </button>
+        )}
       </div>
 
       <div className="flex gap-2 flex-wrap">

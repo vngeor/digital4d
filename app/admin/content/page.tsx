@@ -8,6 +8,7 @@ import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ContentForm } from "@/app/components/admin/ContentForm"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface ContentType {
   id: string
@@ -34,6 +35,7 @@ interface Content {
 
 export default function ContentPage() {
   const t = useTranslations("admin.content")
+  const { can } = useAdminPermissions()
   const [content, setContent] = useState<Content[]>([])
   const [allContent, setAllContent] = useState<Content[]>([]) // For computing homepage positions
   const [allTypes, setAllTypes] = useState<string[]>([])
@@ -306,39 +308,45 @@ export default function ContentPage() {
       className: "w-[120px]",
       render: (item: Content) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleTogglePublish(item)
-            }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            title={item.published ? t("unpublish") : t("publish")}
-          >
-            {item.published ? (
-              <EyeOff className="w-4 h-4 text-gray-400" />
-            ) : (
-              <Eye className="w-4 h-4 text-gray-400" />
-            )}
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setEditingContent(item)
-              setShowForm(true)
-            }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <Edit2 className="w-4 h-4 text-gray-400" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(item.id, item.titleEn)
-            }}
-            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
-          >
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          {can("content", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleTogglePublish(item)
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              title={item.published ? t("unpublish") : t("publish")}
+            >
+              {item.published ? (
+                <EyeOff className="w-4 h-4 text-gray-400" />
+              ) : (
+                <Eye className="w-4 h-4 text-gray-400" />
+              )}
+            </button>
+          )}
+          {can("content", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingContent(item)
+                setShowForm(true)
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <Edit2 className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          {can("content", "delete") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(item.id, item.titleEn)
+              }}
+              className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -351,16 +359,18 @@ export default function ContentPage() {
           <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
           <p className="text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingContent(null)
-            setShowForm(true)
-          }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          {t("addContent")}
-        </button>
+        {can("content", "create") && (
+          <button
+            onClick={() => {
+              setEditingContent(null)
+              setShowForm(true)
+            }}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            {t("addContent")}
+          </button>
+        )}
       </div>
 
       <div className="flex gap-2 flex-wrap">

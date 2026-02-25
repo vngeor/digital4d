@@ -9,6 +9,7 @@ import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ProductForm } from "@/app/components/admin/ProductForm"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface Product {
   id: string
@@ -56,6 +57,7 @@ const FILE_TYPE_BADGES: Record<string, { label: string; color: string }> = {
 
 export default function ProductsPage() {
   const t = useTranslations("admin.products")
+  const { can } = useAdminPermissions()
   const [products, setProducts] = useState<Product[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([]) // For computing homepage positions
   const [categories, setCategories] = useState<ProductCategory[]>([])
@@ -178,7 +180,13 @@ export default function ProductsPage() {
 
   const confirmDelete = async () => {
     if (!deleteItem) return
-    await fetch(`/api/admin/products?id=${deleteItem.id}`, { method: "DELETE" })
+    const res = await fetch(`/api/admin/products?id=${deleteItem.id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      toast.error(err.error || t("deleteFailed"))
+      setDeleteItem(null)
+      return
+    }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
     fetchProducts(selectedCategory)
@@ -378,27 +386,31 @@ export default function ProductsPage() {
       className: "w-[80px]",
       render: (item: Product) => (
         <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setEditingProduct(item)
-              setShowForm(true)
-            }}
-            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-            title={t("edit")}
-          >
-            <Edit2 className="w-4 h-4 text-gray-400" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(item.id, item.nameEn)
-            }}
-            className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
-            title={t("delete")}
-          >
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          {can("products", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingProduct(item)
+                setShowForm(true)
+              }}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              title={t("edit")}
+            >
+              <Edit2 className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          {can("products", "delete") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(item.id, item.nameEn)
+              }}
+              className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
+              title={t("delete")}
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -419,16 +431,18 @@ export default function ProductsPage() {
             <FolderOpen className="w-4 h-4" />
             {t("manageCategories")}
           </Link>
-          <button
-            onClick={() => {
-              setEditingProduct(null)
-              setShowForm(true)
-            }}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            {t("addProduct")}
-          </button>
+          {can("products", "create") && (
+            <button
+              onClick={() => {
+                setEditingProduct(null)
+                setShowForm(true)
+              }}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+            >
+              <Plus className="w-5 h-5" />
+              {t("addProduct")}
+            </button>
+          )}
         </div>
       </div>
 

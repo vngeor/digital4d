@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { auth } from "@/auth"
+import { requirePermissionApi } from "@/lib/admin"
 import { deleteBlobSafe } from "@/lib/blob"
-
-async function requireAdminApi() {
-  const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return null
-  }
-  return session
-}
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("quotes", "view")
+    if (error) return error
 
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get("status")
@@ -82,10 +72,8 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("quotes", "edit")
+    if (error) return error
 
     const data = await request.json()
 
@@ -149,10 +137,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("quotes", "delete")
+    if (error) return error
 
     const searchParams = request.nextUrl.searchParams
     const id = searchParams.get("id")

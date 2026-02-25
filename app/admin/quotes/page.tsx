@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface Product {
   id: string
@@ -62,6 +63,7 @@ const STATUS_BADGES: Record<string, { label: string; color: string }> = {
 
 export default function QuotesPage() {
   const t = useTranslations("admin.quotes")
+  const { can } = useAdminPermissions()
   const [quotes, setQuotes] = useState<QuoteRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
@@ -143,7 +145,13 @@ export default function QuotesPage() {
 
   const confirmDelete = async () => {
     if (!deleteItem) return
-    await fetch(`/api/admin/quotes?id=${deleteItem.id}`, { method: "DELETE" })
+    const res = await fetch(`/api/admin/quotes?id=${deleteItem.id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      toast.error(err.error || t("deleteFailed"))
+      setDeleteItem(null)
+      return
+    }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
     fetchQuotes(selectedStatus)
@@ -344,16 +352,18 @@ export default function QuotesPage() {
           >
             <Eye className="w-4 h-4 text-gray-400" />
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(item.id, item.quoteNumber)
-            }}
-            className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
-            title="Delete"
-          >
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          {can("quotes", "delete") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(item.id, item.quoteNumber)
+              }}
+              className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
       ),
     },

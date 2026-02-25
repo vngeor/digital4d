@@ -17,7 +17,9 @@ import {
   Package,
   MessageSquare,
   Presentation,
+  Shield,
 } from "lucide-react"
+import type { PermissionMap } from "@/lib/permissions"
 
 interface SidebarProps {
   user: {
@@ -25,9 +27,12 @@ interface SidebarProps {
     email?: string | null
     image?: string | null
   }
+  role: string
+  visibleNavHrefs: string[]
+  permissions: PermissionMap
 }
 
-const navItems = [
+const allNavItems = [
   { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
   { href: "/admin/menu", icon: Menu, labelKey: "menu" },
   { href: "/admin/content", icon: FileText, labelKey: "content" },
@@ -37,14 +42,26 @@ const navItems = [
   { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes", showBadge: true },
   { href: "/admin/orders", icon: ShoppingCart, labelKey: "orders" },
   { href: "/admin/users", icon: Users, labelKey: "users" },
+  { href: "/admin/roles", icon: Shield, labelKey: "roles" },
 ]
 
-export function Sidebar({ user }: SidebarProps) {
+const ROLE_BADGE_COLORS: Record<string, string> = {
+  ADMIN: "bg-red-500/20 text-red-400 border-red-500/30",
+  EDITOR: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  AUTHOR: "bg-green-500/20 text-green-400 border-green-500/30",
+}
+
+export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
   const pathname = usePathname()
   const t = useTranslations("admin.nav")
   const [pendingQuotesCount, setPendingQuotesCount] = useState(0)
 
+  const navItems = allNavItems.filter((item) => visibleNavHrefs.includes(item.href))
+
   useEffect(() => {
+    // Only fetch quotes if user can see quotes
+    if (!visibleNavHrefs.includes("/admin/quotes")) return
+
     async function fetchPendingQuotes() {
       try {
         const res = await fetch("/api/admin/quotes?status=pending")
@@ -66,7 +83,7 @@ export function Sidebar({ user }: SidebarProps) {
       clearInterval(interval)
       window.removeEventListener("quoteUpdated", handleQuoteUpdate)
     }
-  }, [])
+  }, [visibleNavHrefs])
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 glass-strong border-r border-white/10 flex flex-col">
@@ -82,7 +99,7 @@ export function Sidebar({ user }: SidebarProps) {
         </Link>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             item.href === "/admin"
@@ -130,8 +147,19 @@ export function Sidebar({ user }: SidebarProps) {
             <p className="text-sm font-medium text-white truncate">
               {user.name || "Admin"}
             </p>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            </div>
           </div>
+        </div>
+        <div className="px-4 mb-3">
+          <span
+            className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded-full border ${
+              ROLE_BADGE_COLORS[role] || "bg-gray-500/20 text-gray-400 border-gray-500/30"
+            }`}
+          >
+            {role}
+          </span>
         </div>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}

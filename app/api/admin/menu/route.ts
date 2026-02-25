@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { auth } from "@/auth"
+import { requirePermissionApi } from "@/lib/admin"
 
 const RESERVED_SLUGS = ['news', 'admin', 'login', 'api', 'register']
-
-async function requireAdminApi() {
-  const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return null
-  }
-  return session
-}
 
 function generateSlug(title: string): string {
   return title
@@ -23,10 +15,8 @@ function generateSlug(title: string): string {
 
 export async function GET() {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("menu", "view")
+    if (error) return error
 
     const menuItems = await prisma.menuItem.findMany({
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
@@ -49,10 +39,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("menu", "create")
+    if (error) return error
 
     const data = await request.json()
 
@@ -105,10 +93,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("menu", "edit")
+    if (error) return error
 
     const data = await request.json()
 
@@ -173,10 +159,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("menu", "delete")
+    if (error) return error
 
     const searchParams = request.nextUrl.searchParams
     const id = searchParams.get("id")

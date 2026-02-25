@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Trash2, Loader2, Shield, User as UserIcon, Eye, X, Package, Pencil, FileText, Save, Download, ChevronDown } from "lucide-react"
+import { Trash2, Loader2, Shield, User as UserIcon, Eye, X, Package, Pencil, FileText, Save, Download, ChevronDown, Check, RotateCcw } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface User {
   id: string
@@ -13,7 +14,7 @@ interface User {
   email: string | null
   phone: string | null
   image: string | null
-  role: "USER" | "ADMIN"
+  role: "ADMIN" | "EDITOR" | "AUTHOR" | "SUBSCRIBER"
   createdAt: string
   _count: {
     orders: number
@@ -26,7 +27,7 @@ interface UserDetails {
   email: string | null
   phone: string | null
   image: string | null
-  role: "USER" | "ADMIN"
+  role: "ADMIN" | "EDITOR" | "AUTHOR" | "SUBSCRIBER"
   country: string | null
   city: string | null
   address: string | null
@@ -79,6 +80,7 @@ interface EditForm {
 
 export default function UsersPage() {
   const t = useTranslations("admin.users")
+  const { can } = useAdminPermissions()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>("all")
@@ -90,6 +92,12 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false)
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set())
   const [expandedQuotes, setExpandedQuotes] = useState<Set<string>>(new Set())
+  const [modalTab, setModalTab] = useState<"details" | "permissions">("details")
+  const [permLoading, setPermLoading] = useState(false)
+  const [permSaving, setPermSaving] = useState(false)
+  const [rolePermissions, setRolePermissions] = useState<Record<string, Record<string, boolean>>>({})
+  const [userOverrides, setUserOverrides] = useState<Record<string, Record<string, boolean>>>({})
+  const [editedOverrides, setEditedOverrides] = useState<Record<string, Record<string, boolean>>>({})
 
   const toggleOrder = (id: string) => {
     setExpandedOrders(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
@@ -98,12 +106,110 @@ export default function UsersPage() {
     setExpandedQuotes(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
   }
 
+  const PERM_RESOURCES = [
+    "dashboard", "products", "categories", "content", "types",
+    "banners", "menu", "orders", "quotes", "users", "roles",
+  ] as const
+  const PERM_ACTIONS = ["view", "create", "edit", "delete"] as const
+  const PERM_RESOURCE_LABELS: Record<string, string> = {
+    dashboard: "Dashboard", products: "Products", categories: "Categories",
+    content: "Content", types: "Content Types", banners: "Banners",
+    menu: "Menu", orders: "Orders", quotes: "Quotes", users: "Users", roles: "Roles",
+  }
+
+  const fetchUserPermissions = async (userId: string) => {
+    setPermLoading(true)
+    try {
+      const res = await fetch(`/api/admin/users/permissions?userId=${userId}`)
+      if (!res.ok) throw new Error("Failed to fetch permissions")
+      const data = await res.json()
+      setRolePermissions(data.rolePermissions || {})
+      setUserOverrides(data.userOverrides || {})
+      setEditedOverrides(JSON.parse(JSON.stringify(data.userOverrides || {})))
+    } catch {
+      toast.error(t("permLoadFailed"))
+    } finally {
+      setPermLoading(false)
+    }
+  }
+
+  const togglePermOverride = (resource: string, action: string) => {
+    setEditedOverrides(prev => {
+      const next = JSON.parse(JSON.stringify(prev))
+      const roleValue = rolePermissions[resource]?.[action] ?? false
+      const currentOverride = next[resource]?.[action]
+
+      if (currentOverride !== undefined) {
+        // Currently overridden — remove override (go back to role default)
+        if (next[resource]) {
+          delete next[resource][action]
+          if (Object.keys(next[resource]).length === 0) {
+            delete next[resource]
+          }
+        }
+      } else {
+        // Not overridden — set override to opposite of role default
+        if (!next[resource]) next[resource] = {}
+        next[resource][action] = !roleValue
+      }
+      return next
+    })
+  }
+
+  const saveUserPermissions = async () => {
+    if (!viewingUser) return
+    setPermSaving(true)
+    try {
+      const res = await fetch("/api/admin/users/permissions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: viewingUser.id, overrides: editedOverrides }),
+      })
+      if (!res.ok) throw new Error("Failed to save")
+      setUserOverrides(JSON.parse(JSON.stringify(editedOverrides)))
+      toast.success(t("permSaved"))
+    } catch {
+      toast.error(t("permSaveFailed"))
+    } finally {
+      setPermSaving(false)
+    }
+  }
+
+  const resetUserPermissions = async () => {
+    if (!viewingUser) return
+    setPermSaving(true)
+    try {
+      const res = await fetch(`/api/admin/users/permissions?userId=${viewingUser.id}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error("Failed to reset")
+      setUserOverrides({})
+      setEditedOverrides({})
+      toast.success(t("permReset"))
+    } catch {
+      toast.error(t("permResetFailed"))
+    } finally {
+      setPermSaving(false)
+    }
+  }
+
+  const hasPermChanges = JSON.stringify(editedOverrides) !== JSON.stringify(userOverrides)
+
   const fetchUsers = async () => {
     setLoading(true)
-    const res = await fetch("/api/admin/users")
-    const data = await res.json()
-    setUsers(data)
-    setLoading(false)
+    try {
+      const res = await fetch("/api/admin/users")
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        setUsers(data)
+      } else {
+        toast.error(data.error || "Failed to load users")
+      }
+    } catch {
+      toast.error("Failed to load users")
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -119,6 +225,7 @@ export default function UsersPage() {
       setViewingUser(data)
       setExpandedOrders(new Set())
       setExpandedQuotes(new Set())
+      setModalTab("details")
     } catch {
       toast.error("Failed to load user details")
     } finally {
@@ -168,7 +275,7 @@ export default function UsersPage() {
     }
   }
 
-  const handleRoleChange = async (user: User, newRole: "USER" | "ADMIN") => {
+  const handleRoleChange = async (user: User, newRole: "ADMIN" | "EDITOR" | "AUTHOR" | "SUBSCRIBER") => {
     await fetch("/api/admin/users", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -234,17 +341,23 @@ export default function UsersPage() {
         <select
           value={item.role}
           onChange={(e) =>
-            handleRoleChange(item, e.target.value as "USER" | "ADMIN")
+            handleRoleChange(item, e.target.value as "ADMIN" | "EDITOR" | "AUTHOR" | "SUBSCRIBER")
           }
           onClick={(e) => e.stopPropagation()}
           className={`px-3 py-1 rounded-full text-xs font-medium border-none focus:outline-none cursor-pointer ${
             item.role === "ADMIN"
-              ? "bg-purple-500/20 text-purple-400"
+              ? "bg-red-500/20 text-red-400"
+              : item.role === "EDITOR"
+              ? "bg-blue-500/20 text-blue-400"
+              : item.role === "AUTHOR"
+              ? "bg-green-500/20 text-green-400"
               : "bg-gray-500/20 text-gray-400"
           }`}
         >
-          <option value="USER">User</option>
           <option value="ADMIN">Admin</option>
+          <option value="EDITOR">Editor</option>
+          <option value="AUTHOR">Author</option>
+          <option value="SUBSCRIBER">Subscriber</option>
         </select>
       ),
     },
@@ -281,15 +394,17 @@ export default function UsersPage() {
           >
             <Eye className="w-4 h-4 text-emerald-400" />
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(item.id, item.name || item.email || "this user")
-            }}
-            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
-          >
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          {can("users", "delete") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(item.id, item.name || item.email || "this user")
+              }}
+              className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -298,7 +413,9 @@ export default function UsersPage() {
   const stats = {
     total: users.length,
     admins: users.filter((u) => u.role === "ADMIN").length,
-    users: users.filter((u) => u.role === "USER").length,
+    editors: users.filter((u) => u.role === "EDITOR").length,
+    authors: users.filter((u) => u.role === "AUTHOR").length,
+    subscribers: users.filter((u) => u.role === "SUBSCRIBER").length,
   }
 
   return (
@@ -308,7 +425,7 @@ export default function UsersPage() {
         <p className="text-gray-400 mt-1">{t("subtitle")}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="glass rounded-xl p-4 border border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
@@ -322,7 +439,7 @@ export default function UsersPage() {
         </div>
         <div className="glass rounded-xl p-4 border border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -333,19 +450,41 @@ export default function UsersPage() {
         </div>
         <div className="glass rounded-xl p-4 border border-white/10">
           <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">{stats.editors}</p>
+              <p className="text-xs text-gray-400">{t("editors")}</p>
+            </div>
+          </div>
+        </div>
+        <div className="glass rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+              <UserIcon className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-white">{stats.authors}</p>
+              <p className="text-xs text-gray-400">{t("authors")}</p>
+            </div>
+          </div>
+        </div>
+        <div className="glass rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
               <UserIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-white">{stats.users}</p>
-              <p className="text-xs text-gray-400">{t("regularUsers")}</p>
+              <p className="text-2xl font-bold text-white">{stats.subscribers}</p>
+              <p className="text-xs text-gray-400">{t("subscribers")}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-2">
-        {["all", "ADMIN", "USER"].map((role) => (
+      <div className="flex gap-2 flex-wrap">
+        {["all", "ADMIN", "EDITOR", "AUTHOR", "SUBSCRIBER"].map((role) => (
           <button
             key={role}
             onClick={() => setFilter(role)}
@@ -359,7 +498,11 @@ export default function UsersPage() {
               ? t("all")
               : role === "ADMIN"
               ? t("admins")
-              : t("regularUsers")}
+              : role === "EDITOR"
+              ? t("editors")
+              : role === "AUTHOR"
+              ? t("authors")
+              : t("subscribers")}
           </button>
         ))}
       </div>
@@ -394,8 +537,8 @@ export default function UsersPage() {
 
       {/* User Details Modal */}
       {viewingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setViewingUser(null); setEditing(false) }}>
-          <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setViewingUser(null); setEditing(false); setModalTab("details") }}>
+          <div className={`glass-strong rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-3xl" : "max-w-lg"} max-h-[85vh] overflow-y-auto transition-all`} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -410,7 +553,11 @@ export default function UsersPage() {
                   <h2 className="text-lg font-bold text-white">{viewingUser.name || "Anonymous"}</h2>
                   <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                     viewingUser.role === "ADMIN"
-                      ? "bg-purple-500/20 text-purple-400"
+                      ? "bg-red-500/20 text-red-400"
+                      : viewingUser.role === "EDITOR"
+                      ? "bg-blue-500/20 text-blue-400"
+                      : viewingUser.role === "AUTHOR"
+                      ? "bg-green-500/20 text-green-400"
                       : "bg-gray-500/20 text-gray-400"
                   }`}>
                     {viewingUser.role}
@@ -423,12 +570,47 @@ export default function UsersPage() {
                     <Pencil className="w-4 h-4 text-gray-400" />
                   </button>
                 )}
-                <button onClick={() => { setViewingUser(null); setEditing(false) }} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                <button onClick={() => { setViewingUser(null); setEditing(false); setModalTab("details") }} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
                   <X className="w-5 h-5 text-gray-400" />
                 </button>
               </div>
             </div>
 
+            {/* Tab Navigation — only for EDITOR/AUTHOR */}
+            {(viewingUser.role === "EDITOR" || viewingUser.role === "AUTHOR") && (
+              <div className="flex border-b border-white/10">
+                <button
+                  onClick={() => setModalTab("details")}
+                  className={`flex-1 px-6 py-3 text-sm font-medium transition-all ${
+                    modalTab === "details"
+                      ? "text-emerald-400 border-b-2 border-emerald-400"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  {t("tabDetails")}
+                </button>
+                <button
+                  onClick={() => {
+                    setModalTab("permissions")
+                    if (Object.keys(rolePermissions).length === 0) {
+                      fetchUserPermissions(viewingUser.id)
+                    }
+                  }}
+                  className={`flex-1 px-6 py-3 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    modalTab === "permissions"
+                      ? "text-emerald-400 border-b-2 border-emerald-400"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  <Shield className="w-4 h-4" />
+                  {t("tabPermissions")}
+                </button>
+              </div>
+            )}
+
+            {/* Details Tab */}
+            {modalTab === "details" && (
+            <>
             {/* Personal Info */}
             <div className="p-6 border-b border-white/10">
               <div className="flex items-center justify-between mb-4">
@@ -695,10 +877,139 @@ export default function UsersPage() {
               )}
             </div>
 
+            </>
+            )}
+
+            {/* Permissions Tab */}
+            {modalTab === "permissions" && (
+              <div className="p-6">
+                {permLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    {/* Permission Grid */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-white/10">
+                            <th className="text-left px-3 py-2 text-xs font-semibold text-gray-400">{t("permResource")}</th>
+                            {PERM_ACTIONS.map((action) => (
+                              <th key={action} className="px-2 py-2 text-[10px] text-gray-500 uppercase font-medium text-center">
+                                {action}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {PERM_RESOURCES.map((resource) => (
+                            <tr key={resource} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                              <td className="px-3 py-2">
+                                <span className="text-sm font-medium text-white">
+                                  {PERM_RESOURCE_LABELS[resource] || resource}
+                                </span>
+                              </td>
+                              {PERM_ACTIONS.map((action) => {
+                                const roleValue = rolePermissions[resource]?.[action] ?? false
+                                const overrideValue = editedOverrides[resource]?.[action]
+                                const isOverridden = overrideValue !== undefined
+                                const effectiveValue = isOverridden ? overrideValue : roleValue
+
+                                return (
+                                  <td key={`${resource}-${action}`} className="px-2 py-2 text-center">
+                                    <button
+                                      onClick={() => togglePermOverride(resource, action)}
+                                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
+                                        isOverridden
+                                          ? effectiveValue
+                                            ? "bg-amber-500/20 ring-1 ring-amber-500/40 hover:bg-amber-500/30"
+                                            : "bg-red-500/20 ring-1 ring-red-500/40 hover:bg-red-500/30"
+                                          : effectiveValue
+                                            ? "bg-emerald-500/10 hover:bg-emerald-500/20"
+                                            : "bg-white/5 hover:bg-white/10"
+                                      }`}
+                                      title={
+                                        isOverridden
+                                          ? effectiveValue
+                                            ? t("permOverrideGranted")
+                                            : t("permOverrideRevoked")
+                                          : effectiveValue
+                                            ? t("permInheritedAllowed")
+                                            : t("permInheritedDenied")
+                                      }
+                                    >
+                                      {effectiveValue ? (
+                                        <Check className={`w-3.5 h-3.5 ${isOverridden ? "text-amber-400" : "text-emerald-500/60"}`} />
+                                      ) : (
+                                        <X className={`w-3.5 h-3.5 ${isOverridden ? "text-red-400" : "text-gray-600"}`} />
+                                      )}
+                                    </button>
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Legend */}
+                    <div className="mt-4 flex flex-wrap gap-4 text-[10px] text-gray-500">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 rounded bg-emerald-500/10 flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 text-emerald-500/60" />
+                        </div>
+                        {t("permLegendInherited")}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 rounded bg-amber-500/20 ring-1 ring-amber-500/40 flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 text-amber-400" />
+                        </div>
+                        {t("permLegendGranted")}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 rounded bg-red-500/20 ring-1 ring-red-500/40 flex items-center justify-center">
+                          <X className="w-2.5 h-2.5 text-red-400" />
+                        </div>
+                        {t("permLegendRevoked")}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-4 rounded bg-white/5 flex items-center justify-center">
+                          <X className="w-2.5 h-2.5 text-gray-600" />
+                        </div>
+                        {t("permLegendDenied")}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-6 flex items-center gap-3">
+                      <button
+                        onClick={resetUserPermissions}
+                        disabled={permSaving || Object.keys(editedOverrides).length === 0}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white border border-white/10 hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        {t("permResetDefaults")}
+                      </button>
+                      <button
+                        onClick={saveUserPermissions}
+                        disabled={permSaving || !hasPermChanges}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {permSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {t("permSaveBtn")}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Footer */}
             <div className="p-6 pt-0">
               <button
-                onClick={() => { setViewingUser(null); setEditing(false) }}
+                onClick={() => { setViewingUser(null); setEditing(false); setModalTab("details") }}
                 className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
               >
                 {t("close")}

@@ -24,11 +24,11 @@ export async function GET(
       return NextResponse.json({ error: "Quote not found" }, { status: 404 })
     }
 
-    // Allow access if user owns the quote or is admin
-    const isAdmin = session.user.role === "ADMIN"
+    // Allow access if user owns the quote or is admin/editor
+    const isStaff = session.user.role === "ADMIN" || session.user.role === "EDITOR"
     const isOwner = quote.email === session.user.email
 
-    if (!isAdmin && !isOwner) {
+    if (!isStaff && !isOwner) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

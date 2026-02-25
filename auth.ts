@@ -132,10 +132,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Fetch role from database if not present (for OAuth users)
       // Set default role first to prevent Configuration error if DB is slow on first request
       if (!token.role) {
-        token.role = "USER"
+        token.role = "SUBSCRIBER"
       }
 
-      if (token.email && token.role === "USER") {
+      if (token.email && token.role === "SUBSCRIBER") {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { email: token.email },
@@ -147,7 +147,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         } catch (error) {
           console.error("Error fetching user role:", error)
-          // Continue with default USER role - token.role already set above
+          // Continue with default SUBSCRIBER role - token.role already set above
         }
       }
 
@@ -156,7 +156,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
-        session.user.role = (token.role as Role) || "USER"
+        session.user.role = (token.role as Role) || "SUBSCRIBER"
       }
       return session
     },

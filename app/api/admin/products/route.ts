@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { auth } from "@/auth"
+import { requirePermissionApi } from "@/lib/admin"
 import { deleteBlobsBatch } from "@/lib/blob"
-
-async function requireAdminApi() {
-  const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return null
-  }
-  return session
-}
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("products", "view")
+    if (error) return error
 
     const searchParams = request.nextUrl.searchParams
     const category = searchParams.get("category")
@@ -38,10 +28,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("products", "create")
+    if (error) return error
 
     const data = await request.json()
 
@@ -112,10 +100,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("products", "edit")
+    if (error) return error
 
     const data = await request.json()
 
@@ -197,10 +183,8 @@ export async function PUT(request: NextRequest) {
 // PATCH - Bulk update order
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("products", "edit")
+    if (error) return error
 
     const { items } = await request.json()
 
@@ -228,10 +212,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("products", "delete")
+    if (error) return error
 
     const searchParams = request.nextUrl.searchParams
     const id = searchParams.get("id")

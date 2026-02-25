@@ -1,6 +1,7 @@
 import { put } from "@vercel/blob"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
+import { canAccessAdmin } from "@/lib/permissions"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import sharp from "sharp"
@@ -72,7 +73,7 @@ async function uploadToVercelBlob(buffer: Buffer, uniqueName: string, contentTyp
 
 export async function POST(request: NextRequest) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user || !canAccessAdmin(session.user.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

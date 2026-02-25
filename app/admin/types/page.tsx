@@ -7,6 +7,7 @@ import { Plus, Edit2, Trash2, Loader2, Tag, Link as LinkIcon, ExternalLink } fro
 import { DataTable } from "@/app/components/admin/DataTable"
 import { TypeForm, COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface ContentType {
   id: string
@@ -25,6 +26,7 @@ interface ContentType {
 
 export default function TypesPage() {
   const t = useTranslations("admin.types")
+  const { can } = useAdminPermissions()
   const [types, setTypes] = useState<ContentType[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -80,7 +82,13 @@ export default function TypesPage() {
 
   const confirmDelete = async () => {
     if (!deleteItem) return
-    await fetch(`/api/admin/types?id=${deleteItem.id}`, { method: "DELETE" })
+    const res = await fetch(`/api/admin/types?id=${deleteItem.id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      toast.error(err.error || t("deleteFailed"))
+      setDeleteItem(null)
+      return
+    }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
     fetchTypes()
@@ -139,27 +147,31 @@ export default function TypesPage() {
       className: "w-[80px]",
       render: (item: ContentType) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setEditingType(item)
-              setShowForm(true)
-            }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            title={t("edit")}
-          >
-            <Edit2 className="w-4 h-4 text-gray-400" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(item.id, item.nameEn)
-            }}
-            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
-            title={t("delete")}
-          >
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          {can("types", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingType(item)
+                setShowForm(true)
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              title={t("edit")}
+            >
+              <Edit2 className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          {can("types", "delete") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(item.id, item.nameEn)
+              }}
+              className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+              title={t("delete")}
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -172,16 +184,18 @@ export default function TypesPage() {
           <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
           <p className="text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingType(null)
-            setShowForm(true)
-          }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          {t("addType")}
-        </button>
+        {can("types", "create") && (
+          <button
+            onClick={() => {
+              setEditingType(null)
+              setShowForm(true)
+            }}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            {t("addType")}
+          </button>
+        )}
       </div>
 
       {loading ? (

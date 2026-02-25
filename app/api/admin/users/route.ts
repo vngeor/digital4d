@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { auth } from "@/auth"
-
-async function requireAdminApi() {
-  const session = await auth()
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return null
-  }
-  return session
-}
+import { requirePermissionApi } from "@/lib/admin"
+import { invalidateUserPermissionCache } from "@/lib/permissions"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("users", "view")
+    if (error) return error
 
     const searchParams = request.nextUrl.searchParams
     const id = searchParams.get("id")
@@ -121,10 +112,8 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("users", "edit")
+    if (error) return error
 
     const data = await request.json()
 
@@ -148,6 +137,19 @@ export async function PUT(request: NextRequest) {
     if (data.city !== undefined) updateData.city = data.city
     if (data.address !== undefined) updateData.address = data.address
     if (data.birthDate !== undefined) updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null
+
+    // If role is changing, clear user-level permission overrides
+    // (they're relative to the old role and meaningless after role change)
+    if (data.role !== undefined) {
+      const currentUser = await prisma.user.findUnique({
+        where: { id: data.id },
+        select: { role: true },
+      })
+      if (currentUser && currentUser.role !== data.role) {
+        await prisma.userPermission.deleteMany({ where: { userId: data.id } })
+        invalidateUserPermissionCache(data.id)
+      }
+    }
 
     const user = await prisma.user.update({
       where: { id: data.id },
@@ -179,10 +181,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await requireAdminApi()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const { session, error } = await requirePermissionApi("users", "delete")
+    if (error) return error
 
     const searchParams = request.nextUrl.searchParams
     const id = searchParams.get("id")

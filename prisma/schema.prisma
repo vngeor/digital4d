@@ -58,17 +58,22 @@ model User {
   city          String?
   address       String?   @db.Text  // Street address
   birthDate     DateTime?
-  role          Role      @default(USER)
+  role          Role      @default(SUBSCRIBER)
   accounts      Account[]
   sessions      Session[]
   orders        Order[]
+  createdContents  Content[]  @relation("ContentCreator")
+  createdProducts  Product[]  @relation("ProductCreator")
+  permissions      UserPermission[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
 
 enum Role {
-  USER
   ADMIN
+  EDITOR
+  AUTHOR
+  SUBSCRIBER
 }
 
 // Order model for tracking customer requests
@@ -146,16 +151,19 @@ model Content {
   bodyEn     String?   @db.Text
   bodyEs     String?   @db.Text
   image      String?
-  published  Boolean   @default(false)
-  order      Int       @default(0)
-  menuItemId String?
-  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  published    Boolean   @default(false)
+  order        Int       @default(0)
+  menuItemId   String?
+  menuItem     MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  createdById  String?
+  createdBy    User?     @relation("ContentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([type])
   @@index([published])
   @@index([menuItemId])
+  @@index([createdById])
 }
 
 // Product model for e-commerce catalog
@@ -181,17 +189,20 @@ model Product {
   fileUrl     String?   // For digital products
   fileType    String?   // "digital", "physical", "service"
   featured    Boolean   @default(false)
-  published   Boolean   @default(false)
-  inStock     Boolean   @default(true)
-  order       Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  quotes      QuoteRequest[]
+  published     Boolean   @default(false)
+  inStock       Boolean   @default(true)
+  order         Int       @default(0)
+  createdById   String?
+  createdBy     User?     @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  quotes        QuoteRequest[]
 
   @@index([category])
   @@index([published])
   @@index([featured])
   @@index([order])
+  @@index([createdById])
 }
 
 // Product category model
@@ -290,4 +301,29 @@ model Banner {
 
   @@index([type, published])
   @@index([order])
+}
+
+// Role permission overrides (DB overrides code defaults)
+model RolePermission {
+  id       String  @id @default(cuid())
+  role     Role
+  resource String  // "products", "categories", "content", "types", "banners", "menu", "orders", "quotes", "users", "roles"
+  action   String  // "view", "create", "edit", "delete"
+  allowed  Boolean @default(false)
+
+  @@unique([role, resource, action])
+  @@index([role])
+}
+
+// Per-user permission overrides (overrides role-level permissions for specific users)
+model UserPermission {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource String  // same values as RolePermission
+  action   String  // "view", "create", "edit", "delete"
+  allowed  Boolean @default(false)
+
+  @@unique([userId, resource, action])
+  @@index([userId])
 }

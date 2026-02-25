@@ -7,6 +7,7 @@ import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, Link as LinkIcon, ExternalLi
 import { DataTable } from "@/app/components/admin/DataTable"
 import { MenuItemForm } from "@/app/components/admin/MenuItemForm"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface MenuItem {
   id: string
@@ -29,6 +30,7 @@ interface MenuItem {
 
 export default function MenuPage() {
   const t = useTranslations("admin.menu")
+  const { can } = useAdminPermissions()
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -85,7 +87,13 @@ export default function MenuPage() {
 
   const confirmDelete = async () => {
     if (!deleteItem) return
-    await fetch(`/api/admin/menu?id=${deleteItem.id}`, { method: "DELETE" })
+    const res = await fetch(`/api/admin/menu?id=${deleteItem.id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred" }))
+      toast.error(err.error || t("deleteFailed"))
+      setDeleteItem(null)
+      return
+    }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
     fetchMenuItems()
@@ -174,39 +182,45 @@ export default function MenuPage() {
       className: "w-[120px]",
       render: (item: MenuItem) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleTogglePublish(item)
-            }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            title={item.published ? t("unpublish") : t("publish")}
-          >
-            {item.published ? (
-              <EyeOff className="w-4 h-4 text-gray-400" />
-            ) : (
-              <Eye className="w-4 h-4 text-gray-400" />
-            )}
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setEditingItem(item)
-              setShowForm(true)
-            }}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <Edit2 className="w-4 h-4 text-gray-400" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleDelete(item.id, item.titleEn)
-            }}
-            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
-          >
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          {can("menu", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleTogglePublish(item)
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              title={item.published ? t("unpublish") : t("publish")}
+            >
+              {item.published ? (
+                <EyeOff className="w-4 h-4 text-gray-400" />
+              ) : (
+                <Eye className="w-4 h-4 text-gray-400" />
+              )}
+            </button>
+          )}
+          {can("menu", "edit") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingItem(item)
+                setShowForm(true)
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <Edit2 className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          {can("menu", "delete") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(item.id, item.titleEn)
+              }}
+              className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -219,16 +233,18 @@ export default function MenuPage() {
           <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
           <p className="text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingItem(null)
-            setShowForm(true)
-          }}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          {t("addMenuItem")}
-        </button>
+        {can("menu", "create") && (
+          <button
+            onClick={() => {
+              setEditingItem(null)
+              setShowForm(true)
+            }}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            {t("addMenuItem")}
+          </button>
+        )}
       </div>
 
       {loading ? (
