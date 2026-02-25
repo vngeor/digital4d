@@ -11,6 +11,8 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Quote System** - File uploads (STL/OBJ/3MF), quote requests, admin-customer messaging
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content
 - **Admin Dashboard** - Products, orders, quotes, users, content, banners management
+- **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
+- **Security** - Auto-logout after 5 min inactivity, permission-gated admin pages and API routes
 - **Authentication** - Email/password + OAuth (Google, GitHub)
 - **Image Optimization** - Automatic compression, WebP conversion, Vercel Blob storage
 
@@ -43,7 +45,8 @@ digital4d-next/
 │   │   ├── products/      # Product catalog management
 │   │   ├── quotes/        # Quote requests management
 │   │   ├── types/         # Content types configuration
-│   │   └── users/         # User management
+│   │   ├── users/         # User management
+│   │   └── roles/         # Role permission matrix
 │   ├── api/               # API routes
 │   │   ├── admin/         # Admin-only endpoints
 │   │   ├── auth/          # Authentication
@@ -58,6 +61,8 @@ digital4d-next/
 │   ├── profile/           # User profile
 │   └── services/          # Services listing
 ├── lib/                   # Utilities
+│   ├── admin.ts           # Auth guards (requirePermission, requirePermissionApi)
+│   ├── permissions.ts     # Permission resolution (role + user overrides)
 │   ├── blob.ts            # Vercel Blob helpers
 │   ├── prisma.ts          # Database client
 │   └── generateCode.ts    # Order/quote number generation
@@ -150,7 +155,9 @@ USE_LOCAL_UPLOADS="true"  # Use local storage instead of Vercel Blob
 
 Key models:
 
-- **User** - Accounts with roles (USER/ADMIN)
+- **User** - Accounts with roles (ADMIN/EDITOR/AUTHOR/SUBSCRIBER)
+- **RolePermission** - Per-role permission overrides
+- **UserPermission** - Per-user permission overrides
 - **Product** - E-commerce catalog with multilingual content
 - **ProductCategory** - Product categorization
 - **Order** - Customer orders
@@ -183,8 +190,11 @@ Key models:
 - `/api/admin/content` - Manage CMS content
 - `/api/admin/banners` - Manage banners
 - `/api/admin/users` - Manage users
+- `/api/admin/users/permissions` - Per-user permission overrides
 - `/api/admin/menu` - Manage navigation
 - `/api/admin/types` - Manage content types
+- `/api/admin/roles` - Role permission matrix
+- `/api/admin/categories` - Manage product categories
 
 ## Deployment
 
@@ -215,6 +225,10 @@ npm run start
    UPDATE "User" SET role = 'ADMIN' WHERE email = 'your@email.com';
    ```
 3. Access admin at `/admin`
+
+**Roles:** Admin (full access), Editor (configurable), Author (configurable), Subscriber (no admin access)
+
+**Security:** Admin panel auto-logs out after 5 minutes of inactivity with a 1-minute warning countdown.
 
 ---
 
@@ -417,13 +431,14 @@ Define content categories with custom styling.
 
 ### Users (`/admin/users`)
 
-Manage user accounts and roles.
+Manage user accounts, roles, and per-user permissions.
 
 **Features:**
-- User statistics (total, admins, regular users)
-- Role filter tabs
+- User statistics (total, admins, editors, authors, subscribers)
+- Role filter tabs (All, Admin, Editor, Author, Subscriber)
 - Quick role change dropdown
-- Order count per user
+- Order and quote history per user
+- **Permissions tab** (for Editor/Author users) — override role defaults per user
 
 **User Fields:**
 | Field | Description |
@@ -432,8 +447,25 @@ Manage user accounts and roles.
 | Email | Account email |
 | Phone | Contact phone |
 | Image | Profile picture (from OAuth) |
-| Role | `USER` or `ADMIN` |
+| Role | `ADMIN`, `EDITOR`, `AUTHOR`, or `SUBSCRIBER` |
 | Orders | Count of orders placed |
+
+---
+
+### Roles & Permissions (`/admin/roles`)
+
+Configure role-level permissions with a visual matrix.
+
+**Features:**
+- Permission matrix: 11 resources × 4 actions (view, create, edit, delete)
+- Admin role is locked (always full access)
+- Editor and Author permissions are fully configurable
+- Per-user overrides available from the Users page
+
+**Permission Resolution (3-tier):**
+1. **User override** (highest priority) — set per-user on Users page
+2. **Role override** — set on Roles page
+3. **Code defaults** — hardcoded fallback in `lib/permissions.ts`
 
 ---
 

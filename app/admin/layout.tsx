@@ -2,6 +2,7 @@ import { requireAdminAccess } from "@/lib/admin"
 import { getPermissionsForUser, getDefaultPermissions, getVisibleNavItems } from "@/lib/permissions"
 import { Sidebar } from "../components/admin/Sidebar"
 import { AdminPermissionsProvider } from "../components/admin/AdminPermissionsContext"
+import { AdminIdleGuard } from "../components/admin/AdminIdleGuard"
 
 export default async function AdminLayout({
   children,
@@ -23,19 +24,21 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex">
-      <Sidebar
-        user={session.user}
-        role={role}
-        visibleNavHrefs={visibleNavHrefs}
-        permissions={serializedPermissions}
-      />
-      <main className="flex-1 ml-64 p-8">
-        <div className="max-w-7xl mx-auto">
-          <AdminPermissionsProvider role={role} permissions={serializedPermissions}>
-            {children}
-          </AdminPermissionsProvider>
-        </div>
-      </main>
+      <AdminIdleGuard>
+        <Sidebar
+          user={session.user}
+          role={role}
+          visibleNavHrefs={visibleNavHrefs}
+          permissions={serializedPermissions}
+        />
+        <main className="flex-1 ml-64 p-8">
+          <div className="max-w-7xl mx-auto">
+            <AdminPermissionsProvider role={role} permissions={serializedPermissions}>
+              {children}
+            </AdminPermissionsProvider>
+          </div>
+        </main>
+      </AdminIdleGuard>
     </div>
   )
 }

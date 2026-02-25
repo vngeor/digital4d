@@ -34,11 +34,18 @@ No test framework is configured.
 - **Multilingual DB fields**: every user-facing text has `fieldBg`, `fieldEn`, `fieldEs` columns. Access pattern: `` `field${locale.charAt(0).toUpperCase() + locale.slice(1)}` ``
 - **Country mapping**: BG→Bulgarian, 19 Spanish-speaking countries→Spanish, all others→English
 
-### Auth
+### Auth & Permissions
 
 - **NextAuth v5 beta** (`auth.ts`): Credentials + Google + GitHub providers, JWT strategy (30-day sessions, 24h update interval)
-- **Roles**: `USER` / `ADMIN` enum in Prisma schema
-- **Guards**: `requireAdmin()` for server components (redirects), `requireAdminApi()` for API routes (returns 401). Both in `lib/admin.ts`
+- **Roles**: `ADMIN` / `EDITOR` / `AUTHOR` / `SUBSCRIBER` enum in Prisma schema
+- **Guards** (`lib/admin.ts`):
+  - `requireAdmin()` — ADMIN-only for server components (redirects)
+  - `requireAdminApi()` — ADMIN-only for API routes (returns 401)
+  - `requirePermission(resource, action)` — role+user permission check for server components
+  - `requirePermissionApi(resource, action)` — role+user permission check for API routes (returns 403)
+  - `requireAdminAccess()` — any admin role (ADMIN/EDITOR/AUTHOR) for layout-level access
+- **3-tier permission resolution** (`lib/permissions.ts`): User override → Role override → Code defaults. Resources: dashboard, products, categories, content, types, banners, menu, orders, quotes, users, roles. Actions: view, create, edit, delete
+- **Admin idle timeout**: `AdminIdleGuard` component auto-logs out after 5 minutes of inactivity with 1-minute warning countdown
 - **Neon cold start handling**: `withRetry()` wrapper around PrismaAdapter auto-retries on first request timeout after DB inactivity
 - **OAuth config**: `allowDangerousEmailAccountLinking: true` for Google & GitHub; Google has `access_type: "offline"`; GitHub requests `"read:user user:email"` scope
 - **Password**: bcryptjs hashing, min 6 chars + at least one special character
@@ -46,13 +53,13 @@ No test framework is configured.
 ### Database
 
 - **Prisma 7** with Neon HTTP adapter (`lib/prisma.ts`) — **no transaction support**
-- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner
+- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission
 - Prisma results must be serialized for client components: `JSON.parse(JSON.stringify(data))`
 
 ### API Layer
 
 - **No server actions** — all mutations through API routes in `app/api/`
-- Admin CRUD routes in `app/api/admin/` (types, products, categories, content, banners, menu, orders, quotes, users)
+- Admin CRUD routes in `app/api/admin/` (types, products, categories, content, banners, menu, orders, quotes, users, roles, users/permissions)
 - HTTP methods per route: GET (list/filter), POST (create), PUT (update by ID), PATCH (bulk operations like reordering), DELETE (by ID in query params)
 - Error format: `{ error: "message" }` with appropriate HTTP status
 - No optimistic updates — refetch after mutations
@@ -107,8 +114,10 @@ No test framework is configured.
 - **Modal-based CRUD forms** with multi-language tabs (BG/EN/ES)
 - **`ConfirmModal`**: reusable confirmation dialog with customizable title/message, keyboard support (Escape), glassmorphic styling
 - **`RichTextEditor`**: TipTap editor with formatting toolbar, image upload, color picker
+- **`AdminPermissionsContext`**: React context providing `can(resource, action)` helper for client-side permission checks
+- **`AdminIdleGuard`**: wraps admin layout, auto-logout after 5 min inactivity with 1-min warning modal
 - Admin sidebar has live pending quotes badge (30s polling)
-- Admin pages: dashboard, products, categories, orders, quotes, content, banners, menu, types, users
+- Admin pages: dashboard, products, categories, orders, quotes, content, banners, menu, types, users, roles
 
 ### Frontend Components
 
@@ -176,6 +185,7 @@ NEXT_PUBLIC_SITE_URL=            # Public site URL (e.g., https://www.digital4d.
 1. **No transactions** — Neon HTTP adapter doesn't support them; use sequential operations
 2. **No server actions** — all backend logic via API routes
 3. **Trilingual content** — always maintain BG/EN/ES variants for user-facing fields
-4. **Admin auth is dual-layer** — middleware checks cookie existence, `requireAdmin()`/`requireAdminApi()` does full role validation
+4. **Admin auth is triple-layer** — middleware checks cookie existence, `requirePermission()`/`requirePermissionApi()` does role + user-level permission validation, `AdminIdleGuard` handles inactivity timeout
 5. **Prisma serialization** — always `JSON.parse(JSON.stringify())` when passing Prisma results to client components
 6. **NextAuth v5 beta** — some APIs may change before final release
+7. **Permission changes** — when modifying role permissions on `/admin/roles`, or user-level overrides on `/admin/users`, caches are invalidated. Changing a user's role clears their user-level overrides

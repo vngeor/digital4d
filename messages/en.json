@@ -126,7 +126,10 @@
       "users": "Users",
       "banners": "Banners",
       "roles": "Roles",
-      "logout": "Logout"
+      "logout": "Logout",
+      "idleWarningTitle": "Session Expiring",
+      "idleWarningMessage": "You will be logged out in {seconds} seconds due to inactivity.",
+      "idleStayLoggedIn": "Stay Logged In"
     },
     "banners": {
       "title": "Banner Management",

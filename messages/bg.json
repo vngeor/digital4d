@@ -126,7 +126,10 @@
       "users": "Потребители",
       "banners": "Банери",
       "roles": "Роли",
-      "logout": "Изход"
+      "logout": "Изход",
+      "idleWarningTitle": "Сесията изтича",
+      "idleWarningMessage": "Ще бъдете излезли след {seconds} секунди поради неактивност.",
+      "idleStayLoggedIn": "Остани в профила"
     },
     "banners": {
       "title": "Управление на банери",

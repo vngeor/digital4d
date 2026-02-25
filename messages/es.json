@@ -126,7 +126,10 @@
       "users": "Usuarios",
       "banners": "Banners",
       "roles": "Roles",
-      "logout": "Cerrar sesión"
+      "logout": "Cerrar sesión",
+      "idleWarningTitle": "Sesión por expirar",
+      "idleWarningMessage": "Se cerrará su sesión en {seconds} segundos por inactividad.",
+      "idleStayLoggedIn": "Mantener sesión"
     },
     "banners": {
       "title": "Gestión de Banners",

@@ -538,7 +538,7 @@ export default function UsersPage() {
       {/* User Details Modal */}
       {viewingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setViewingUser(null); setEditing(false); setModalTab("details") }}>
-          <div className={`glass-strong rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-3xl" : "max-w-lg"} max-h-[85vh] overflow-y-auto transition-all`} onClick={(e) => e.stopPropagation()}>
+          <div className={`glass-strong bg-[#0f0f0f] rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-3xl" : "max-w-lg"} max-h-[85vh] overflow-y-auto transition-all`} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -565,7 +565,7 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {!editing && (
+                {!editing && modalTab === "details" && (
                   <button onClick={() => startEditing(viewingUser)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
                     <Pencil className="w-4 h-4 text-gray-400" />
                   </button>
@@ -890,13 +890,13 @@ export default function UsersPage() {
                 ) : (
                   <>
                     {/* Permission Grid */}
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto rounded-xl border border-white/10">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b border-white/10">
-                            <th className="text-left px-3 py-2 text-xs font-semibold text-gray-400">{t("permResource")}</th>
+                          <tr className="border-b border-white/10 bg-white/[0.03]">
+                            <th className="text-left px-4 py-3 text-xs font-semibold text-gray-300 uppercase tracking-wider min-w-[140px]">{t("permResource")}</th>
                             {PERM_ACTIONS.map((action) => (
-                              <th key={action} className="px-2 py-2 text-[10px] text-gray-500 uppercase font-medium text-center">
+                              <th key={action} className="px-3 py-3 text-xs text-gray-400 uppercase font-semibold tracking-wider text-center whitespace-nowrap w-[80px]">
                                 {action}
                               </th>
                             ))}
@@ -904,8 +904,8 @@ export default function UsersPage() {
                         </thead>
                         <tbody>
                           {PERM_RESOURCES.map((resource) => (
-                            <tr key={resource} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                              <td className="px-3 py-2">
+                            <tr key={resource} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                              <td className="px-4 py-3">
                                 <span className="text-sm font-medium text-white">
                                   {PERM_RESOURCE_LABELS[resource] || resource}
                                 </span>
@@ -917,10 +917,10 @@ export default function UsersPage() {
                                 const effectiveValue = isOverridden ? overrideValue : roleValue
 
                                 return (
-                                  <td key={`${resource}-${action}`} className="px-2 py-2 text-center">
+                                  <td key={`${resource}-${action}`} className="px-3 py-3 text-center">
                                     <button
                                       onClick={() => togglePermOverride(resource, action)}
-                                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
+                                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-all mx-auto ${
                                         isOverridden
                                           ? effectiveValue
                                             ? "bg-amber-500/20 ring-1 ring-amber-500/40 hover:bg-amber-500/30"
