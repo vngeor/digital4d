@@ -163,7 +163,11 @@
       "uploadFailed": "Upload failed",
       "uploadImageFailed": "Failed to upload image",
       "confirmDeleteTitle": "Confirm Delete",
-      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
+      "uploading": "Uploading...",
+      "uploadImage": "Upload Image",
+      "or": "or",
+      "deleteFailed": "Failed to delete banner"
     },
     "menu": {
       "title": "Menu Management",
@@ -261,7 +265,8 @@
       "unpublishedSuccess": "Unpublished",
       "updateFailed": "Failed to update content",
       "confirmDeleteTitle": "Confirm Delete",
-      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
+      "homepage": "Homepage"
     },
     "orders": {
       "title": "Order Management",
@@ -286,7 +291,14 @@
       "savedSuccess": "Order saved successfully",
       "deletedSuccess": "Order deleted",
       "confirmDeleteTitle": "Confirm Delete",
-      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
+      "statusPending": "Pending",
+      "statusInProgress": "In Progress",
+      "statusCompleted": "Completed",
+      "statusCancelled": "Cancelled",
+      "copied": "Copied!",
+      "clickToCopy": "Click to copy",
+      "deleteFailed": "Failed to delete order"
     },
     "users": {
       "title": "User Management",
@@ -365,7 +377,27 @@
       "permLegendRevoked": "User override (revoked)",
       "permLegendDenied": "Denied (inherited)",
       "permResetDefaults": "Reset to Defaults",
-      "permSaveBtn": "Save Permissions"
+      "permSaveBtn": "Save Permissions",
+      "anonymous": "Anonymous",
+      "roleAdmin": "Admin",
+      "roleEditor": "Editor",
+      "roleAuthor": "Author",
+      "roleSubscriber": "Subscriber",
+      "loadFailed": "Failed to load users",
+      "loadDetailsFailed": "Failed to load user details",
+      "senderAdmin": "Admin",
+      "senderUser": "User",
+      "resDashboard": "Dashboard",
+      "resProducts": "Products",
+      "resCategories": "Categories",
+      "resContent": "Content",
+      "resTypes": "Content Types",
+      "resBanners": "Banners",
+      "resMenu": "Menu",
+      "resOrders": "Orders",
+      "resQuotes": "Quotes",
+      "resUsers": "Users",
+      "resRoles": "Roles"
     },
     "roles": {
       "title": "Role Permissions",
@@ -376,7 +408,20 @@
       "fullAccess": "Full access (locked)",
       "adminNote": "has full access to everything and cannot be restricted.",
       "editorNote": "can manage all content by default.",
-      "authorNote": "can create and edit own content by default."
+      "authorNote": "can create and edit own content by default.",
+      "resDashboard": "Dashboard",
+      "resProducts": "Products",
+      "resCategories": "Categories",
+      "resContent": "Content",
+      "resTypes": "Content Types",
+      "resBanners": "Banners",
+      "resMenu": "Menu",
+      "resOrders": "Orders",
+      "resQuotes": "Quotes",
+      "resUsers": "Users",
+      "resRoles": "Roles",
+      "loadFailed": "Failed to load permissions",
+      "saveFailed": "Failed to save permissions"
     },
     "types": {
       "title": "Type Management",
@@ -450,7 +495,9 @@
       "deletedSuccess": "Product deleted",
       "saveFailed": "Failed to save product",
       "confirmDeleteTitle": "Confirm Delete",
-      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
+      "homepage": "Home",
+      "deleteFailed": "Failed to delete product"
     },
     "productCategories": {
       "title": "Product Categories",
@@ -476,7 +523,9 @@
       "deletedSuccess": "Category deleted",
       "saveFailed": "Failed to save category",
       "confirmDeleteTitle": "Confirm Delete",
-      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
+      "backToProducts": "Back to Products",
+      "deleteFailed": "Failed to delete category"
     },
     "quotes": {
       "title": "Quote Requests",
@@ -512,7 +561,24 @@
       "deletedSuccess": "Quote deleted",
       "updateFailed": "Failed to update quote",
       "confirmDeleteTitle": "Confirm Delete",
-      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
+      "counterOffer": "Counter Offer",
+      "userDeclined": "User Declined",
+      "seen": "Seen",
+      "unseen": "Unseen",
+      "copied": "Copied!",
+      "clickToCopy": "Click to copy",
+      "justNow": "Just now",
+      "minutesAgo": "{minutes}m ago",
+      "hoursAgo": "{hours}h ago",
+      "daysAgo": "{days}d ago",
+      "customerResponse": "Customer Response",
+      "conversationHistory": "Conversation History",
+      "you": "You",
+      "customerLabel": "Customer",
+      "viewProduct": "View Product",
+      "delete": "Delete",
+      "deleteFailed": "Failed to delete quote"
     },
     "common": {
       "uploadFailed": "Upload failed",

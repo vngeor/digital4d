@@ -120,6 +120,7 @@ export default function CategoriesPage() {
     {
       key: "color",
       header: t("color"),
+      className: "hidden md:table-cell",
       render: (item: ProductCategory) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${COLOR_CLASSES[item.color] || "bg-gray-500/20 text-gray-400"}`}
@@ -131,6 +132,7 @@ export default function CategoriesPage() {
     {
       key: "order",
       header: t("order"),
+      className: "hidden lg:table-cell",
     },
     {
       key: "actions",
@@ -169,17 +171,17 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <Link
             href="/admin/products"
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-2 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Products
+            {t("backToProducts")}
           </Link>
-          <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
-          <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
+          <p className="text-sm lg:text-base text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
         {can("categories", "create") && (
           <button
@@ -187,7 +189,7 @@ export default function CategoriesPage() {
               setEditingCategory(null)
               setShowForm(true)
             }}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-sm sm:text-base text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
           >
             <Plus className="w-5 h-5" />
             {t("addCategory")}

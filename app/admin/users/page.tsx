@@ -112,9 +112,9 @@ export default function UsersPage() {
   ] as const
   const PERM_ACTIONS = ["view", "create", "edit", "delete"] as const
   const PERM_RESOURCE_LABELS: Record<string, string> = {
-    dashboard: "Dashboard", products: "Products", categories: "Categories",
-    content: "Content", types: "Content Types", banners: "Banners",
-    menu: "Menu", orders: "Orders", quotes: "Quotes", users: "Users", roles: "Roles",
+    dashboard: "resDashboard", products: "resProducts", categories: "resCategories",
+    content: "resContent", types: "resTypes", banners: "resBanners",
+    menu: "resMenu", orders: "resOrders", quotes: "resQuotes", users: "resUsers", roles: "resRoles",
   }
 
   const fetchUserPermissions = async (userId: string) => {
@@ -203,10 +203,10 @@ export default function UsersPage() {
       if (Array.isArray(data)) {
         setUsers(data)
       } else {
-        toast.error(data.error || "Failed to load users")
+        toast.error(data.error || t("loadFailed"))
       }
     } catch {
-      toast.error("Failed to load users")
+      toast.error(t("loadFailed"))
     } finally {
       setLoading(false)
     }
@@ -227,7 +227,7 @@ export default function UsersPage() {
       setExpandedQuotes(new Set())
       setModalTab("details")
     } catch {
-      toast.error("Failed to load user details")
+      toast.error(t("loadDetailsFailed"))
     } finally {
       setLoadingDetails(false)
     }
@@ -326,7 +326,7 @@ export default function UsersPage() {
             </div>
           )}
           <div>
-            <p className="font-medium text-white">{item.name || "Anonymous"}</p>
+            <p className="font-medium text-white">{item.name || t("anonymous")}</p>
             <p className="text-xs text-gray-500">{item.email}</p>
             {item.phone && <p className="text-xs text-gray-400">{item.phone}</p>}
           </div>
@@ -354,17 +354,17 @@ export default function UsersPage() {
               : "bg-gray-500/20 text-gray-400"
           }`}
         >
-          <option value="ADMIN">Admin</option>
-          <option value="EDITOR">Editor</option>
-          <option value="AUTHOR">Author</option>
-          <option value="SUBSCRIBER">Subscriber</option>
+          <option value="ADMIN">{t("roleAdmin")}</option>
+          <option value="EDITOR">{t("roleEditor")}</option>
+          <option value="AUTHOR">{t("roleAuthor")}</option>
+          <option value="SUBSCRIBER">{t("roleSubscriber")}</option>
         </select>
       ),
     },
     {
       key: "orders",
       header: t("orders"),
-      className: "whitespace-nowrap w-[80px]",
+      className: "whitespace-nowrap w-[80px] hidden md:table-cell",
       render: (item: User) => (
         <span className="text-gray-400">{item._count.orders}</span>
       ),
@@ -372,7 +372,7 @@ export default function UsersPage() {
     {
       key: "createdAt",
       header: t("joined"),
-      className: "whitespace-nowrap w-[100px]",
+      className: "whitespace-nowrap w-[100px] hidden lg:table-cell",
       render: (item: User) => (
         <span className="text-gray-400">
           {new Date(item.createdAt).toLocaleDateString()}
@@ -421,8 +421,8 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
-        <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
+        <p className="text-sm lg:text-base text-gray-400 mt-1">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -538,7 +538,7 @@ export default function UsersPage() {
       {/* User Details Modal */}
       {viewingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setViewingUser(null); setEditing(false); setModalTab("details") }}>
-          <div className={`glass-strong bg-[#0f0f0f] rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-3xl" : "max-w-lg"} max-h-[85vh] overflow-y-auto transition-all`} onClick={(e) => e.stopPropagation()}>
+          <div className={`glass-strong bg-[#0f0f0f] rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-[95vw] md:max-w-3xl" : "max-w-[95vw] md:max-w-lg"} max-h-[85vh] overflow-y-auto transition-all`} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -550,7 +550,7 @@ export default function UsersPage() {
                   </div>
                 )}
                 <div>
-                  <h2 className="text-lg font-bold text-white">{viewingUser.name || "Anonymous"}</h2>
+                  <h2 className="text-lg font-bold text-white">{viewingUser.name || t("anonymous")}</h2>
                   <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                     viewingUser.role === "ADMIN"
                       ? "bg-red-500/20 text-red-400"
@@ -629,7 +629,7 @@ export default function UsersPage() {
               </div>
 
               {editing ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="col-span-2">
                     <label className="text-xs text-gray-500 mb-1 block">{t("name")}</label>
                     <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
@@ -656,7 +656,7 @@ export default function UsersPage() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-500">{t("email")}</p>
                     <p className="text-sm text-white">{viewingUser.email || t("notProvided")}</p>
@@ -847,7 +847,7 @@ export default function UsersPage() {
                                     }`}>
                                       <div className="flex items-center gap-1.5 mb-0.5">
                                         <span className={`text-[10px] font-medium ${msg.senderType === "admin" ? "text-blue-400" : "text-emerald-400"}`}>
-                                          {msg.senderType === "admin" ? "Admin" : "User"}
+                                          {msg.senderType === "admin" ? t("senderAdmin") : t("senderUser")}
                                         </span>
                                         <span className="text-[10px] text-gray-500">
                                           {new Date(msg.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -907,7 +907,7 @@ export default function UsersPage() {
                             <tr key={resource} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
                               <td className="px-4 py-3">
                                 <span className="text-sm font-medium text-white">
-                                  {PERM_RESOURCE_LABELS[resource] || resource}
+                                  {t(PERM_RESOURCE_LABELS[resource]) || resource}
                                 </span>
                               </td>
                               {PERM_ACTIONS.map((action) => {

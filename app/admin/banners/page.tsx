@@ -170,7 +170,7 @@ export default function BannersPage() {
     {
       key: "titleEn",
       header: t("titleField"),
-      className: "min-w-[180px]",
+      className: "min-w-[140px] sm:min-w-[180px]",
       render: (item: Banner) => (
         <div>
           <p className="font-medium text-white">{item.titleEn}</p>
@@ -191,7 +191,7 @@ export default function BannersPage() {
     {
       key: "link",
       header: t("link"),
-      className: "min-w-[150px] max-w-[200px]",
+      className: "min-w-[150px] max-w-[200px] hidden md:table-cell",
       render: (item: Banner) => {
         if (!item.link) {
           return <span className="text-gray-500 text-sm">—</span>
@@ -230,7 +230,7 @@ export default function BannersPage() {
     {
       key: "order",
       header: t("order"),
-      className: "whitespace-nowrap w-[60px]",
+      className: "whitespace-nowrap w-[60px] hidden lg:table-cell",
       render: (item: Banner) => (
         <span className="text-gray-400">{item.order}</span>
       ),
@@ -287,10 +287,10 @@ export default function BannersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
-          <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
+          <p className="text-gray-400 mt-1 text-sm lg:text-base">{t("subtitle")}</p>
         </div>
         {can("banners", "create") && (
           <button
@@ -298,7 +298,7 @@ export default function BannersPage() {
               setEditingBanner(null)
               setShowForm(true)
             }}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm sm:text-base hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
           >
             <Plus className="w-5 h-5" />
             {t("addBanner")}
@@ -450,8 +450,8 @@ function BannerForm({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+      <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0f0f0f]">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? t("editBanner") : t("addBanner")}
           </h2>
@@ -463,8 +463,8 @@ function BannerForm({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
                 {t("type")}
@@ -499,7 +499,7 @@ function BannerForm({
             </label>
             <div className="space-y-3">
               {formData.image && (
-                <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10">
+                <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden border border-white/10">
                   <img
                     src={formData.image}
                     alt="Preview"
@@ -514,7 +514,7 @@ function BannerForm({
                   </button>
                 </div>
               )}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -533,9 +533,9 @@ function BannerForm({
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  {uploading ? "Uploading..." : "Upload Image"}
+                  {uploading ? t("uploading") : t("uploadImage")}
                 </button>
-                <span className="text-gray-500 text-sm self-center">or</span>
+                <span className="text-gray-500 text-sm self-center">{t("or")}</span>
                 <input
                   type="url"
                   value={formData.image}
@@ -573,7 +573,7 @@ function BannerForm({
 
           {/* Language Tabs */}
           <div>
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4">
               {languageTabs.map((tab) => (
                 <button
                   key={tab.key}
@@ -646,14 +646,14 @@ function BannerForm({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-6 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+              className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
             >
               {t("cancel")}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

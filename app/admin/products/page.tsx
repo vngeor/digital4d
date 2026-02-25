@@ -49,10 +49,10 @@ interface ProductCategory {
   color: string
 }
 
-const FILE_TYPE_BADGES: Record<string, { label: string; color: string }> = {
-  digital: { label: "Digital", color: "bg-purple-500/20 text-purple-400" },
-  physical: { label: "Physical", color: "bg-emerald-500/20 text-emerald-400" },
-  service: { label: "Service", color: "bg-amber-500/20 text-amber-400" },
+const FILE_TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
+  digital: { labelKey: "fileTypeDigital", color: "bg-purple-500/20 text-purple-400" },
+  physical: { labelKey: "fileTypePhysical", color: "bg-emerald-500/20 text-emerald-400" },
+  service: { labelKey: "fileTypeService", color: "bg-amber-500/20 text-amber-400" },
 }
 
 export default function ProductsPage() {
@@ -229,7 +229,7 @@ export default function ProductsPage() {
     {
       key: "product",
       header: t("name"),
-      className: "min-w-[200px]",
+      className: "min-w-[140px] sm:min-w-[200px]",
       render: (item: Product) => (
         <div className="flex items-center gap-3">
           {item.image ? (
@@ -263,8 +263,8 @@ export default function ProductsPage() {
     },
     {
       key: "homepage",
-      header: "Home",
-      className: "whitespace-nowrap w-[70px]",
+      header: t("homepage"),
+      className: "whitespace-nowrap w-[70px] hidden sm:table-cell",
       render: (item: Product) => {
         const position = getHomepagePosition(item.id)
         if (!item.published) {
@@ -284,7 +284,7 @@ export default function ProductsPage() {
     {
       key: "category",
       header: t("category"),
-      className: "whitespace-nowrap",
+      className: "whitespace-nowrap hidden md:table-cell",
       render: (item: Product) => {
         const color = getCategoryColor(item.category)
         return (
@@ -299,7 +299,7 @@ export default function ProductsPage() {
     {
       key: "sku",
       header: t("sku"),
-      className: "whitespace-nowrap",
+      className: "whitespace-nowrap hidden lg:table-cell",
       render: (item: Product) => {
         if (!item.sku) {
           return <span className="text-gray-500 text-xs">—</span>
@@ -312,12 +312,12 @@ export default function ProductsPage() {
     {
       key: "fileType",
       header: t("fileType"),
-      className: "whitespace-nowrap",
+      className: "whitespace-nowrap hidden md:table-cell",
       render: (item: Product) => {
         const badge = FILE_TYPE_BADGES[item.fileType || "physical"]
         return (
           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
-            {badge.label}
+            {t(badge.labelKey)}
           </span>
         )
       },
@@ -367,7 +367,7 @@ export default function ProductsPage() {
     {
       key: "status",
       header: t("published"),
-      className: "whitespace-nowrap",
+      className: "whitespace-nowrap hidden sm:table-cell",
       render: (item: Product) => (
         item.published ? (
           <span className="flex items-center gap-1 text-emerald-400">
@@ -393,7 +393,7 @@ export default function ProductsPage() {
                 setEditingProduct(item)
                 setShowForm(true)
               }}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
               title={t("edit")}
             >
               <Edit2 className="w-4 h-4 text-gray-400" />
@@ -405,7 +405,7 @@ export default function ProductsPage() {
                 e.stopPropagation()
                 handleDelete(item.id, item.nameEn)
               }}
-              className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
+              className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
               title={t("delete")}
             >
               <Trash2 className="w-4 h-4 text-red-400" />
@@ -418,15 +418,15 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
-          <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
+          <p className="text-sm lg:text-base text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <Link
             href="/admin/products/categories"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-all"
           >
             <FolderOpen className="w-4 h-4" />
             {t("manageCategories")}
@@ -437,7 +437,7 @@ export default function ProductsPage() {
                 setEditingProduct(null)
                 setShowForm(true)
               }}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm sm:text-base font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
             >
               <Plus className="w-5 h-5" />
               {t("addProduct")}

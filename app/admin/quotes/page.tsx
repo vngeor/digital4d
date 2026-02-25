@@ -52,13 +52,13 @@ interface QuoteRequest {
   messages?: QuoteMessage[]
 }
 
-const STATUS_BADGES: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pending", color: "bg-amber-500/20 text-amber-400" },
-  quoted: { label: "Quoted", color: "bg-blue-500/20 text-blue-400" },
-  accepted: { label: "Accepted", color: "bg-emerald-500/20 text-emerald-400" },
-  rejected: { label: "Rejected", color: "bg-red-500/20 text-red-400" },
-  counter_offer: { label: "Counter Offer", color: "bg-purple-500/20 text-purple-400" },
-  user_declined: { label: "User Declined", color: "bg-gray-500/20 text-gray-400" },
+const STATUS_BADGES: Record<string, { labelKey: string; color: string }> = {
+  pending: { labelKey: "statusPending", color: "bg-amber-500/20 text-amber-400" },
+  quoted: { labelKey: "statusQuoted", color: "bg-blue-500/20 text-blue-400" },
+  accepted: { labelKey: "statusAccepted", color: "bg-emerald-500/20 text-emerald-400" },
+  rejected: { labelKey: "statusRejected", color: "bg-red-500/20 text-red-400" },
+  counter_offer: { labelKey: "counterOffer", color: "bg-purple-500/20 text-purple-400" },
+  user_declined: { labelKey: "userDeclined", color: "bg-gray-500/20 text-gray-400" },
 }
 
 export default function QuotesPage() {
@@ -166,10 +166,10 @@ export default function QuotesPage() {
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
-    if (diffMins < 1) return "Just now"
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    return `${diffDays}d ago`
+    if (diffMins < 1) return t("justNow")
+    if (diffMins < 60) return t("minutesAgo", { minutes: diffMins })
+    if (diffHours < 24) return t("hoursAgo", { hours: diffHours })
+    return t("daysAgo", { days: diffDays })
   }
 
   const formatFileSize = (bytes: number | null) => {
@@ -189,17 +189,10 @@ export default function QuotesPage() {
           onClick={(e) => {
             e.stopPropagation()
             navigator.clipboard.writeText(item.quoteNumber)
-            const btn = e.currentTarget
-            btn.classList.add("scale-95")
-            const orig = btn.textContent
-            btn.textContent = "Copied!"
-            setTimeout(() => {
-              btn.textContent = orig
-              btn.classList.remove("scale-95")
-            }, 1000)
+            toast.success(t("copied"))
           }}
           className="font-mono text-xs text-blue-400 hover:text-blue-300 hover:underline cursor-pointer transition-all"
-          title="Click to copy"
+          title={t("clickToCopy")}
         >
           {item.quoteNumber}
         </button>
@@ -219,7 +212,7 @@ export default function QuotesPage() {
     {
       key: "product",
       header: t("product"),
-      className: "min-w-[140px] max-w-[180px]",
+      className: "min-w-[140px] max-w-[180px] hidden md:table-cell",
       render: (item: QuoteRequest) => {
         const product = item.product
         if (!product) return <span className="text-gray-500 text-sm">-</span>
@@ -261,7 +254,7 @@ export default function QuotesPage() {
     {
       key: "file",
       header: t("file"),
-      className: "whitespace-nowrap",
+      className: "whitespace-nowrap hidden lg:table-cell",
       render: (item: QuoteRequest) => (
         <div>
           {item.fileUrl ? (
@@ -291,11 +284,11 @@ export default function QuotesPage() {
         return (
           <div className="flex flex-col gap-1">
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium w-fit ${badge.color}`}>
-              {badge.label}
+              {t(badge.labelKey)}
             </span>
             {hasCounterOffer && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/20 text-purple-400 w-fit">
-                Counter
+                {t("counterOffer")}
               </span>
             )}
             {item.status === "quoted" && (
@@ -304,7 +297,7 @@ export default function QuotesPage() {
                   ? "bg-emerald-500/20 text-emerald-400"
                   : "bg-amber-500/20 text-amber-400"
               }`}>
-                {item.viewedAt ? "Seen" : "Unseen"}
+                {item.viewedAt ? t("seen") : t("unseen")}
               </span>
             )}
           </div>
@@ -314,7 +307,7 @@ export default function QuotesPage() {
     {
       key: "quotedPrice",
       header: t("quotedPrice"),
-      className: "whitespace-nowrap text-right",
+      className: "whitespace-nowrap text-right hidden sm:table-cell",
       render: (item: QuoteRequest) => (
         <span className="text-white font-medium">
           {item.quotedPrice && parseFloat(item.quotedPrice) >= 0
@@ -326,7 +319,7 @@ export default function QuotesPage() {
     {
       key: "date",
       header: t("date"),
-      className: "whitespace-nowrap",
+      className: "whitespace-nowrap hidden lg:table-cell",
       render: (item: QuoteRequest) => (
         <span className="text-gray-400 text-xs">
           {new Date(item.createdAt).toLocaleDateString("en-US", {
@@ -359,7 +352,7 @@ export default function QuotesPage() {
                 handleDelete(item.id, item.quoteNumber)
               }}
               className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
-              title="Delete"
+              title={t("delete")}
             >
               <Trash2 className="w-4 h-4 text-red-400" />
             </button>
@@ -373,18 +366,18 @@ export default function QuotesPage() {
     { key: null, label: t("all") },
     { key: "pending", label: t("pending") },
     { key: "quoted", label: t("quoted") },
-    { key: "counter_offer", label: "Counter Offer" },
+    { key: "counter_offer", label: t("counterOffer") },
     { key: "accepted", label: t("accepted") },
-    { key: "user_declined", label: "User Declined" },
+    { key: "user_declined", label: t("userDeclined") },
     { key: "rejected", label: t("rejected") },
   ]
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
-          <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
+          <p className="text-gray-400 mt-1 text-sm lg:text-base">{t("subtitle")}</p>
         </div>
       </div>
 
@@ -426,7 +419,7 @@ export default function QuotesPage() {
       {/* View/Edit Quote Modal */}
       {viewingQuote && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="glass-strong bg-[#0f0f0f] rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-emerald-400" />
@@ -489,7 +482,7 @@ export default function QuotesPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm"
                     >
-                      <span>View Product →</span>
+                      <span>{t("viewProduct")} →</span>
                     </a>
                   </div>
                 )
@@ -498,7 +491,7 @@ export default function QuotesPage() {
               {/* Customer Info */}
               <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
                 <h3 className="text-sm font-medium text-gray-300">{t("customer")}</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">{t("customer")}</p>
                     <p className="text-white">{viewingQuote.name}</p>
@@ -544,7 +537,7 @@ export default function QuotesPage() {
               {viewingQuote.userResponse && (
                 <div>
                   <label className="block text-sm font-medium text-purple-400 mb-2">
-                    Customer Response
+                    {t("customerResponse")}
                   </label>
                   <p className="text-white bg-purple-500/10 p-4 rounded-xl border border-purple-500/30 whitespace-pre-wrap">
                     {viewingQuote.userResponse}
@@ -556,7 +549,7 @@ export default function QuotesPage() {
               {viewingQuote.messages && viewingQuote.messages.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-3">
-                    Conversation History
+                    {t("conversationHistory")}
                   </label>
                   <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/10 max-h-60 overflow-y-auto">
                     {viewingQuote.messages.map((msg) => (
@@ -575,7 +568,7 @@ export default function QuotesPage() {
                             <span className={`text-xs font-medium ${
                               msg.senderType === "admin" ? "text-blue-400" : "text-emerald-400"
                             }`}>
-                              {msg.senderType === "admin" ? "You" : "Customer"}
+                              {msg.senderType === "admin" ? t("you") : t("customerLabel")}
                             </span>
                             <span className="text-xs text-gray-500">
                               {new Date(msg.createdAt).toLocaleDateString(undefined, {
@@ -613,7 +606,7 @@ export default function QuotesPage() {
                   >
                     <Download className="w-5 h-5 text-cyan-400" />
                     <div>
-                      <p className="text-cyan-400 font-medium">{viewingQuote.fileName || "Download File"}</p>
+                      <p className="text-cyan-400 font-medium">{viewingQuote.fileName || t("downloadFile")}</p>
                       {viewingQuote.fileSize && (
                         <p className="text-xs text-cyan-400/60">{formatFileSize(viewingQuote.fileSize)}</p>
                       )}

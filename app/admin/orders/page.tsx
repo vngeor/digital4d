@@ -35,10 +35,10 @@ interface Order {
 }
 
 const statusConfig = {
-  PENDING: { icon: Clock, color: "amber", label: "Pending" },
-  IN_PROGRESS: { icon: PlayCircle, color: "cyan", label: "In Progress" },
-  COMPLETED: { icon: CheckCircle, color: "emerald", label: "Completed" },
-  CANCELLED: { icon: XCircle, color: "red", label: "Cancelled" },
+  PENDING: { icon: Clock, color: "amber", labelKey: "statusPending" },
+  IN_PROGRESS: { icon: PlayCircle, color: "cyan", labelKey: "statusInProgress" },
+  COMPLETED: { icon: CheckCircle, color: "emerald", labelKey: "statusCompleted" },
+  CANCELLED: { icon: XCircle, color: "red", labelKey: "statusCancelled" },
 }
 
 export default function OrdersPage() {
@@ -120,23 +120,16 @@ export default function OrdersPage() {
     {
       key: "orderNumber",
       header: "#",
-      className: "whitespace-nowrap w-[130px]",
+      className: "whitespace-nowrap w-[80px] sm:w-[100px] lg:w-[130px]",
       render: (item: Order) => (
         <button
           onClick={(e) => {
             e.stopPropagation()
             navigator.clipboard.writeText(item.orderNumber)
-            const btn = e.currentTarget
-            btn.classList.add("scale-95")
-            const orig = btn.textContent
-            btn.textContent = "Copied!"
-            setTimeout(() => {
-              btn.textContent = orig
-              btn.classList.remove("scale-95")
-            }, 1000)
+            toast.success(t("copied"))
           }}
           className="font-mono text-sm text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer transition-all"
-          title="Click to copy"
+          title={t("clickToCopy")}
         >
           {item.orderNumber}
         </button>
@@ -145,7 +138,7 @@ export default function OrdersPage() {
     {
       key: "customerName",
       header: t("customer"),
-      className: "min-w-[150px]",
+      className: "min-w-[120px] sm:min-w-[150px]",
       render: (item: Order) => (
         <div>
           <p className="font-medium text-white">{item.customerName}</p>
@@ -156,7 +149,7 @@ export default function OrdersPage() {
     {
       key: "description",
       header: t("description"),
-      className: "min-w-[200px] max-w-[300px]",
+      className: "min-w-[200px] max-w-[300px] hidden md:table-cell",
       render: (item: Order) => (
         <p className="text-gray-300 truncate max-w-xs">{item.description}</p>
       ),
@@ -178,10 +171,10 @@ export default function OrdersPage() {
               backgroundColor: `rgba(var(--${config.color}-500), 0.2)`,
             }}
           >
-            <option value="PENDING">Pending</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
+            <option value="PENDING">{t("statusPending")}</option>
+            <option value="IN_PROGRESS">{t("statusInProgress")}</option>
+            <option value="COMPLETED">{t("statusCompleted")}</option>
+            <option value="CANCELLED">{t("statusCancelled")}</option>
           </select>
         )
       },
@@ -189,7 +182,7 @@ export default function OrdersPage() {
     {
       key: "createdAt",
       header: t("date"),
-      className: "whitespace-nowrap w-[90px]",
+      className: "whitespace-nowrap w-[90px] hidden lg:table-cell",
       render: (item: Order) => (
         <span className="text-gray-400">
           {new Date(item.createdAt).toLocaleDateString()}
@@ -234,10 +227,10 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
-          <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
+          <p className="text-gray-400 mt-1 text-sm lg:text-base">{t("subtitle")}</p>
         </div>
         {can("orders", "create") && (
           <button
@@ -245,7 +238,7 @@ export default function OrdersPage() {
               setEditingOrder(null)
               setShowForm(true)
             }}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all text-sm sm:text-base"
           >
             <Plus className="w-5 h-5" />
             {t("addOrder")}
@@ -264,7 +257,7 @@ export default function OrdersPage() {
                 : "text-gray-400 hover:text-white hover:bg-white/5"
             }`}
           >
-            {status === "all" ? t("all") : statusConfig[status as keyof typeof statusConfig]?.label || status}
+            {status === "all" ? t("all") : t(statusConfig[status as keyof typeof statusConfig]?.labelKey || status)}
           </button>
         ))}
       </div>
@@ -284,8 +277,8 @@ export default function OrdersPage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-xl">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="glass-strong bg-[#0f0f0f] rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
               <h2 className="text-xl font-bold text-white">
                 {editingOrder ? t("editOrder") : t("addOrder")}
               </h2>
@@ -300,8 +293,8 @@ export default function OrdersPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-2">
                     {t("customerName")}
@@ -328,7 +321,7 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-2">
                     {t("phone")}
@@ -349,10 +342,10 @@ export default function OrdersPage() {
                     defaultValue={editingOrder?.status || "PENDING"}
                     className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                   >
-                    <option value="PENDING">Pending</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="CANCELLED">Cancelled</option>
+                    <option value="PENDING">{t("statusPending")}</option>
+                    <option value="IN_PROGRESS">{t("statusInProgress")}</option>
+                    <option value="COMPLETED">{t("statusCompleted")}</option>
+                    <option value="CANCELLED">{t("statusCancelled")}</option>
                   </select>
                 </div>
               </div>

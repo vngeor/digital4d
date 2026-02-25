@@ -112,7 +112,7 @@ export default function MenuPage() {
     {
       key: "slug",
       header: t("slug"),
-      className: "min-w-[120px]",
+      className: "min-w-[120px] hidden sm:table-cell",
       render: (item: MenuItem) => (
         <a
           href={`/${item.slug}`}
@@ -141,7 +141,7 @@ export default function MenuPage() {
     {
       key: "contents",
       header: t("linkedContent"),
-      className: "whitespace-nowrap w-[100px]",
+      className: "whitespace-nowrap w-[100px] hidden md:table-cell",
       render: (item: MenuItem) => (
         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
           item._count.contents > 0
@@ -171,7 +171,7 @@ export default function MenuPage() {
     {
       key: "order",
       header: t("order"),
-      className: "whitespace-nowrap w-[60px]",
+      className: "whitespace-nowrap w-[60px] hidden lg:table-cell",
       render: (item: MenuItem) => (
         <span className="text-gray-400">{item.order}</span>
       ),
@@ -228,10 +228,10 @@ export default function MenuPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
-          <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
+          <p className="text-gray-400 mt-1 text-sm lg:text-base">{t("subtitle")}</p>
         </div>
         {can("menu", "create") && (
           <button
@@ -239,7 +239,7 @@ export default function MenuPage() {
               setEditingItem(null)
               setShowForm(true)
             }}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm sm:text-base hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
           >
             <Plus className="w-5 h-5" />
             {t("addMenuItem")}

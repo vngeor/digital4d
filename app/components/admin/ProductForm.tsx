@@ -251,8 +251,8 @@ export function ProductForm({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+      <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? t("editProduct") : t("addProduct")}
           </h2>
@@ -264,9 +264,9 @@ export function ProductForm({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
           {/* Basic Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
                 {t("slug")} <span className="text-red-400">*</span>
@@ -310,7 +310,7 @@ export function ProductForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
                 {t("category")} <span className="text-red-400">*</span>
@@ -359,7 +359,7 @@ export function ProductForm({
 
           {/* Language Tabs for Name and Description */}
           <div>
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4">
               {languageTabs.map((tab) => {
                 const nameKey = `name${tab.key.charAt(0).toUpperCase() + tab.key.slice(1)}`
                 const hasError = errors[nameKey]
@@ -440,7 +440,7 @@ export function ProductForm({
           {/* Pricing */}
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
             <h3 className="text-sm font-medium text-gray-300">Pricing</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("priceType")}
@@ -487,7 +487,7 @@ export function ProductForm({
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("salePrice")}
@@ -523,7 +523,7 @@ export function ProductForm({
             <div className="space-y-3">
               {/* Image Preview */}
               {formData.image && (
-                <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10">
+                <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden border border-white/10">
                   <img
                     src={formData.image}
                     alt="Preview"
@@ -540,7 +540,7 @@ export function ProductForm({
               )}
 
               {/* Upload Button */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -590,7 +590,7 @@ export function ProductForm({
             </div>
           )}
           {/* Settings */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
                 {t("order")}
@@ -641,14 +641,14 @@ export function ProductForm({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-6 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+              className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
             >
               {t("cancel")}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

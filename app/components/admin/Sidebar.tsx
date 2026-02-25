@@ -12,12 +12,13 @@ import {
   Users,
   LogOut,
   Settings,
-  Menu,
+  Menu as MenuIcon,
   Tag,
   Package,
   MessageSquare,
   Presentation,
   Shield,
+  X,
 } from "lucide-react"
 import type { PermissionMap } from "@/lib/permissions"
 
@@ -34,7 +35,7 @@ interface SidebarProps {
 
 const allNavItems = [
   { href: "/admin", icon: LayoutDashboard, labelKey: "dashboard" },
-  { href: "/admin/menu", icon: Menu, labelKey: "menu" },
+  { href: "/admin/menu", icon: MenuIcon, labelKey: "menu" },
   { href: "/admin/content", icon: FileText, labelKey: "content" },
   { href: "/admin/banners", icon: Presentation, labelKey: "banners" },
   { href: "/admin/types", icon: Tag, labelKey: "types" },
@@ -55,8 +56,14 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
   const pathname = usePathname()
   const t = useTranslations("admin.nav")
   const [pendingQuotesCount, setPendingQuotesCount] = useState(0)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const navItems = allNavItems.filter((item) => visibleNavHrefs.includes(item.href))
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     // Only fetch quotes if user can see quotes
@@ -74,9 +81,7 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
       }
     }
     fetchPendingQuotes()
-    // Refresh every 30 seconds
     const interval = setInterval(fetchPendingQuotes, 30000)
-    // Listen for quote updates
     const handleQuoteUpdate = () => fetchPendingQuotes()
     window.addEventListener("quoteUpdated", handleQuoteUpdate)
     return () => {
@@ -85,18 +90,27 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
     }
   }, [visibleNavHrefs])
 
-  return (
-    <aside className="fixed left-0 top-0 h-screen w-64 glass-strong border-r border-white/10 flex flex-col">
+  const sidebarContent = (
+    <>
       <div className="p-6 border-b border-white/10">
-        <Link href="/admin" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-bold text-white">Digital4D</h1>
-            <p className="text-xs text-gray-400">{t("adminPanel")}</p>
-          </div>
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/admin" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="font-bold text-white">Digital4D</h1>
+              <p className="text-xs text-gray-400">{t("adminPanel")}</p>
+            </div>
+          </Link>
+          {/* Close button — mobile only */}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -169,6 +183,43 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
           <span className="font-medium">{t("logout")}</span>
         </button>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile header bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 glass-strong border-b border-white/10 flex items-center px-4 gap-3">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          <MenuIcon className="w-5 h-5 text-gray-400" />
+        </button>
+        <Link href="/admin" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+            <Settings className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-white text-sm">Digital4D</span>
+        </Link>
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 h-screen w-64 glass-strong border-r border-white/10 flex flex-col z-50 transition-transform duration-300 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0`}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   )
 }

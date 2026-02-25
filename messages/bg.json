@@ -163,7 +163,11 @@
       "uploadFailed": "Качването не успя",
       "uploadImageFailed": "Неуспешно качване на изображение",
       "confirmDeleteTitle": "Потвърждаване на изтриване",
-      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
+      "uploading": "Качване...",
+      "uploadImage": "Качи изображение",
+      "or": "или",
+      "deleteFailed": "Грешка при изтриване на банер"
     },
     "menu": {
       "title": "Управление на меню",
@@ -261,7 +265,8 @@
       "unpublishedSuccess": "Скрито",
       "updateFailed": "Неуспешно обновяване на съдържание",
       "confirmDeleteTitle": "Потвърждаване на изтриване",
-      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
+      "homepage": "Начална стр."
     },
     "orders": {
       "title": "Управление на поръчки",
@@ -286,7 +291,14 @@
       "savedSuccess": "Поръчката е запазена успешно",
       "deletedSuccess": "Поръчката е изтрита",
       "confirmDeleteTitle": "Потвърждаване на изтриване",
-      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
+      "statusPending": "Изчакваща",
+      "statusInProgress": "В изпълнение",
+      "statusCompleted": "Завършена",
+      "statusCancelled": "Отказана",
+      "copied": "Копирано!",
+      "clickToCopy": "Кликни за копиране",
+      "deleteFailed": "Грешка при изтриване на поръчка"
     },
     "users": {
       "title": "Управление на потребители",
@@ -365,7 +377,27 @@
       "permLegendRevoked": "Потребителско право (отнето)",
       "permLegendDenied": "Забранено (наследено)",
       "permResetDefaults": "Нулиране",
-      "permSaveBtn": "Запази правата"
+      "permSaveBtn": "Запази правата",
+      "anonymous": "Анонимен",
+      "roleAdmin": "Администратор",
+      "roleEditor": "Редактор",
+      "roleAuthor": "Автор",
+      "roleSubscriber": "Абонат",
+      "loadFailed": "Грешка при зареждане на потребители",
+      "loadDetailsFailed": "Грешка при зареждане на детайли",
+      "senderAdmin": "Админ",
+      "senderUser": "Потребител",
+      "resDashboard": "Табло",
+      "resProducts": "Продукти",
+      "resCategories": "Категории",
+      "resContent": "Съдържание",
+      "resTypes": "Типове съдържание",
+      "resBanners": "Банери",
+      "resMenu": "Меню",
+      "resOrders": "Поръчки",
+      "resQuotes": "Оферти",
+      "resUsers": "Потребители",
+      "resRoles": "Роли"
     },
     "roles": {
       "title": "Права на роли",
@@ -376,7 +408,20 @@
       "fullAccess": "Пълен достъп (заключен)",
       "adminNote": "има пълен достъп до всичко и не може да бъде ограничен.",
       "editorNote": "може да управлява цялото съдържание по подразбиране.",
-      "authorNote": "може да създава и редактира собствено съдържание по подразбиране."
+      "authorNote": "може да създава и редактира собствено съдържание по подразбиране.",
+      "resDashboard": "Табло",
+      "resProducts": "Продукти",
+      "resCategories": "Категории",
+      "resContent": "Съдържание",
+      "resTypes": "Типове съдържание",
+      "resBanners": "Банери",
+      "resMenu": "Меню",
+      "resOrders": "Поръчки",
+      "resQuotes": "Оферти",
+      "resUsers": "Потребители",
+      "resRoles": "Роли",
+      "loadFailed": "Грешка при зареждане на правата",
+      "saveFailed": "Грешка при запазване на правата"
     },
     "types": {
       "title": "Управление на типове",
@@ -450,7 +495,9 @@
       "deletedSuccess": "Продуктът е изтрит",
       "saveFailed": "Неуспешно запазване на продукт",
       "confirmDeleteTitle": "Потвърждаване на изтриване",
-      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
+      "homepage": "Начало",
+      "deleteFailed": "Грешка при изтриване на продукт"
     },
     "productCategories": {
       "title": "Категории продукти",
@@ -476,7 +523,9 @@
       "deletedSuccess": "Категорията е изтрита",
       "saveFailed": "Неуспешно запазване на категория",
       "confirmDeleteTitle": "Потвърждаване на изтриване",
-      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
+      "backToProducts": "Обратно към продукти",
+      "deleteFailed": "Грешка при изтриване на категория"
     },
     "quotes": {
       "title": "Заявки за оферти",
@@ -512,7 +561,24 @@
       "deletedSuccess": "Офертата е изтрита",
       "updateFailed": "Неуспешно обновяване на оферта",
       "confirmDeleteTitle": "Потвърждаване на изтриване",
-      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
+      "counterOffer": "Контра оферта",
+      "userDeclined": "Отказана от клиент",
+      "seen": "Видяна",
+      "unseen": "Невидяна",
+      "copied": "Копирано!",
+      "clickToCopy": "Кликни за копиране",
+      "justNow": "Току-що",
+      "minutesAgo": "преди {minutes} мин",
+      "hoursAgo": "преди {hours} ч",
+      "daysAgo": "преди {days} д",
+      "customerResponse": "Отговор на клиента",
+      "conversationHistory": "История на разговора",
+      "you": "Вие",
+      "customerLabel": "Клиент",
+      "viewProduct": "Виж продукта",
+      "delete": "Изтрий",
+      "deleteFailed": "Грешка при изтриване на офертата"
     },
     "common": {
       "uploadFailed": "Качването не успя",

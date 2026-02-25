@@ -70,7 +70,7 @@ export function RichTextEditor({ value, onChange, error }: RichTextEditorProps) 
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert prose-sm max-w-none min-h-[150px] p-4 focus:outline-none text-white " +
+          "prose prose-invert prose-sm max-w-none min-h-[120px] sm:min-h-[150px] p-4 focus:outline-none text-white " +
           "prose-headings:text-white prose-p:text-slate-300 prose-strong:text-white " +
           "prose-ul:text-slate-300 prose-ol:text-slate-300 prose-blockquote:border-emerald-500 " +
           "prose-blockquote:text-slate-400 prose-a:text-emerald-400",

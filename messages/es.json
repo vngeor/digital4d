@@ -163,7 +163,11 @@
       "uploadFailed": "Error al subir",
       "uploadImageFailed": "Error al subir la imagen",
       "confirmDeleteTitle": "Confirmar eliminación",
-      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
+      "uploading": "Subiendo...",
+      "uploadImage": "Subir Imagen",
+      "or": "o",
+      "deleteFailed": "Error al eliminar el banner"
     },
     "menu": {
       "title": "Gestión de Menú",
@@ -261,7 +265,8 @@
       "unpublishedSuccess": "Despublicado",
       "updateFailed": "Error al actualizar el contenido",
       "confirmDeleteTitle": "Confirmar eliminación",
-      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
+      "homepage": "Inicio"
     },
     "orders": {
       "title": "Gestión de Pedidos",
@@ -286,7 +291,14 @@
       "savedSuccess": "Pedido guardado correctamente",
       "deletedSuccess": "Pedido eliminado",
       "confirmDeleteTitle": "Confirmar eliminación",
-      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
+      "statusPending": "Pendiente",
+      "statusInProgress": "En Progreso",
+      "statusCompleted": "Completado",
+      "statusCancelled": "Cancelado",
+      "copied": "¡Copiado!",
+      "clickToCopy": "Clic para copiar",
+      "deleteFailed": "Error al eliminar el pedido"
     },
     "users": {
       "title": "Gestión de Usuarios",
@@ -365,7 +377,27 @@
       "permLegendRevoked": "Permiso del usuario (revocado)",
       "permLegendDenied": "Denegado (heredado)",
       "permResetDefaults": "Restablecer",
-      "permSaveBtn": "Guardar permisos"
+      "permSaveBtn": "Guardar permisos",
+      "anonymous": "Anónimo",
+      "roleAdmin": "Administrador",
+      "roleEditor": "Editor",
+      "roleAuthor": "Autor",
+      "roleSubscriber": "Suscriptor",
+      "loadFailed": "Error al cargar los usuarios",
+      "loadDetailsFailed": "Error al cargar detalles del usuario",
+      "senderAdmin": "Admin",
+      "senderUser": "Usuario",
+      "resDashboard": "Panel",
+      "resProducts": "Productos",
+      "resCategories": "Categorías",
+      "resContent": "Contenido",
+      "resTypes": "Tipos de Contenido",
+      "resBanners": "Banners",
+      "resMenu": "Menú",
+      "resOrders": "Pedidos",
+      "resQuotes": "Cotizaciones",
+      "resUsers": "Usuarios",
+      "resRoles": "Roles"
     },
     "roles": {
       "title": "Permisos de Roles",
@@ -376,7 +408,20 @@
       "fullAccess": "Acceso completo (bloqueado)",
       "adminNote": "tiene acceso completo a todo y no puede ser restringido.",
       "editorNote": "puede gestionar todo el contenido por defecto.",
-      "authorNote": "puede crear y editar su propio contenido por defecto."
+      "authorNote": "puede crear y editar su propio contenido por defecto.",
+      "resDashboard": "Panel",
+      "resProducts": "Productos",
+      "resCategories": "Categorías",
+      "resContent": "Contenido",
+      "resTypes": "Tipos de Contenido",
+      "resBanners": "Banners",
+      "resMenu": "Menú",
+      "resOrders": "Pedidos",
+      "resQuotes": "Cotizaciones",
+      "resUsers": "Usuarios",
+      "resRoles": "Roles",
+      "loadFailed": "Error al cargar los permisos",
+      "saveFailed": "Error al guardar los permisos"
     },
     "types": {
       "title": "Gestión de Tipos",
@@ -450,7 +495,9 @@
       "deletedSuccess": "Producto eliminado",
       "saveFailed": "Error al guardar el producto",
       "confirmDeleteTitle": "Confirmar eliminación",
-      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
+      "homepage": "Inicio",
+      "deleteFailed": "Error al eliminar el producto"
     },
     "productCategories": {
       "title": "Categorías de Productos",
@@ -476,7 +523,9 @@
       "deletedSuccess": "Categoría eliminada",
       "saveFailed": "Error al guardar la categoría",
       "confirmDeleteTitle": "Confirmar eliminación",
-      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
+      "backToProducts": "Volver a Productos",
+      "deleteFailed": "Error al eliminar la categoría"
     },
     "quotes": {
       "title": "Solicitudes de Cotización",
@@ -512,7 +561,24 @@
       "deletedSuccess": "Cotización eliminada",
       "updateFailed": "Error al actualizar la cotización",
       "confirmDeleteTitle": "Confirmar eliminación",
-      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
+      "counterOffer": "Contraoferta",
+      "userDeclined": "Rechazado por Cliente",
+      "seen": "Visto",
+      "unseen": "No visto",
+      "copied": "¡Copiado!",
+      "clickToCopy": "Clic para copiar",
+      "justNow": "Ahora mismo",
+      "minutesAgo": "hace {minutes}m",
+      "hoursAgo": "hace {hours}h",
+      "daysAgo": "hace {days}d",
+      "customerResponse": "Respuesta del Cliente",
+      "conversationHistory": "Historial de Conversación",
+      "you": "Tú",
+      "customerLabel": "Cliente",
+      "viewProduct": "Ver Producto",
+      "delete": "Eliminar",
+      "deleteFailed": "Error al eliminar la cotización"
     },
     "common": {
       "uploadFailed": "Error al subir",

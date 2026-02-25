@@ -24,17 +24,17 @@ const RESOURCES = [
 const ACTIONS = ["view", "create", "edit", "delete"] as const
 
 const RESOURCE_LABELS: Record<string, string> = {
-  dashboard: "Dashboard",
-  products: "Products",
-  categories: "Categories",
-  content: "Content",
-  types: "Content Types",
-  banners: "Banners",
-  menu: "Menu",
-  orders: "Orders",
-  quotes: "Quotes",
-  users: "Users",
-  roles: "Roles",
+  dashboard: "resDashboard",
+  products: "resProducts",
+  categories: "resCategories",
+  content: "resContent",
+  types: "resTypes",
+  banners: "resBanners",
+  menu: "resMenu",
+  orders: "resOrders",
+  quotes: "resQuotes",
+  users: "resUsers",
+  roles: "resRoles",
 }
 
 const ROLE_COLORS: Record<string, string> = {
@@ -61,7 +61,7 @@ export default function RolesPage() {
         setPermissions(data)
       }
     } catch {
-      toast.error("Failed to load permissions")
+      toast.error(t("roles.loadFailed"))
     } finally {
       setLoading(false)
     }
@@ -92,10 +92,10 @@ export default function RolesPage() {
         toast.success(t("roles.saved"))
       } else {
         const data = await res.json()
-        toast.error(data.error || "Failed to save")
+        toast.error(data.error || t("roles.saveFailed"))
       }
     } catch {
-      toast.error("Failed to save permissions")
+      toast.error(t("roles.saveFailed"))
     } finally {
       setSaving(false)
     }
@@ -112,20 +112,20 @@ export default function RolesPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">{t("roles.title")}</h1>
-            <p className="text-sm text-gray-400">{t("roles.description")}</p>
+            <h1 className="text-xl lg:text-2xl font-bold text-white">{t("roles.title")}</h1>
+            <p className="text-xs lg:text-sm text-gray-400">{t("roles.description")}</p>
           </div>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-xl font-semibold text-white hover:shadow-lg hover:shadow-emerald-500/25 transition-all disabled:opacity-50"
+          className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-xl text-sm sm:text-base font-semibold text-white hover:shadow-lg hover:shadow-emerald-500/25 transition-all disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {t("roles.save")}
@@ -185,7 +185,7 @@ export default function RolesPage() {
                 <tr key={resource} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                   <td className="px-6 py-3">
                     <span className="text-sm font-medium text-white">
-                      {RESOURCE_LABELS[resource] || resource}
+                      {t(`roles.${RESOURCE_LABELS[resource]}`)}
                     </span>
                   </td>
                   {/* ADMIN — all locked to true */}

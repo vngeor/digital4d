@@ -18,6 +18,7 @@ interface DataTableProps<T> {
   pageSize?: number
   emptyMessage?: string
   onRowClick?: (item: T) => void
+  paginationText?: (from: number, to: number, total: number) => string
 }
 
 export function DataTable<T extends { id: string }>({
@@ -28,6 +29,7 @@ export function DataTable<T extends { id: string }>({
   pageSize = 10,
   emptyMessage = "No data found",
   onRowClick,
+  paginationText,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -78,13 +80,13 @@ export function DataTable<T extends { id: string }>({
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px]">
+        <table className="w-full">
           <thead>
             <tr className="border-b border-white/10">
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`px-6 py-4 text-left text-sm font-medium text-gray-400 ${
+                  className={`px-3 py-3 sm:px-6 sm:py-4 text-left text-sm font-medium text-gray-400 ${
                     column.className || ""
                   }`}
                 >
@@ -98,7 +100,7 @@ export function DataTable<T extends { id: string }>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-6 py-12 text-center text-gray-500"
+                  className="px-3 py-8 sm:px-6 sm:py-12 text-center text-gray-500"
                 >
                   {emptyMessage}
                 </td>
@@ -115,7 +117,7 @@ export function DataTable<T extends { id: string }>({
                   {columns.map((column) => (
                     <td
                       key={`${item.id}-${String(column.key)}`}
-                      className={`px-6 py-4 text-sm text-gray-300 ${
+                      className={`px-3 py-3 sm:px-6 sm:py-4 text-sm text-gray-300 ${
                         column.className || ""
                       }`}
                     >
@@ -132,13 +134,13 @@ export function DataTable<T extends { id: string }>({
       </div>
 
       {totalPages > 1 && (
-        <div className="p-4 border-t border-white/10 flex items-center justify-between">
-          <p className="text-sm text-gray-400">
-            Showing {startIndex + 1} to{" "}
-            {Math.min(startIndex + pageSize, filteredData.length)} of{" "}
-            {filteredData.length} results
+        <div className="p-3 sm:p-4 border-t border-white/10 flex items-center justify-between">
+          <p className="text-sm text-gray-400 hidden sm:block">
+            {paginationText
+              ? paginationText(startIndex + 1, Math.min(startIndex + pageSize, filteredData.length), filteredData.length)
+              : `${startIndex + 1}-${Math.min(startIndex + pageSize, filteredData.length)} / ${filteredData.length}`}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:ml-0 mx-auto sm:mx-0">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}

@@ -217,14 +217,14 @@ export default function ContentPage() {
     },
     {
       key: "homepage",
-      header: "Homepage",
-      className: "whitespace-nowrap w-[90px]",
+      header: t("homepage"),
+      className: "whitespace-nowrap w-[90px] hidden sm:table-cell",
       render: (item: Content) => {
         if (item.type !== "news") {
           return <span className="text-gray-600 text-xs">—</span>
         }
         if (!item.published) {
-          return <span className="text-gray-600 text-xs">Draft</span>
+          return <span className="text-gray-600 text-xs">{t("draft")}</span>
         }
         const position = getHomepagePosition(item)
         if (position) {
@@ -252,7 +252,7 @@ export default function ContentPage() {
     {
       key: "slug",
       header: t("slug"),
-      className: "min-w-[140px]",
+      className: "min-w-[140px] hidden md:table-cell",
       render: (item: Content) => {
         if (!item.slug) {
           return <span className="text-gray-500 text-sm">—</span>
@@ -297,7 +297,7 @@ export default function ContentPage() {
     {
       key: "order",
       header: t("order"),
-      className: "whitespace-nowrap w-[60px]",
+      className: "whitespace-nowrap w-[60px] hidden lg:table-cell",
       render: (item: Content) => (
         <span className="text-gray-400">{item.order}</span>
       ),
@@ -354,10 +354,10 @@ export default function ContentPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">{t("title")}</h1>
-          <p className="text-gray-400 mt-1">{t("subtitle")}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
+          <p className="text-gray-400 mt-1 text-sm lg:text-base">{t("subtitle")}</p>
         </div>
         {can("content", "create") && (
           <button
@@ -365,7 +365,7 @@ export default function ContentPage() {
               setEditingContent(null)
               setShowForm(true)
             }}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm sm:text-base hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
           >
             <Plus className="w-5 h-5" />
             {t("addContent")}
