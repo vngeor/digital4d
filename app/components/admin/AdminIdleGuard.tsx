@@ -49,7 +49,7 @@ export function AdminIdleGuard({ children }: { children: React.ReactNode }) {
         setRemaining((prev) => {
           if (prev <= 1) {
             // Time's up — logout
-            signOut({ callbackUrl: "/login" })
+            signOut({ callbackUrl: "/login?callbackUrl=/admin" })
             return 0
           }
           return prev - 1
@@ -59,7 +59,7 @@ export function AdminIdleGuard({ children }: { children: React.ReactNode }) {
 
     // Hard logout timer — fires at IDLE_TIMEOUT
     logoutTimerRef.current = setTimeout(() => {
-      signOut({ callbackUrl: "/login" })
+      signOut({ callbackUrl: "/login?callbackUrl=/admin" })
     }, IDLE_TIMEOUT)
   }, [clearAllTimers])
 
@@ -83,7 +83,7 @@ export function AdminIdleGuard({ children }: { children: React.ReactNode }) {
 
         if (elapsed >= IDLE_TIMEOUT) {
           // Already past timeout — logout
-          signOut({ callbackUrl: "/login" })
+          signOut({ callbackUrl: "/login?callbackUrl=/admin" })
         } else if (elapsed >= IDLE_TIMEOUT - WARNING_BEFORE) {
           // In warning zone
           const remainingMs = IDLE_TIMEOUT - elapsed
@@ -94,7 +94,7 @@ export function AdminIdleGuard({ children }: { children: React.ReactNode }) {
           countdownRef.current = setInterval(() => {
             setRemaining((prev) => {
               if (prev <= 1) {
-                signOut({ callbackUrl: "/login" })
+                signOut({ callbackUrl: "/login?callbackUrl=/admin" })
                 return 0
               }
               return prev - 1
@@ -102,7 +102,7 @@ export function AdminIdleGuard({ children }: { children: React.ReactNode }) {
           }, 1000)
 
           logoutTimerRef.current = setTimeout(() => {
-            signOut({ callbackUrl: "/login" })
+            signOut({ callbackUrl: "/login?callbackUrl=/admin" })
           }, remainingMs)
         } else {
           // Still have time — restart timers from where we are
@@ -115,7 +115,7 @@ export function AdminIdleGuard({ children }: { children: React.ReactNode }) {
             countdownRef.current = setInterval(() => {
               setRemaining((prev) => {
                 if (prev <= 1) {
-                  signOut({ callbackUrl: "/login" })
+                  signOut({ callbackUrl: "/login?callbackUrl=/admin" })
                   return 0
                 }
                 return prev - 1
@@ -124,7 +124,7 @@ export function AdminIdleGuard({ children }: { children: React.ReactNode }) {
           }, remainingToWarning)
 
           logoutTimerRef.current = setTimeout(() => {
-            signOut({ callbackUrl: "/login" })
+            signOut({ callbackUrl: "/login?callbackUrl=/admin" })
           }, IDLE_TIMEOUT - elapsed)
         }
       }
@@ -208,7 +208,7 @@ export function AdminIdleGuard({ children }: { children: React.ReactNode }) {
             {/* Actions */}
             <div className="flex gap-3">
               <button
-                onClick={() => signOut({ callbackUrl: "/login" })}
+                onClick={() => signOut({ callbackUrl: "/login?callbackUrl=/admin" })}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 border border-white/10 hover:bg-white/5 hover:text-red-400 transition-all"
               >
                 <LogOut className="w-4 h-4" />

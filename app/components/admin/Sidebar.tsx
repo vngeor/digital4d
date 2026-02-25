@@ -176,7 +176,7 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
           </span>
         </div>
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => signOut({ callbackUrl: "/login?callbackUrl=/admin" })}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
         >
           <LogOut className="w-5 h-5" />

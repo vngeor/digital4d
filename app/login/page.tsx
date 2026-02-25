@@ -15,6 +15,8 @@ export default function LoginPage() {
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
+    const callbackUrl = searchParams.get("callbackUrl") || "/"
+
     // Handle OAuth error redirects
     useEffect(() => {
         const errorParam = searchParams.get("error")
@@ -41,7 +43,7 @@ export default function LoginPage() {
         setError("")
         setLoading(true)
         try {
-            await signIn("google", { callbackUrl: "/" })
+            await signIn("google", { callbackUrl })
         } catch {
             setError(t("somethingWentWrong"))
             setLoading(false)
@@ -52,7 +54,7 @@ export default function LoginPage() {
         setError("")
         setLoading(true)
         try {
-            await signIn("github", { callbackUrl: "/" })
+            await signIn("github", { callbackUrl })
         } catch {
             setError(t("somethingWentWrong"))
             setLoading(false)
@@ -122,7 +124,7 @@ export default function LoginPage() {
                 if (result?.error) {
                     setError(t("loginFailedAfterRegister"))
                 } else {
-                    window.location.href = "/"
+                    window.location.href = callbackUrl
                 }
             } else {
                 // Login
@@ -135,7 +137,7 @@ export default function LoginPage() {
                 if (result?.error) {
                     setError(t("invalidCredentials"))
                 } else {
-                    window.location.href = "/"
+                    window.location.href = callbackUrl
                 }
             }
         } catch {
