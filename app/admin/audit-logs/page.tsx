@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -19,6 +19,8 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
+import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { toast } from "sonner"
 
 interface AuditUser {
   id: string
@@ -65,11 +67,14 @@ const RESOURCE_COLORS: Record<string, string> = {
   roles: "bg-red-500/20 text-red-400",
   categories: "bg-emerald-500/20 text-emerald-400",
   media: "bg-violet-500/20 text-violet-400",
+  coupons: "bg-amber-500/20 text-amber-400",
+  notifications: "bg-sky-500/20 text-sky-400",
 }
 
 const RESOURCES = [
   "products", "content", "orders", "quotes", "banners",
   "media", "menu", "types", "users", "roles", "categories",
+  "coupons", "notifications",
 ]
 
 const ACTIONS = ["create", "edit", "delete"]
@@ -89,14 +94,28 @@ export default function AuditLogsPage() {
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [viewingDetails, setViewingDetails] = useState<AuditLogEntry | null>(null)
+  const [resolvedNames, setResolvedNames] = useState<Record<string, string>>({})
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null)
 
-  const fetchLogs = async () => {
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1)
+      setDebouncedSearch(search)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const fetchLogs = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
       params.set("page", page.toString())
       params.set("limit", "50")
-      if (search) params.set("search", search)
+      if (debouncedSearch) params.set("search", debouncedSearch)
       if (resourceFilter) params.set("resource", resourceFilter)
       if (actionFilter) params.set("action", actionFilter)
       if (dateFrom) params.set("from", dateFrom)
@@ -109,22 +128,51 @@ export default function AuditLogsPage() {
       }
     } catch {
       // Ignore
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-  }
+  }, [page, debouncedSearch, resourceFilter, actionFilter, dateFrom, dateTo])
 
   useEffect(() => {
     fetchLogs()
-  }, [page, resourceFilter, actionFilter, dateFrom, dateTo])
+  }, [fetchLogs])
 
-  // Debounced search
+  // Resolve all product IDs found in current page's log details
+  const resolvedRef = useRef<Set<string>>(new Set())
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setPage(1)
-      fetchLogs()
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [search])
+    if (!data?.logs) return
+    const ids = new Set<string>()
+    for (const log of data.logs) {
+      if (!log.details) continue
+      try {
+        const parsed = JSON.parse(log.details)
+        for (const [field, change] of Object.entries(parsed)) {
+          if (field === "productIds" && change && typeof change === "object") {
+            const { from, to } = change as { from: unknown; to: unknown }
+            if (Array.isArray(from)) from.forEach((id: string) => ids.add(id))
+            if (Array.isArray(to)) to.forEach((id: string) => ids.add(id))
+          }
+        }
+      } catch {
+        // Skip unparseable
+      }
+    }
+    if (ids.size === 0) return
+    const unresolvedIds = [...ids].filter((id) => !resolvedRef.current.has(id))
+    if (unresolvedIds.length === 0) return
+    unresolvedIds.forEach((id) => resolvedRef.current.add(id))
+    fetch(`/api/admin/products?ids=${unresolvedIds.join(",")}`)
+      .then((res) => res.ok ? res.json() : [])
+      .then((products) => {
+        const names: Record<string, string> = {}
+        for (const p of products) {
+          names[p.id] = p.nameEn || p.nameBg || p.id
+        }
+        setResolvedNames((prev) => ({ ...prev, ...names }))
+      })
+      .catch(() => {})
+  }, [data])
 
   const clearFilters = () => {
     setSearch("")
@@ -136,6 +184,46 @@ export default function AuditLogsPage() {
   }
 
   const hasFilters = search || resourceFilter || actionFilter || dateFrom || dateTo
+
+  const handleClearLogs = async () => {
+    setConfirmClear(false)
+    try {
+      const params = new URLSearchParams()
+      params.set("clearAll", "true")
+      if (resourceFilter) params.set("resource", resourceFilter)
+      if (actionFilter) params.set("action", actionFilter)
+      if (dateFrom) params.set("from", dateFrom)
+      if (dateTo) params.set("to", dateTo)
+
+      const res = await fetch(`/api/admin/audit-logs?${params.toString()}`, { method: "DELETE" })
+      if (res.ok) {
+        const json = await res.json()
+        toast.success(t("deleteSuccess", { count: json.deleted }))
+        fetchLogs()
+      } else {
+        toast.error(t("deleteFailed"))
+      }
+    } catch {
+      toast.error(t("deleteFailed"))
+    }
+  }
+
+  const handleDeleteEntry = async () => {
+    if (!deletingEntryId) return
+    const id = deletingEntryId
+    setDeletingEntryId(null)
+    try {
+      const res = await fetch(`/api/admin/audit-logs?id=${id}`, { method: "DELETE" })
+      if (res.ok) {
+        toast.success(t("deleteEntrySuccess"))
+        fetchLogs()
+      } else {
+        toast.error(t("deleteFailed"))
+      }
+    } catch {
+      toast.error(t("deleteFailed"))
+    }
+  }
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -171,7 +259,37 @@ export default function AuditLogsPage() {
     return String(val)
   }
 
-  const getInlineChangeSummary = (details: string | null): string | null => {
+  // Render a value with clickable product links when IDs are resolved
+  const renderIdArrayValue = (val: unknown, color: string): React.ReactNode => {
+    if (!Array.isArray(val) || val.length === 0) return <span className={color}>—</span>
+    const hasNames = val.some((id) => resolvedNames[id])
+    if (!hasNames) return <span className={color}>{JSON.stringify(val)}</span>
+    return (
+      <span className="flex flex-col gap-0.5">
+        {val.map((id: string) => (
+          <Link
+            key={id}
+            href={`/admin/products?edit=${id}`}
+            className={`${color} hover:underline`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {resolvedNames[id] || id}
+          </Link>
+        ))}
+      </span>
+    )
+  }
+
+  // Resolve a single value: if it's an array of known IDs, show names
+  const resolveValue = (val: unknown): string => {
+    if (Array.isArray(val)) {
+      const names = val.map((id: string) => resolvedNames[id] || id)
+      return names.join(", ")
+    }
+    return formatValue(val)
+  }
+
+  const getInlineChangeSummary = (details: string | null): React.ReactNode | null => {
     const parsed = parseDetails(details)
     if (!parsed || !isChangeRecord(parsed)) return null
     const keys = Object.keys(parsed)
@@ -179,7 +297,11 @@ export default function AuditLogsPage() {
     if (keys.length === 1) {
       const key = keys[0]
       const change = parsed[key]
-      return `${key}: ${formatValue(change.from)} → ${formatValue(change.to)}`
+      return (
+        <span>
+          {key}: <span className="text-red-400">{resolveValue(change.from)}</span>{" → "}<span className="text-green-400">{resolveValue(change.to)}</span>
+        </span>
+      )
     }
     return `${keys.length} ${t("fieldsChanged")}`
   }
@@ -196,7 +318,9 @@ export default function AuditLogsPage() {
     types: "/admin/types",
     users: "/admin/users",
     roles: "/admin/roles",
-    categories: "/admin/categories",
+    categories: "/admin/products/categories",
+    coupons: "/admin/coupons",
+    notifications: "/admin/notifications",
   }
 
   const getResourcePageLink = (resource: string): string | null => {
@@ -245,18 +369,29 @@ export default function AuditLogsPage() {
           </h1>
           <p className="text-gray-400 text-sm mt-1">{t("subtitle")}</p>
         </div>
-        {data && (
-          <div className="text-sm text-gray-400">
-            {t("totalEntries", { count: data.total })}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {data && (
+            <span className="text-sm text-gray-400">
+              {t("totalEntries", { count: data.total })}
+            </span>
+          )}
+          {can("audit", "delete") && data && data.total > 0 && (
+            <button
+              onClick={() => setConfirmClear(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-xs sm:text-sm text-red-400 hover:text-red-300 transition-colors whitespace-nowrap"
+            >
+              <Trash2 className="w-4 h-4" />
+              {hasFilters ? t("clearLogsFiltered") : t("clearLogs")}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="glass rounded-2xl p-4 mb-6">
-        <div className="flex flex-col lg:flex-row gap-3">
+      <div className="glass rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
+        <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
           {/* Search */}
-          <div className="flex-1 relative">
+          <div className="lg:flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -267,54 +402,54 @@ export default function AuditLogsPage() {
             />
           </div>
 
-          {/* Resource filter */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <select
-              value={resourceFilter}
-              onChange={(e) => { setResourceFilter(e.target.value); setPage(1) }}
-              className="pl-10 pr-8 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white appearance-none focus:outline-none focus:border-emerald-500/50 cursor-pointer"
-            >
-              <option value="">{t("allResources")}</option>
-              {RESOURCES.map((r) => (
-                <option key={r} value={r}>{t(`resource_${r}`)}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Action filter */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <select
-              value={actionFilter}
-              onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
-              className="pl-10 pr-8 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white appearance-none focus:outline-none focus:border-emerald-500/50 cursor-pointer"
-            >
-              <option value="">{t("allActions")}</option>
-              {ACTIONS.map((a) => (
-                <option key={a} value={a}>{t(`action_${a}`)}</option>
-              ))}
-            </select>
+          {/* Resource & Action filters */}
+          <div className="flex gap-3">
+            <div className="relative flex-1 min-w-0 lg:flex-none">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <select
+                value={resourceFilter}
+                onChange={(e) => { setResourceFilter(e.target.value); setPage(1) }}
+                className="w-full lg:w-auto pl-10 pr-8 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white appearance-none focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+              >
+                <option value="">{t("allResources")}</option>
+                {RESOURCES.map((r) => (
+                  <option key={r} value={r}>{t(`resource_${r}`)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="relative flex-1 min-w-0 lg:flex-none">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <select
+                value={actionFilter}
+                onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
+                className="w-full lg:w-auto pl-10 pr-8 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white appearance-none focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+              >
+                <option value="">{t("allActions")}</option>
+                {ACTIONS.map((a) => (
+                  <option key={a} value={a}>{t(`action_${a}`)}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Date range */}
           <div className="flex items-center gap-2">
-            <div className="relative">
+            <div className="relative flex-1 min-w-0 lg:flex-none">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
-                className="pl-10 pr-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 [color-scheme:dark]"
+                className="w-full pl-10 pr-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 [color-scheme:dark]"
               />
             </div>
-            <span className="text-gray-500 text-sm">—</span>
-            <div className="relative">
+            <span className="text-gray-500 text-sm shrink-0">—</span>
+            <div className="relative flex-1 min-w-0 lg:flex-none">
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
-                className="px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 [color-scheme:dark]"
+                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 [color-scheme:dark]"
               />
             </div>
           </div>
@@ -358,6 +493,7 @@ export default function AuditLogsPage() {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("resource")}</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("record")}</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("details")}</th>
+                    {can("audit", "delete") && <th className="px-4 py-3 w-10"></th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -429,6 +565,16 @@ export default function AuditLogsPage() {
                             <span className="text-xs text-gray-600">—</span>
                           )}
                         </td>
+                        {can("audit", "delete") && (
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => setDeletingEntryId(log.id)}
+                              className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     )
                   })}
@@ -443,21 +589,21 @@ export default function AuditLogsPage() {
                 const ActionIcon = actionStyle.icon
                 const resourceColor = RESOURCE_COLORS[log.resource] || "bg-gray-500/20 text-gray-400"
                 return (
-                  <div key={log.id} className="p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                  <div key={log.id} className="p-4 space-y-2 overflow-hidden">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         {log.user.image ? (
-                          <img src={log.user.image} alt="" className="w-6 h-6 rounded-full" />
+                          <img src={log.user.image} alt="" className="w-6 h-6 rounded-full shrink-0" />
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-[10px] text-white font-bold">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-[10px] text-white font-bold shrink-0">
                             {(log.user.name || log.user.email).charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <span className="text-sm text-white">{log.user.name || log.user.email}</span>
+                        <span className="text-sm text-white truncate">{log.user.name || log.user.email}</span>
                       </div>
-                      <span className="text-xs text-gray-500">{formatDate(log.createdAt)}</span>
+                      <span className="text-xs text-gray-500 shrink-0">{formatDate(log.createdAt)}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${actionStyle.color}`}>
                         <ActionIcon className="w-3 h-3" />
                         {t(`action_${log.action}`)}
@@ -475,27 +621,42 @@ export default function AuditLogsPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-sm truncate">
+                    <div className="text-sm overflow-hidden text-ellipsis whitespace-nowrap">
                       {getRecordLink(log) ? (
                         <Link
                           href={getRecordLink(log)!}
-                          className="text-emerald-400 hover:text-emerald-300 transition-colors inline-flex items-center gap-1"
+                          className="text-emerald-400 hover:text-emerald-300 transition-colors inline-flex items-center gap-1 max-w-full"
                         >
-                          {log.recordTitle || log.recordId}
-                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{log.recordTitle || log.recordId}</span>
+                          <ExternalLink className="w-3 h-3 shrink-0" />
                         </Link>
                       ) : (
                         <span className="text-gray-300">{log.recordTitle || log.recordId}</span>
                       )}
                     </div>
                     {log.details && (
-                      <button
-                        onClick={() => setViewingDetails(log)}
-                        className="text-xs text-emerald-400 hover:text-emerald-300"
-                      >
-                        {t("viewDetails")}
-                      </button>
+                      <div className="text-xs text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap">
+                        {getInlineChangeSummary(log.details) || null}
+                      </div>
                     )}
+                    <div className="flex items-center justify-between">
+                      {log.details ? (
+                        <button
+                          onClick={() => setViewingDetails(log)}
+                          className="text-xs text-emerald-400 hover:text-emerald-300"
+                        >
+                          {t("viewDetails")}
+                        </button>
+                      ) : <span />}
+                      {can("audit", "delete") && (
+                        <button
+                          onClick={() => setDeletingEntryId(log.id)}
+                          className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -503,7 +664,7 @@ export default function AuditLogsPage() {
 
             {/* Pagination */}
             {data.totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-3 border-t border-white/10">
                 <span className="text-sm text-gray-400">
                   {t("pageInfo", { page: data.page, total: data.totalPages })}
                 </span>
@@ -540,7 +701,7 @@ export default function AuditLogsPage() {
               </button>
             </div>
             <div className="p-4 space-y-3 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
                   <span className="text-gray-500">{t("user")}</span>
                   <p className="text-white">{viewingDetails.user.name || viewingDetails.user.email}</p>
@@ -588,7 +749,8 @@ export default function AuditLogsPage() {
                   return (
                     <div>
                       <span className="text-sm text-gray-500 block mb-2">{t("changes")}</span>
-                      <div className="bg-black/40 rounded-xl overflow-hidden">
+                      {/* Desktop: table layout */}
+                      <div className="hidden sm:block bg-black/40 rounded-xl overflow-hidden">
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="border-b border-white/10">
@@ -601,12 +763,38 @@ export default function AuditLogsPage() {
                             {Object.entries(parsed).map(([field, change]) => (
                               <tr key={field}>
                                 <td className="px-3 py-2 text-emerald-400 font-mono">{field}</td>
-                                <td className="px-3 py-2 text-red-400 break-all max-w-[180px]">{formatValue(change.from)}</td>
-                                <td className="px-3 py-2 text-green-400 break-all max-w-[180px]">{formatValue(change.to)}</td>
+                                <td className="px-3 py-2 text-red-400 break-all max-w-[180px]">
+                                  {field === "productIds" ? renderIdArrayValue(change.from, "text-red-400") : formatValue(change.from)}
+                                </td>
+                                <td className="px-3 py-2 text-green-400 break-all max-w-[180px]">
+                                  {field === "productIds" ? renderIdArrayValue(change.to, "text-green-400") : formatValue(change.to)}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                      {/* Mobile: stacked cards */}
+                      <div className="sm:hidden space-y-2">
+                        {Object.entries(parsed).map(([field, change]) => (
+                          <div key={field} className="bg-black/40 rounded-xl p-3 space-y-1.5">
+                            <div className="text-emerald-400 font-mono text-xs font-medium">{field}</div>
+                            <div className="flex flex-col gap-1 text-xs">
+                              <div className="flex items-start gap-2">
+                                <span className="text-gray-500 shrink-0">{t("fromValue")}:</span>
+                                <span className="text-red-400 break-all">
+                                  {field === "productIds" ? renderIdArrayValue(change.from, "text-red-400") : formatValue(change.from)}
+                                </span>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <span className="text-gray-500 shrink-0">{t("toValue")}:</span>
+                                <span className="text-green-400 break-all">
+                                  {field === "productIds" ? renderIdArrayValue(change.to, "text-green-400") : formatValue(change.to)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )
@@ -637,6 +825,26 @@ export default function AuditLogsPage() {
           </div>
         </div>
       )}
+
+      {/* Clear logs confirm */}
+      <ConfirmModal
+        open={confirmClear}
+        title={t("confirmClearTitle")}
+        message={hasFilters
+          ? t("confirmClearFiltered", { count: data?.total ?? 0 })
+          : t("confirmClearAll", { count: data?.total ?? 0 })}
+        onConfirm={handleClearLogs}
+        onCancel={() => setConfirmClear(false)}
+      />
+
+      {/* Delete single entry confirm */}
+      <ConfirmModal
+        open={!!deletingEntryId}
+        title={t("confirmDeleteTitle")}
+        message={t("confirmDeleteEntry")}
+        onConfirm={handleDeleteEntry}
+        onCancel={() => setDeletingEntryId(null)}
+      />
     </div>
   )
 }

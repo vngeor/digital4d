@@ -12,6 +12,16 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const category = searchParams.get("category")
     const search = searchParams.get("search")
+    const ids = searchParams.get("ids")
+
+    // If specific IDs requested, return just those products
+    if (ids) {
+      const idList = ids.split(",").filter(Boolean)
+      const products = await prisma.product.findMany({
+        where: { id: { in: idList } },
+      })
+      return NextResponse.json(products)
+    }
 
     // Build where clause
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

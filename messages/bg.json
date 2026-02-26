@@ -688,7 +688,18 @@
       "resource_categories": "Категории",
       "resource_media": "Медия",
       "resource_coupons": "Купони",
-      "resource_notifications": "Известия"
+      "resource_notifications": "Известия",
+      "clearLogs": "Изчисти журнала",
+      "clearLogsFiltered": "Изчисти филтрираните",
+      "confirmClearTitle": "Изчистване на одит журнала",
+      "confirmClearAll": "Сигурни ли сте, че искате да изтриете всички {count} записа от журнала? Действието е необратимо.",
+      "confirmClearFiltered": "Сигурни ли сте, че искате да изтриете {count} филтрирани записа от журнала? Действието е необратимо.",
+      "deleteSuccess": "Успешно изтрити {count} записа",
+      "deleteFailed": "Грешка при изтриване на записи",
+      "confirmDeleteTitle": "Изтриване на запис",
+      "confirmDeleteEntry": "Сигурни ли сте, че искате да изтриете този запис от журнала?",
+      "deleteEntrySuccess": "Записът е изтрит",
+      "resource_audit": "Одит"
     },
     "types": {
       "title": "Управление на типове",

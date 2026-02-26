@@ -688,7 +688,18 @@
       "resource_categories": "Categorías",
       "resource_media": "Medios",
       "resource_coupons": "Cupones",
-      "resource_notifications": "Notificaciones"
+      "resource_notifications": "Notificaciones",
+      "clearLogs": "Limpiar registros",
+      "clearLogsFiltered": "Limpiar filtrados",
+      "confirmClearTitle": "Limpiar registros de auditoría",
+      "confirmClearAll": "¿Está seguro de que desea eliminar todas las {count} entradas del registro? Esta acción no se puede deshacer.",
+      "confirmClearFiltered": "¿Está seguro de que desea eliminar {count} entradas filtradas del registro? Esta acción no se puede deshacer.",
+      "deleteSuccess": "Se eliminaron {count} entradas correctamente",
+      "deleteFailed": "Error al eliminar las entradas",
+      "confirmDeleteTitle": "Eliminar entrada",
+      "confirmDeleteEntry": "¿Está seguro de que desea eliminar esta entrada del registro?",
+      "deleteEntrySuccess": "Entrada eliminada",
+      "resource_audit": "Auditoría"
     },
     "types": {
       "title": "Gestión de Tipos",

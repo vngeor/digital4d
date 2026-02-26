@@ -688,7 +688,18 @@
       "resource_categories": "Categories",
       "resource_media": "Media",
       "resource_coupons": "Coupons",
-      "resource_notifications": "Notifications"
+      "resource_notifications": "Notifications",
+      "clearLogs": "Clear Logs",
+      "clearLogsFiltered": "Clear Filtered",
+      "confirmClearTitle": "Clear Audit Logs",
+      "confirmClearAll": "Are you sure you want to delete all {count} audit log entries? This cannot be undone.",
+      "confirmClearFiltered": "Are you sure you want to delete {count} filtered audit log entries? This cannot be undone.",
+      "deleteSuccess": "Successfully deleted {count} log entries",
+      "deleteFailed": "Failed to delete log entries",
+      "confirmDeleteTitle": "Delete Log Entry",
+      "confirmDeleteEntry": "Are you sure you want to delete this audit log entry?",
+      "deleteEntrySuccess": "Log entry deleted",
+      "resource_audit": "Audit"
     },
     "types": {
       "title": "Type Management",

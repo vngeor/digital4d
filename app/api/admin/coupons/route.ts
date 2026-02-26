@@ -201,7 +201,7 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    const trackFields = ["type", "value", "currency", "minPurchase", "maxUses", "perUserLimit", "allowOnSale", "active", "startsAt", "expiresAt"]
+    const trackFields = ["type", "value", "currency", "minPurchase", "maxUses", "perUserLimit", "productIds", "allowOnSale", "active", "startsAt", "expiresAt"]
     const details = getChangeDetails(
       oldCoupon as unknown as Record<string, unknown>,
       updated as unknown as Record<string, unknown>,

@@ -99,7 +99,7 @@ const RESOURCE_PAGES: Record<string, string> = {
 export default function MediaGalleryPage() {
   const t = useTranslations("admin.media")
   const tAdmin = useTranslations("admin")
-  const tb = useTranslations("admin.bulkActions")
+  const tb = useTranslations("admin.bulk")
   const router = useRouter()
   const searchParams = useSearchParams()
   const { can } = useAdminPermissions()
@@ -884,7 +884,7 @@ export default function MediaGalleryPage() {
       {selectedIds.size > 0 && can("media", "delete") && (
         <BulkActionBar
           selectedCount={selectedIds.size}
-          selectedLabel={tb("selectedItems", { count: selectedIds.size })}
+          selectedLabel={tb("selected", { count: selectedIds.size })}
           onDelete={() => setBulkDeleteConfirm(true)}
           onClear={() => setSelectedIds(new Set())}
         />

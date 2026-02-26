@@ -289,7 +289,7 @@ export default function CouponsPage() {
             className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400"
             title={item.productIds.join(", ")}
           >
-            {item.productIds.length} {t("selectedProducts")}
+            {t("selectedProducts", { count: item.productIds.length })}
           </span>
         )
       },
