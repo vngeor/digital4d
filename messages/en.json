@@ -10,6 +10,7 @@
     "logout": "Logout",
     "profile": "My Profile",
     "myOrders": "My Orders",
+    "myWishlist": "My Wishlist",
     "notifications": "Notifications",
     "noNotifications": "No new notifications",
     "newQuoteReceived": "New quote received",
@@ -17,7 +18,19 @@
     "justNow": "Just now",
     "minutesAgo": "{minutes}m ago",
     "hoursAgo": "{hours}h ago",
-    "daysAgo": "{days}d ago"
+    "daysAgo": "{days}d ago",
+    "wishlistPriceDrop": "Price drop: {product}",
+    "wishlistPriceDropMessage": "Now {newPrice} {currency} (was {oldPrice} {currency})",
+    "wishlistOnSale": "{product} is now on sale!",
+    "wishlistCoupon": "New discount: {code}",
+    "wishlistCouponPercentage": "Use code {code} for {value}% off on your favorites!",
+    "wishlistCouponFixed": "Use code {code} for {value} {currency} off on your favorites!",
+    "quoteOfferTitle": "New Quote Offer",
+    "quoteOfferWithCouponTitle": "Quote Offer + Coupon",
+    "quoteOfferMessage": "You received a quote offer for {price}",
+    "quoteOfferMessageWithCoupon": "You received a quote offer for {price} — includes a coupon!",
+    "quoteOfferMessageGeneric": "You received a new quote offer",
+    "quotePriceMessage": "Quote price: {price}"
   },
   "hero": {
     "badge": "Professional 3D Solutions",
@@ -908,7 +921,10 @@
     "originalPrice": "Original Price",
     "finalPrice": "Final Price",
     "couponDiscountAvailable": "You have a discount coupon!",
-    "couponMentionInQuote": "mention this code in your quote request"
+    "couponMentionInQuote": "mention this code in your quote request",
+    "addToWishlist": "Added to wishlist",
+    "removeFromWishlist": "Removed from wishlist",
+    "loginToWishlist": "Sign in to add items to your wishlist"
   },
   "quotes": {
     "title": "Request a Quote",
@@ -1023,7 +1039,12 @@
     "couponIncluded": "Coupon",
     "copyCouponCode": "Copy coupon code",
     "couponCopied": "Copied!",
-    "couponOff": "off"
+    "couponOff": "off",
+    "msgAccepted": "✅ Accepted the offer",
+    "msgDeclined": "❌ Declined the offer",
+    "msgCounterOffer": "🔄 Counter offer",
+    "msgPrice": "💰 €{price}",
+    "msgCoupon": "🎟️ {code} (-{discount})"
   },
   "notFound": {
     "title": "404",
@@ -1038,5 +1059,17 @@
     "tryAgain": "Try Again",
     "backHome": "Back to Home",
     "backToDashboard": "Back to Dashboard"
+  },
+  "wishlist": {
+    "title": "My Wishlist",
+    "subtitle": "Products you're watching for deals",
+    "empty": "Your wishlist is empty",
+    "emptyDescription": "Browse our products and add items to get notified about price drops and deals.",
+    "browseProducts": "Browse Products",
+    "addToWishlist": "Added to wishlist",
+    "removeFromWishlist": "Removed from wishlist",
+    "loginToWishlist": "Sign in to add items to your wishlist",
+    "priceDropAlert": "We'll notify you when prices drop or new deals are available on your wishlisted items!",
+    "backToHome": "Back to Home"
   }
 }

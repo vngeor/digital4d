@@ -17,6 +17,19 @@ import {
   Pencil,
   Trash2,
   ExternalLink,
+  Package,
+  FileText,
+  ShoppingCart,
+  MessageSquare,
+  Presentation,
+  Menu as MenuIcon,
+  Tag,
+  Users,
+  Shield,
+  FolderOpen,
+  ImageIcon,
+  Ticket,
+  BellRing,
 } from "lucide-react"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
@@ -55,20 +68,20 @@ const ACTION_STYLES: Record<string, { icon: typeof Plus; color: string }> = {
   delete: { icon: Trash2, color: "bg-red-500/20 text-red-400" },
 }
 
-const RESOURCE_COLORS: Record<string, string> = {
-  products: "bg-purple-500/20 text-purple-400",
-  content: "bg-blue-500/20 text-blue-400",
-  orders: "bg-cyan-500/20 text-cyan-400",
-  quotes: "bg-orange-500/20 text-orange-400",
-  banners: "bg-pink-500/20 text-pink-400",
-  menu: "bg-teal-500/20 text-teal-400",
-  types: "bg-indigo-500/20 text-indigo-400",
-  users: "bg-yellow-500/20 text-yellow-400",
-  roles: "bg-red-500/20 text-red-400",
-  categories: "bg-emerald-500/20 text-emerald-400",
-  media: "bg-violet-500/20 text-violet-400",
-  coupons: "bg-amber-500/20 text-amber-400",
-  notifications: "bg-sky-500/20 text-sky-400",
+const RESOURCE_STYLES: Record<string, { icon: typeof Plus; color: string }> = {
+  products:      { icon: Package,       color: "bg-purple-500/20 text-purple-400" },
+  content:       { icon: FileText,      color: "bg-blue-500/20 text-blue-400" },
+  orders:        { icon: ShoppingCart,   color: "bg-cyan-500/20 text-cyan-400" },
+  quotes:        { icon: MessageSquare,  color: "bg-orange-500/20 text-orange-400" },
+  banners:       { icon: Presentation,   color: "bg-pink-500/20 text-pink-400" },
+  menu:          { icon: MenuIcon,       color: "bg-teal-500/20 text-teal-400" },
+  types:         { icon: Tag,            color: "bg-indigo-500/20 text-indigo-400" },
+  users:         { icon: Users,          color: "bg-yellow-500/20 text-yellow-400" },
+  roles:         { icon: Shield,         color: "bg-red-500/20 text-red-400" },
+  categories:    { icon: FolderOpen,     color: "bg-emerald-500/20 text-emerald-400" },
+  media:         { icon: ImageIcon,      color: "bg-violet-500/20 text-violet-400" },
+  coupons:       { icon: Ticket,         color: "bg-amber-500/20 text-amber-400" },
+  notifications: { icon: BellRing,       color: "bg-sky-500/20 text-sky-400" },
 }
 
 const RESOURCES = [
@@ -500,7 +513,9 @@ export default function AuditLogsPage() {
                   {data.logs.map((log) => {
                     const actionStyle = ACTION_STYLES[log.action] || ACTION_STYLES.edit
                     const ActionIcon = actionStyle.icon
-                    const resourceColor = RESOURCE_COLORS[log.resource] || "bg-gray-500/20 text-gray-400"
+                    const resourceStyle = RESOURCE_STYLES[log.resource] || { icon: ScrollText, color: "bg-gray-500/20 text-gray-400" }
+                    const ResourceIcon = resourceStyle.icon
+                    const resourceColor = resourceStyle.color
                     return (
                       <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">
@@ -521,8 +536,8 @@ export default function AuditLogsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${actionStyle.color}`}>
-                            <ActionIcon className="w-3 h-3" />
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${actionStyle.color}`}>
+                            <ActionIcon className="w-3.5 h-3.5 shrink-0" />
                             {t(`action_${log.action}`)}
                           </span>
                         </td>
@@ -530,12 +545,14 @@ export default function AuditLogsPage() {
                           {getResourcePageLink(log.resource) ? (
                             <Link
                               href={getResourcePageLink(log.resource)!}
-                              className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${resourceColor} hover:opacity-80 transition-opacity`}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${resourceColor} hover:opacity-80 transition-opacity`}
                             >
+                              <ResourceIcon className="w-3.5 h-3.5 shrink-0" />
                               {t(`resource_${log.resource}`)}
                             </Link>
                           ) : (
-                            <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${resourceColor}`}>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${resourceColor}`}>
+                              <ResourceIcon className="w-3.5 h-3.5 shrink-0" />
                               {t(`resource_${log.resource}`)}
                             </span>
                           )}
@@ -587,7 +604,9 @@ export default function AuditLogsPage() {
               {data.logs.map((log) => {
                 const actionStyle = ACTION_STYLES[log.action] || ACTION_STYLES.edit
                 const ActionIcon = actionStyle.icon
-                const resourceColor = RESOURCE_COLORS[log.resource] || "bg-gray-500/20 text-gray-400"
+                const resourceStyle = RESOURCE_STYLES[log.resource] || { icon: ScrollText, color: "bg-gray-500/20 text-gray-400" }
+                const ResourceIcon = resourceStyle.icon
+                const resourceColor = resourceStyle.color
                 return (
                   <div key={log.id} className="p-4 space-y-2 overflow-hidden">
                     <div className="flex items-center justify-between gap-2">
@@ -604,19 +623,21 @@ export default function AuditLogsPage() {
                       <span className="text-xs text-gray-500 shrink-0">{formatDate(log.createdAt)}</span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${actionStyle.color}`}>
-                        <ActionIcon className="w-3 h-3" />
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${actionStyle.color}`}>
+                        <ActionIcon className="w-3 h-3 shrink-0" />
                         {t(`action_${log.action}`)}
                       </span>
                       {getResourcePageLink(log.resource) ? (
                         <Link
                           href={getResourcePageLink(log.resource)!}
-                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${resourceColor} hover:opacity-80 transition-opacity`}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${resourceColor} hover:opacity-80 transition-opacity`}
                         >
+                          <ResourceIcon className="w-3 h-3 shrink-0" />
                           {t(`resource_${log.resource}`)}
                         </Link>
                       ) : (
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${resourceColor}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${resourceColor}`}>
+                          <ResourceIcon className="w-3 h-3 shrink-0" />
                           {t(`resource_${log.resource}`)}
                         </span>
                       )}
@@ -711,18 +732,39 @@ export default function AuditLogsPage() {
                   <p className="text-white">{formatDate(viewingDetails.createdAt)}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">{t("action")}</span>
-                  <p className="text-white capitalize">{t(`action_${viewingDetails.action}`)}</p>
+                  <span className="text-gray-500 block mb-1">{t("action")}</span>
+                  {(() => {
+                    const modalActionStyle = ACTION_STYLES[viewingDetails.action] || ACTION_STYLES.edit
+                    const ModalActionIcon = modalActionStyle.icon
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${modalActionStyle.color}`}>
+                        <ModalActionIcon className="w-3.5 h-3.5 shrink-0" />
+                        {t(`action_${viewingDetails.action}`)}
+                      </span>
+                    )
+                  })()}
                 </div>
                 <div>
-                  <span className="text-gray-500">{t("resource")}</span>
-                  {getResourcePageLink(viewingDetails.resource) ? (
-                    <Link href={getResourcePageLink(viewingDetails.resource)!} className="text-emerald-400 hover:text-emerald-300 transition-colors capitalize block">
-                      {t(`resource_${viewingDetails.resource}`)}
-                    </Link>
-                  ) : (
-                    <p className="text-white capitalize">{t(`resource_${viewingDetails.resource}`)}</p>
-                  )}
+                  <span className="text-gray-500 block mb-1">{t("resource")}</span>
+                  {(() => {
+                    const modalResourceStyle = RESOURCE_STYLES[viewingDetails.resource] || { icon: ScrollText, color: "bg-gray-500/20 text-gray-400" }
+                    const ModalResourceIcon = modalResourceStyle.icon
+                    const modalResourceColor = modalResourceStyle.color
+                    return getResourcePageLink(viewingDetails.resource) ? (
+                      <Link
+                        href={getResourcePageLink(viewingDetails.resource)!}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${modalResourceColor} hover:opacity-80 transition-opacity`}
+                      >
+                        <ModalResourceIcon className="w-3.5 h-3.5 shrink-0" />
+                        {t(`resource_${viewingDetails.resource}`)}
+                      </Link>
+                    ) : (
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${modalResourceColor}`}>
+                        <ModalResourceIcon className="w-3.5 h-3.5 shrink-0" />
+                        {t(`resource_${viewingDetails.resource}`)}
+                      </span>
+                    )
+                  })()}
                 </div>
                 <div className="col-span-2">
                   <span className="text-gray-500">{t("record")}</span>

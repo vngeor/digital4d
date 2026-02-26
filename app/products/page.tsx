@@ -2,6 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../components/Header"
 import prisma from "@/lib/prisma"
+import { auth } from "@/auth"
 import { ProductCatalog } from "../components/ProductCatalog"
 import { ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
@@ -41,6 +42,17 @@ export default async function ProductsPage() {
         orderBy: [{ order: "asc" }],
     })
 
+    // Fetch wishlisted product IDs for authenticated user
+    const session = await auth()
+    let wishlistedProductIds: string[] = []
+    if (session?.user?.id) {
+        const wishlistItems = await prisma.wishlistItem.findMany({
+            where: { userId: session.user.id },
+            select: { productId: true },
+        })
+        wishlistedProductIds = wishlistItems.map((w) => w.productId)
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
             {/* Animated Background Orbs */}
@@ -73,6 +85,7 @@ export default async function ProductsPage() {
                 products={JSON.parse(JSON.stringify(products))}
                 categories={JSON.parse(JSON.stringify(categories))}
                 locale={locale}
+                wishlistedProductIds={wishlistedProductIds}
             />
 
             {/* Footer */}

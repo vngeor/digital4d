@@ -66,14 +66,14 @@ export async function GET() {
     // Get quoteIds that are covered by Notification records to deduplicate
     const coveredQuoteIds = new Set(
       dbNotifications
-        .filter(n => n.type === "quote_offer" && n.quoteId)
+        .filter(n => (n.type === "quote_offer" || n.type === "coupon") && n.quoteId)
         .map(n => n.quoteId!)
     )
 
     // Build unified notifications list
     const unified: Array<{
       id: string
-      type: "quote_offer" | "admin_message" | "coupon"
+      type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon"
       title: string
       message: string
       link: string | null
@@ -90,6 +90,7 @@ export async function GET() {
       couponCurrency: string | null
       createdAt: string
       isLegacy: boolean
+      quoteId: string | null
     }> = []
 
     // Add legacy quote notifications (not covered by Notification model)
@@ -98,8 +99,11 @@ export async function GET() {
         unified.push({
           id: n.id,
           type: "quote_offer",
-          title: "New Quote Offer",
-          message: `Quote price: ${n.quotedPrice ? `€${parseFloat(n.quotedPrice.toString()).toFixed(2)}` : "See details"}`,
+          title: "quote_offer",
+          message: JSON.stringify({
+            price: n.quotedPrice ? `€${parseFloat(n.quotedPrice.toString()).toFixed(2)}` : null,
+            hasCoupon: false,
+          }),
           link: "/my-orders",
           read: n.viewedAt !== null,
           quotedPrice: n.quotedPrice?.toString() || null,
@@ -114,20 +118,32 @@ export async function GET() {
           couponCurrency: null,
           createdAt: n.quotedAt?.toISOString() || new Date().toISOString(),
           isLegacy: true,
+          quoteId: n.id,
         })
       }
     }
 
     // Add Notification model records
     for (const n of dbNotifications) {
+      // Extract quotedPrice from JSON message for quote notifications
+      let extractedPrice: string | null = null
+      if (n.type === "quote_offer" || n.type === "coupon") {
+        try {
+          const parsed = JSON.parse(n.message)
+          if (parsed?.price) {
+            extractedPrice = parsed.price.replace("€", "")
+          }
+        } catch { /* not JSON */ }
+      }
+
       unified.push({
         id: n.id,
-        type: n.type as "quote_offer" | "admin_message" | "coupon",
+        type: n.type as "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon",
         title: n.title,
         message: n.message,
         link: n.link,
         read: n.read,
-        quotedPrice: null,
+        quotedPrice: extractedPrice,
         quotedAt: null,
         viewedAt: n.readAt?.toISOString() || null,
         productName: null,
@@ -139,7 +155,55 @@ export async function GET() {
         couponCurrency: n.coupon?.currency || null,
         createdAt: n.createdAt.toISOString(),
         isLegacy: false,
+        quoteId: n.quoteId || null,
       })
+    }
+
+    // Enrich quote notifications with last admin message from QuoteMessage
+    const quoteIdsNeedingEnrichment: string[] = []
+    for (const n of unified) {
+      if ((n.type === "quote_offer" || n.type === "coupon") && n.quoteId) {
+        try {
+          const parsed = JSON.parse(n.message)
+          if (!parsed?.adminMessage) {
+            quoteIdsNeedingEnrichment.push(n.quoteId)
+          }
+        } catch {
+          quoteIdsNeedingEnrichment.push(n.quoteId)
+        }
+      }
+    }
+
+    if (quoteIdsNeedingEnrichment.length > 0) {
+      const lastAdminMessages = await prisma.quoteMessage.findMany({
+        where: {
+          quoteId: { in: quoteIdsNeedingEnrichment },
+          senderType: "admin",
+        },
+        orderBy: { createdAt: "desc" },
+        distinct: ["quoteId"],
+        select: { quoteId: true, message: true },
+      })
+
+      const adminMessageMap = new Map(
+        lastAdminMessages.map(m => [m.quoteId, m.message])
+      )
+
+      for (const n of unified) {
+        if ((n.type === "quote_offer" || n.type === "coupon") && n.quoteId) {
+          const adminMsg = adminMessageMap.get(n.quoteId)
+          if (adminMsg) {
+            try {
+              const parsed = JSON.parse(n.message)
+              if (!parsed.adminMessage) {
+                n.message = JSON.stringify({ ...parsed, adminMessage: adminMsg })
+              }
+            } catch {
+              n.message = JSON.stringify({ adminMessage: adminMsg })
+            }
+          }
+        }
+      }
     }
 
     // Sort by createdAt desc

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X } from "lucide-react"
+import { WishlistButton } from "./WishlistButton"
 
 interface Product {
     id: string
@@ -40,6 +41,7 @@ interface ProductCatalogProps {
     products: Product[]
     categories: ProductCategory[]
     locale: string
+    wishlistedProductIds?: string[]
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -61,7 +63,7 @@ const COLOR_CLASSES: Record<string, string> = {
     yellow: "bg-yellow-500/20 text-yellow-400",
 }
 
-export function ProductCatalog({ products, categories, locale }: ProductCatalogProps) {
+export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [] }: ProductCatalogProps) {
     const t = useTranslations("products")
     const searchParams = useSearchParams()
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -269,14 +271,24 @@ export function ProductCatalog({ products, categories, locale }: ProductCatalogP
                                             )}
                                         </div>
 
-                                        {/* Stock Status */}
-                                        {!product.inStock && (
-                                            <div className="absolute top-3 right-3">
+                                        {/* Wishlist + Stock Status */}
+                                        <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+                                            <WishlistButton
+                                                productId={product.id}
+                                                initialWishlisted={wishlistedProductIds.includes(product.id)}
+                                                size="sm"
+                                                translations={{
+                                                    addToWishlist: t("addToWishlist"),
+                                                    removeFromWishlist: t("removeFromWishlist"),
+                                                    loginToWishlist: t("loginToWishlist"),
+                                                }}
+                                            />
+                                            {!product.inStock && (
                                                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400">
                                                     {t("outOfStock")}
                                                 </span>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Content */}

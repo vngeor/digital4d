@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
 import { deleteBlobsBatch } from "@/lib/blob"
 import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
+import { notifyWishlistPriceDrop } from "@/lib/wishlistNotifications"
 
 export async function GET(request: NextRequest) {
   try {
@@ -211,6 +212,29 @@ export async function PUT(request: NextRequest) {
     const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "image", "gallery", "fileUrl", "fileType", "featured", "published", "inStock", "order"]
     const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
+
+    // Detect price drop or sale activation → notify wishlist users
+    const oldPriceNum = oldProduct.price ? parseFloat(oldProduct.price.toString()) : null
+    const newPriceNum = product.price ? parseFloat(product.price.toString()) : null
+    const oldSalePriceNum = oldProduct.salePrice ? parseFloat(oldProduct.salePrice.toString()) : null
+    const newSalePriceNum = product.salePrice ? parseFloat(product.salePrice.toString()) : null
+
+    const priceDropped = newPriceNum !== null && oldPriceNum !== null && newPriceNum < oldPriceNum
+    const wentOnSale = !oldProduct.onSale && product.onSale
+    const salePriceDropped = product.onSale && newSalePriceNum !== null && oldSalePriceNum !== null && newSalePriceNum < oldSalePriceNum
+
+    if (priceDropped || wentOnSale || salePriceDropped) {
+      notifyWishlistPriceDrop(
+        product.id,
+        product.slug,
+        { nameBg: product.nameBg, nameEn: product.nameEn, nameEs: product.nameEs },
+        oldPriceNum,
+        newPriceNum,
+        product.onSale,
+        newSalePriceNum,
+        product.currency
+      ).catch((err) => console.error("Failed to send wishlist price drop notifications:", err))
+    }
 
     return NextResponse.json(product)
   } catch (error) {

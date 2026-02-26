@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
 import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
+import { notifyWishlistCoupon } from "@/lib/wishlistNotifications"
 
 export async function GET(request: NextRequest) {
   try {
@@ -150,6 +151,18 @@ export async function POST(request: NextRequest) {
       recordTitle: coupon.code,
     }).catch(() => {})
 
+    // Notify wishlist users if coupon is active
+    if (coupon.active) {
+      notifyWishlistCoupon(
+        coupon.id,
+        coupon.code,
+        coupon.type,
+        parseFloat(coupon.value.toString()),
+        coupon.currency,
+        coupon.productIds
+      ).catch((err) => console.error("Failed to send wishlist coupon notifications:", err))
+    }
+
     return NextResponse.json(coupon, { status: 201 })
   } catch (error) {
     console.error("Error creating coupon:", error)
@@ -215,6 +228,18 @@ export async function PUT(request: NextRequest) {
       recordTitle: updated.code,
       details,
     }).catch(() => {})
+
+    // Notify wishlist users if coupon was just activated
+    if (!oldCoupon.active && updated.active) {
+      notifyWishlistCoupon(
+        updated.id,
+        updated.code,
+        updated.type,
+        parseFloat(updated.value.toString()),
+        updated.currency,
+        updated.productIds
+      ).catch((err) => console.error("Failed to send wishlist coupon notifications:", err))
+    }
 
     return NextResponse.json(updated)
   } catch (error) {

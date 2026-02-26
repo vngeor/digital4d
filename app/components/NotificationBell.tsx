@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Bell, X, MessageSquare, Ticket, Copy, Check } from "lucide-react"
+import { Bell, X, MessageSquare, Ticket, Copy, Check, Heart, TrendingDown } from "lucide-react"
 
 interface Notification {
   id: string
-  type: "quote_offer" | "admin_message" | "coupon"
+  type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon"
   title: string
   message: string
   link: string | null
@@ -23,6 +23,7 @@ interface Notification {
   couponCurrency: string | null
   createdAt: string
   isLegacy: boolean
+  quoteId: string | null
 }
 
 interface NotificationBellProps {
@@ -35,10 +36,23 @@ interface NotificationBellProps {
     minutesAgo: string
     hoursAgo: string
     daysAgo: string
+    wishlistPriceDrop: string
+    wishlistPriceDropMessage: string
+    wishlistOnSale: string
+    wishlistCoupon: string
+    wishlistCouponPercentage: string
+    wishlistCouponFixed: string
+    quoteOfferTitle: string
+    quoteOfferWithCouponTitle: string
+    quoteOfferMessage: string
+    quoteOfferMessageWithCoupon: string
+    quoteOfferMessageGeneric: string
+    quotePriceMessage: string
   }
+  locale?: string
 }
 
-export function NotificationBell({ translations: t }: NotificationBellProps) {
+export function NotificationBell({ translations: t, locale = "en" }: NotificationBellProps) {
   const [count, setCount] = useState(0)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -131,6 +145,94 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
     return date.toLocaleDateString()
   }
 
+  const tryParseJson = (str: string) => {
+    try { return JSON.parse(str) } catch { return null }
+  }
+
+  const getLocalizedTitle = (notification: Notification): string => {
+    if (notification.type === "wishlist_price_drop") {
+      const names = tryParseJson(notification.title)
+      const msgData = tryParseJson(notification.message)
+      if (names) {
+        const productName = names[locale] || names.en || notification.title
+        if (msgData && !msgData.newPrice && msgData.onSale) {
+          return t.wishlistOnSale.replace("{product}", productName)
+        }
+        return t.wishlistPriceDrop.replace("{product}", productName)
+      }
+    }
+    if (notification.type === "wishlist_coupon") {
+      const data = tryParseJson(notification.title)
+      if (data?.code) {
+        return t.wishlistCoupon.replace("{code}", data.code)
+      }
+    }
+    // Quote offer notifications
+    if (notification.type === "quote_offer") {
+      return t.quoteOfferTitle
+    }
+    // Coupon-type notifications (quote offer + coupon)
+    if (notification.type === "coupon") {
+      return t.quoteOfferWithCouponTitle
+    }
+    return notification.title
+  }
+
+  const getLocalizedMessage = (notification: Notification): string => {
+    if (notification.type === "wishlist_price_drop") {
+      const msgData = tryParseJson(notification.message)
+      if (msgData && msgData.newPrice) {
+        return t.wishlistPriceDropMessage
+          .replace("{newPrice}", msgData.newPrice)
+          .replace("{oldPrice}", msgData.oldPrice || "")
+          .replace(/\{currency\}/g, msgData.currency || "")
+      }
+      if (msgData && msgData.onSale) {
+        const names = tryParseJson(notification.title)
+        const productName = names ? (names[locale] || names.en) : ""
+        return t.wishlistOnSale.replace("{product}", productName)
+      }
+    }
+    if (notification.type === "wishlist_coupon") {
+      const data = tryParseJson(notification.title)
+      if (data?.code) {
+        if (data.type === "percentage") {
+          return t.wishlistCouponPercentage
+            .replace("{code}", data.code)
+            .replace("{value}", String(data.value))
+        }
+        return t.wishlistCouponFixed
+          .replace("{code}", data.code)
+          .replace("{value}", String(data.value))
+          .replace("{currency}", data.currency || "")
+      }
+    }
+    // Quote offer notifications
+    if (notification.type === "quote_offer" || notification.type === "coupon") {
+      const msgData = tryParseJson(notification.message)
+      // Prefer admin message as preview text
+      if (msgData?.adminMessage) {
+        return msgData.adminMessage
+      }
+      if (msgData?.price) {
+        if (msgData.hasCoupon) {
+          return t.quoteOfferMessageWithCoupon.replace("{price}", msgData.price)
+        }
+        return t.quoteOfferMessage.replace("{price}", msgData.price)
+      }
+      // Legacy quote with quotedPrice field
+      if (notification.quotedPrice) {
+        const price = `€${parseFloat(notification.quotedPrice).toFixed(2)}`
+        if (notification.type === "coupon") {
+          return t.quoteOfferMessageWithCoupon.replace("{price}", price)
+        }
+        return t.quoteOfferMessage.replace("{price}", price)
+      }
+      return t.quoteOfferMessageGeneric
+    }
+    return notification.message
+  }
+
   const getNotificationIcon = (notification: Notification) => {
     if (notification.type === "coupon") {
       return (
@@ -143,6 +245,20 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
       return (
         <div className="shrink-0 w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
           <MessageSquare className="w-5 h-5 text-purple-400" />
+        </div>
+      )
+    }
+    if (notification.type === "wishlist_price_drop") {
+      return (
+        <div className="shrink-0 w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+          <TrendingDown className="w-5 h-5 text-red-400" />
+        </div>
+      )
+    }
+    if (notification.type === "wishlist_coupon") {
+      return (
+        <div className="shrink-0 w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center">
+          <Heart className="w-5 h-5 text-pink-400" />
         </div>
       )
     }
@@ -164,6 +280,12 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
   }
 
   const getNotificationLink = (notification: Notification) => {
+    // For quote notifications, append quoteId to scroll to the quote on my-orders
+    if ((notification.type === "quote_offer" || notification.type === "coupon") && notification.quoteId) {
+      const baseLink = notification.link || "/my-orders"
+      const separator = baseLink.includes("?") ? "&" : "?"
+      return `${baseLink}${separator}quoteId=${notification.quoteId}`
+    }
     if (notification.link) return notification.link
     if (notification.type === "coupon") return "/products"
     return "/my-orders"
@@ -175,7 +297,7 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
+        className="relative p-3 sm:p-2 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
         title={t.notifications}
       >
         <Bell className="w-5 h-5 text-slate-300" />
@@ -194,7 +316,7 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
             <h3 className="font-semibold text-white">{t.notifications}</h3>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-2.5 sm:p-1 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
             >
               <X className="w-4 h-4 text-slate-400" />
             </button>
@@ -218,10 +340,10 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
                   {getNotificationIcon(notification)}
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium truncate ${!notification.read ? "text-white" : "text-slate-300"}`}>
-                      {notification.title}
+                      {getLocalizedTitle(notification)}
                     </p>
                     <p className="text-xs text-slate-400 truncate">
-                      {notification.message}
+                      {getLocalizedMessage(notification)}
                     </p>
 
                     {/* Coupon code with copy button */}
@@ -232,7 +354,7 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
                         </code>
                         <button
                           onClick={(e) => handleCopyCode(notification.couponCode!, e)}
-                          className="p-0.5 rounded hover:bg-white/10 transition-colors"
+                          className="p-2 sm:p-0.5 rounded hover:bg-white/10 transition-colors touch-manipulation"
                           title="Copy code"
                         >
                           {copiedCode === notification.couponCode ? (

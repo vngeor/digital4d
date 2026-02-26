@@ -59,13 +59,37 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Create a message in the history for user responses
+    // Create a message in the history for user responses (stored as JSON for i18n)
     if (action === "accept") {
+      // Look up coupon from notification
+      let couponCode: string | null = null
+      let couponDiscount: string | null = null
+      try {
+        const couponNotification = await prisma.notification.findFirst({
+          where: { quoteId, couponId: { not: null } },
+          select: { coupon: { select: { code: true, type: true, value: true, currency: true } } },
+        })
+        if (couponNotification?.coupon) {
+          const c = couponNotification.coupon
+          couponCode = c.code
+          couponDiscount = c.type === "percentage"
+            ? `${c.value}%`
+            : `${c.value} ${c.currency || "EUR"}`
+        }
+      } catch {
+        // Non-critical — coupon info is supplementary
+      }
+
       await prisma.quoteMessage.create({
         data: {
           quoteId,
           senderType: "user",
-          message: "Accepted the offer",
+          message: JSON.stringify({
+            key: "accepted",
+            price: quote.quotedPrice ? Number(quote.quotedPrice).toFixed(2) : null,
+            couponCode,
+            couponDiscount,
+          }),
           quotedPrice: quote.quotedPrice ? Number(quote.quotedPrice) : null,
         },
       })
@@ -74,7 +98,10 @@ export async function POST(request: NextRequest) {
         data: {
           quoteId,
           senderType: "user",
-          message: message || "Declined the offer",
+          message: JSON.stringify({
+            key: "declined",
+            text: message || null,
+          }),
         },
       })
     } else if (action === "counter_offer" && message) {
@@ -82,7 +109,10 @@ export async function POST(request: NextRequest) {
         data: {
           quoteId,
           senderType: "user",
-          message,
+          message: JSON.stringify({
+            key: "counter_offer",
+            text: message,
+          }),
         },
       })
     }

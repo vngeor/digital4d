@@ -213,7 +213,7 @@ export function ProductActions({ product, initialCouponCode }: ProductActionsPro
                                     </button>
                                     <button
                                         onClick={() => { setShowCouponInput(false); setCouponCode(""); setCouponError("") }}
-                                        className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                                        className="p-2 min-w-[40px] min-h-[40px] rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors touch-manipulation flex items-center justify-center"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>

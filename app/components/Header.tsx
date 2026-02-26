@@ -9,7 +9,7 @@ import Image from "next/image"
 import { LanguageSwitcher } from "./LanguageSwitcher"
 import { locales, localeFlags, type Locale } from "@/i18n/config"
 import { NotificationBell } from "./NotificationBell"
-import { ChevronDown, Menu, X } from "lucide-react"
+import { ChevronDown, Menu, X, Heart } from "lucide-react"
 
 interface MenuContent {
     id: string
@@ -167,6 +167,7 @@ export function Header() {
                     {/* Notification Bell - Only for logged-in users */}
                     {session && (
                         <NotificationBell
+                            locale={locale}
                             translations={{
                                 notifications: t("notifications"),
                                 noNotifications: t("noNotifications"),
@@ -176,6 +177,18 @@ export function Header() {
                                 minutesAgo: t.raw("minutesAgo"),
                                 hoursAgo: t.raw("hoursAgo"),
                                 daysAgo: t.raw("daysAgo"),
+                                wishlistPriceDrop: t.raw("wishlistPriceDrop"),
+                                wishlistPriceDropMessage: t.raw("wishlistPriceDropMessage"),
+                                wishlistOnSale: t.raw("wishlistOnSale"),
+                                wishlistCoupon: t.raw("wishlistCoupon"),
+                                wishlistCouponPercentage: t.raw("wishlistCouponPercentage"),
+                                wishlistCouponFixed: t.raw("wishlistCouponFixed"),
+                                quoteOfferTitle: t("quoteOfferTitle"),
+                                quoteOfferWithCouponTitle: t("quoteOfferWithCouponTitle"),
+                                quoteOfferMessage: t.raw("quoteOfferMessage"),
+                                quoteOfferMessageWithCoupon: t.raw("quoteOfferMessageWithCoupon"),
+                                quoteOfferMessageGeneric: t("quoteOfferMessageGeneric"),
+                                quotePriceMessage: t.raw("quotePriceMessage"),
                             }}
                         />
                     )}
@@ -211,7 +224,7 @@ export function Header() {
                             </button>
                             {/* Dropdown */}
                             {userDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 py-2 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl">
+                                <div className="absolute right-0 mt-2 w-48 py-2 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl z-50">
                                     <div className="px-4 py-2 border-b border-white/10">
                                         <p className="text-sm font-medium truncate">{session.user?.name}</p>
                                         <p className="text-xs text-slate-400 truncate">{session.user?.email}</p>
@@ -229,6 +242,14 @@ export function Header() {
                                         className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
                                     >
                                         {t("myOrders")}
+                                    </Link>
+                                    <Link
+                                        href="/wishlist"
+                                        onClick={() => setUserDropdownOpen(false)}
+                                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                                    >
+                                        <Heart className="w-3.5 h-3.5" />
+                                        {t("myWishlist")}
                                     </Link>
                                     <div className="border-t border-white/10 my-1" />
                                     <button
@@ -298,7 +319,7 @@ export function Header() {
                                                         <Link
                                                             key={content.id}
                                                             href={href}
-                                                            className="block py-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+                                                            className="block py-3 text-sm text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation"
                                                         >
                                                             {getLocalizedTitle(content)}
                                                         </Link>
@@ -350,6 +371,13 @@ export function Header() {
                                     className="mt-2 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation"
                                 >
                                     {t("myOrders")}
+                                </Link>
+                                <Link
+                                    href="/wishlist"
+                                    className="mt-2 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation flex items-center justify-center gap-2"
+                                >
+                                    <Heart className="w-4 h-4" />
+                                    {t("myWishlist")}
                                 </Link>
                                 <button
                                     onClick={() => signOut()}

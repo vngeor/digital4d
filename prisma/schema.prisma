@@ -69,6 +69,7 @@ model User {
   mediaFiles       MediaFile[]
   notifications    Notification[]
   couponsCreated   Coupon[]       @relation("CouponCreator")
+  wishlistItems    WishlistItem[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -201,6 +202,7 @@ model Product {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   quotes        QuoteRequest[]
+  wishlistItems WishlistItem[]
 
   @@index([category])
   @@index([published])
@@ -422,12 +424,13 @@ model Notification {
   id          String    @id @default(cuid())
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String                    // "quote_offer" | "admin_message" | "coupon"
+  type        String                    // "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon"
   title       String
   message     String    @db.Text
   link        String?                   // Optional deep link URL
   couponId    String?
   coupon      Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  productId   String?                   // For wishlist notifications
   quoteId     String?                   // For quote_offer type
   read        Boolean   @default(false)
   readAt      DateTime?
@@ -440,4 +443,30 @@ model Notification {
   @@index([createdAt])
   @@index([type])
   @@index([scheduledAt])
+}
+
+// Wishlist item linking User to Product
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+// Track wishlist notifications sent to prevent spam (24h cooldown)
+model WishlistNotificationLog {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  type      String   // "price_drop" | "coupon"
+  createdAt DateTime @default(now())
+
+  @@index([userId, productId])
+  @@index([createdAt])
 }

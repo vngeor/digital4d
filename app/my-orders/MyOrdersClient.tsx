@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Package, ArrowLeft, MessageSquare, ChevronDown, Ticket, Copy, Check } from "lucide-react"
 import { Header } from "@/app/components/Header"
@@ -92,6 +93,40 @@ interface MyOrdersClientProps {
     copyCouponCode: string
     couponCopied: string
     couponOff: string
+    msgAccepted: string
+    msgDeclined: string
+    msgCounterOffer: string
+    msgPrice: string
+    msgCoupon: string
+  }
+}
+
+// Localize structured quote messages (stored as JSON)
+function localizeMessage(raw: string, t: MyOrdersClientProps["translations"]): string[] {
+  try {
+    const data = JSON.parse(raw)
+    if (!data?.key) throw new Error("not structured")
+
+    const lines: string[] = []
+    if (data.key === "accepted") {
+      lines.push(t.msgAccepted)
+      if (data.price) lines.push(t.msgPrice.replace("{price}", data.price))
+      if (data.couponCode && data.couponDiscount) {
+        lines.push(t.msgCoupon.replace("{code}", data.couponCode).replace("{discount}", data.couponDiscount))
+      }
+    } else if (data.key === "declined") {
+      lines.push(t.msgDeclined)
+      if (data.text) lines.push(data.text)
+    } else if (data.key === "counter_offer") {
+      lines.push(t.msgCounterOffer)
+      if (data.text) lines.push(data.text)
+    } else {
+      throw new Error("unknown key")
+    }
+    return lines
+  } catch {
+    // Plain text message (old format or admin-authored) — split by newlines
+    return raw.split("\n")
   }
 }
 
@@ -112,6 +147,7 @@ const quoteStatusColors: Record<string, string> = {
 }
 
 export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t }: MyOrdersClientProps) {
+  const searchParams = useSearchParams()
   const [quotes, setQuotes] = useState(initialQuotes)
   const [respondingToQuote, setRespondingToQuote] = useState<string | null>(null)
   const [counterOfferMessage, setCounterOfferMessage] = useState("")
@@ -120,6 +156,35 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
   const [showAllQuotes, setShowAllQuotes] = useState(false)
   const [showAllOrders, setShowAllOrders] = useState(false)
   const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null)
+  const quoteRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const messagesEndRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  // Auto-scroll to specific quote when navigating from notification
+  useEffect(() => {
+    const quoteId = searchParams.get("quoteId")
+    if (quoteId) {
+      setShowAllQuotes(true)
+      setExpandedHistory(quoteId)
+      setTimeout(() => {
+        const el = quoteRefs.current[quoteId]
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+      }, 300)
+    }
+  }, [searchParams])
+
+  // Auto-scroll to last message when conversation history is expanded
+  useEffect(() => {
+    if (expandedHistory) {
+      setTimeout(() => {
+        const el = messagesEndRefs.current[expandedHistory]
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" })
+        }
+      }, 150)
+    }
+  }, [expandedHistory])
 
   const handleCopyCoupon = (code: string) => {
     navigator.clipboard.writeText(code)
@@ -248,6 +313,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                   return (
                     <div
                       key={quote.id}
+                      ref={el => { quoteRefs.current[quote.id] = el }}
                       className={`p-4 rounded-xl border ${
                         quote.status === "rejected"
                           ? "bg-red-500/5 border-red-500/20"
@@ -455,7 +521,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                           </button>
 
                           {expandedHistory === quote.id && (
-                            <div className="mt-2 space-y-1.5 animate-in slide-in-from-top-2 duration-200">
+                            <div className="mt-2 max-h-64 overflow-y-auto space-y-1.5 animate-in slide-in-from-top-2 duration-200">
                               {quote.messages.map((msg) => (
                                 <div
                                   key={msg.id}
@@ -483,15 +549,15 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                         })}
                                       </span>
                                     </div>
-                                    <p className="text-xs text-white leading-snug">{msg.message}</p>
-                                    {msg.quotedPrice && (
-                                      <p className="text-xs font-semibold text-emerald-400 mt-0.5">
-                                        €{parseFloat(msg.quotedPrice).toFixed(2)}
-                                      </p>
-                                    )}
+                                    <div className="text-xs text-white leading-snug space-y-0.5">
+                                      {localizeMessage(msg.message, t).map((line, i) => (
+                                        <p key={i}>{line}</p>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
                               ))}
+                              <div ref={el => { messagesEndRefs.current[quote.id] = el }} />
                             </div>
                           )}
                         </div>

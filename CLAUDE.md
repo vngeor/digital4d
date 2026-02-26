@@ -53,7 +53,7 @@ No test framework is configured.
 ### Database
 
 - **Prisma 7** with Neon HTTP adapter (`lib/prisma.ts`) — **no transaction support**
-- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission, Coupon, CouponUsage, Notification
+- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission, Coupon, CouponUsage, Notification, WishlistItem, WishlistNotification
 - Prisma results must be serialized for client components: `JSON.parse(JSON.stringify(data))`
 
 ### API Layer
@@ -78,8 +78,12 @@ No test framework is configured.
 - `GET /api/user/orders` — user order history
 - `GET /api/quotes/[id]/messages` — quote conversation
 - `PATCH /api/quotes/[id]/view` — mark quote as viewed
-- `POST /api/quotes/respond` — customer quote response (accept/counter-offer)
-- `GET /api/notifications` — unified notifications (quotes, admin messages, coupons) with scheduledAt visibility gate
+- `POST /api/quotes/respond` — customer quote response (accept/counter-offer), stores structured JSON for i18n
+- `GET /api/notifications` — unified notifications (quotes, admin messages, coupons, wishlist) with scheduledAt visibility gate
+- `GET /api/wishlist` — user's wishlist items
+- `POST /api/wishlist` — add product to wishlist
+- `DELETE /api/wishlist` — remove product from wishlist
+- `GET /api/wishlist/check` — check if product is in wishlist
 
 **Auth routes:**
 - `POST /api/auth/register` — user registration
@@ -101,7 +105,8 @@ No test framework is configured.
 - **Services** (`app/services/`): listing and detail pages
 - **Dynamic CMS** (`app/[menuSlug]/`): menu-driven pages with nested content
 - **Profile** (`app/profile/`): user profile management
-- **My Orders** (`app/my-orders/`): order history
+- **My Orders** (`app/my-orders/`): order history, quote conversations with auto-scroll from notifications
+- **Wishlist** (`app/wishlist/`): saved products with price drop tracking
 - **Checkout** (`app/checkout/`): Stripe success/cancel pages
 - **Login** (`app/login/`): auth with OAuth + credentials
 - **404** (`app/not-found.tsx`): custom page with interactive 3D dinosaur (Three.js + React Three Fiber)
@@ -122,10 +127,13 @@ No test framework is configured.
 - **`AdminIdleGuard`**: wraps admin layout, auto-logout after 5 min inactivity with 1-min warning modal
 - Admin sidebar has live pending quotes badge (30s polling), mobile hamburger menu with drawer overlay
 - Admin pages: dashboard, products, categories, orders, quotes, content, banners, menu, types, media, coupons, notifications, users, roles, audit logs
+- **Audit logs** (`/admin/audit-logs`): action badges with icons (Plus/Pencil/Trash2), resource badges with matching sidebar icons (Package, FileText, etc.) via `ACTION_STYLES` and `RESOURCE_STYLES` maps
 
 ### Frontend Components
 
 - **`Header`**: navigation with dynamic menu, user dropdown, language switcher, mobile responsive
+- **`NotificationBell`**: unified notifications with i18n support; quote notifications show admin message preview, link to specific quote on my-orders with auto-scroll
+- **`WishlistButton`**: heart toggle on product cards/detail pages, adds/removes from wishlist
 - **`LanguageSwitcher`**: locale switching with `useTransition`
 - **`ProductCatalog`**: product filtering, search, category tabs
 - **`QuoteForm`**: drag-and-drop file upload, auto-fill from profile
@@ -159,16 +167,28 @@ No test framework is configured.
 - **Checkout integration**: coupon code applied at Stripe checkout, usage recorded in webhook via `CouponUsage` model
 - **Customer UX**: coupon input on digital product pages (auto-apply via `?coupon=CODE` URL param), discount banner for service/physical products
 - **Quote integration**: admin can attach coupon when sending quote offer, customer sees coupon badge on My Orders page
+- **Quote conversation messages**: admin offers stored as multi-line text (notes + 💰 price + 🎟️ coupon). User responses (accept/decline/counter) stored as JSON with i18n keys, localized at display time via `localizeMessage()` in MyOrdersClient
 
 ### Notifications
 
-- **Notification model**: userId, type (quote_offer/admin_message/coupon), title, message, link, couponId, quoteId, read/readAt, scheduledAt, createdById
+- **Notification model**: userId, type (quote_offer/admin_message/coupon/wishlist_price_drop/wishlist_coupon), title, message, link, couponId, quoteId, productId, read/readAt, scheduledAt, createdById
+- **i18n pattern**: Notification `title`/`message` fields store JSON with translation keys (e.g., `"quote_offer"`, `{"price":"7.50","hasCoupon":true}`). Localized at display time in `NotificationBell` using `getLocalizedTitle()`/`getLocalizedMessage()` helpers. Use `t.raw()` for template strings with placeholders.
 - **Admin page** (`/admin/notifications`): send notifications to users with smart recipient selection
   - **Quick filters**: Birthday Today/This Week/This Month, All Users (with count confirmation), By Role dropdown
   - **Schedule/snooze**: toggle to schedule notifications for future delivery with datetime picker
   - **Types**: admin messages and coupon notifications with optional deep links
-- **Customer bell** (`NotificationBell`): unified notifications from quotes, admin messages, and coupons; scheduled notifications hidden until delivery time
-- **Quote auto-notification**: when admin sends a quote offer, a Notification record is auto-created
+- **Customer bell** (`NotificationBell`): unified notifications from quotes, admin messages, coupons, and wishlist; scheduled notifications hidden until delivery time; quote notifications show admin's last message as preview
+- **Quote auto-notification**: when admin sends a quote offer, a Notification record is auto-created with rich JSON message including adminMessage, price, and coupon info
+- **Wishlist notifications**: price drop and coupon availability notifications for wishlisted products
+
+### Wishlist
+
+- **WishlistItem model**: userId, productId, addedAt — tracks which products a user has wishlisted
+- **WishlistNotification model**: userId, productId, type (price_drop/coupon), createdAt — prevents duplicate notifications
+- **API routes**: `/api/wishlist` (GET/POST/DELETE), `/api/wishlist/check` (GET)
+- **Price drop detection**: when admin changes product price, compares old vs new; if price dropped, creates notifications for all users who wishlisted that product
+- **Coupon detection**: when admin creates/edits a coupon with specific productIds, notifies users who wishlisted those products
+- **Wishlist page** (`app/wishlist/`): displays saved products with current prices, sale badges, and remove button
 
 ### Payments
 

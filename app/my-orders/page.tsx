@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { auth } from "@/auth"
@@ -150,13 +151,20 @@ export default async function MyOrdersPage() {
     copyCouponCode: t("copyCouponCode"),
     couponCopied: t("couponCopied"),
     couponOff: t("couponOff"),
+    msgAccepted: t("msgAccepted"),
+    msgDeclined: t("msgDeclined"),
+    msgCounterOffer: t("msgCounterOffer"),
+    msgPrice: t.raw("msgPrice"),
+    msgCoupon: t.raw("msgCoupon"),
   }
 
   return (
-    <MyOrdersClient
-      orders={JSON.parse(JSON.stringify(orders))}
-      quotes={JSON.parse(JSON.stringify(quotesWithCoupons))}
-      translations={translations}
-    />
+    <Suspense>
+      <MyOrdersClient
+        orders={JSON.parse(JSON.stringify(orders))}
+        quotes={JSON.parse(JSON.stringify(quotesWithCoupons))}
+        translations={translations}
+      />
+    </Suspense>
   )
 }

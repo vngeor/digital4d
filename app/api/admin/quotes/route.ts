@@ -122,11 +122,35 @@ export async function PUT(request: NextRequest) {
 
     // Create a message in the history when admin sends a quote
     if (data.status === "quoted" && (data.quotedPrice || data.adminNotes)) {
+      // Fetch coupon details if attached
+      let couponInfo: { code: string; type: string; value: string; currency: string | null } | null = null
+      if (data.couponId) {
+        const coupon = await prisma.coupon.findUnique({
+          where: { id: data.couponId },
+          select: { code: true, type: true, value: true, currency: true },
+        })
+        if (coupon) {
+          couponInfo = { code: coupon.code, type: coupon.type, value: coupon.value.toString(), currency: coupon.currency }
+        }
+      }
+
+      // Build rich message with all offer details
+      const messageParts: string[] = []
+      if (data.adminNotes) messageParts.push(data.adminNotes)
+      if (data.quotedPrice) messageParts.push(`💰 €${parseFloat(data.quotedPrice).toFixed(2)}`)
+      if (couponInfo) {
+        const discount = couponInfo.type === "percentage"
+          ? `${couponInfo.value}%`
+          : `${couponInfo.value} ${couponInfo.currency || "EUR"}`
+        messageParts.push(`🎟️ ${couponInfo.code} (-${discount})`)
+      }
+      const fullMessage = messageParts.join("\n") || `Quoted price: €${parseFloat(data.quotedPrice).toFixed(2)}`
+
       await prisma.quoteMessage.create({
         data: {
           quoteId: data.id,
           senderType: "admin",
-          message: data.adminNotes || `Quoted price: €${parseFloat(data.quotedPrice).toFixed(2)}`,
+          message: fullMessage,
           quotedPrice: data.quotedPrice ? parseFloat(data.quotedPrice) : null,
         },
       })
@@ -140,18 +164,16 @@ export async function PUT(request: NextRequest) {
           const priceText = data.quotedPrice ? `€${parseFloat(data.quotedPrice).toFixed(2)}` : ""
           const hasCoupon = !!data.couponId
 
-          // Build notification message
-          let notifMessage = priceText ? `You received a quote offer for ${priceText}` : "You received a new quote offer"
-          if (hasCoupon) {
-            notifMessage += " — includes a coupon!"
-          }
-
           await prisma.notification.create({
             data: {
               userId: user.id,
               type: hasCoupon ? "coupon" : "quote_offer",
-              title: hasCoupon ? "Quote Offer + Coupon" : "New Quote Offer",
-              message: notifMessage,
+              title: "quote_offer",
+              message: JSON.stringify({
+                price: priceText || null,
+                hasCoupon,
+                adminMessage: data.adminNotes || null,
+              }),
               link: "/my-orders",
               quoteId: quote.id,
               couponId: data.couponId || null,

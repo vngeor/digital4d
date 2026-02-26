@@ -3,7 +3,9 @@ import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../../components/Header"
 import { ProductActions } from "../../components/ProductActions"
+import { WishlistButton } from "../../components/WishlistButton"
 import prisma from "@/lib/prisma"
+import { auth } from "@/auth"
 import { ArrowLeft } from "lucide-react"
 import type { Product } from "@prisma/client"
 import type { Metadata } from "next"
@@ -97,6 +99,21 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     const category = await prisma.productCategory.findFirst({
         where: { slug: product.category }
     })
+
+    // Check wishlist state for authenticated user
+    const session = await auth()
+    let isWishlisted = false
+    if (session?.user?.id) {
+        const wishlistItem = await prisma.wishlistItem.findUnique({
+            where: {
+                userId_productId: {
+                    userId: session.user.id,
+                    productId: product.id,
+                },
+            },
+        })
+        isWishlisted = !!wishlistItem
+    }
 
     // Fetch related products (same category, excluding current)
     const relatedProducts = await prisma.product.findMany({
@@ -209,7 +226,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                     {/* Mobile: Simple back arrow */}
                     <Link
                         href="/products"
-                        className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3"
+                        className="sm:hidden inline-flex items-center justify-center w-11 h-11 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3 relative z-10 touch-manipulation"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
@@ -260,10 +277,22 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                 {categoryName}
                             </Link>
 
-                            {/* Name */}
-                            <h1 className="text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent leading-tight">
-                                {productName}
-                            </h1>
+                            {/* Name + Wishlist */}
+                            <div className="flex items-start gap-3">
+                                <h1 className="flex-1 text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent leading-tight">
+                                    {productName}
+                                </h1>
+                                <WishlistButton
+                                    productId={product.id}
+                                    initialWishlisted={isWishlisted}
+                                    size="lg"
+                                    translations={{
+                                        addToWishlist: t("products.addToWishlist"),
+                                        removeFromWishlist: t("products.removeFromWishlist"),
+                                        loginToWishlist: t("products.loginToWishlist"),
+                                    }}
+                                />
+                            </div>
 
                             {/* Badges */}
                             <div className="flex flex-wrap gap-1 md:gap-2">
@@ -338,7 +367,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             <h2 className="text-lg md:text-2xl font-bold text-white mb-4 md:mb-8">
                                 {t("products.relatedProducts")}
                             </h2>
-                            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6">
+                            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6 relative z-10">
                                 {relatedProducts.map((related: Product) => {
                                     const relatedName = getLocalizedName(related)
                                     const relatedPrice = related.price
@@ -440,10 +469,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                     )}
 
                     {/* Back Link */}
-                    <div className="mt-12">
+                    <div className="mt-12 relative z-10">
                         <Link
                             href="/products"
-                            className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors"
+                            className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors touch-manipulation"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />

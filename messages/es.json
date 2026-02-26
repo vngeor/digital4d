@@ -10,6 +10,7 @@
     "logout": "Cerrar sesión",
     "profile": "Mi Perfil",
     "myOrders": "Mis Pedidos",
+    "myWishlist": "Mis Favoritos",
     "notifications": "Notificaciones",
     "noNotifications": "No hay nuevas notificaciones",
     "newQuoteReceived": "Nueva cotización recibida",
@@ -17,7 +18,19 @@
     "justNow": "Ahora mismo",
     "minutesAgo": "hace {minutes}m",
     "hoursAgo": "hace {hours}h",
-    "daysAgo": "hace {days}d"
+    "daysAgo": "hace {days}d",
+    "wishlistPriceDrop": "Bajada de precio: {product}",
+    "wishlistPriceDropMessage": "Ahora {newPrice} {currency} (era {oldPrice} {currency})",
+    "wishlistOnSale": "¡{product} está en oferta!",
+    "wishlistCoupon": "Nuevo descuento: {code}",
+    "wishlistCouponPercentage": "¡Usa el código {code} para {value}% de descuento en tus favoritos!",
+    "wishlistCouponFixed": "¡Usa el código {code} para {value} {currency} de descuento en tus favoritos!",
+    "quoteOfferTitle": "Nueva oferta de cotización",
+    "quoteOfferWithCouponTitle": "Oferta + Cupón",
+    "quoteOfferMessage": "Recibiste una oferta de cotización por {price}",
+    "quoteOfferMessageWithCoupon": "Recibiste una oferta por {price} — ¡incluye un cupón!",
+    "quoteOfferMessageGeneric": "Recibiste una nueva oferta de cotización",
+    "quotePriceMessage": "Precio de cotización: {price}"
   },
   "hero": {
     "badge": "Soluciones 3D Profesionales",
@@ -908,7 +921,10 @@
     "originalPrice": "Precio Original",
     "finalPrice": "Precio Final",
     "couponDiscountAvailable": "¡Tienes un cupón de descuento!",
-    "couponMentionInQuote": "menciona este código en tu solicitud de cotización"
+    "couponMentionInQuote": "menciona este código en tu solicitud de cotización",
+    "addToWishlist": "Añadido a favoritos",
+    "removeFromWishlist": "Eliminado de favoritos",
+    "loginToWishlist": "Inicia sesión para añadir a favoritos"
   },
   "quotes": {
     "title": "Solicitar Cotización",
@@ -1023,7 +1039,12 @@
     "couponIncluded": "Cupón",
     "copyCouponCode": "Copiar código de cupón",
     "couponCopied": "¡Copiado!",
-    "couponOff": "descuento"
+    "couponOff": "descuento",
+    "msgAccepted": "✅ Oferta aceptada",
+    "msgDeclined": "❌ Oferta rechazada",
+    "msgCounterOffer": "🔄 Contraoferta",
+    "msgPrice": "💰 €{price}",
+    "msgCoupon": "🎟️ {code} (-{discount})"
   },
   "notFound": {
     "title": "404",
@@ -1038,5 +1059,17 @@
     "tryAgain": "Intentar de nuevo",
     "backHome": "Volver al inicio",
     "backToDashboard": "Volver al panel"
+  },
+  "wishlist": {
+    "title": "Mis Favoritos",
+    "subtitle": "Productos que estás siguiendo para ofertas",
+    "empty": "Tu lista de favoritos está vacía",
+    "emptyDescription": "Explora nuestros productos y añade artículos para recibir notificaciones sobre bajadas de precio y ofertas.",
+    "browseProducts": "Explorar Productos",
+    "addToWishlist": "Añadido a favoritos",
+    "removeFromWishlist": "Eliminado de favoritos",
+    "loginToWishlist": "Inicia sesión para añadir a favoritos",
+    "priceDropAlert": "¡Te notificaremos cuando bajen los precios o haya nuevas ofertas en tus productos favoritos!",
+    "backToHome": "Volver al inicio"
   }
 }
