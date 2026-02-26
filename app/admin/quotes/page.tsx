@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye, Link as LinkIcon, ExternalLink } from "lucide-react"
+import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
@@ -404,9 +405,7 @@ export default function QuotesPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
-        </div>
+        <SkeletonDataTable columns={5} />
       ) : (
         <DataTable
           data={quotes}

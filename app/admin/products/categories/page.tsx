@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Loader2, ArrowLeft, FolderOpen } from "lucide-react"
+import { Plus, Edit2, Trash2, ArrowLeft, FolderOpen } from "lucide-react"
+import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import Link from "next/link"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ProductCategoryForm } from "@/app/components/admin/ProductCategoryForm"
@@ -198,9 +199,7 @@ export default function CategoriesPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
-        </div>
+        <SkeletonDataTable columns={4} />
       ) : (
         <DataTable
           data={categories}

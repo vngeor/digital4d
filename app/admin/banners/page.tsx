@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, X, Save, Upload, Image as ImageIcon, Link as LinkIcon, ExternalLink } from "lucide-react"
+import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
@@ -323,9 +324,7 @@ export default function BannersPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
-        </div>
+        <SkeletonDataTable columns={5} />
       ) : (
         <SortableDataTable
           data={banners}

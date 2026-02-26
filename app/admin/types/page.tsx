@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Loader2, Tag, Link as LinkIcon, ExternalLink } from "lucide-react"
+import { Plus, Edit2, Trash2, Tag, Link as LinkIcon, ExternalLink } from "lucide-react"
+import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { TypeForm, COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
@@ -199,9 +200,7 @@ export default function TypesPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
-        </div>
+        <SkeletonDataTable columns={4} />
       ) : (
         <DataTable
           data={types}

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Loader2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
+import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
+import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ProductForm } from "@/app/components/admin/ProductForm"
@@ -474,9 +475,7 @@ export default function ProductsPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
-        </div>
+        <SkeletonDataTable columns={6} />
       ) : (
         <SortableDataTable
           data={products}
