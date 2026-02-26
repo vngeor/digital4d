@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
+import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 
 const RESERVED_SLUGS = ['news', 'admin', 'login', 'api', 'register']
 
@@ -79,6 +80,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    logAuditAction({ userId: session.user.id, action: "create", resource: "menu", recordId: menuItem.id, recordTitle: menuItem.titleEn }).catch(() => {})
+
     // Manually add _count since new items have 0 contents
     // (Neon HTTP mode doesn't support implicit transactions from include)
     return NextResponse.json({ ...menuItem, _count: { contents: 0 } }, { status: 201 })
@@ -100,6 +103,12 @@ export async function PUT(request: NextRequest) {
 
     if (!data.id) {
       return NextResponse.json({ error: "Menu item ID required" }, { status: 400 })
+    }
+
+    // Fetch old record for change tracking
+    const oldMenuItem = await prisma.menuItem.findUnique({ where: { id: data.id } })
+    if (!oldMenuItem) {
+      return NextResponse.json({ error: "Menu item not found" }, { status: 404 })
     }
 
     // If slug is being changed, check for conflicts
@@ -147,6 +156,10 @@ export async function PUT(request: NextRequest) {
       where: { menuItemId: data.id }
     })
 
+    const menuFields = ["slug", "type", "titleBg", "titleEn", "titleEs", "bodyBg", "bodyEn", "bodyEs", "order", "published"]
+    const details = getChangeDetails(oldMenuItem as Record<string, unknown>, menuItem as Record<string, unknown>, menuFields)
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "menu", recordId: menuItem.id, recordTitle: menuItem.titleEn, details }).catch(() => {})
+
     return NextResponse.json({ ...menuItem, _count: { contents: count } })
   } catch (error) {
     console.error("Error updating menu item:", error)
@@ -173,6 +186,8 @@ export async function DELETE(request: NextRequest) {
     await prisma.menuItem.delete({
       where: { id },
     })
+
+    logAuditAction({ userId: session.user.id, action: "delete", resource: "menu", recordId: id }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

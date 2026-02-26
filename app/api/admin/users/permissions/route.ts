@@ -6,6 +6,7 @@ import {
   getUserPermissionOverrides,
   invalidateUserPermissionCache,
 } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/auditLog"
 
 async function requireAdminOnly() {
   const session = await auth()
@@ -105,6 +106,8 @@ export async function PUT(request: NextRequest) {
 
     // Invalidate cache
     invalidateUserPermissionCache(userId)
+
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "users", recordId: userId, recordTitle: `User permissions (${user.role})`, details: JSON.stringify(overrides) }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

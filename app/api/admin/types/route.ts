@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
+import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 
 export async function GET() {
   try {
@@ -51,6 +52,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    logAuditAction({ userId: session.user.id, action: "create", resource: "types", recordId: contentType.id, recordTitle: contentType.nameEn }).catch(() => {})
+
     return NextResponse.json(contentType, { status: 201 })
   } catch (error) {
     console.error("Error creating type:", error)
@@ -70,6 +73,12 @@ export async function PUT(request: NextRequest) {
 
     if (!data.id) {
       return NextResponse.json({ error: "Type ID required" }, { status: 400 })
+    }
+
+    // Fetch old record for change tracking
+    const oldType = await prisma.contentType.findUnique({ where: { id: data.id } })
+    if (!oldType) {
+      return NextResponse.json({ error: "Type not found" }, { status: 404 })
     }
 
     // Check for duplicate slug
@@ -103,6 +112,10 @@ export async function PUT(request: NextRequest) {
       },
     })
 
+    const typeFields = ["slug", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "color", "order"]
+    const details = getChangeDetails(oldType as Record<string, unknown>, contentType as Record<string, unknown>, typeFields)
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "types", recordId: contentType.id, recordTitle: contentType.nameEn, details }).catch(() => {})
+
     return NextResponse.json(contentType)
   } catch (error) {
     console.error("Error updating type:", error)
@@ -128,6 +141,8 @@ export async function DELETE(request: NextRequest) {
     await prisma.contentType.delete({
       where: { id },
     })
+
+    logAuditAction({ userId: session.user.id, action: "delete", resource: "types", recordId: id }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

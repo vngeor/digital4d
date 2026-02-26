@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
 import { deleteBlobsBatch } from "@/lib/blob"
+import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 
 export async function GET(request: NextRequest) {
   try {
@@ -88,6 +89,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    logAuditAction({ userId: session.user.id, action: "create", resource: "products", recordId: product.id, recordTitle: product.nameEn }).catch(() => {})
+
     return NextResponse.json(product, { status: 201 })
   } catch (error) {
     console.error("Error creating product:", error)
@@ -107,6 +110,12 @@ export async function PUT(request: NextRequest) {
 
     if (!data.id) {
       return NextResponse.json({ error: "Product ID required" }, { status: 400 })
+    }
+
+    // Fetch old record for change tracking
+    const oldProduct = await prisma.product.findUnique({ where: { id: data.id } })
+    if (!oldProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
     // Check for duplicate slug
@@ -170,6 +179,10 @@ export async function PUT(request: NextRequest) {
       },
     })
 
+    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "image", "gallery", "fileUrl", "fileType", "featured", "published", "inStock", "order"]
+    const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
+
     return NextResponse.json(product)
   } catch (error) {
     console.error("Error updating product:", error)
@@ -229,6 +242,10 @@ export async function PATCH(request: NextRequest) {
         console.error("Failed to delete product file blobs:", err)
       })
 
+      for (const p of products) {
+        logAuditAction({ userId: session.user.id, action: "delete", resource: "products", recordId: p.id }).catch(() => {})
+      }
+
       return NextResponse.json({ success: true, count: products.length })
     }
 
@@ -246,6 +263,11 @@ export async function PATCH(request: NextRequest) {
           where: { id },
           data: { published: action === "publish" },
         })
+      }
+
+      const published = action === "publish"
+      for (const id of ids) {
+        logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: id, details: JSON.stringify({ published: { from: !published, to: published } }) }).catch(() => {})
       }
 
       return NextResponse.json({ success: true, count: ids.length })
@@ -296,6 +318,8 @@ export async function DELETE(request: NextRequest) {
         console.error("Failed to delete product file blobs:", err)
       })
     }
+
+    logAuditAction({ userId: session.user.id, action: "delete", resource: "products", recordId: id }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

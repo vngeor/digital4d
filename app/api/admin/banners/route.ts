@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
+import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 
 export async function GET(request: NextRequest) {
   try {
@@ -51,6 +52,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    logAuditAction({ userId: session.user.id, action: "create", resource: "banners", recordId: banner.id, recordTitle: banner.titleEn }).catch(() => {})
+
     return NextResponse.json(banner, { status: 201 })
   } catch (error) {
     console.error("Error creating banner:", error)
@@ -72,6 +75,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Banner ID required" }, { status: 400 })
     }
 
+    // Fetch old record for change tracking
+    const oldBanner = await prisma.banner.findUnique({ where: { id: data.id } })
+    if (!oldBanner) {
+      return NextResponse.json({ error: "Banner not found" }, { status: 404 })
+    }
+
     const banner = await prisma.banner.update({
       where: { id: data.id },
       data: {
@@ -91,6 +100,10 @@ export async function PUT(request: NextRequest) {
         order: data.order,
       },
     })
+
+    const bannerFields = ["type", "titleBg", "titleEn", "titleEs", "subtitleBg", "subtitleEn", "subtitleEs", "image", "link", "linkTextBg", "linkTextEn", "linkTextEs", "published", "order"]
+    const details = getChangeDetails(oldBanner as Record<string, unknown>, banner as Record<string, unknown>, bannerFields)
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "banners", recordId: banner.id, recordTitle: banner.titleEn, details }).catch(() => {})
 
     return NextResponse.json(banner)
   } catch (error) {
@@ -147,6 +160,8 @@ export async function DELETE(request: NextRequest) {
     await prisma.banner.delete({
       where: { id },
     })
+
+    logAuditAction({ userId: session.user.id, action: "delete", resource: "banners", recordId: id }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

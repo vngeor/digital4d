@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
 import { invalidateUserPermissionCache } from "@/lib/permissions"
+import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 
 export async function GET(request: NextRequest) {
   try {
@@ -121,6 +122,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "User ID required" }, { status: 400 })
     }
 
+    // Fetch old record for change tracking
+    const oldUser = await prisma.user.findUnique({ where: { id: data.id } })
+    if (!oldUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
     // Prevent admin from demoting themselves
     if (data.role && data.id === session.user.id && data.role !== "ADMIN") {
       return NextResponse.json(
@@ -140,15 +147,9 @@ export async function PUT(request: NextRequest) {
 
     // If role is changing, clear user-level permission overrides
     // (they're relative to the old role and meaningless after role change)
-    if (data.role !== undefined) {
-      const currentUser = await prisma.user.findUnique({
-        where: { id: data.id },
-        select: { role: true },
-      })
-      if (currentUser && currentUser.role !== data.role) {
-        await prisma.userPermission.deleteMany({ where: { userId: data.id } })
-        invalidateUserPermissionCache(data.id)
-      }
+    if (data.role !== undefined && oldUser.role !== data.role) {
+      await prisma.userPermission.deleteMany({ where: { userId: data.id } })
+      invalidateUserPermissionCache(data.id)
     }
 
     const user = await prisma.user.update({
@@ -168,6 +169,10 @@ export async function PUT(request: NextRequest) {
         createdAt: true,
       },
     })
+
+    const userFields = ["name", "role", "phone", "country", "city", "address", "birthDate"]
+    const details = getChangeDetails(oldUser as Record<string, unknown>, user as Record<string, unknown>, userFields)
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "users", recordId: user.id, recordTitle: user.name || user.email, details }).catch(() => {})
 
     return NextResponse.json(user)
   } catch (error) {
@@ -202,6 +207,8 @@ export async function DELETE(request: NextRequest) {
     await prisma.user.delete({
       where: { id },
     })
+
+    logAuditAction({ userId: session.user.id, action: "delete", resource: "users", recordId: id }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

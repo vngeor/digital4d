@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Presentation,
   Shield,
+  ScrollText,
   Menu as MenuIcon,
   CornerDownLeft,
 } from "lucide-react"
@@ -68,6 +69,7 @@ const PAGE_ITEMS = [
   { href: "/admin/orders", icon: ShoppingCart, labelKey: "orders", resource: "orders" },
   { href: "/admin/users", icon: Users, labelKey: "users", resource: "users" },
   { href: "/admin/roles", icon: Shield, labelKey: "roles", resource: "roles" },
+  { href: "/admin/audit-logs", icon: ScrollText, labelKey: "auditLogs", resource: "audit" },
 ]
 
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes

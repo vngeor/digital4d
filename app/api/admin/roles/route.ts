@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { getAllPermissions, invalidatePermissionCache } from "@/lib/permissions"
+import { logAuditAction } from "@/lib/auditLog"
 
 async function requireAdminOnly() {
   const session = await auth()
@@ -65,6 +66,8 @@ export async function PUT(request: NextRequest) {
 
     // Invalidate cache so changes take effect immediately
     invalidatePermissionCache()
+
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "roles", recordId: "role-permissions", recordTitle: "Role Permissions", details: JSON.stringify(body) }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

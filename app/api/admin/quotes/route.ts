@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
 import { deleteBlobSafe } from "@/lib/blob"
+import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,6 +82,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Quote ID required" }, { status: 400 })
     }
 
+    // Fetch old record for change tracking
+    const oldQuote = await prisma.quoteRequest.findUnique({ where: { id: data.id } })
+    if (!oldQuote) {
+      return NextResponse.json({ error: "Quote not found" }, { status: 404 })
+    }
+
     // Validate quoted price is not negative
     if (data.quotedPrice) {
       const price = parseFloat(data.quotedPrice)
@@ -125,6 +132,10 @@ export async function PUT(request: NextRequest) {
       })
     }
 
+    const quoteFields = ["status", "quotedPrice", "adminNotes"]
+    const details = getChangeDetails(oldQuote as Record<string, unknown>, quote as Record<string, unknown>, quoteFields)
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "quotes", recordId: quote.id, recordTitle: quote.quoteNumber, details }).catch(() => {})
+
     return NextResponse.json(quote)
   } catch (error) {
     console.error("Error updating quote:", error)
@@ -164,6 +175,8 @@ export async function DELETE(request: NextRequest) {
         console.error("Failed to delete quote file blob:", err)
       })
     }
+
+    logAuditAction({ userId: session.user.id, action: "delete", resource: "quotes", recordId: id }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

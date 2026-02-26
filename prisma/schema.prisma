@@ -65,6 +65,7 @@ model User {
   createdContents  Content[]  @relation("ContentCreator")
   createdProducts  Product[]  @relation("ProductCreator")
   permissions      UserPermission[]
+  auditLogs        AuditLog[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -313,6 +314,24 @@ model RolePermission {
 
   @@unique([role, resource, action])
   @@index([role])
+}
+
+// Audit log for tracking admin actions
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      String   // "create" | "edit" | "delete"
+  resource    String   // "products" | "content" | "orders" | etc.
+  recordId    String
+  recordTitle String?
+  details     String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource])
+  @@index([action])
+  @@index([createdAt])
 }
 
 // Per-user permission overrides (overrides role-level permissions for specific users)

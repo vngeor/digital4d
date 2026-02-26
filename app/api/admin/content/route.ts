@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
+import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,6 +81,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    logAuditAction({ userId: session.user.id, action: "create", resource: "content", recordId: content.id, recordTitle: content.titleEn }).catch(() => {})
+
     return NextResponse.json({ ...content, menuItem }, { status: 201 })
   } catch (error) {
     console.error("Error creating content:", error)
@@ -99,6 +102,12 @@ export async function PUT(request: NextRequest) {
 
     if (!data.id) {
       return NextResponse.json({ error: "Content ID required" }, { status: 400 })
+    }
+
+    // Fetch old record for change tracking
+    const oldContent = await prisma.content.findUnique({ where: { id: data.id } })
+    if (!oldContent) {
+      return NextResponse.json({ error: "Content not found" }, { status: 404 })
     }
 
     // Check for duplicate slug (if changing)
@@ -145,6 +154,10 @@ export async function PUT(request: NextRequest) {
         select: { id: true, slug: true, titleEn: true }
       })
     }
+
+    const contentFields = ["type", "slug", "titleBg", "titleEn", "titleEs", "bodyBg", "bodyEn", "bodyEs", "image", "published", "order", "menuItemId"]
+    const details = getChangeDetails(oldContent as Record<string, unknown>, content as Record<string, unknown>, contentFields)
+    logAuditAction({ userId: session.user.id, action: "edit", resource: "content", recordId: content.id, recordTitle: content.titleEn, details }).catch(() => {})
 
     return NextResponse.json({ ...content, menuItem })
   } catch (error) {
@@ -194,6 +207,10 @@ export async function PATCH(request: NextRequest) {
         await prisma.content.delete({ where: { id } })
       }
 
+      for (const id of ids) {
+        logAuditAction({ userId: session.user.id, action: "delete", resource: "content", recordId: id }).catch(() => {})
+      }
+
       return NextResponse.json({ success: true, count: ids.length })
     }
 
@@ -211,6 +228,11 @@ export async function PATCH(request: NextRequest) {
           where: { id },
           data: { published: action === "publish" },
         })
+      }
+
+      const pub = action === "publish"
+      for (const id of ids) {
+        logAuditAction({ userId: session.user.id, action: "edit", resource: "content", recordId: id, details: JSON.stringify({ published: { from: !pub, to: pub } }) }).catch(() => {})
       }
 
       return NextResponse.json({ success: true, count: ids.length })
@@ -241,6 +263,8 @@ export async function DELETE(request: NextRequest) {
     await prisma.content.delete({
       where: { id },
     })
+
+    logAuditAction({ userId: session.user.id, action: "delete", resource: "content", recordId: id }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -18,6 +18,7 @@ import {
   MessageSquare,
   Presentation,
   Shield,
+  ScrollText,
   X,
 } from "lucide-react"
 import type { PermissionMap } from "@/lib/permissions"
@@ -44,6 +45,7 @@ const allNavItems = [
   { href: "/admin/orders", icon: ShoppingCart, labelKey: "orders" },
   { href: "/admin/users", icon: Users, labelKey: "users" },
   { href: "/admin/roles", icon: Shield, labelKey: "roles" },
+  { href: "/admin/audit-logs", icon: ScrollText, labelKey: "auditLogs" },
 ]
 
 const ROLE_BADGE_COLORS: Record<string, string> = {
