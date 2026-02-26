@@ -1,7 +1,8 @@
-import { getTranslations } from "next-intl/server"
+import { getTranslations, getLocale } from "next-intl/server"
 import { Users, ShoppingCart, FileText, TrendingUp } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { StatsCard } from "../components/admin/StatsCard"
+import { OrdersChart } from "../components/admin/OrdersChart"
 import type { Order, User, OrderStatus } from "@prisma/client"
 
 type RecentOrder = Pick<Order, "id" | "customerName" | "customerEmail" | "status"> & {
@@ -30,6 +31,17 @@ async function getStats() {
     select: { id: true, name: true, email: true, image: true, createdAt: true },
   })
 
+  // Monthly order counts for the last 6 months
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+  sixMonthsAgo.setDate(1)
+  sixMonthsAgo.setHours(0, 0, 0, 0)
+
+  const monthlyOrders = await prisma.order.findMany({
+    where: { createdAt: { gte: sixMonthsAgo } },
+    select: { createdAt: true },
+  })
+
   return {
     userCount,
     orderCount,
@@ -37,12 +49,30 @@ async function getStats() {
     pendingOrders,
     recentOrders,
     recentUsers,
+    monthlyOrders,
   }
 }
 
 export default async function AdminDashboard() {
   const t = await getTranslations("admin")
+  const locale = await getLocale()
   const stats = await getStats()
+
+  // Aggregate orders by month for chart
+  const now = new Date()
+  const chartData: { month: string; orders: number }[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const monthLabel = d.toLocaleDateString(
+      locale === "bg" ? "bg-BG" : locale === "es" ? "es-ES" : "en-US",
+      { month: "short" }
+    )
+    const count = stats.monthlyOrders.filter((o: { createdAt: Date }) => {
+      const c = new Date(o.createdAt)
+      return c.getFullYear() === d.getFullYear() && c.getMonth() === d.getMonth()
+    }).length
+    chartData.push({ month: monthLabel, orders: count })
+  }
 
   return (
     <div className="space-y-8">
@@ -77,6 +107,11 @@ export default async function AdminDashboard() {
           color="purple"
         />
       </div>
+
+      <OrdersChart
+        data={chartData}
+        title={t("dashboard.ordersOverTime")}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="glass rounded-2xl border border-white/10 p-6">

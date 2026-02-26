@@ -218,7 +218,8 @@
       "recentOrders": "Recent Orders",
       "recentUsers": "Recent Users",
       "noOrders": "No orders yet",
-      "noUsers": "No users yet"
+      "noUsers": "No users yet",
+      "ordersOverTime": "Orders Over Time"
     },
     "content": {
       "title": "Content Management",

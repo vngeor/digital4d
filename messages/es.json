@@ -218,7 +218,8 @@
       "recentOrders": "Pedidos Recientes",
       "recentUsers": "Usuarios Recientes",
       "noOrders": "Aún no hay pedidos",
-      "noUsers": "Aún no hay usuarios"
+      "noUsers": "Aún no hay usuarios",
+      "ordersOverTime": "Pedidos a lo largo del tiempo"
     },
     "content": {
       "title": "Gestión de Contenido",
