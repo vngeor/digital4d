@@ -145,6 +145,22 @@
       "bulkPublishSuccess": "{count} items published",
       "bulkUnpublishSuccess": "{count} items unpublished"
     },
+    "search": {
+      "placeholder": "Search pages, products, orders...",
+      "pages": "Pages",
+      "products": "Products",
+      "content": "Content",
+      "orders": "Orders",
+      "quotes": "Quotes",
+      "users": "Users",
+      "menuItems": "Menu Items",
+      "types": "Content Types",
+      "noResults": "No results found",
+      "navigate": "Navigate",
+      "select": "Select",
+      "close": "Close",
+      "loading": "Loading..."
+    },
     "banners": {
       "title": "Banner Management",
       "subtitle": "Manage homepage banners, promos, and hero slides",

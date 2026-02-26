@@ -108,7 +108,7 @@ function SortableRow<T extends { id: string }>({
         <td
           key={`${item.id}-${String(column.key)}`}
           onClick={() => onRowClick?.(item)}
-          className={`px-3 py-3 sm:px-6 sm:py-4 text-sm text-gray-300 ${column.className || ""}`}
+          className={`px-3 py-3 sm:px-4 sm:py-4 text-sm text-gray-300 ${column.className || ""}`}
         >
           {column.render
             ? column.render(item)
@@ -273,7 +273,7 @@ export function SortableDataTable<T extends { id: string; order: number }>({
                 {columns.map((column) => (
                   <th
                     key={String(column.key)}
-                    className={`px-3 py-3 sm:px-6 sm:py-4 text-left text-sm font-medium text-gray-400 ${
+                    className={`px-3 py-3 sm:px-4 sm:py-4 text-left text-sm font-medium text-gray-400 ${
                       column.className || ""
                     }`}
                   >

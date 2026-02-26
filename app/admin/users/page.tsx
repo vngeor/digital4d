@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Trash2, Loader2, Shield, User as UserIcon, Eye, X, Package, Pencil, FileText, Save, Download, ChevronDown, Check, RotateCcw } from "lucide-react"
@@ -82,6 +83,7 @@ interface EditForm {
 export default function UsersPage() {
   const t = useTranslations("admin.users")
   const { can } = useAdminPermissions()
+  const searchParams = useSearchParams()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>("all")
@@ -216,6 +218,18 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers()
   }, [])
+
+  // Deep link: open user details when ?edit=<id> is present
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (editId && users.length > 0 && !viewingUser && !loadingDetails) {
+      const item = users.find(u => u.id === editId)
+      if (item) {
+        fetchUserDetails(item.id)
+        window.history.replaceState({}, "", "/admin/users")
+      }
+    }
+  }, [searchParams, users])
 
   const fetchUserDetails = async (id: string) => {
     setLoadingDetails(true)

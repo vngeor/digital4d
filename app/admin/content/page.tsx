@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
@@ -38,6 +39,7 @@ interface Content {
 export default function ContentPage() {
   const t = useTranslations("admin.content")
   const { can } = useAdminPermissions()
+  const searchParams = useSearchParams()
   const [content, setContent] = useState<Content[]>([])
   const [allContent, setAllContent] = useState<Content[]>([]) // For computing homepage positions
   const [allTypes, setAllTypes] = useState<string[]>([])
@@ -108,6 +110,19 @@ export default function ContentPage() {
   useEffect(() => {
     fetchContent()
   }, [filter])
+
+  // Deep link: open edit form when ?edit=<id> is present
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (editId && content.length > 0 && !showForm) {
+      const item = content.find(c => c.id === editId)
+      if (item) {
+        setEditingContent(item)
+        setShowForm(true)
+        window.history.replaceState({}, "", "/admin/content")
+      }
+    }
+  }, [searchParams, content])
 
   const handleSubmit = async (data: {
     id?: string

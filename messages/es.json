@@ -145,6 +145,22 @@
       "bulkPublishSuccess": "{count} elementos publicados",
       "bulkUnpublishSuccess": "{count} elementos despublicados"
     },
+    "search": {
+      "placeholder": "Buscar páginas, productos, pedidos...",
+      "pages": "Páginas",
+      "products": "Productos",
+      "content": "Contenido",
+      "orders": "Pedidos",
+      "quotes": "Cotizaciones",
+      "users": "Usuarios",
+      "menuItems": "Elementos del menú",
+      "types": "Tipos de contenido",
+      "noResults": "No se encontraron resultados",
+      "navigate": "Navegar",
+      "select": "Seleccionar",
+      "close": "Cerrar",
+      "loading": "Cargando..."
+    },
     "banners": {
       "title": "Gestión de Banners",
       "subtitle": "Gestiona banners, promociones y diapositivas de la página principal",

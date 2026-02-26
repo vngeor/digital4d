@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
@@ -60,6 +61,7 @@ const FILE_TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
 export default function ProductsPage() {
   const t = useTranslations("admin.products")
   const { can } = useAdminPermissions()
+  const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([]) // For computing homepage positions
   const [categories, setCategories] = useState<ProductCategory[]>([])
@@ -132,6 +134,20 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts(selectedCategory)
   }, [selectedCategory])
+
+  // Deep link: open edit form when ?edit=<id> is present
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (editId && products.length > 0 && !showForm) {
+      const item = products.find(p => p.id === editId)
+      if (item) {
+        setEditingProduct(item)
+        setShowForm(true)
+        // Clean up URL
+        window.history.replaceState({}, "", "/admin/products")
+      }
+    }
+  }, [searchParams, products])
 
   const handleSubmit = async (data: {
     id?: string
@@ -343,7 +359,7 @@ export default function ProductsPage() {
     {
       key: "sku",
       header: t("sku"),
-      className: "whitespace-nowrap hidden lg:table-cell",
+      className: "whitespace-nowrap hidden xl:table-cell",
       render: (item: Product) => {
         if (!item.sku) {
           return <span className="text-gray-500 text-xs">—</span>
@@ -356,7 +372,7 @@ export default function ProductsPage() {
     {
       key: "fileType",
       header: t("fileType"),
-      className: "whitespace-nowrap hidden md:table-cell",
+      className: "whitespace-nowrap hidden lg:table-cell",
       render: (item: Product) => {
         const badge = FILE_TYPE_BADGES[item.fileType || "physical"]
         return (

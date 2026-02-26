@@ -131,7 +131,7 @@ export function DataTable<T extends { id: string }>({
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`px-3 py-3 sm:px-6 sm:py-4 text-left text-sm font-medium text-gray-400 ${
+                  className={`px-3 py-3 sm:px-4 sm:py-4 text-left text-sm font-medium text-gray-400 ${
                     column.className || ""
                   }`}
                 >
@@ -173,7 +173,7 @@ export function DataTable<T extends { id: string }>({
                   {columns.map((column) => (
                     <td
                       key={`${item.id}-${String(column.key)}`}
-                      className={`px-3 py-3 sm:px-6 sm:py-4 text-sm text-gray-300 ${
+                      className={`px-3 py-3 sm:px-4 sm:py-4 text-sm text-gray-300 ${
                         column.className || ""
                       }`}
                     >

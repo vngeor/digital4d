@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Link as LinkIcon, ExternalLink } from "lucide-react"
@@ -32,6 +33,7 @@ interface MenuItem {
 export default function MenuPage() {
   const t = useTranslations("admin.menu")
   const { can } = useAdminPermissions()
+  const searchParams = useSearchParams()
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -49,6 +51,19 @@ export default function MenuPage() {
   useEffect(() => {
     fetchMenuItems()
   }, [])
+
+  // Deep link: open edit form when ?edit=<id> is present
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (editId && menuItems.length > 0 && !showForm) {
+      const item = menuItems.find(m => m.id === editId)
+      if (item) {
+        setEditingItem(item)
+        setShowForm(true)
+        window.history.replaceState({}, "", "/admin/menu")
+      }
+    }
+  }, [searchParams, menuItems])
 
   const handleSubmit = async (data: {
     id?: string

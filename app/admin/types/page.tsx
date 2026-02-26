@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Tag, Link as LinkIcon, ExternalLink } from "lucide-react"
@@ -28,6 +29,7 @@ interface ContentType {
 export default function TypesPage() {
   const t = useTranslations("admin.types")
   const { can } = useAdminPermissions()
+  const searchParams = useSearchParams()
   const [types, setTypes] = useState<ContentType[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -45,6 +47,19 @@ export default function TypesPage() {
   useEffect(() => {
     fetchTypes()
   }, [])
+
+  // Deep link: open edit form when ?edit=<id> is present
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (editId && types.length > 0 && !showForm) {
+      const item = types.find(t => t.id === editId)
+      if (item) {
+        setEditingType(item)
+        setShowForm(true)
+        window.history.replaceState({}, "", "/admin/types")
+      }
+    }
+  }, [searchParams, types])
 
   const handleSubmit = async (data: {
     id?: string

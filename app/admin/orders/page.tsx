@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import {
@@ -44,6 +45,7 @@ const statusConfig = {
 export default function OrdersPage() {
   const t = useTranslations("admin.orders")
   const { can } = useAdminPermissions()
+  const searchParams = useSearchParams()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -63,6 +65,19 @@ export default function OrdersPage() {
   useEffect(() => {
     fetchOrders()
   }, [filter])
+
+  // Deep link: open edit form when ?edit=<id> is present
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (editId && orders.length > 0 && !showForm) {
+      const item = orders.find(o => o.id === editId)
+      if (item) {
+        setEditingOrder(item)
+        setShowForm(true)
+        window.history.replaceState({}, "", "/admin/orders")
+      }
+    }
+  }, [searchParams, orders])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

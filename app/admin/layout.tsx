@@ -3,6 +3,7 @@ import { getPermissionsForUser, getDefaultPermissions, getVisibleNavItems } from
 import { Sidebar } from "../components/admin/Sidebar"
 import { AdminPermissionsProvider } from "../components/admin/AdminPermissionsContext"
 import { AdminIdleGuard } from "../components/admin/AdminIdleGuard"
+import { GlobalSearch } from "../components/admin/GlobalSearch"
 
 export default async function AdminLayout({
   children,
@@ -35,6 +36,7 @@ export default async function AdminLayout({
           <div className="max-w-7xl mx-auto">
             <AdminPermissionsProvider role={role} permissions={serializedPermissions}>
               {children}
+              <GlobalSearch />
             </AdminPermissionsProvider>
           </div>
         </main>

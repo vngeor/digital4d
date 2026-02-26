@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye, Link as LinkIcon, ExternalLink } from "lucide-react"
@@ -65,6 +66,7 @@ const STATUS_BADGES: Record<string, { labelKey: string; color: string }> = {
 export default function QuotesPage() {
   const t = useTranslations("admin.quotes")
   const { can } = useAdminPermissions()
+  const searchParams = useSearchParams()
   const [quotes, setQuotes] = useState<QuoteRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
@@ -102,6 +104,18 @@ export default function QuotesPage() {
   useEffect(() => {
     fetchQuotes(selectedStatus)
   }, [selectedStatus])
+
+  // Deep link: open view modal when ?edit=<id> is present
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (editId && quotes.length > 0 && !viewingQuote) {
+      const item = quotes.find(q => q.id === editId)
+      if (item) {
+        handleView(item)
+        window.history.replaceState({}, "", "/admin/quotes")
+      }
+    }
+  }, [searchParams, quotes])
 
   const handleView = (quote: QuoteRequest) => {
     setViewingQuote(quote)

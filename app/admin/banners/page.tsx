@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, X, Save, Upload, Image as ImageIcon, Link as LinkIcon, ExternalLink } from "lucide-react"
@@ -50,6 +51,7 @@ interface BannerFormData {
 export default function BannersPage() {
   const t = useTranslations("admin.banners")
   const { can } = useAdminPermissions()
+  const searchParams = useSearchParams()
   const [banners, setBanners] = useState<Banner[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -69,6 +71,19 @@ export default function BannersPage() {
   useEffect(() => {
     fetchBanners()
   }, [filter])
+
+  // Deep link: open edit form when ?edit=<id> is present
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (editId && banners.length > 0 && !showForm) {
+      const item = banners.find(b => b.id === editId)
+      if (item) {
+        setEditingBanner(item)
+        setShowForm(true)
+        window.history.replaceState({}, "", "/admin/banners")
+      }
+    }
+  }, [searchParams, banners])
 
   const handleSubmit = async (data: BannerFormData) => {
     const method = data.id ? "PUT" : "POST"
