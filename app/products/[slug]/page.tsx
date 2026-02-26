@@ -231,17 +231,17 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             {/* Product Content */}
             <section className="relative py-8 px-4">
                 <div className="mx-auto max-w-6xl">
-                    <div className="grid grid-cols-2 gap-3 md:gap-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
                         {/* Image */}
                         <div className="glass rounded-xl md:rounded-2xl border border-white/10 overflow-hidden">
                             {product.image ? (
                                 <img
                                     src={product.image}
                                     alt={productName}
-                                    className="w-full h-full object-cover min-h-[180px] md:min-h-[400px]"
+                                    className="w-full h-full object-cover min-h-[220px] sm:min-h-[300px] md:min-h-[400px]"
                                 />
                             ) : (
-                                <div className="w-full h-full min-h-[180px] md:min-h-[400px] flex items-center justify-center bg-white/5">
+                                <div className="w-full h-full min-h-[220px] sm:min-h-[300px] md:min-h-[400px] flex items-center justify-center bg-white/5">
                                     <svg className="w-12 h-12 md:w-24 md:h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                     </svg>
@@ -250,7 +250,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                         </div>
 
                         {/* Details */}
-                        <div className="space-y-2 md:space-y-6">
+                        <div className="space-y-3 md:space-y-6">
                             {/* Category Badge */}
                             <Link
                                 href={`/products?category=${product.category}`}
@@ -261,7 +261,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             </Link>
 
                             {/* Name */}
-                            <h1 className="text-base md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent leading-tight">
+                            <h1 className="text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent leading-tight">
                                 {productName}
                             </h1>
 
@@ -294,18 +294,18 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             </div>
 
                             {/* Price */}
-                            <div className="p-2 md:p-6 rounded-lg md:rounded-xl bg-white/5 border border-white/10">
+                            <div className="p-3 sm:p-4 md:p-6 rounded-lg md:rounded-xl bg-white/5 border border-white/10">
                                 {product.onSale && product.salePrice ? (
                                     <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                                        <span className="text-lg md:text-4xl font-bold text-emerald-400">
+                                        <span className="text-xl sm:text-2xl md:text-4xl font-bold text-emerald-400">
                                             {parseFloat(product.salePrice.toString()).toFixed(2)} {product.currency}
                                         </span>
-                                        <span className="text-xs md:text-xl text-gray-500 line-through">
+                                        <span className="text-sm sm:text-base md:text-xl text-gray-500 line-through">
                                             {price}
                                         </span>
                                     </div>
                                 ) : (
-                                    <span className="text-lg md:text-4xl font-bold text-white">
+                                    <span className="text-xl sm:text-2xl md:text-4xl font-bold text-white">
                                         {price || "-"}
                                     </span>
                                 )}

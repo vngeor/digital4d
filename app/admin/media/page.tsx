@@ -571,7 +571,7 @@ export default function MediaGalleryPage() {
         {loading ? (
           <div className="p-6">
             {viewMode === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
                 {[...Array(10)].map((_, i) => (
                   <div key={i} className="aspect-square bg-white/5 rounded-xl animate-pulse" />
                 ))}
@@ -607,7 +607,7 @@ export default function MediaGalleryPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
               {data.files.map((file) => (
                 <div
                   key={file.id}

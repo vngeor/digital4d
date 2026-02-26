@@ -471,6 +471,80 @@ export default function ContentPage() {
           selectable
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
+          renderMobileCard={(item: Content) => {
+            const homepagePos = getHomepagePosition(item)
+            const getUrl = () => {
+              if (!item.slug) return null
+              if (item.type === "news") return `/news/${item.slug}`
+              if (item.type === "service") return `/services/${item.slug}`
+              return `/${item.slug}`
+            }
+            const url = getUrl()
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-white truncate">{item.titleEn}</p>
+                    <p className="text-xs text-gray-500 truncate">{item.titleBg}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${getTypeColorClass(item.type)}`}>
+                    {item.type}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    item.published ? "bg-emerald-500/20 text-emerald-400" : "bg-gray-500/20 text-gray-400"
+                  }`}>
+                    {item.published ? t("published") : t("draft")}
+                  </span>
+                  {homepagePos && (
+                    <span className="flex items-center gap-1 text-xs text-emerald-400">
+                      <Home className="w-3 h-3" />#{homepagePos}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500">#{item.order}</span>
+                </div>
+                {url && (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-2 text-xs text-cyan-400 hover:text-cyan-300 truncate"
+                  >
+                    <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{url}</span>
+                  </a>
+                )}
+                <div className="flex items-center justify-end gap-2">
+                  {can("content", "edit") && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleTogglePublish(item) }}
+                      className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      {item.published ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+                    </button>
+                  )}
+                  {can("content", "edit") && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingContent(item); setShowForm(true) }}
+                      className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-400" />
+                    </button>
+                  )}
+                  {can("content", "delete") && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.titleEn) }}
+                      className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  )}
+                </div>
+              </>
+            )
+          }}
         />
       )}
 

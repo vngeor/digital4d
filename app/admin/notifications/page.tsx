@@ -674,6 +674,67 @@ export default function NotificationsPage() {
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noNotifications")}
+          renderMobileCard={(item: Notification) => {
+            const badge = TYPE_BADGES[item.type] || TYPE_BADGES.admin_message
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {item.user.image ? (
+                      <img src={item.user.image} alt={item.user.name || ""} className="w-8 h-8 rounded-full shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        {item.user.name?.charAt(0) || item.user.email?.charAt(0) || "U"}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-medium text-white text-sm truncate">{item.user.name || t("anonymous")}</p>
+                      <p className="text-xs text-gray-500 truncate">{item.user.email}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500 shrink-0">{formatDate(item.createdAt)}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
+                    {t(badge.labelKey)}
+                  </span>
+                  {isScheduled(item) && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-400 inline-flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {t("scheduled")}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-2 h-2 rounded-full ${isScheduled(item) ? "bg-cyan-400" : item.read ? "bg-emerald-400" : "bg-gray-500"}`} />
+                    <span className={`text-xs ${isScheduled(item) ? "text-cyan-400" : item.read ? "text-emerald-400" : "text-gray-500"}`}>
+                      {isScheduled(item) ? t("scheduled") : item.read ? t("read") : t("unread")}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-sm text-white truncate">{item.title}</p>
+                <p className="text-sm text-gray-400 truncate">{item.message}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    {item.coupon && (
+                      <span className="font-mono text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+                        {item.coupon.code}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {can("notifications", "delete") && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.title) }}
+                        className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )
+          }}
         />
       )}
 

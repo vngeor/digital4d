@@ -28,13 +28,13 @@ export function BulkActionBar({
   if (selectedCount === 0) return null
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-fade-in-up">
-      <div className="flex items-center gap-3 px-5 py-3 rounded-2xl border border-white/10 bg-[#1a1a2e] shadow-2xl">
+    <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 animate-fade-in-up">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 py-3 sm:px-5 rounded-2xl border border-white/10 bg-[#1a1a2e] shadow-2xl">
         <span className="text-sm font-medium text-white whitespace-nowrap">
           {selectedLabel}
         </span>
 
-        <div className="w-px h-6 bg-white/10" />
+        <div className="w-px h-6 bg-white/10 hidden sm:block" />
 
         <div className="flex items-center gap-2">
           {onPublish && (

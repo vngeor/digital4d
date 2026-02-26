@@ -206,6 +206,44 @@ export default function CategoriesPage() {
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noCategories")}
+          renderMobileCard={(item: ProductCategory) => (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-white truncate">{item.nameEn}</p>
+                  <p className="text-xs text-gray-500 truncate">{item.nameBg}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${COLOR_CLASSES[item.color] || "bg-gray-500/20 text-gray-400"}`}>
+                  {item.color}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FolderOpen className="w-4 h-4 text-gray-500 shrink-0" />
+                  <span className="font-mono text-sm text-cyan-400 truncate">{item.slug}</span>
+                </div>
+                <span className="text-xs text-gray-500 shrink-0">#{item.order}</span>
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                {can("categories", "edit") && (
+                  <button
+                    onClick={() => { setEditingCategory(item); setShowForm(true) }}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4 text-gray-400" />
+                  </button>
+                )}
+                {can("categories", "delete") && (
+                  <button
+                    onClick={() => handleDelete(item.id, item.nameEn)}
+                    className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         />
       )}
 

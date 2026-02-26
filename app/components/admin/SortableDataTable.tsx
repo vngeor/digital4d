@@ -39,6 +39,7 @@ interface SortableDataTableProps<T> {
   selectable?: boolean
   selectedIds?: Set<string>
   onSelectionChange?: (ids: Set<string>) => void
+  renderMobileCard?: (item: T) => React.ReactNode
 }
 
 function SortableRow<T extends { id: string }>({
@@ -131,6 +132,7 @@ export function SortableDataTable<T extends { id: string; order: number }>({
   selectable = false,
   selectedIds,
   onSelectionChange,
+  renderMobileCard,
 }: SortableDataTableProps<T>) {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -249,7 +251,7 @@ export function SortableDataTable<T extends { id: string; order: number }>({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <div className={renderMobileCard ? "hidden lg:block overflow-x-auto" : "overflow-x-auto"}>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -315,6 +317,37 @@ export function SortableDataTable<T extends { id: string; order: number }>({
           </table>
         </DndContext>
       </div>
+
+      {renderMobileCard && (
+        <div className="lg:hidden divide-y divide-white/5">
+          {paginatedData.length === 0 ? (
+            <div className="px-4 py-8 text-center text-gray-500">
+              {emptyMessage}
+            </div>
+          ) : (
+            paginatedData.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => onRowClick?.(item)}
+                className={`p-4 space-y-2 overflow-hidden ${onRowClick ? "cursor-pointer" : ""} ${isSelectedFn(item.id) ? "bg-emerald-500/5" : ""}`}
+              >
+                {selectable && (
+                  <div className="flex items-center justify-end">
+                    <input
+                      type="checkbox"
+                      checked={isSelectedFn(item.id)}
+                      onChange={() => toggleOne(item.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+                    />
+                  </div>
+                )}
+                {renderMobileCard(item)}
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="p-3 sm:p-4 border-t border-white/10 flex items-center justify-between">

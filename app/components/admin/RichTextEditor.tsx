@@ -166,7 +166,7 @@ export function RichTextEditor({ value, onChange, error }: RichTextEditorProps) 
       type="button"
       onClick={onClick}
       title={title}
-      className={`p-1.5 rounded-lg transition-colors ${
+      className={`p-2 sm:p-1.5 rounded-lg transition-colors ${
         isActive
           ? "bg-emerald-500/30 text-emerald-400"
           : "text-gray-400 hover:text-white hover:bg-white/10"
@@ -183,7 +183,7 @@ export function RichTextEditor({ value, onChange, error }: RichTextEditorProps) 
       } transition-colors bg-white/5`}
     >
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-white/10 bg-white/5">
+      <div className="flex flex-wrap items-center gap-1 sm:gap-0.5 px-2 py-1.5 border-b border-white/10 bg-white/5">
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive("bold")}

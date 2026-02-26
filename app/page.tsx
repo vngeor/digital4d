@@ -240,41 +240,41 @@ export default async function Home() {
                     </h2>
                     <p className="text-slate-400 mb-8 sm:mb-16 text-sm sm:text-lg">{tContact("subtitle")}</p>
 
-                    <div className="grid grid-cols-3 gap-2 sm:gap-6">
+                    <div className="grid grid-cols-3 gap-3 sm:gap-6">
                         {/* WhatsApp */}
                         <a href="https://wa.me/359888123456" target="_blank" rel="noopener noreferrer"
                            className="group flex flex-col items-center p-3 sm:p-8 rounded-xl sm:rounded-2xl glass hover:bg-white/10 hover:scale-105 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300">
-                            <div className="w-10 h-10 sm:w-10 sm:h-10 rounded-xl sm:rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mb-2 sm:mb-4 shadow-lg shadow-green-500/30 group-hover:shadow-green-500/50 group-hover:scale-110 transition-all">
-                                <svg className="w-5 h-5 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mb-2 sm:mb-4 shadow-lg shadow-green-500/30 group-hover:shadow-green-500/50 group-hover:scale-110 transition-all">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                                 </svg>
                             </div>
-                            <h3 className="text-xs sm:text-xl font-semibold mb-0 sm:mb-2">{tContact("whatsapp")}</h3>
-                            <p className="text-slate-400 text-[10px] sm:text-base hidden sm:block">+359 888 123 456</p>
+                            <h3 className="text-xs sm:text-base md:text-xl font-semibold mb-0 sm:mb-2">{tContact("whatsapp")}</h3>
+                            <p className="text-slate-400 text-[11px] sm:text-sm md:text-base">+359 888 123 456</p>
                         </a>
 
                         {/* Viber */}
                         <a href="viber://chat?number=359888123456" target="_blank" rel="noopener noreferrer"
                            className="group flex flex-col items-center p-3 sm:p-8 rounded-xl sm:rounded-2xl glass hover:bg-white/10 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
-                            <div className="w-10 h-10 sm:w-10 sm:h-10 rounded-xl sm:rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-2 sm:mb-4 shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 group-hover:scale-110 transition-all">
-                                <svg className="w-5 h-5 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-2 sm:mb-4 shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 group-hover:scale-110 transition-all">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M11.398.002C9.473.028 5.331.344 3.014 2.467 1.294 4.182.518 6.77.382 9.978.246 13.186.106 19.108 5.73 20.762l.002.002.001.006s-.036 1.881-.037 1.917c-.004.087.022.206.089.284.067.078.17.122.277.122.073 0 .146-.023.233-.07.11-.06 4.415-3.735 4.415-3.735l.09-.076c1.116.117 2.214.147 3.2.147 1.926 0 6.068-.316 8.385-2.44 1.72-1.714 2.496-4.303 2.632-7.51.136-3.209.277-9.13-5.348-10.784-1.604-.439-3.91-.626-6.27-.602zm5.392 3.71c.224 0 .4.18.4.401 0 .165-.101.31-.262.38-.023.005-.04.027-.067.027-1.004.315-1.56.833-1.849 1.126a7.72 7.72 0 00-.485.555c.076.14.125.3.125.472 0 .556-.45 1.006-1.006 1.006a1.007 1.007 0 01-.867-.493c-.05.02-.09.052-.144.068-.368.115-.667.248-.897.397-.233.152-.382.305-.48.474-.098.17-.15.357-.15.566 0 .203.056.367.1.509.044.141.079.263.054.42a.4.4 0 01-.393.33h-.001a.4.4 0 01-.394-.333c-.086-.538-.004-.997.15-1.381.155-.384.384-.691.656-.947-.012-.05-.02-.102-.02-.155 0-.556.45-1.007 1.006-1.007.235 0 .45.083.621.219.088-.071.19-.135.297-.2.362-.218.838-.424 1.375-.583.01-.015.013-.034.025-.048.3-.36.685-.718 1.164-1.012.48-.293 1.06-.523 1.777-.634.065-.013.139-.027.195-.027.025 0 .05.002.075.007zm-4.778 9.18c-.032 0-.065.004-.098.012a2.256 2.256 0 00-1.59-.656c-1.248 0-2.26 1.012-2.26 2.26s1.012 2.26 2.26 2.26c1.247 0 2.259-1.012 2.259-2.26a2.26 2.26 0 00-.43-1.327.4.4 0 01.26-.687.4.4 0 01.316.154 3.053 3.053 0 01.654 1.86c0 1.693-1.377 3.06-3.06 3.06-1.682 0-3.059-1.377-3.059-3.06s1.377-3.06 3.06-3.06c.85 0 1.617.348 2.173.907a.4.4 0 01-.085.537.402.402 0 01-.4.0z"/>
                                 </svg>
                             </div>
-                            <h3 className="text-xs sm:text-xl font-semibold mb-0 sm:mb-2">{tContact("viber")}</h3>
-                            <p className="text-slate-400 text-[10px] sm:text-base hidden sm:block">+359 888 123 456</p>
+                            <h3 className="text-xs sm:text-base md:text-xl font-semibold mb-0 sm:mb-2">{tContact("viber")}</h3>
+                            <p className="text-slate-400 text-[11px] sm:text-sm md:text-base">+359 888 123 456</p>
                         </a>
 
                         {/* Email */}
                         <a href="mailto:contact@digital4d.bg"
                            className="group flex flex-col items-center p-3 sm:p-8 rounded-xl sm:rounded-2xl glass hover:bg-white/10 hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
-                            <div className="w-10 h-10 sm:w-10 sm:h-10 rounded-xl sm:rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center mb-2 sm:mb-4 shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 group-hover:scale-110 transition-all">
-                                <svg className="w-5 h-5 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center mb-2 sm:mb-4 shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/50 group-hover:scale-110 transition-all">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
                             </div>
-                            <h3 className="text-xs sm:text-xl font-semibold mb-0 sm:mb-2">{tContact("email")}</h3>
-                            <p className="text-slate-400 text-[10px] sm:text-base hidden sm:block">contact@digital4d.bg</p>
+                            <h3 className="text-xs sm:text-base md:text-xl font-semibold mb-0 sm:mb-2">{tContact("email")}</h3>
+                            <p className="text-slate-400 text-[11px] sm:text-sm md:text-base">contact@digital4d.bg</p>
                         </a>
                     </div>
                 </div>

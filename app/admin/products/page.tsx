@@ -549,6 +549,101 @@ export default function ProductsPage() {
           selectable
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
+          renderMobileCard={(item: Product) => {
+            const homepagePos = getHomepagePosition(item.id)
+            const categoryColor = getCategoryColor(item.category)
+            const fileTypeBadge = FILE_TYPE_BADGES[item.fileType || "physical"]
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {item.image ? (
+                      <img src={item.image} alt={item.nameEn} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                        <Package className="w-5 h-5 text-gray-500" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium text-white text-sm truncate">{item.nameEn}</p>
+                        {item.featured && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />}
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">{item.nameBg}</p>
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    {item.published ? (
+                      <Eye className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <EyeOff className="w-4 h-4 text-gray-500" />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"}`}>
+                    {item.category}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${fileTypeBadge.color}`}>
+                    {t(fileTypeBadge.labelKey)}
+                  </span>
+                  {homepagePos && (
+                    <span className="flex items-center gap-1 text-xs text-emerald-400">
+                      <Home className="w-3 h-3" />#{homepagePos}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    {item.sku && <span className="font-mono text-xs text-amber-400">{item.sku}</span>}
+                    <a
+                      href={`/products/${item.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-cyan-400 hover:text-cyan-300 truncate"
+                    >
+                      /{item.slug}
+                    </a>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {item.priceType === "quote" ? (
+                      <span className="text-amber-400 text-sm">{t("priceTypeQuote")}</span>
+                    ) : item.price ? (
+                      item.onSale && item.salePrice ? (
+                        <div>
+                          <span className="text-gray-500 text-xs line-through">{parseFloat(item.price).toFixed(2)}</span>
+                          <p className="text-emerald-400 text-sm font-medium">{parseFloat(item.salePrice).toFixed(2)} {item.currency}</p>
+                        </div>
+                      ) : (
+                        <span className="text-white text-sm">{parseFloat(item.price).toFixed(2)} {item.currency}</span>
+                      )
+                    ) : (
+                      <span className="text-gray-500 text-sm">—</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  {can("products", "edit") && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingProduct(item); setShowForm(true) }}
+                      className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-400" />
+                    </button>
+                  )}
+                  {can("products", "delete") && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.nameEn) }}
+                      className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  )}
+                </div>
+              </>
+            )
+          }}
         />
       )}
 

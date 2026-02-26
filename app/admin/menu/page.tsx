@@ -271,6 +271,69 @@ export default function MenuPage() {
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noMenuItems")}
+          renderMobileCard={(item: MenuItem) => (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-white truncate">{item.titleEn}</p>
+                  <p className="text-xs text-gray-500 truncate">{item.titleBg}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${
+                  item.published
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "bg-gray-500/20 text-gray-400"
+                }`}>
+                  {item.published ? t("published") : t("draft")}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <LinkIcon className="w-4 h-4 text-gray-500 shrink-0" />
+                  <span className="font-mono text-sm text-cyan-400 truncate">/{item.slug}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    item._count.contents > 0
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : "bg-gray-500/20 text-gray-400"
+                  }`}>
+                    {item._count.contents} {t("items")}
+                  </span>
+                  <span className="text-xs text-gray-500">#{item.order}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                {can("menu", "edit") && (
+                  <button
+                    onClick={() => handleTogglePublish(item)}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    {item.published ? (
+                      <EyeOff className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                )}
+                {can("menu", "edit") && (
+                  <button
+                    onClick={() => { setEditingItem(item); setShowForm(true) }}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4 text-gray-400" />
+                  </button>
+                )}
+                {can("menu", "delete") && (
+                  <button
+                    onClick={() => handleDelete(item.id, item.titleEn)}
+                    className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         />
       )}
 

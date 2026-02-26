@@ -110,14 +110,17 @@ No test framework is configured.
 ### Admin UI Patterns
 
 - `app/components/admin/` contains reusable admin components
-- **`DataTable<T>`**: generic paginated table with search, nested field access (e.g., `"user.name"`)
-- **`SortableDataTable<T>`**: DataTable + dnd-kit drag-and-drop reordering (requires `order` field)
+- **`DataTable<T>`**: generic paginated table with search, nested field access (e.g., `"user.name"`), optional `renderMobileCard` prop for responsive mobile card views
+- **`SortableDataTable<T>`**: DataTable + dnd-kit drag-and-drop reordering (requires `order` field), optional `renderMobileCard` prop (no drag handles on mobile)
+- **Mobile responsive**: All admin pages use dual-view pattern — desktop table (`hidden lg:block`) + mobile cards (`lg:hidden`) at the `lg` (1024px) breakpoint. The `renderMobileCard` prop is passed to DataTable/SortableDataTable; it receives the same filtered/searched/paginated data as the desktop table. The Roles page uses a custom role-tabbed card layout (EDITOR/AUTHOR tabs) instead of a table on mobile.
 - **Modal-based CRUD forms** with multi-language tabs (BG/EN/ES)
 - **`ConfirmModal`**: reusable confirmation dialog with customizable title/message, keyboard support (Escape), glassmorphic styling
-- **`RichTextEditor`**: TipTap editor with formatting toolbar, image upload, color picker
+- **`RichTextEditor`**: TipTap editor with formatting toolbar, image upload, color picker. Toolbar has responsive touch targets (`p-2 sm:p-1.5`)
+- **`StatsCard`**: responsive padding (`p-4 sm:p-6`) and text sizes (`text-2xl sm:text-3xl`)
+- **`BulkActionBar`**: responsive fixed positioning (`bottom-4 left-4 right-4 sm:bottom-6 sm:left-1/2`)
 - **`AdminPermissionsContext`**: React context providing `can(resource, action)` helper for client-side permission checks
 - **`AdminIdleGuard`**: wraps admin layout, auto-logout after 5 min inactivity with 1-min warning modal
-- Admin sidebar has live pending quotes badge (30s polling)
+- Admin sidebar has live pending quotes badge (30s polling), mobile hamburger menu with drawer overlay
 - Admin pages: dashboard, products, categories, orders, quotes, content, banners, menu, types, media, coupons, notifications, users, roles, audit logs
 
 ### Frontend Components
@@ -141,6 +144,7 @@ No test framework is configured.
 - Custom animations: `animate-float`, `animate-float-slow`, `animate-float-reverse`, `animate-pulse-glow`, `animate-fade-in-up`
 - Animation delays: `.animation-delay-200`, `.animation-delay-400`, `.animation-delay-1000`, `.animation-delay-2000`
 - Toast notifications: `sonner`
+- **Responsive breakpoints**: mobile-first design. Key breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px — admin table/card toggle). Product detail page stacks to single column on mobile (`grid-cols-1 md:grid-cols-2`). Homepage contact section shows phone numbers on all sizes.
 
 ### Code Generation
 

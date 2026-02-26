@@ -440,6 +440,73 @@ export default function CouponsPage() {
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noCoupons")}
+          renderMobileCard={(item: Coupon) => {
+            const status = getCouponStatus(item)
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-sm text-emerald-400 font-medium truncate">{item.code}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleCopyCode(item) }}
+                      className="p-1 rounded hover:bg-white/10 transition-colors shrink-0"
+                    >
+                      {copiedId === item.id ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-gray-500" />
+                      )}
+                    </button>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${getStatusBadgeClass(status)}`}>
+                    {t(status)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                    item.type === "percentage" ? "bg-purple-500/20 text-purple-400" : "bg-cyan-500/20 text-cyan-400"
+                  }`}>
+                    {item.type === "percentage" ? <Percent className="w-3 h-3" /> : <DollarSign className="w-3 h-3" />}
+                    {item.type === "percentage" ? `${item.value}%` : formatCurrency(item.value, item.currency)}
+                  </span>
+                  <span className="text-xs text-gray-300">
+                    {item.usedCount} / {item.maxUses ?? "\u221e"}
+                  </span>
+                  {item.productIds && item.productIds.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
+                      {t("selectedProducts", { count: item.productIds.length })}
+                    </span>
+                  )}
+                </div>
+                {(item.startsAt || item.expiresAt) && (
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <Calendar className="w-3 h-3 shrink-0" />
+                    <span>{formatDateShort(item.startsAt)}</span>
+                    <span className="text-gray-600">{"\u2192"}</span>
+                    <span>{formatDateShort(item.expiresAt)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-end gap-2">
+                  {can("coupons", "edit") && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingCoupon(item); setShowForm(true) }}
+                      className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-400" />
+                    </button>
+                  )}
+                  {can("coupons", "delete") && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.code) }}
+                      className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  )}
+                </div>
+              </>
+            )
+          }}
         />
       )}
 

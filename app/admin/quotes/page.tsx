@@ -487,6 +487,98 @@ export default function QuotesPage() {
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noQuotes")}
+          renderMobileCard={(item: QuoteRequest) => {
+            const badge = STATUS_BADGES[item.status] || STATUS_BADGES.pending
+            const hasCounterOffer = (item.status === "pending" && item.userResponse) || item.status === "counter_offer"
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-white truncate">{item.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{item.email}</p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigator.clipboard.writeText(item.quoteNumber)
+                      toast.success(t("copied"))
+                    }}
+                    className="font-mono text-xs text-blue-400 hover:text-blue-300 shrink-0"
+                  >
+                    {item.quoteNumber}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
+                    {t(badge.labelKey)}
+                  </span>
+                  {hasCounterOffer && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/20 text-purple-400">
+                      {t("counterOffer")}
+                    </span>
+                  )}
+                  {item.status === "quoted" && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      item.viewedAt ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                    }`}>
+                      {item.viewedAt ? t("seen") : t("unseen")}
+                    </span>
+                  )}
+                </div>
+                {item.product && (
+                  <div className="text-sm text-gray-300 truncate">
+                    {item.product.nameEn}
+                    {item.product.price && (
+                      <span className="text-xs text-emerald-400 ml-2">
+                        {item.product.onSale && item.product.salePrice
+                          ? `${parseFloat(item.product.salePrice).toFixed(2)} ${item.product.currency}`
+                          : `${parseFloat(item.product.price).toFixed(2)} ${item.product.currency}`
+                        }
+                      </span>
+                    )}
+                  </div>
+                )}
+                {item.fileUrl && (
+                  <a
+                    href={item.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Download className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{item.fileName || "File"}</span>
+                  </a>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    {item.quotedPrice && parseFloat(item.quotedPrice) >= 0 && (
+                      <span className="text-white font-medium text-sm">€{parseFloat(item.quotedPrice).toFixed(2)}</span>
+                    )}
+                    <span className="text-xs text-gray-500">
+                      {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleView(item) }}
+                      className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <Eye className="w-4 h-4 text-gray-400" />
+                    </button>
+                    {can("quotes", "delete") && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.quoteNumber) }}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )
+          }}
         />
       )}
 

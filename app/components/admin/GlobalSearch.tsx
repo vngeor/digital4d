@@ -504,7 +504,7 @@ export function GlobalSearch() {
                       <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-emerald-400" : "text-gray-500"}`} />
                       <span className="text-sm font-medium truncate">{item.label}</span>
                       {item.sublabel && (
-                        <span className="text-xs text-gray-500 ml-auto shrink-0">{item.sublabel}</span>
+                        <span className="text-xs text-gray-500 ml-auto shrink-0 max-w-[100px] truncate">{item.sublabel}</span>
                       )}
                     </button>
                   )

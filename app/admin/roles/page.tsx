@@ -60,6 +60,7 @@ export default function RolesPage() {
   const [permissions, setPermissions] = useState<Record<string, PermissionMap>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [mobileRole, setMobileRole] = useState<"EDITOR" | "AUTHOR">("EDITOR")
 
   useEffect(() => {
     fetchPermissions()
@@ -164,8 +165,8 @@ export default function RolesPage() {
         </button>
       </div>
 
-      {/* Permission Matrix */}
-      <div className="glass-strong rounded-2xl overflow-hidden">
+      {/* Permission Matrix — Desktop */}
+      <div className="hidden lg:block glass-strong rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -278,6 +279,79 @@ export default function RolesPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Permission Matrix — Mobile */}
+      <div className="lg:hidden space-y-4">
+        {/* Role Tabs */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMobileRole("EDITOR")}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              mobileRole === "EDITOR"
+                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10"
+            }`}
+          >
+            EDITOR
+          </button>
+          <button
+            onClick={() => setMobileRole("AUTHOR")}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              mobileRole === "AUTHOR"
+                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10"
+            }`}
+          >
+            AUTHOR
+          </button>
+        </div>
+
+        {/* Resource Cards */}
+        <div className="glass-strong rounded-2xl divide-y divide-white/5 overflow-hidden">
+          {RESOURCES.map((resource) => (
+            <div key={resource} className="px-4 py-3">
+              <p className="text-sm font-medium text-white mb-2">
+                {t(`roles.${RESOURCE_LABELS[resource]}`)}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ACTIONS.map((action) => {
+                  const allowed = permissions[mobileRole]?.[resource]?.[action] ?? false
+                  const colorClasses = mobileRole === "EDITOR"
+                    ? allowed
+                      ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                      : "bg-white/5 text-gray-500 border-white/10"
+                    : allowed
+                      ? "bg-green-500/20 text-green-400 border-green-500/30"
+                      : "bg-white/5 text-gray-500 border-white/10"
+                  return (
+                    <button
+                      key={`${resource}-${action}`}
+                      onClick={() => togglePermission(mobileRole, resource, action)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${colorClasses}`}
+                    >
+                      {allowed ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <X className="w-3 h-3" />
+                      )}
+                      {action}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ADMIN Info Card */}
+        <div className="glass rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-gray-500" />
+            <span className={`text-sm font-bold ${ROLE_COLORS.ADMIN}`}>ADMIN</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">{t("roles.fullAccess")}</p>
         </div>
       </div>
 

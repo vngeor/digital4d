@@ -532,6 +532,55 @@ export default function UsersPage() {
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noUsers")}
+          renderMobileCard={(item: User) => (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  {item.image ? (
+                    <img src={item.image} alt={item.name || ""} className="w-10 h-10 rounded-full shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold shrink-0">
+                      {item.name?.charAt(0) || item.email?.charAt(0) || "U"}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-medium text-white truncate">{item.name || t("anonymous")}</p>
+                    <p className="text-xs text-gray-500 truncate">{item.email}</p>
+                  </div>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${
+                  item.role === "ADMIN" ? "bg-red-500/20 text-red-400"
+                    : item.role === "EDITOR" ? "bg-blue-500/20 text-blue-400"
+                    : item.role === "AUTHOR" ? "bg-green-500/20 text-green-400"
+                    : "bg-gray-500/20 text-gray-400"
+                }`}>
+                  {item.role}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <span>{t("orders")}: {item._count.orders}</span>
+                  <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); fetchUserDetails(item.id) }}
+                    className="p-2 rounded-lg hover:bg-emerald-500/20 transition-colors"
+                  >
+                    <Eye className="w-4 h-4 text-emerald-400" />
+                  </button>
+                  {can("users", "delete") && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.name || item.email || "this user") }}
+                      className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         />
       )}
 

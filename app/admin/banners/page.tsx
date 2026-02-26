@@ -347,6 +347,74 @@ export default function BannersPage() {
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noBanners")}
           onReorder={handleReorder}
+          renderMobileCard={(item: Banner) => (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5 flex items-center justify-center shrink-0">
+                    {item.image ? (
+                      <img src={item.image} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-gray-500" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-white truncate">{item.titleEn}</p>
+                    <p className="text-xs text-gray-500 truncate">{item.titleBg}</p>
+                  </div>
+                </div>
+                <span className="text-xs text-gray-500 shrink-0">#{item.order}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTypeBadgeClass(item.type)}`}>
+                  {getTypeLabel(item.type)}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  item.published ? "bg-emerald-500/20 text-emerald-400" : "bg-gray-500/20 text-gray-400"
+                }`}>
+                  {item.published ? t("published") : t("draft")}
+                </span>
+              </div>
+              {item.link && (
+                <a
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-2 text-xs text-cyan-400 hover:text-cyan-300 truncate"
+                >
+                  <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{item.link}</span>
+                </a>
+              )}
+              <div className="flex items-center justify-end gap-2">
+                {can("banners", "edit") && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleTogglePublish(item) }}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    {item.published ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+                  </button>
+                )}
+                {can("banners", "edit") && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditingBanner(item); setShowForm(true) }}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4 text-gray-400" />
+                  </button>
+                )}
+                {can("banners", "delete") && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.titleEn) }}
+                    className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         />
       )}
 

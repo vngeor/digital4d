@@ -285,6 +285,76 @@ export default function OrdersPage() {
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noOrders")}
+          renderMobileCard={(item: Order) => {
+            const config = statusConfig[item.status]
+            return (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-white truncate">{item.customerName}</p>
+                    <p className="text-xs text-gray-500 truncate">{item.customerEmail}</p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigator.clipboard.writeText(item.orderNumber)
+                      toast.success(t("copied"))
+                    }}
+                    className="font-mono text-xs text-emerald-400 hover:text-emerald-300 shrink-0"
+                  >
+                    {item.orderNumber}
+                  </button>
+                </div>
+                <div>
+                  <select
+                    value={item.status}
+                    onChange={(e) => handleStatusChange(item, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium bg-${config.color}-500/20 text-${config.color}-400 border-none focus:outline-none cursor-pointer appearance-none`}
+                    style={{ backgroundColor: `rgba(var(--${config.color}-500), 0.2)` }}
+                  >
+                    <option value="PENDING">{t("statusPending")}</option>
+                    <option value="IN_PROGRESS">{t("statusInProgress")}</option>
+                    <option value="COMPLETED">{t("statusCompleted")}</option>
+                    <option value="CANCELLED">{t("statusCancelled")}</option>
+                  </select>
+                </div>
+                {item.description && (
+                  <p className="text-sm text-gray-300 truncate">{item.description}</p>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-gray-500">
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {can("orders", "edit") && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingOrder(item)
+                          setShowForm(true)
+                        }}
+                        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4 text-gray-400" />
+                      </button>
+                    )}
+                    {can("orders", "delete") && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(item.id, item.orderNumber)
+                        }}
+                        className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )
+          }}
         />
       )}
 
