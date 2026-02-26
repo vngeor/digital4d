@@ -19,8 +19,12 @@ const RESOURCES = [
   "menu",
   "orders",
   "quotes",
+  "media",
+  "coupons",
+  "notifications",
   "users",
   "roles",
+  "audit",
 ] as const
 
 const ACTIONS = ["view", "create", "edit", "delete"] as const

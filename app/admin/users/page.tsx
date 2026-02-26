@@ -111,7 +111,8 @@ export default function UsersPage() {
 
   const PERM_RESOURCES = [
     "dashboard", "products", "categories", "content", "types",
-    "banners", "menu", "orders", "quotes", "users", "roles",
+    "banners", "menu", "orders", "quotes", "media", "coupons",
+    "notifications", "users", "roles", "audit",
   ] as const
   const PERM_ACTIONS = ["view", "create", "edit", "delete"] as const
   const PERM_RESOURCE_LABELS: Record<string, string> = {
