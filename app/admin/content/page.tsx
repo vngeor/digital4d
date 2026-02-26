@@ -8,6 +8,7 @@ import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ContentForm } from "@/app/components/admin/ContentForm"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { BulkActionBar } from "@/app/components/admin/BulkActionBar"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
@@ -46,6 +47,9 @@ export default function ContentPage() {
   const [editingContent, setEditingContent] = useState<Content | null>(null)
   const [filter, setFilter] = useState<string>("all")
   const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+  const tb = useTranslations("admin.bulk")
 
   // Get homepage position for news items (top 4 news appear on homepage)
   const getHomepagePosition = (item: Content): number | null => {
@@ -183,12 +187,52 @@ export default function ContentPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        action: "reorder",
         items: items.map((item, index) => ({ id: item.id, order: index })),
       }),
     })
     // Refresh allContent if filtering to update homepage positions
     if (filter !== "all") {
       fetchAllContent()
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds)
+    const res = await fetch("/api/admin/content", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", ids }),
+    })
+    if (res.ok) {
+      toast.success(tb("bulkDeleteSuccess", { count: ids.length }))
+      setSelectedIds(new Set())
+      setBulkDeleteConfirm(false)
+      fetchContent()
+      fetchAllTypes()
+      fetchAllContent()
+    } else {
+      toast.error("Failed to delete content")
+    }
+  }
+
+  const handleBulkPublish = async (publish: boolean) => {
+    const ids = Array.from(selectedIds)
+    const res = await fetch("/api/admin/content", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: publish ? "publish" : "unpublish", ids }),
+    })
+    if (res.ok) {
+      toast.success(publish
+        ? tb("bulkPublishSuccess", { count: ids.length })
+        : tb("bulkUnpublishSuccess", { count: ids.length })
+      )
+      setSelectedIds(new Set())
+      fetchContent()
+      fetchAllContent()
+    } else {
+      toast.error("Failed to update content")
     }
   }
 
@@ -409,6 +453,9 @@ export default function ContentPage() {
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noContent")}
           onReorder={handleReorder}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
         />
       )}
 
@@ -430,6 +477,26 @@ export default function ContentPage() {
         message={t("confirmDeleteMessage", { name: deleteItem?.name ?? "" })}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteItem(null)}
+      />
+
+      <ConfirmModal
+        open={bulkDeleteConfirm}
+        title={tb("bulkDelete")}
+        message={tb("confirmBulkDelete", { count: selectedIds.size })}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteConfirm(false)}
+      />
+
+      <BulkActionBar
+        selectedCount={selectedIds.size}
+        selectedLabel={tb("selected", { count: selectedIds.size })}
+        onDelete={can("content", "delete") ? () => setBulkDeleteConfirm(true) : undefined}
+        onPublish={can("content", "edit") ? () => handleBulkPublish(true) : undefined}
+        onUnpublish={can("content", "edit") ? () => handleBulkPublish(false) : undefined}
+        onClear={() => setSelectedIds(new Set())}
+        deleteLabel={tb("bulkDelete")}
+        publishLabel={tb("bulkPublish")}
+        unpublishLabel={tb("bulkUnpublish")}
       />
     </div>
   )

@@ -134,6 +134,17 @@
     "noPermission": "Достъпът е отказан",
     "noPermissionDesc": "Нямате разрешение за достъп до тази страница.",
     "backToDashboard": "Към таблото",
+    "bulk": {
+      "selected": "{count} избрани",
+      "clearSelection": "Изчисти",
+      "bulkDelete": "Изтрий",
+      "bulkPublish": "Публикувай",
+      "bulkUnpublish": "Скрий",
+      "confirmBulkDelete": "Сигурни ли сте, че искате да изтриете {count} елемента? Това не може да бъде отменено.",
+      "bulkDeleteSuccess": "{count} елемента изтрити",
+      "bulkPublishSuccess": "{count} елемента публикувани",
+      "bulkUnpublishSuccess": "{count} елемента скрити"
+    },
     "banners": {
       "title": "Управление на банери",
       "subtitle": "Управлявайте банери, промоции и слайдове на началната страница",
@@ -219,7 +230,15 @@
       "recentUsers": "Скорошни потребители",
       "noOrders": "Все още няма поръчки",
       "noUsers": "Все още няма потребители",
-      "ordersOverTime": "Поръчки във времето"
+      "ordersOverTime": "Поръчки във времето",
+      "granularityDay": "Ден",
+      "granularityMonth": "Месец",
+      "granularityYear": "Година",
+      "dateFrom": "От",
+      "dateTo": "До",
+      "orders": "поръчки",
+      "noChartData": "Няма поръчки в избрания период",
+      "chartLoadError": "Грешка при зареждане на данните"
     },
     "content": {
       "title": "Управление на съдържание",

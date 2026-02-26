@@ -156,29 +156,69 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// PATCH - Bulk update order
+// PATCH - Bulk operations (reorder, delete, publish, unpublish)
 export async function PATCH(request: NextRequest) {
   try {
-    const { session, error } = await requirePermissionApi("content", "edit")
-    if (error) return error
+    const body = await request.json()
+    const action = body.action || "reorder"
 
-    const { items } = await request.json()
+    if (action === "reorder") {
+      const { session, error } = await requirePermissionApi("content", "edit")
+      if (error) return error
 
-    if (!Array.isArray(items)) {
-      return NextResponse.json({ error: "Items array required" }, { status: 400 })
+      const { items } = body
+      if (!Array.isArray(items)) {
+        return NextResponse.json({ error: "Items array required" }, { status: 400 })
+      }
+
+      for (const item of items) {
+        await prisma.content.update({
+          where: { id: item.id },
+          data: { order: item.order },
+        })
+      }
+
+      return NextResponse.json({ success: true })
     }
 
-    // Update all items (Neon HTTP mode doesn't support transactions, so update one by one)
-    for (const item of items) {
-      await prisma.content.update({
-        where: { id: item.id },
-        data: { order: item.order },
-      })
+    if (action === "delete") {
+      const { session, error } = await requirePermissionApi("content", "delete")
+      if (error) return error
+
+      const { ids } = body
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return NextResponse.json({ error: "IDs array required" }, { status: 400 })
+      }
+
+      for (const id of ids) {
+        await prisma.content.delete({ where: { id } })
+      }
+
+      return NextResponse.json({ success: true, count: ids.length })
     }
 
-    return NextResponse.json({ success: true })
+    if (action === "publish" || action === "unpublish") {
+      const { session, error } = await requirePermissionApi("content", "edit")
+      if (error) return error
+
+      const { ids } = body
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return NextResponse.json({ error: "IDs array required" }, { status: 400 })
+      }
+
+      for (const id of ids) {
+        await prisma.content.update({
+          where: { id },
+          data: { published: action === "publish" },
+        })
+      }
+
+      return NextResponse.json({ success: true, count: ids.length })
+    }
+
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 })
   } catch (error) {
-    console.error("Error reordering content:", error)
+    console.error("Error in bulk content operation:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

@@ -2,8 +2,8 @@ import { getTranslations, getLocale } from "next-intl/server"
 import { Users, ShoppingCart, FileText, TrendingUp } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { StatsCard } from "../components/admin/StatsCard"
-import { OrdersChart } from "../components/admin/OrdersChart"
-import type { Order, User, OrderStatus } from "@prisma/client"
+import { InteractiveOrdersChart } from "../components/admin/InteractiveOrdersChart"
+import type { Order, User } from "@prisma/client"
 
 type RecentOrder = Pick<Order, "id" | "customerName" | "customerEmail" | "status"> & {
   user: Pick<User, "name" | "email"> | null
@@ -58,20 +58,18 @@ export default async function AdminDashboard() {
   const locale = await getLocale()
   const stats = await getStats()
 
-  // Aggregate orders by month for chart
+  // Aggregate orders by month for initial chart render
   const now = new Date()
-  const chartData: { month: string; orders: number }[] = []
+  const localeStr = locale === "bg" ? "bg-BG" : locale === "es" ? "es-ES" : "en-US"
+  const chartData: { label: string; orders: number }[] = []
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const monthLabel = d.toLocaleDateString(
-      locale === "bg" ? "bg-BG" : locale === "es" ? "es-ES" : "en-US",
-      { month: "short" }
-    )
+    const monthLabel = d.toLocaleDateString(localeStr, { month: "short", year: "2-digit" })
     const count = stats.monthlyOrders.filter((o: { createdAt: Date }) => {
       const c = new Date(o.createdAt)
       return c.getFullYear() === d.getFullYear() && c.getMonth() === d.getMonth()
     }).length
-    chartData.push({ month: monthLabel, orders: count })
+    chartData.push({ label: monthLabel, orders: count })
   }
 
   return (
@@ -108,8 +106,8 @@ export default async function AdminDashboard() {
         />
       </div>
 
-      <OrdersChart
-        data={chartData}
+      <InteractiveOrdersChart
+        initialData={chartData}
         title={t("dashboard.ordersOverTime")}
       />
 

@@ -11,8 +11,9 @@ import {
 } from "recharts"
 
 interface OrdersChartProps {
-  data: { month: string; orders: number }[]
-  title: string
+  data: { label: string; orders: number }[]
+  title?: string
+  loading?: boolean
 }
 
 function CustomTooltip({
@@ -34,11 +35,16 @@ function CustomTooltip({
   )
 }
 
-export function OrdersChart({ data, title }: OrdersChartProps) {
+export function OrdersChart({ data, title, loading }: OrdersChartProps) {
   return (
-    <div className="glass rounded-2xl border border-white/10 p-6">
-      <h2 className="text-xl font-bold text-white mb-6">{title}</h2>
-      <div className="h-64 sm:h-72">
+    <div className="relative">
+      {title && <h2 className="text-xl font-bold text-white mb-6">{title}</h2>}
+      <div className="relative h-64 sm:h-72">
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/5 rounded-xl backdrop-blur-[1px]">
+            <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
             <defs>
@@ -49,7 +55,7 @@ export function OrdersChart({ data, title }: OrdersChartProps) {
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
             <XAxis
-              dataKey="month"
+              dataKey="label"
               axisLine={false}
               tickLine={false}
               tick={{ fill: "#64748b", fontSize: 12 }}

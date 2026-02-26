@@ -134,6 +134,17 @@
     "noPermission": "Acceso denegado",
     "noPermissionDesc": "No tiene permiso para acceder a esta página.",
     "backToDashboard": "Volver al panel",
+    "bulk": {
+      "selected": "{count} seleccionados",
+      "clearSelection": "Limpiar",
+      "bulkDelete": "Eliminar",
+      "bulkPublish": "Publicar",
+      "bulkUnpublish": "Despublicar",
+      "confirmBulkDelete": "¿Estás seguro de que quieres eliminar {count} elementos? Esta acción no se puede deshacer.",
+      "bulkDeleteSuccess": "{count} elementos eliminados",
+      "bulkPublishSuccess": "{count} elementos publicados",
+      "bulkUnpublishSuccess": "{count} elementos despublicados"
+    },
     "banners": {
       "title": "Gestión de Banners",
       "subtitle": "Gestiona banners, promociones y diapositivas de la página principal",
@@ -219,7 +230,15 @@
       "recentUsers": "Usuarios Recientes",
       "noOrders": "Aún no hay pedidos",
       "noUsers": "Aún no hay usuarios",
-      "ordersOverTime": "Pedidos a lo largo del tiempo"
+      "ordersOverTime": "Pedidos a lo largo del tiempo",
+      "granularityDay": "Día",
+      "granularityMonth": "Mes",
+      "granularityYear": "Año",
+      "dateFrom": "Desde",
+      "dateTo": "Hasta",
+      "orders": "pedidos",
+      "noChartData": "No hay pedidos en el rango seleccionado",
+      "chartLoadError": "Error al cargar los datos del gráfico"
     },
     "content": {
       "title": "Gestión de Contenido",

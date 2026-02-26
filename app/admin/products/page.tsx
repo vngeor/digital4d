@@ -9,6 +9,7 @@ import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
 import { ProductForm } from "@/app/components/admin/ProductForm"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { BulkActionBar } from "@/app/components/admin/BulkActionBar"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
@@ -67,6 +68,9 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+  const tb = useTranslations("admin.bulk")
 
   // Compute which products appear on homepage (top 8 published, sorted by featured then order)
   const homepageProductIds = new Set(
@@ -204,12 +208,51 @@ export default function ProductsPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        action: "reorder",
         items: items.map((item, index) => ({ id: item.id, order: index })),
       }),
     })
     // Refresh allProducts to update homepage positions
     if (selectedCategory) {
       fetchAllProducts()
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds)
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", ids }),
+    })
+    if (res.ok) {
+      toast.success(tb("bulkDeleteSuccess", { count: ids.length }))
+      setSelectedIds(new Set())
+      setBulkDeleteConfirm(false)
+      fetchProducts()
+      fetchAllProducts()
+    } else {
+      toast.error("Failed to delete products")
+    }
+  }
+
+  const handleBulkPublish = async (publish: boolean) => {
+    const ids = Array.from(selectedIds)
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: publish ? "publish" : "unpublish", ids }),
+    })
+    if (res.ok) {
+      toast.success(publish
+        ? tb("bulkPublishSuccess", { count: ids.length })
+        : tb("bulkUnpublishSuccess", { count: ids.length })
+      )
+      setSelectedIds(new Set())
+      fetchProducts()
+      fetchAllProducts()
+    } else {
+      toast.error("Failed to update products")
     }
   }
 
@@ -487,6 +530,9 @@ export default function ProductsPage() {
             setEditingProduct(item)
             setShowForm(true)
           }}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
         />
       )}
 
@@ -508,6 +554,26 @@ export default function ProductsPage() {
         message={t("confirmDeleteMessage", { name: deleteItem?.name ?? "" })}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteItem(null)}
+      />
+
+      <ConfirmModal
+        open={bulkDeleteConfirm}
+        title={tb("bulkDelete")}
+        message={tb("confirmBulkDelete", { count: selectedIds.size })}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteConfirm(false)}
+      />
+
+      <BulkActionBar
+        selectedCount={selectedIds.size}
+        selectedLabel={tb("selected", { count: selectedIds.size })}
+        onDelete={can("products", "delete") ? () => setBulkDeleteConfirm(true) : undefined}
+        onPublish={can("products", "edit") ? () => handleBulkPublish(true) : undefined}
+        onUnpublish={can("products", "edit") ? () => handleBulkPublish(false) : undefined}
+        onClear={() => setSelectedIds(new Set())}
+        deleteLabel={tb("bulkDelete")}
+        publishLabel={tb("bulkPublish")}
+        unpublishLabel={tb("bulkUnpublish")}
       />
     </div>
   )

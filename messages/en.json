@@ -134,6 +134,17 @@
     "noPermission": "Access Denied",
     "noPermissionDesc": "You don't have permission to access this page.",
     "backToDashboard": "Back to Dashboard",
+    "bulk": {
+      "selected": "{count} selected",
+      "clearSelection": "Clear",
+      "bulkDelete": "Delete",
+      "bulkPublish": "Publish",
+      "bulkUnpublish": "Unpublish",
+      "confirmBulkDelete": "Are you sure you want to delete {count} items? This cannot be undone.",
+      "bulkDeleteSuccess": "{count} items deleted",
+      "bulkPublishSuccess": "{count} items published",
+      "bulkUnpublishSuccess": "{count} items unpublished"
+    },
     "banners": {
       "title": "Banner Management",
       "subtitle": "Manage homepage banners, promos, and hero slides",
@@ -219,7 +230,15 @@
       "recentUsers": "Recent Users",
       "noOrders": "No orders yet",
       "noUsers": "No users yet",
-      "ordersOverTime": "Orders Over Time"
+      "ordersOverTime": "Orders Over Time",
+      "granularityDay": "Day",
+      "granularityMonth": "Month",
+      "granularityYear": "Year",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "orders": "orders",
+      "noChartData": "No orders in the selected range",
+      "chartLoadError": "Failed to load chart data"
     },
     "content": {
       "title": "Content Management",

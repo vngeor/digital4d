@@ -36,6 +36,9 @@ interface SortableDataTableProps<T> {
   emptyMessage?: string
   onRowClick?: (item: T) => void
   onReorder?: (items: T[]) => void
+  selectable?: boolean
+  selectedIds?: Set<string>
+  onSelectionChange?: (ids: Set<string>) => void
 }
 
 function SortableRow<T extends { id: string }>({
@@ -43,11 +46,17 @@ function SortableRow<T extends { id: string }>({
   columns,
   onRowClick,
   getValue,
+  selectable,
+  isSelected,
+  onToggle,
 }: {
   item: T
   columns: Column<T>[]
   onRowClick?: (item: T) => void
   getValue: (item: T, key: string) => unknown
+  selectable?: boolean
+  isSelected?: boolean
+  onToggle?: (id: string) => void
 }) {
   const {
     attributes,
@@ -71,7 +80,7 @@ function SortableRow<T extends { id: string }>({
       style={style}
       className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
         onRowClick ? "cursor-pointer" : ""
-      } ${isDragging ? "bg-white/10" : ""}`}
+      } ${isDragging ? "bg-white/10" : ""} ${isSelected ? "bg-emerald-500/5" : ""}`}
     >
       {/* Drag Handle */}
       <td className="px-1.5 py-3 sm:px-2 sm:py-4 w-10">
@@ -84,6 +93,17 @@ function SortableRow<T extends { id: string }>({
           <GripVertical className="w-4 h-4 text-gray-500" />
         </button>
       </td>
+      {selectable && (
+        <td className="px-1.5 py-3 sm:px-2 sm:py-4 w-10">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggle?.(item.id)}
+            onClick={(e) => e.stopPropagation()}
+            className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+          />
+        </td>
+      )}
       {columns.map((column) => (
         <td
           key={`${item.id}-${String(column.key)}`}
@@ -108,6 +128,9 @@ export function SortableDataTable<T extends { id: string; order: number }>({
   emptyMessage = "No data found",
   onRowClick,
   onReorder,
+  selectable = false,
+  selectedIds,
+  onSelectionChange,
 }: SortableDataTableProps<T>) {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -173,6 +196,35 @@ export function SortableDataTable<T extends { id: string; order: number }>({
     }
   }
 
+  const isSelectedFn = (id: string) => selectedIds?.has(id) ?? false
+  const allPageSelected = paginatedData.length > 0 && paginatedData.every((item) => isSelectedFn(item.id))
+  const somePageSelected = paginatedData.some((item) => isSelectedFn(item.id))
+
+  const toggleAll = () => {
+    if (!onSelectionChange || !selectedIds) return
+    const next = new Set(selectedIds)
+    if (allPageSelected) {
+      paginatedData.forEach((item) => next.delete(item.id))
+    } else {
+      paginatedData.forEach((item) => next.add(item.id))
+    }
+    onSelectionChange(next)
+  }
+
+  const toggleOne = (id: string) => {
+    if (!onSelectionChange || !selectedIds) return
+    const next = new Set(selectedIds)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      next.add(id)
+    }
+    onSelectionChange(next)
+  }
+
+  // +1 for drag handle, +1 for checkbox if selectable
+  const colCount = columns.length + 1 + (selectable ? 1 : 0)
+
   return (
     <div className="glass rounded-2xl border border-white/10 overflow-hidden">
       {searchable && (
@@ -207,6 +259,17 @@ export function SortableDataTable<T extends { id: string; order: number }>({
             <thead>
               <tr className="border-b border-white/10">
                 <th className="px-1.5 py-3 sm:px-2 sm:py-4 w-10"></th>
+                {selectable && (
+                  <th className="px-1.5 py-3 sm:px-2 sm:py-4 w-10">
+                    <input
+                      type="checkbox"
+                      checked={allPageSelected}
+                      ref={(el) => { if (el) el.indeterminate = somePageSelected && !allPageSelected }}
+                      onChange={toggleAll}
+                      className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+                    />
+                  </th>
+                )}
                 {columns.map((column) => (
                   <th
                     key={String(column.key)}
@@ -223,7 +286,7 @@ export function SortableDataTable<T extends { id: string; order: number }>({
               {paginatedData.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={columns.length + 1}
+                    colSpan={colCount}
                     className="px-3 py-8 sm:px-6 sm:py-12 text-center text-gray-500"
                   >
                     {emptyMessage}
@@ -241,6 +304,9 @@ export function SortableDataTable<T extends { id: string; order: number }>({
                       columns={columns}
                       onRowClick={onRowClick}
                       getValue={getValue}
+                      selectable={selectable}
+                      isSelected={isSelectedFn(item.id)}
+                      onToggle={toggleOne}
                     />
                   ))}
                 </SortableContext>
