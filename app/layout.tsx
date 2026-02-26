@@ -82,6 +82,42 @@ export default async function RootLayout({
         className={`${exo2.variable} ${inter.variable} antialiased`}
         suppressHydrationWarning
       >
+        {/* JSON-LD: Organization + WebSite */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "digital4d",
+                url: siteUrl,
+                logo: `${siteUrl}/favicon.ico`,
+                description: "Professional 3D printing, modeling and prototyping services. High-quality 3D printers, materials and customized solutions.",
+                contactPoint: {
+                  "@type": "ContactPoint",
+                  email: "contact@digital4d.bg",
+                  contactType: "customer service",
+                  availableLanguage: ["Bulgarian", "English", "Spanish"],
+                },
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "digital4d",
+                url: siteUrl,
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate: `${siteUrl}/products?search={search_term_string}`,
+                  },
+                  "query-input": "required name=search_term_string",
+                },
+              },
+            ]),
+          }}
+        />
         <NextIntlClientProvider messages={messages}>
           <Providers>
             <GlobalPromoStrip />

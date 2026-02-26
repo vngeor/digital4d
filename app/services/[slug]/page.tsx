@@ -52,8 +52,43 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     const serviceTitle = getLocalizedTitle(service)
     const serviceBody = getLocalizedBody(service)
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.digital4d.eu"
+    const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "").trim()
+
+    const serviceJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        name: serviceTitle,
+        description: serviceBody ? stripHtml(serviceBody).slice(0, 200) : serviceTitle,
+        image: service.image || undefined,
+        provider: {
+            "@type": "Organization",
+            name: "digital4d",
+            url: siteUrl,
+        },
+        serviceType: "3D Printing",
+        areaServed: "BG",
+        url: `${siteUrl}/services/${service.slug}`,
+    }
+
+    const breadcrumbJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "Services", item: `${siteUrl}/services` },
+            { "@type": "ListItem", position: 3, name: serviceTitle },
+        ],
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+            {/* JSON-LD: Service + Breadcrumb */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([serviceJsonLd, breadcrumbJsonLd]) }}
+            />
+
             {/* Animated Background Orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />

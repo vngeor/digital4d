@@ -143,8 +143,54 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
     const price = formatPrice()
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.digital4d.eu"
+    const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "").trim()
+
+    const productJsonLd: Record<string, unknown> = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: productName,
+        description: productDesc ? stripHtml(productDesc).slice(0, 200) : productName,
+        image: product.image || undefined,
+        sku: product.sku,
+        brand: { "@type": "Brand", name: "digital4d" },
+        category: categoryName,
+        url: `${siteUrl}/products/${product.slug}`,
+    }
+
+    if (product.priceType !== "quote" && product.price) {
+        const offerPrice = product.onSale && product.salePrice
+            ? parseFloat(product.salePrice.toString())
+            : parseFloat(product.price.toString())
+        productJsonLd.offers = {
+            "@type": "Offer",
+            price: offerPrice.toFixed(2),
+            priceCurrency: product.currency,
+            availability: product.inStock
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+            url: `${siteUrl}/products/${product.slug}`,
+        }
+    }
+
+    const breadcrumbJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "Products", item: `${siteUrl}/products` },
+            { "@type": "ListItem", position: 3, name: productName },
+        ],
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+            {/* JSON-LD: Product + Breadcrumb */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([productJsonLd, breadcrumbJsonLd]) }}
+            />
+
             {/* Animated Background Orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />

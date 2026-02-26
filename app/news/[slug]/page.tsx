@@ -96,8 +96,44 @@ export default async function NewsDetailPage({ params }: PageProps) {
     const newsTitle = getLocalizedTitle(news)
     const newsBody = getLocalizedBody(news)
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.digital4d.eu"
+    const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "").trim()
+
+    const articleJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "NewsArticle",
+        headline: newsTitle,
+        datePublished: news.createdAt.toISOString(),
+        dateModified: news.updatedAt.toISOString(),
+        image: news.image || undefined,
+        articleBody: newsBody ? stripHtml(newsBody).slice(0, 200) : undefined,
+        author: { "@type": "Organization", name: "digital4d", url: siteUrl },
+        publisher: {
+            "@type": "Organization",
+            name: "digital4d",
+            logo: { "@type": "ImageObject", url: `${siteUrl}/favicon.ico` },
+        },
+        mainEntityOfPage: `${siteUrl}/news/${news.slug}`,
+    }
+
+    const breadcrumbJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "News", item: `${siteUrl}/news` },
+            { "@type": "ListItem", position: 3, name: newsTitle },
+        ],
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+            {/* JSON-LD: NewsArticle + Breadcrumb */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([articleJsonLd, breadcrumbJsonLd]) }}
+            />
+
             {/* Animated Background Orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />
