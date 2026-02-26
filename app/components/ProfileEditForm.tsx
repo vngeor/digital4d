@@ -96,7 +96,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, onCl
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md glass-strong rounded-2xl border border-white/10 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-md rounded-2xl border border-white/10 p-6 shadow-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e]">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors"

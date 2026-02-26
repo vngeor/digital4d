@@ -131,6 +131,9 @@
       "idleWarningMessage": "You will be logged out in {seconds} seconds due to inactivity.",
       "idleStayLoggedIn": "Stay Logged In"
     },
+    "noPermission": "Access Denied",
+    "noPermissionDesc": "You don't have permission to access this page.",
+    "backToDashboard": "Back to Dashboard",
     "banners": {
       "title": "Banner Management",
       "subtitle": "Manage homepage banners, promos, and hero slides",

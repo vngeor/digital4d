@@ -131,6 +131,9 @@
       "idleWarningMessage": "Se cerrará su sesión en {seconds} segundos por inactividad.",
       "idleStayLoggedIn": "Mantener sesión"
     },
+    "noPermission": "Acceso denegado",
+    "noPermissionDesc": "No tiene permiso para acceder a esta página.",
+    "backToDashboard": "Volver al panel",
     "banners": {
       "title": "Gestión de Banners",
       "subtitle": "Gestiona banners, promociones y diapositivas de la página principal",

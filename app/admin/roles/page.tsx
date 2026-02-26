@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Shield, Save, Loader2, Lock, Check, X } from "lucide-react"
+import { Shield, Save, Loader2, Lock, Check, X, ShieldOff } from "lucide-react"
 import { toast } from "sonner"
+import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 type PermissionMap = Record<string, Record<string, boolean>>
 
@@ -45,6 +47,8 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function RolesPage() {
   const t = useTranslations("admin")
+  const router = useRouter()
+  const { can } = useAdminPermissions()
   const [permissions, setPermissions] = useState<Record<string, PermissionMap>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -99,6 +103,26 @@ export default function RolesPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!can("roles", "view")) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center">
+          <ShieldOff className="w-8 h-8 text-red-400" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-white">{t("noPermission")}</h2>
+          <p className="text-sm text-gray-400 mt-1">{t("noPermissionDesc")}</p>
+        </div>
+        <button
+          onClick={() => router.push("/admin")}
+          className="px-4 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-sm text-white transition-colors"
+        >
+          {t("backToDashboard")}
+        </button>
+      </div>
+    )
   }
 
   if (loading) {
@@ -192,8 +216,8 @@ export default function RolesPage() {
                   {ACTIONS.map((action) => (
                     <td key={`admin-${resource}-${action}`} className="px-2 py-3 text-center">
                       <div className="flex items-center justify-center">
-                        <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
-                          <Check className="w-3.5 h-3.5 text-emerald-500/50" />
+                        <div className="w-6 h-6 rounded-md bg-emerald-500/20 flex items-center justify-center">
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
                         </div>
                       </div>
                     </td>

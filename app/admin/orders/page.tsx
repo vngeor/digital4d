@@ -277,7 +277,7 @@ export default function OrdersPage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-strong bg-[#0f0f0f] rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-xl max-h-[90vh] overflow-y-auto">
+          <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
               <h2 className="text-xl font-bold text-white">
                 {editingOrder ? t("editOrder") : t("addOrder")}

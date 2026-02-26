@@ -538,7 +538,7 @@ export default function UsersPage() {
       {/* User Details Modal */}
       {viewingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setViewingUser(null); setEditing(false); setModalTab("details") }}>
-          <div className={`glass-strong bg-[#0f0f0f] rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-[95vw] md:max-w-3xl" : "max-w-[95vw] md:max-w-lg"} max-h-[85vh] overflow-y-auto transition-all`} onClick={(e) => e.stopPropagation()}>
+          <div className={`rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-[95vw] md:max-w-3xl" : "max-w-[95vw] md:max-w-lg"} max-h-[85vh] overflow-y-auto transition-all bg-[#1a1a2e] shadow-2xl`} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -926,7 +926,7 @@ export default function UsersPage() {
                                             ? "bg-amber-500/20 ring-1 ring-amber-500/40 hover:bg-amber-500/30"
                                             : "bg-red-500/20 ring-1 ring-red-500/40 hover:bg-red-500/30"
                                           : effectiveValue
-                                            ? "bg-emerald-500/10 hover:bg-emerald-500/20"
+                                            ? "bg-emerald-500/20 hover:bg-emerald-500/30"
                                             : "bg-white/5 hover:bg-white/10"
                                       }`}
                                       title={
@@ -940,7 +940,7 @@ export default function UsersPage() {
                                       }
                                     >
                                       {effectiveValue ? (
-                                        <Check className={`w-3.5 h-3.5 ${isOverridden ? "text-amber-400" : "text-emerald-500/60"}`} />
+                                        <Check className={`w-3.5 h-3.5 ${isOverridden ? "text-amber-400" : "text-emerald-400"}`} />
                                       ) : (
                                         <X className={`w-3.5 h-3.5 ${isOverridden ? "text-red-400" : "text-gray-600"}`} />
                                       )}
@@ -957,8 +957,8 @@ export default function UsersPage() {
                     {/* Legend */}
                     <div className="mt-4 flex flex-wrap gap-4 text-[10px] text-gray-500">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-4 h-4 rounded bg-emerald-500/10 flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-emerald-500/60" />
+                        <div className="w-4 h-4 rounded bg-emerald-500/20 flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 text-emerald-400" />
                         </div>
                         {t("permLegendInherited")}
                       </div>
