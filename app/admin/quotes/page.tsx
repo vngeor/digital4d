@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye, Link as LinkIcon, ExternalLink } from "lucide-react"
+import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye, Link as LinkIcon, ExternalLink, Ticket, Search } from "lucide-react"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
@@ -54,6 +54,14 @@ interface QuoteRequest {
   messages?: QuoteMessage[]
 }
 
+interface CouponOption {
+  id: string
+  code: string
+  type: string
+  value: string
+  currency: string | null
+}
+
 const STATUS_BADGES: Record<string, { labelKey: string; color: string }> = {
   pending: { labelKey: "statusPending", color: "bg-amber-500/20 text-amber-400" },
   quoted: { labelKey: "statusQuoted", color: "bg-blue-500/20 text-blue-400" },
@@ -79,6 +87,14 @@ export default function QuotesPage() {
   const [saving, setSaving] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
   const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
+  // Coupon picker state
+  const [selectedCoupon, setSelectedCoupon] = useState<CouponOption | null>(null)
+  const [couponSearch, setCouponSearch] = useState("")
+  const [couponResults, setCouponResults] = useState<CouponOption[]>([])
+  const [couponSearchLoading, setCouponSearchLoading] = useState(false)
+  const [showCouponDropdown, setShowCouponDropdown] = useState(false)
+  const couponSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const couponDropdownRef = useRef<HTMLDivElement>(null)
 
   const fetchQuotes = async (status?: string | null) => {
     setLoading(true)
@@ -124,6 +140,9 @@ export default function QuotesPage() {
       quotedPrice: quote.quotedPrice || "",
       adminNotes: quote.adminNotes || "",
     })
+    setSelectedCoupon(null)
+    setCouponSearch("")
+    setCouponResults([])
   }
 
   const handleSave = async () => {
@@ -136,6 +155,7 @@ export default function QuotesPage() {
       body: JSON.stringify({
         id: viewingQuote.id,
         ...editForm,
+        couponId: selectedCoupon?.id || null,
       }),
     })
 
@@ -192,6 +212,47 @@ export default function QuotesPage() {
     if (bytes < 1024) return `${bytes} B`
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  // Coupon search
+  const searchCoupons = useCallback((query: string) => {
+    if (couponSearchTimeout.current) clearTimeout(couponSearchTimeout.current)
+    couponSearchTimeout.current = setTimeout(async () => {
+      setCouponSearchLoading(true)
+      try {
+        const res = await fetch(`/api/admin/coupons?search=${encodeURIComponent(query)}&status=active`)
+        const data = await res.json()
+        const list = Array.isArray(data.coupons) ? data.coupons : Array.isArray(data) ? data : []
+        setCouponResults(list.slice(0, 10).map((c: CouponOption & Record<string, unknown>) => ({
+          id: c.id,
+          code: c.code,
+          type: c.type,
+          value: c.value,
+          currency: c.currency,
+        })))
+      } catch {
+        setCouponResults([])
+      } finally {
+        setCouponSearchLoading(false)
+      }
+    }, 300)
+  }, [])
+
+  // Close coupon dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (couponDropdownRef.current && !couponDropdownRef.current.contains(e.target as Node)) {
+        setShowCouponDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const formatCouponValue = (coupon: CouponOption) => {
+    if (coupon.type === "percentage") return `${coupon.value}%`
+    const symbol = coupon.currency === "EUR" ? "€" : coupon.currency === "USD" ? "$" : coupon.currency || ""
+    return `${symbol}${parseFloat(coupon.value).toFixed(2)}`
   }
 
   const columns = [
@@ -679,6 +740,84 @@ export default function QuotesPage() {
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
                 />
               </div>
+
+              {/* Attach Coupon — shown only when status is "quoted" */}
+              {editForm.status === "quoted" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                    <Ticket className="w-4 h-4 text-amber-400" />
+                    {t("attachCoupon")}
+                    <span className="text-gray-600 font-normal">({t("optional")})</span>
+                  </label>
+
+                  {/* Selected Coupon Tag */}
+                  {selectedCoupon ? (
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
+                        <Ticket className="w-3.5 h-3.5" />
+                        <span className="font-mono font-medium">{selectedCoupon.code}</span>
+                        <span className="text-amber-400/60">({formatCouponValue(selectedCoupon)})</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCoupon(null)}
+                          className="hover:text-red-400 transition-colors ml-1"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="relative" ref={couponDropdownRef}>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <input
+                          type="text"
+                          value={couponSearch}
+                          onChange={(e) => {
+                            setCouponSearch(e.target.value)
+                            searchCoupons(e.target.value)
+                            setShowCouponDropdown(true)
+                          }}
+                          onFocus={() => {
+                            setShowCouponDropdown(true)
+                            if (!couponSearch) searchCoupons("")
+                          }}
+                          placeholder={t("searchCoupons")}
+                          className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-colors"
+                        />
+                        {couponSearchLoading && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 animate-spin" />
+                        )}
+                      </div>
+
+                      {/* Dropdown Results */}
+                      {showCouponDropdown && couponResults.length > 0 && (
+                        <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a2e] shadow-xl">
+                          {couponResults.map((coupon) => (
+                            <button
+                              key={coupon.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCoupon(coupon)
+                                setShowCouponDropdown(false)
+                                setCouponSearch("")
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 text-left transition-colors"
+                            >
+                              <Ticket className="w-4 h-4 text-amber-400 shrink-0" />
+                              <span className="font-mono text-sm text-amber-400">{coupon.code}</span>
+                              <span className="text-xs text-gray-500">
+                                {formatCouponValue(coupon)}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1.5">{t("attachCouponHint")}</p>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button

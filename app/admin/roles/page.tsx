@@ -37,6 +37,10 @@ const RESOURCE_LABELS: Record<string, string> = {
   quotes: "resQuotes",
   users: "resUsers",
   roles: "resRoles",
+  media: "resMedia",
+  coupons: "resCoupons",
+  notifications: "resNotifications",
+  audit: "resAudit",
 }
 
 const ROLE_COLORS: Record<string, string> = {

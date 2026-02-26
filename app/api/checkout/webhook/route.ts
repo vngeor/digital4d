@@ -67,10 +67,43 @@ export async function POST(request: NextRequest) {
           maxDownloads: 3,
           expiresAt,
           stripeSession: session.id,
+          couponId: session.metadata?.couponId || null,
         },
       })
 
       console.log(`Digital purchase created for ${customerEmail}, product ${productId}`)
+
+      // Record coupon usage if a coupon was used
+      const couponId = session.metadata?.couponId
+      if (couponId) {
+        try {
+          const originalPrice = parseFloat(session.metadata?.originalPrice || "0")
+          const discountAmount = parseFloat(session.metadata?.discountAmount || "0")
+          const finalPrice = originalPrice - discountAmount
+
+          await prisma.couponUsage.create({
+            data: {
+              couponId,
+              email: customerEmail,
+              originalPrice,
+              discountAmount,
+              finalPrice: Math.max(finalPrice, 0.50),
+              stripeSession: session.id,
+            },
+          })
+
+          // Increment coupon usage count
+          await prisma.coupon.update({
+            where: { id: couponId },
+            data: { usedCount: { increment: 1 } },
+          })
+
+          console.log(`Coupon usage recorded for ${customerEmail}, coupon ${couponId}`)
+        } catch (couponError) {
+          console.error("Error recording coupon usage:", couponError)
+          // Non-critical — purchase still valid
+        }
+      }
     }
 
     return NextResponse.json({ received: true })

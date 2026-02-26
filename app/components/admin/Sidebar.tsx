@@ -20,6 +20,8 @@ import {
   Shield,
   ScrollText,
   ImageIcon,
+  Ticket,
+  BellRing,
   X,
 } from "lucide-react"
 import type { PermissionMap } from "@/lib/permissions"
@@ -45,6 +47,8 @@ const allNavItems = [
   { href: "/admin/products", icon: Package, labelKey: "products" },
   { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes", showBadge: true },
   { href: "/admin/orders", icon: ShoppingCart, labelKey: "orders" },
+  { href: "/admin/coupons", icon: Ticket, labelKey: "coupons" },
+  { href: "/admin/notifications", icon: BellRing, labelKey: "notifications" },
   { href: "/admin/users", icon: Users, labelKey: "users" },
   { href: "/admin/roles", icon: Shield, labelKey: "roles" },
   { href: "/admin/audit-logs", icon: ScrollText, labelKey: "auditLogs" },

@@ -132,6 +132,38 @@ export async function PUT(request: NextRequest) {
       })
     }
 
+    // Create in-app notification when quote is sent
+    if (data.status === "quoted") {
+      try {
+        const user = await prisma.user.findFirst({ where: { email: quote.email } })
+        if (user) {
+          const priceText = data.quotedPrice ? `€${parseFloat(data.quotedPrice).toFixed(2)}` : ""
+          const hasCoupon = !!data.couponId
+
+          // Build notification message
+          let notifMessage = priceText ? `You received a quote offer for ${priceText}` : "You received a new quote offer"
+          if (hasCoupon) {
+            notifMessage += " — includes a coupon!"
+          }
+
+          await prisma.notification.create({
+            data: {
+              userId: user.id,
+              type: hasCoupon ? "coupon" : "quote_offer",
+              title: hasCoupon ? "Quote Offer + Coupon" : "New Quote Offer",
+              message: notifMessage,
+              link: "/my-orders",
+              quoteId: quote.id,
+              couponId: data.couponId || null,
+              createdById: session.user.id,
+            },
+          })
+        }
+      } catch {
+        // Non-critical — notification is supplementary
+      }
+    }
+
     const quoteFields = ["status", "quotedPrice", "adminNotes"]
     const details = getChangeDetails(oldQuote as Record<string, unknown>, quote as Record<string, unknown>, quoteFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "quotes", recordId: quote.id, recordTitle: quote.quoteNumber, details }).catch(() => {})

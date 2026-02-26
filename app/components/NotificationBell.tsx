@@ -2,16 +2,27 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Bell, X, MessageSquare } from "lucide-react"
+import { Bell, X, MessageSquare, Ticket, Copy, Check } from "lucide-react"
 
 interface Notification {
   id: string
+  type: "quote_offer" | "admin_message" | "coupon"
+  title: string
+  message: string
+  link: string | null
+  read: boolean
   quotedPrice: string | null
   quotedAt: string | null
   viewedAt: string | null
-  productName: string
+  productName: string | null
   productSlug: string | null
   productImage: string | null
+  couponCode: string | null
+  couponType: string | null
+  couponValue: string | null
+  couponCurrency: string | null
+  createdAt: string
+  isLegacy: boolean
 }
 
 interface NotificationBellProps {
@@ -31,6 +42,7 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
   const [count, setCount] = useState(0)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -65,19 +77,42 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const handleNotificationClick = async (notificationId: string) => {
+  const handleNotificationClick = async (notification: Notification) => {
     try {
-      await fetch(`/api/quotes/${notificationId}/view`, { method: "POST" })
-      // Mark as viewed in local state (stops pulse, but keeps counter)
+      if (notification.isLegacy) {
+        // Legacy quote notification — mark as viewed via old endpoint
+        await fetch(`/api/quotes/${notification.id}/view`, { method: "POST" })
+      } else {
+        // New notification — mark as read
+        await fetch("/api/notifications/read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: notification.id }),
+        })
+      }
+      // Update local state
       setNotifications(prev =>
         prev.map(n =>
-          n.id === notificationId ? { ...n, viewedAt: new Date().toISOString() } : n
+          n.id === notification.id ? { ...n, read: true, viewedAt: new Date().toISOString() } : n
         )
       )
+      setCount(prev => Math.max(prev - 1, 0))
     } catch (error) {
-      console.error("Error marking notification as viewed:", error)
+      console.error("Error marking notification as read:", error)
     }
     setIsOpen(false)
+  }
+
+  const handleCopyCode = async (code: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(null), 2000)
+    } catch {
+      // Fallback
+    }
   }
 
   const formatDate = (dateString: string | null) => {
@@ -96,6 +131,46 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
     return date.toLocaleDateString()
   }
 
+  const getNotificationIcon = (notification: Notification) => {
+    if (notification.type === "coupon") {
+      return (
+        <div className="shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+          <Ticket className="w-5 h-5 text-amber-400" />
+        </div>
+      )
+    }
+    if (notification.type === "admin_message") {
+      return (
+        <div className="shrink-0 w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+          <MessageSquare className="w-5 h-5 text-purple-400" />
+        </div>
+      )
+    }
+    // quote_offer
+    if (notification.productImage) {
+      return (
+        <img
+          src={notification.productImage}
+          alt={notification.productName || ""}
+          className="shrink-0 w-10 h-10 rounded-lg object-cover"
+        />
+      )
+    }
+    return (
+      <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+        <MessageSquare className="w-5 h-5 text-blue-400" />
+      </div>
+    )
+  }
+
+  const getNotificationLink = (notification: Notification) => {
+    if (notification.link) return notification.link
+    if (notification.type === "coupon") return "/products"
+    return "/my-orders"
+  }
+
+  const hasUnread = notifications.some(n => !n.read)
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -105,7 +180,7 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
       >
         <Bell className="w-5 h-5 text-slate-300" />
         {count > 0 && (
-          <span className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold${notifications.some(n => n.viewedAt === null) ? " animate-pulse" : ""}`}>
+          <span className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold${hasUnread ? " animate-pulse" : ""}`}>
             {count > 9 ? "9+" : count}
           </span>
         )}
@@ -136,37 +211,54 @@ export function NotificationBell({ translations: t }: NotificationBellProps) {
               notifications.map((notification) => (
                 <Link
                   key={notification.id}
-                  href="/my-orders"
-                  onClick={() => handleNotificationClick(notification.id)}
-                  className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0"
+                  href={getNotificationLink(notification)}
+                  onClick={() => handleNotificationClick(notification)}
+                  className={`flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0 ${!notification.read ? "bg-white/[0.02]" : ""}`}
                 >
-                  {notification.productImage ? (
-                    <img
-                      src={notification.productImage}
-                      alt={notification.productName}
-                      className="shrink-0 w-10 h-10 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <MessageSquare className="w-5 h-5 text-blue-400" />
-                    </div>
-                  )}
+                  {getNotificationIcon(notification)}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white font-medium truncate">
-                      {t.newQuoteReceived}
+                    <p className={`text-sm font-medium truncate ${!notification.read ? "text-white" : "text-slate-300"}`}>
+                      {notification.title}
                     </p>
                     <p className="text-xs text-slate-400 truncate">
-                      {notification.productName}
+                      {notification.message}
                     </p>
+
+                    {/* Coupon code with copy button */}
+                    {notification.couponCode && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-xs font-mono bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded">
+                          {notification.couponCode}
+                        </code>
+                        <button
+                          onClick={(e) => handleCopyCode(notification.couponCode!, e)}
+                          className="p-0.5 rounded hover:bg-white/10 transition-colors"
+                          title="Copy code"
+                        >
+                          {copiedCode === notification.couponCode ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-slate-400" />
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Quote price */}
                     {notification.quotedPrice && (
                       <p className="text-sm text-emerald-400 font-semibold mt-1">
                         €{parseFloat(notification.quotedPrice).toFixed(2)}
                       </p>
                     )}
                   </div>
-                  <span className="text-xs text-slate-500 shrink-0">
-                    {formatDate(notification.quotedAt)}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-xs text-slate-500 shrink-0">
+                      {formatDate(notification.createdAt)}
+                    </span>
+                    {!notification.read && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    )}
+                  </div>
                 </Link>
               ))
             )}

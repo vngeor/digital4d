@@ -85,7 +85,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ...user, quoteRequests })
     }
 
+    // Build where conditions from query params
+    const search = searchParams.get("search")
+    const filter = searchParams.get("filter") // birthday_today | birthday_week | birthday_month
+    const role = searchParams.get("role")
+    const countOnly = searchParams.get("countOnly") === "true"
+
+    const where: Record<string, unknown> = {}
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ]
+    }
+
+    if (role) {
+      where.role = role
+    }
+
+    // Birthday filters require birthDate to be non-null
+    if (filter?.startsWith("birthday_")) {
+      where.birthDate = { not: null }
+    }
+
+    // Count-only mode for "All Users" confirmation
+    if (countOnly) {
+      const count = await prisma.user.count({ where })
+      return NextResponse.json({ count })
+    }
+
     const users = await prisma.user.findMany({
+      where,
       select: {
         id: true,
         name: true,
@@ -93,6 +124,7 @@ export async function GET(request: NextRequest) {
         phone: true,
         image: true,
         role: true,
+        birthDate: true,
         createdAt: true,
         _count: {
           select: { orders: true },
@@ -100,6 +132,43 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
     })
+
+    // Apply birthday filtering in JavaScript (compare month/day, ignoring year)
+    if (filter?.startsWith("birthday_")) {
+      const now = new Date()
+      const todayMonth = now.getMonth() // 0-indexed
+      const todayDate = now.getDate()
+
+      const filtered = users.filter((user) => {
+        if (!user.birthDate) return false
+        const bd = new Date(user.birthDate)
+        const bdMonth = bd.getMonth()
+        const bdDate = bd.getDate()
+
+        if (filter === "birthday_today") {
+          return bdMonth === todayMonth && bdDate === todayDate
+        }
+
+        if (filter === "birthday_week") {
+          // Check if birthday falls within the next 7 days (same year context)
+          for (let i = 0; i < 7; i++) {
+            const checkDate = new Date(now)
+            checkDate.setDate(todayDate + i)
+            if (bd.getMonth() === checkDate.getMonth() && bd.getDate() === checkDate.getDate()) {
+              return true
+            }
+          }
+          return false
+        }
+
+        if (filter === "birthday_month") {
+          return bdMonth === todayMonth
+        }
+
+        return true
+      })
+      return NextResponse.json(filtered)
+    }
 
     return NextResponse.json(users)
   } catch (error) {

@@ -54,6 +54,7 @@ export default async function MyOrdersPage() {
           nameEs: true,
           slug: true,
           image: true,
+          fileType: true,
         },
       },
       messages: {
@@ -68,6 +69,45 @@ export default async function MyOrdersPage() {
       },
     },
   })
+
+  // Fetch coupons attached to quotes via Notification records
+  const quoteIds = quotes.map(q => q.id)
+  const quoteCouponNotifications = quoteIds.length > 0
+    ? await prisma.notification.findMany({
+        where: {
+          quoteId: { in: quoteIds },
+          couponId: { not: null },
+        },
+        select: {
+          quoteId: true,
+          coupon: {
+            select: {
+              code: true,
+              type: true,
+              value: true,
+              currency: true,
+            },
+          },
+        },
+      })
+    : []
+
+  const quoteCouponMap: Record<string, { code: string; type: string; value: string; currency: string | null }> = {}
+  for (const n of quoteCouponNotifications) {
+    if (n.quoteId && n.coupon) {
+      quoteCouponMap[n.quoteId] = {
+        code: n.coupon.code,
+        type: n.coupon.type,
+        value: n.coupon.value.toString(),
+        currency: n.coupon.currency,
+      }
+    }
+  }
+
+  const quotesWithCoupons = quotes.map(q => ({
+    ...q,
+    coupon: quoteCouponMap[q.id] || null,
+  }))
 
   const translations = {
     myOrdersTitle: t("myOrdersTitle"),
@@ -106,12 +146,16 @@ export default async function MyOrdersPage() {
     backToHome: t("backToHome"),
     seeMore: t("seeMore"),
     showLess: t("showLess"),
+    couponIncluded: t("couponIncluded"),
+    copyCouponCode: t("copyCouponCode"),
+    couponCopied: t("couponCopied"),
+    couponOff: t("couponOff"),
   }
 
   return (
     <MyOrdersClient
       orders={JSON.parse(JSON.stringify(orders))}
-      quotes={JSON.parse(JSON.stringify(quotes))}
+      quotes={JSON.parse(JSON.stringify(quotesWithCoupons))}
       translations={translations}
     />
   )

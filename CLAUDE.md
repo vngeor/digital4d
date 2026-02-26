@@ -44,7 +44,7 @@ No test framework is configured.
   - `requirePermission(resource, action)` — role+user permission check for server components
   - `requirePermissionApi(resource, action)` — role+user permission check for API routes (returns 403)
   - `requireAdminAccess()` — any admin role (ADMIN/EDITOR/AUTHOR) for layout-level access
-- **3-tier permission resolution** (`lib/permissions.ts`): User override → Role override → Code defaults. Resources: dashboard, products, categories, content, types, banners, menu, orders, quotes, users, roles. Actions: view, create, edit, delete
+- **3-tier permission resolution** (`lib/permissions.ts`): User override → Role override → Code defaults. Resources: dashboard, products, categories, content, types, banners, menu, orders, quotes, media, coupons, notifications, users, roles, audit. Actions: view, create, edit, delete
 - **Admin idle timeout**: `AdminIdleGuard` component auto-logs out after 5 minutes of inactivity with 1-minute warning countdown
 - **Neon cold start handling**: `withRetry()` wrapper around PrismaAdapter auto-retries on first request timeout after DB inactivity
 - **OAuth config**: `allowDangerousEmailAccountLinking: true` for Google & GitHub; Google has `access_type: "offline"`; GitHub requests `"read:user user:email"` scope
@@ -53,13 +53,13 @@ No test framework is configured.
 ### Database
 
 - **Prisma 7** with Neon HTTP adapter (`lib/prisma.ts`) — **no transaction support**
-- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission
+- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission, Coupon, CouponUsage, Notification
 - Prisma results must be serialized for client components: `JSON.parse(JSON.stringify(data))`
 
 ### API Layer
 
 - **No server actions** — all mutations through API routes in `app/api/`
-- Admin CRUD routes in `app/api/admin/` (types, products, categories, content, banners, menu, orders, quotes, users, roles, users/permissions)
+- Admin CRUD routes in `app/api/admin/` (types, products, categories, content, banners, menu, orders, quotes, users, roles, users/permissions, coupons, notifications)
 - HTTP methods per route: GET (list/filter), POST (create), PUT (update by ID), PATCH (bulk operations like reordering), DELETE (by ID in query params)
 - Error format: `{ error: "message" }` with appropriate HTTP status
 - No optimistic updates — refetch after mutations
@@ -69,8 +69,9 @@ No test framework is configured.
 - `GET /api/menu` — navigation menu items
 - `GET /api/news` — published news/content
 - `POST /api/quotes` — submit quote request with file upload
-- `POST /api/checkout` — create Stripe checkout session
+- `POST /api/checkout` — create Stripe checkout session (supports coupon codes)
 - `GET /api/products/download/[token]` — token-based digital download
+- `POST /api/coupons/validate` — validate coupon code for a product
 
 **Authenticated user routes:**
 - `GET/PUT /api/user/profile` — user profile management
@@ -78,7 +79,7 @@ No test framework is configured.
 - `GET /api/quotes/[id]/messages` — quote conversation
 - `PATCH /api/quotes/[id]/view` — mark quote as viewed
 - `POST /api/quotes/respond` — customer quote response (accept/counter-offer)
-- `GET /api/notifications` — pending quote notifications count
+- `GET /api/notifications` — unified notifications (quotes, admin messages, coupons) with scheduledAt visibility gate
 
 **Auth routes:**
 - `POST /api/auth/register` — user registration
@@ -117,7 +118,7 @@ No test framework is configured.
 - **`AdminPermissionsContext`**: React context providing `can(resource, action)` helper for client-side permission checks
 - **`AdminIdleGuard`**: wraps admin layout, auto-logout after 5 min inactivity with 1-min warning modal
 - Admin sidebar has live pending quotes badge (30s polling)
-- Admin pages: dashboard, products, categories, orders, quotes, content, banners, menu, types, users, roles
+- Admin pages: dashboard, products, categories, orders, quotes, content, banners, menu, types, media, coupons, notifications, users, roles, audit logs
 
 ### Frontend Components
 
@@ -146,9 +147,29 @@ No test framework is configured.
 - `lib/generateCode.ts`: auto-generates order numbers (`ORD-XXXX@D4D`) and quote numbers (`QUO-XXXX@D4D`)
 - Auto-slug from English name, auto-SKU (`D4D-{count}-{timestamp}`)
 
+### Coupons & Discounts
+
+- **Coupon model**: code, type (percentage/fixed), value, currency, minPurchase, maxUses, perUserLimit, productIds[], allowOnSale, active, startsAt/expiresAt
+- **Admin CRUD** (`/admin/coupons`): create/edit/delete coupons, product picker, usage stats, deep linking
+- **Validation API** (`/api/coupons/validate`): checks active, dates, usage limits, product match, sale compatibility
+- **Checkout integration**: coupon code applied at Stripe checkout, usage recorded in webhook via `CouponUsage` model
+- **Customer UX**: coupon input on digital product pages (auto-apply via `?coupon=CODE` URL param), discount banner for service/physical products
+- **Quote integration**: admin can attach coupon when sending quote offer, customer sees coupon badge on My Orders page
+
+### Notifications
+
+- **Notification model**: userId, type (quote_offer/admin_message/coupon), title, message, link, couponId, quoteId, read/readAt, scheduledAt, createdById
+- **Admin page** (`/admin/notifications`): send notifications to users with smart recipient selection
+  - **Quick filters**: Birthday Today/This Week/This Month, All Users (with count confirmation), By Role dropdown
+  - **Schedule/snooze**: toggle to schedule notifications for future delivery with datetime picker
+  - **Types**: admin messages and coupon notifications with optional deep links
+- **Customer bell** (`NotificationBell`): unified notifications from quotes, admin messages, and coupons; scheduled notifications hidden until delivery time
+- **Quote auto-notification**: when admin sends a quote offer, a Notification record is auto-created
+
 ### Payments
 
 - **Stripe** checkout for digital products, webhook at `/api/checkout/webhook` creates `DigitalPurchase` records
+- **Coupon support**: checkout accepts `couponCode`, validates server-side, applies discount, records `CouponUsage` after payment
 - Downloads: token-based (32 hex bytes), max 3 downloads, 7-day expiring links
 - Currency mapping: BGN→bgn, EUR→eur, USD→usd
 

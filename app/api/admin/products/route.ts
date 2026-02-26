@@ -11,9 +11,28 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const category = searchParams.get("category")
+    const search = searchParams.get("search")
+
+    // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {}
+
+    if (category) {
+      where.category = category
+    }
+
+    if (search) {
+      where.OR = [
+        { nameEn: { contains: search, mode: "insensitive" } },
+        { nameBg: { contains: search, mode: "insensitive" } },
+        { nameEs: { contains: search, mode: "insensitive" } },
+        { sku: { contains: search, mode: "insensitive" } },
+        { slug: { contains: search, mode: "insensitive" } },
+      ]
+    }
 
     const products = await prisma.product.findMany({
-      where: category ? { category } : undefined,
+      where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     })
 

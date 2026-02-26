@@ -18,6 +18,8 @@ import {
   ScrollText,
   ImageIcon,
   Menu as MenuIcon,
+  Ticket,
+  BellRing,
   CornerDownLeft,
 } from "lucide-react"
 
@@ -49,6 +51,10 @@ interface SearchType {
   id: string; nameEn: string; nameBg: string; nameEs: string
   slug: string; color: string
 }
+interface SearchCoupon {
+  id: string; code: string; type: string; value: string
+  active: boolean
+}
 
 interface SearchResult {
   id: string
@@ -69,6 +75,8 @@ const PAGE_ITEMS = [
   { href: "/admin/products", icon: Package, labelKey: "products", resource: "products" },
   { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes", resource: "quotes" },
   { href: "/admin/orders", icon: ShoppingCart, labelKey: "orders", resource: "orders" },
+  { href: "/admin/coupons", icon: Ticket, labelKey: "coupons", resource: "coupons" },
+  { href: "/admin/notifications", icon: BellRing, labelKey: "notifications", resource: "notifications" },
   { href: "/admin/users", icon: Users, labelKey: "users", resource: "users" },
   { href: "/admin/roles", icon: Shield, labelKey: "roles", resource: "roles" },
   { href: "/admin/audit-logs", icon: ScrollText, labelKey: "auditLogs", resource: "audit" },
@@ -95,6 +103,7 @@ export function GlobalSearch() {
     users: SearchUser[] | null
     menu: SearchMenuItem[] | null
     types: SearchType[] | null
+    coupons: SearchCoupon[] | null
   }>({
     products: null,
     content: null,
@@ -103,6 +112,7 @@ export function GlobalSearch() {
     users: null,
     menu: null,
     types: null,
+    coupons: null,
   })
 
   const lastFetchRef = useRef<number>(0)
@@ -137,7 +147,7 @@ export function GlobalSearch() {
 
     setLoading(true)
     // Reset cache
-    setDataCache({ products: null, content: null, orders: null, quotes: null, users: null, menu: null, types: null })
+    setDataCache({ products: null, content: null, orders: null, quotes: null, users: null, menu: null, types: null, coupons: null })
 
     const fetchers: Promise<void>[] = []
 
@@ -169,6 +179,22 @@ export function GlobalSearch() {
     fetchEndpoint<SearchUser>("users", "/api/admin/users", "users")
     fetchEndpoint<SearchMenuItem>("menu", "/api/admin/menu", "menu")
     fetchEndpoint<SearchType>("types", "/api/admin/types", "types")
+
+    // Coupons — extract from paginated response
+    if (can("coupons", "view")) {
+      fetchers.push(
+        fetch("/api/admin/coupons?limit=100")
+          .then(r => r.json())
+          .then((data: { coupons: SearchCoupon[] }) => {
+            setDataCache(prev => ({ ...prev, coupons: Array.isArray(data.coupons) ? data.coupons : [] }))
+          })
+          .catch(() => {
+            setDataCache(prev => ({ ...prev, coupons: [] }))
+          })
+      )
+    } else {
+      setDataCache(prev => ({ ...prev, coupons: [] }))
+    }
 
     await Promise.allSettled(fetchers)
     lastFetchRef.current = Date.now()
@@ -336,6 +362,21 @@ export function GlobalSearch() {
             href: `/admin/types?edit=${ct.id}`,
             icon: Tag,
             section: t("types"),
+          }))
+      }
+
+      // Coupons
+      if (dataCache.coupons) {
+        dataCache.coupons
+          .filter(c => c.code.toLowerCase().includes(q))
+          .slice(0, 5)
+          .forEach(c => items.push({
+            id: `coupon-${c.id}`,
+            label: c.code,
+            sublabel: c.type === "percentage" ? `${c.value}%` : `${c.value} ${c.type}`,
+            href: `/admin/coupons?edit=${c.id}`,
+            icon: Ticket,
+            section: t("coupons"),
           }))
       }
     }

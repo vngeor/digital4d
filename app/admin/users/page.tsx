@@ -118,6 +118,7 @@ export default function UsersPage() {
     dashboard: "resDashboard", products: "resProducts", categories: "resCategories",
     content: "resContent", types: "resTypes", banners: "resBanners",
     menu: "resMenu", orders: "resOrders", quotes: "resQuotes", users: "resUsers", roles: "resRoles",
+    media: "resMedia", coupons: "resCoupons", notifications: "resNotifications", audit: "resAudit",
   }
 
   const fetchUserPermissions = async (userId: string) => {

@@ -10,6 +10,7 @@ import type { Metadata } from "next"
 
 interface PageProps {
     params: Promise<{ slug: string }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -73,8 +74,10 @@ const COLOR_CLASSES: Record<string, string> = {
     yellow: "bg-yellow-500/20 text-yellow-400",
 }
 
-export default async function ProductDetailPage({ params }: PageProps) {
+export default async function ProductDetailPage({ params, searchParams }: PageProps) {
     const { slug } = await params
+    const resolvedSearchParams = await searchParams
+    const couponCode = typeof resolvedSearchParams.coupon === "string" ? resolvedSearchParams.coupon : undefined
     const t = await getTranslations()
     const locale = await getLocale()
 
@@ -311,6 +314,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                             {/* Action Buttons */}
                             <ProductActions
                                 product={JSON.parse(JSON.stringify(product))}
+                                initialCouponCode={couponCode}
                             />
 
                         </div>

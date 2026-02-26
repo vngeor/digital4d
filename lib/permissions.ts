@@ -14,6 +14,8 @@ export type Resource =
   | "users"
   | "roles"
   | "media"
+  | "coupons"
+  | "notifications"
   | "audit"
 
 export type Action = "view" | "create" | "edit" | "delete"
@@ -35,6 +37,8 @@ export const RESOURCE_NAV_MAP: Record<string, Resource> = {
   "/admin/users": "users",
   "/admin/roles": "roles",
   "/admin/media": "media",
+  "/admin/coupons": "coupons",
+  "/admin/notifications": "notifications",
   "/admin/audit-logs": "audit",
 }
 
@@ -52,6 +56,8 @@ const EDITOR_DEFAULTS: PermissionMap = {
   orders: { view: true, create: false, edit: true, delete: false },
   quotes: { view: true, create: false, edit: true, delete: false },
   media: { view: true, create: true, edit: true, delete: true },
+  coupons: { view: true, create: true, edit: true, delete: true },
+  notifications: { view: true, create: true, edit: false, delete: true },
   users: { view: false, create: false, edit: false, delete: false },
   roles: { view: false, create: false, edit: false, delete: false },
   audit: { view: false, create: false, edit: false, delete: false },
@@ -68,6 +74,8 @@ const AUTHOR_DEFAULTS: PermissionMap = {
   orders: { view: true, create: false, edit: false, delete: false },
   quotes: { view: true, create: false, edit: false, delete: false },
   media: { view: true, create: true, edit: true, delete: false },
+  coupons: { view: true, create: false, edit: false, delete: false },
+  notifications: { view: true, create: false, edit: false, delete: false },
   users: { view: false, create: false, edit: false, delete: false },
   roles: { view: false, create: false, edit: false, delete: false },
   audit: { view: false, create: false, edit: false, delete: false },
@@ -123,7 +131,7 @@ export function getDefaultPermissions(role: string): PermissionMap {
     const allTrue: PermissionMap = {} as PermissionMap
     const resources: Resource[] = [
       "dashboard", "products", "categories", "content", "types",
-      "banners", "menu", "orders", "quotes", "media", "users", "roles", "audit",
+      "banners", "menu", "orders", "quotes", "media", "coupons", "notifications", "users", "roles", "audit",
     ]
     for (const r of resources) {
       allTrue[r] = { view: true, create: true, edit: true, delete: true }

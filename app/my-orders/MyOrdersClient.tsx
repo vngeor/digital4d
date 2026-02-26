@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { Package, ArrowLeft, MessageSquare, ChevronDown } from "lucide-react"
+import { Package, ArrowLeft, MessageSquare, ChevronDown, Ticket, Copy, Check } from "lucide-react"
 import { Header } from "@/app/components/Header"
 
 interface OrderData {
@@ -37,8 +37,15 @@ interface QuoteData {
     nameEs: string
     slug: string
     image: string | null
+    fileType: string | null
   } | null
   messages: QuoteMessage[]
+  coupon: {
+    code: string
+    type: string
+    value: string
+    currency: string | null
+  } | null
 }
 
 interface MyOrdersClientProps {
@@ -81,6 +88,10 @@ interface MyOrdersClientProps {
     backToHome: string
     seeMore: string
     showLess: string
+    couponIncluded: string
+    copyCouponCode: string
+    couponCopied: string
+    couponOff: string
   }
 }
 
@@ -108,6 +119,13 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
   const [showAllQuotes, setShowAllQuotes] = useState(false)
   const [showAllOrders, setShowAllOrders] = useState(false)
+  const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null)
+
+  const handleCopyCoupon = (code: string) => {
+    navigator.clipboard.writeText(code)
+    setCopiedCoupon(code)
+    setTimeout(() => setCopiedCoupon(null), 2000)
+  }
 
   const markQuotesAsViewed = useCallback(async () => {
     const unviewedQuotes = quotes.filter(q => q.status === "quoted" && !q.viewedAt)
@@ -284,6 +302,56 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                 <p className="text-emerald-400 font-semibold text-sm mt-1">
                                   {t.quotedPrice}: €{parseFloat(quote.quotedPrice).toFixed(2)}
                                 </p>
+                              )}
+                              {/* Coupon badge — always links to product page */}
+                              {quote.coupon && (
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  {quote.product?.slug ? (
+                                    <Link
+                                      href={`/products/${quote.product.slug}?coupon=${quote.coupon.code}`}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-colors"
+                                    >
+                                      <Ticket className="w-3.5 h-3.5 text-amber-400" />
+                                      <span className="text-xs text-amber-400 font-medium">{t.couponIncluded}:</span>
+                                      <span className="text-xs text-amber-300 font-mono font-bold tracking-wider">{quote.coupon.code}</span>
+                                      <span className="text-[10px] text-amber-400/70">
+                                        ({quote.coupon.type === "percentage" ? `${quote.coupon.value}% ${t.couponOff}` : `-${quote.coupon.value} ${quote.coupon.currency || ""} ${t.couponOff}`})
+                                      </span>
+                                      <span
+                                        role="button"
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyCoupon(quote.coupon!.code) }}
+                                        className="ml-1 p-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer"
+                                        title={t.copyCouponCode}
+                                      >
+                                        {copiedCoupon === quote.coupon.code ? (
+                                          <Check className="w-3 h-3 text-emerald-400" />
+                                        ) : (
+                                          <Copy className="w-3 h-3 text-amber-400/60 hover:text-amber-400" />
+                                        )}
+                                      </span>
+                                    </Link>
+                                  ) : (
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                      <Ticket className="w-3.5 h-3.5 text-amber-400" />
+                                      <span className="text-xs text-amber-400 font-medium">{t.couponIncluded}:</span>
+                                      <span className="text-xs text-amber-300 font-mono font-bold tracking-wider">{quote.coupon.code}</span>
+                                      <span className="text-[10px] text-amber-400/70">
+                                        ({quote.coupon.type === "percentage" ? `${quote.coupon.value}% ${t.couponOff}` : `-${quote.coupon.value} ${quote.coupon.currency || ""} ${t.couponOff}`})
+                                      </span>
+                                      <button
+                                        onClick={(e) => { e.preventDefault(); handleCopyCoupon(quote.coupon!.code) }}
+                                        className="ml-1 p-0.5 rounded hover:bg-white/10 transition-colors"
+                                        title={t.copyCouponCode}
+                                      >
+                                        {copiedCoupon === quote.coupon.code ? (
+                                          <Check className="w-3 h-3 text-emerald-400" />
+                                        ) : (
+                                          <Copy className="w-3 h-3 text-amber-400/60 hover:text-amber-400" />
+                                        )}
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                             <span

@@ -67,6 +67,8 @@ model User {
   permissions      UserPermission[]
   auditLogs        AuditLog[]
   mediaFiles       MediaFile[]
+  notifications    Notification[]
+  couponsCreated   Coupon[]       @relation("CouponCreator")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -275,6 +277,7 @@ model DigitalPurchase {
   maxDownloads  Int      @default(3)
   expiresAt     DateTime
   stripeSession String?
+  couponId      String?                   // If a coupon was used
   createdAt     DateTime @default(now())
 
   @@index([downloadToken])
@@ -368,4 +371,73 @@ model UserPermission {
 
   @@unique([userId, resource, action])
   @@index([userId])
+}
+
+// Coupon / Discount code model
+model Coupon {
+  id            String    @id @default(cuid())
+  code          String    @unique              // "SUMMER20", "WELCOME10"
+  type          String                         // "percentage" | "fixed"
+  value         Decimal   @db.Decimal(10, 2)   // 20 for 20%, 5.00 for €5 off
+  currency      String?                        // Required for "fixed" type (EUR, BGN, USD)
+  minPurchase   Decimal?  @db.Decimal(10, 2)   // Minimum purchase amount to use coupon
+  maxUses       Int?                           // Total uses allowed (null = unlimited)
+  usedCount     Int       @default(0)          // Current usage count
+  perUserLimit  Int       @default(1)          // Max uses per email address
+  productIds    String[]                       // Empty = all products, specific IDs = only those
+  allowOnSale   Boolean   @default(false)      // Can this coupon be used on products already on sale?
+  active        Boolean   @default(true)
+  startsAt      DateTime?                      // When coupon becomes valid
+  expiresAt     DateTime?                      // When coupon expires
+  createdById   String?
+  createdBy     User?     @relation("CouponCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  usages        CouponUsage[]
+  notifications Notification[]
+
+  @@index([code])
+  @@index([active])
+  @@index([createdById])
+}
+
+// Coupon usage tracking
+model CouponUsage {
+  id             String   @id @default(cuid())
+  couponId       String
+  coupon         Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  email          String
+  originalPrice  Decimal  @db.Decimal(10, 2)
+  discountAmount Decimal  @db.Decimal(10, 2)
+  finalPrice     Decimal  @db.Decimal(10, 2)
+  stripeSession  String?
+  createdAt      DateTime @default(now())
+
+  @@index([couponId])
+  @@index([email])
+}
+
+// Notification model for in-app notifications
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String                    // "quote_offer" | "admin_message" | "coupon"
+  title       String
+  message     String    @db.Text
+  link        String?                   // Optional deep link URL
+  couponId    String?
+  coupon      Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  quoteId     String?                   // For quote_offer type
+  read        Boolean   @default(false)
+  readAt      DateTime?
+  createdById String?                   // Admin who sent it
+  scheduledAt DateTime?                 // null = immediate, future date = scheduled delivery
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@index([type])
+  @@index([scheduledAt])
 }
