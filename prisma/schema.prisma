@@ -66,6 +66,7 @@ model User {
   createdProducts  Product[]  @relation("ProductCreator")
   permissions      UserPermission[]
   auditLogs        AuditLog[]
+  mediaFiles       MediaFile[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -331,6 +332,28 @@ model AuditLog {
   @@index([userId])
   @@index([resource])
   @@index([action])
+  @@index([createdAt])
+}
+
+// Media file model for centralized media gallery
+model MediaFile {
+  id           String   @id @default(cuid())
+  url          String   @unique
+  filename     String
+  altBg        String?
+  altEn        String?
+  altEs        String?
+  mimeType     String
+  size         Int                       // File size in bytes (compressed)
+  width        Int?                      // Image width in pixels
+  height       Int?                      // Image height in pixels
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([uploadedById])
+  @@index([mimeType])
   @@index([createdAt])
 }
 

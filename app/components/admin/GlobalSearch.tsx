@@ -16,6 +16,7 @@ import {
   Presentation,
   Shield,
   ScrollText,
+  ImageIcon,
   Menu as MenuIcon,
   CornerDownLeft,
 } from "lucide-react"
@@ -63,6 +64,7 @@ const PAGE_ITEMS = [
   { href: "/admin/menu", icon: MenuIcon, labelKey: "menu", resource: "menu" },
   { href: "/admin/content", icon: FileText, labelKey: "content", resource: "content" },
   { href: "/admin/banners", icon: Presentation, labelKey: "banners", resource: "banners" },
+  { href: "/admin/media", icon: ImageIcon, labelKey: "media", resource: "media" },
   { href: "/admin/types", icon: Tag, labelKey: "types", resource: "types" },
   { href: "/admin/products", icon: Package, labelKey: "products", resource: "products" },
   { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes", resource: "quotes" },

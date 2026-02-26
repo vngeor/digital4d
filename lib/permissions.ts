@@ -13,6 +13,7 @@ export type Resource =
   | "quotes"
   | "users"
   | "roles"
+  | "media"
   | "audit"
 
 export type Action = "view" | "create" | "edit" | "delete"
@@ -33,6 +34,7 @@ export const RESOURCE_NAV_MAP: Record<string, Resource> = {
   "/admin/orders": "orders",
   "/admin/users": "users",
   "/admin/roles": "roles",
+  "/admin/media": "media",
   "/admin/audit-logs": "audit",
 }
 
@@ -49,6 +51,7 @@ const EDITOR_DEFAULTS: PermissionMap = {
   menu: { view: true, create: true, edit: true, delete: true },
   orders: { view: true, create: false, edit: true, delete: false },
   quotes: { view: true, create: false, edit: true, delete: false },
+  media: { view: true, create: true, edit: true, delete: true },
   users: { view: false, create: false, edit: false, delete: false },
   roles: { view: false, create: false, edit: false, delete: false },
   audit: { view: false, create: false, edit: false, delete: false },
@@ -64,6 +67,7 @@ const AUTHOR_DEFAULTS: PermissionMap = {
   menu: { view: false, create: false, edit: false, delete: false },
   orders: { view: true, create: false, edit: false, delete: false },
   quotes: { view: true, create: false, edit: false, delete: false },
+  media: { view: true, create: true, edit: true, delete: false },
   users: { view: false, create: false, edit: false, delete: false },
   roles: { view: false, create: false, edit: false, delete: false },
   audit: { view: false, create: false, edit: false, delete: false },
@@ -119,7 +123,7 @@ export function getDefaultPermissions(role: string): PermissionMap {
     const allTrue: PermissionMap = {} as PermissionMap
     const resources: Resource[] = [
       "dashboard", "products", "categories", "content", "types",
-      "banners", "menu", "orders", "quotes", "users", "roles", "audit",
+      "banners", "menu", "orders", "quotes", "media", "users", "roles", "audit",
     ]
     for (const r of resources) {
       allTrue[r] = { view: true, create: true, edit: true, delete: true }

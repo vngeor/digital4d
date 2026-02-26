@@ -19,6 +19,7 @@ import {
   Presentation,
   Shield,
   ScrollText,
+  ImageIcon,
   X,
 } from "lucide-react"
 import type { PermissionMap } from "@/lib/permissions"
@@ -39,6 +40,7 @@ const allNavItems = [
   { href: "/admin/menu", icon: MenuIcon, labelKey: "menu" },
   { href: "/admin/content", icon: FileText, labelKey: "content" },
   { href: "/admin/banners", icon: Presentation, labelKey: "banners" },
+  { href: "/admin/media", icon: ImageIcon, labelKey: "media" },
   { href: "/admin/types", icon: Tag, labelKey: "types" },
   { href: "/admin/products", icon: Package, labelKey: "products" },
   { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes", showBadge: true },

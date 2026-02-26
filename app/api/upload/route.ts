@@ -5,6 +5,7 @@ import { canAccessAdmin } from "@/lib/permissions"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import sharp from "sharp"
+import { prisma } from "@/lib/prisma"
 
 // Check if we should use local storage
 const useLocalStorage = !process.env.BLOB_READ_WRITE_TOKEN || process.env.USE_LOCAL_UPLOADS === "true"
@@ -132,6 +133,24 @@ export async function POST(request: NextRequest) {
         url = await uploadToLocal(compressedBuffer, uniqueName)
         console.log("File uploaded locally (fallback):", url)
       }
+    }
+
+    // Auto-register in media gallery (fire-and-forget)
+    try {
+      const imgMeta = await sharp(compressedBuffer).metadata().catch(() => null)
+      prisma.mediaFile.create({
+        data: {
+          url,
+          filename: file.name,
+          mimeType: contentType,
+          size: compressedSize,
+          width: imgMeta?.width || null,
+          height: imgMeta?.height || null,
+          uploadedById: session.user.id,
+        },
+      }).catch(() => {})
+    } catch {
+      // Silently ignore — media registration is non-critical
     }
 
     return NextResponse.json({ url, originalSize, compressedSize, savings: `${savings}%` })

@@ -64,11 +64,12 @@ const RESOURCE_COLORS: Record<string, string> = {
   users: "bg-yellow-500/20 text-yellow-400",
   roles: "bg-red-500/20 text-red-400",
   categories: "bg-emerald-500/20 text-emerald-400",
+  media: "bg-violet-500/20 text-violet-400",
 }
 
 const RESOURCES = [
   "products", "content", "orders", "quotes", "banners",
-  "menu", "types", "users", "roles", "categories",
+  "media", "menu", "types", "users", "roles", "categories",
 ]
 
 const ACTIONS = ["create", "edit", "delete"]
@@ -190,6 +191,7 @@ export default function AuditLogsPage() {
     orders: "/admin/orders",
     quotes: "/admin/quotes",
     banners: "/admin/banners",
+    media: "/admin/media",
     menu: "/admin/menu",
     types: "/admin/types",
     users: "/admin/users",
