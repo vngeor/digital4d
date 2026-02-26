@@ -732,5 +732,12 @@
     "description": "La pagina que buscas no existe o ha sido movida.",
     "backHome": "Volver al inicio",
     "browseProducts": "Ver productos"
+  },
+  "error": {
+    "title": "Algo salió mal",
+    "description": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
+    "tryAgain": "Intentar de nuevo",
+    "backHome": "Volver al inicio",
+    "backToDashboard": "Volver al panel"
   }
 }

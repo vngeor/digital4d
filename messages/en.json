@@ -732,5 +732,12 @@
     "description": "The page you are looking for doesn't exist or has been moved.",
     "backHome": "Back to Home",
     "browseProducts": "Browse Products"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "tryAgain": "Try Again",
+    "backHome": "Back to Home",
+    "backToDashboard": "Back to Dashboard"
   }
 }
