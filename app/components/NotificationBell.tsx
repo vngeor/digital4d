@@ -438,7 +438,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
   }
 
   const getModalContainerClasses = (type: string) => {
-    const base = "relative w-full max-w-md max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl animate-fade-in-up overflow-clip"
+    const base = "relative w-full max-w-md max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl animate-fade-in-up overflow-hidden"
     if (type === "auto_birthday") return `${base} bg-[#231620] border border-pink-900/40`
     if (type === "auto_christmas") return `${base} bg-[#1c1214] border border-red-900/40`
     if (type === "auto_new_year") return `${base} bg-[#1c1710] border border-amber-900/40`
