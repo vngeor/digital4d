@@ -74,7 +74,7 @@ export default async function ServicesPage() {
                             <p>{t("menu.noContent")}</p>
                         </div>
                     ) : (
-                        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-4 sm:gap-6 lg:gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {services.map((service) => {
                                 const title = getLocalizedTitle(service)
                                 const body = getLocalizedBody(service)

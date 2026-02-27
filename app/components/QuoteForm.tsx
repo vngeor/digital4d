@@ -124,9 +124,9 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
     }
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="glass-strong rounded-t-2xl sm:rounded-2xl border border-white/10 w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center z-50 p-0 pb-safe sm:p-4 sm:pb-safe">
+            <div className="glass-strong rounded-t-2xl sm:rounded-2xl border border-white/10 w-full sm:max-w-lg max-h-[95dvh] sm:max-h-[85dvh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
                     <div>
                         <h2 className="text-xl font-bold text-white">
                             {isOrderInquiry ? "Order Inquiry" : t("title")}
@@ -137,14 +137,14 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                        className="p-2 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
                     >
                         <X className="w-5 h-5 text-gray-400" />
                     </button>
                 </div>
 
                 {success ? (
-                    <div className="p-8 text-center">
+                    <div className="p-6 sm:p-8 text-center">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
                             <CheckCircle className="w-8 h-8 text-emerald-400" />
                         </div>
@@ -158,7 +158,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                         </button>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                    <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                         {error && (
                             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
                                 {error}

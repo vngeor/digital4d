@@ -216,6 +216,7 @@ export default function LoginPage() {
                                     onChange={(e) => setName(e.target.value)}
                                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
                                     placeholder={t("namePlaceholder")}
+                                    autoComplete="name"
                                 />
                             </div>
                         )}
@@ -228,6 +229,8 @@ export default function LoginPage() {
                                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
                                 placeholder={t("emailPlaceholder")}
                                 required
+                                autoComplete="email"
+                                inputMode="email"
                             />
                         </div>
                         <div>
@@ -239,6 +242,7 @@ export default function LoginPage() {
                                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
                                 placeholder={t("passwordPlaceholder")}
                                 required
+                                autoComplete={isRegister ? "new-password" : "current-password"}
                             />
                             {isRegister && (
                                 <p className="text-xs text-slate-500 mt-1">{t("passwordRequirements")}</p>
@@ -254,6 +258,7 @@ export default function LoginPage() {
                                     value={birthDate}
                                     onChange={(e) => setBirthDate(e.target.value)}
                                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors [color-scheme:dark]"
+                                    autoComplete="bday"
                                 />
                             </div>
                         )}

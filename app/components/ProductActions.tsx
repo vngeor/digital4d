@@ -341,7 +341,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                                         value={couponCode}
                                         onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError("") }}
                                         placeholder={t("enterCouponCode")}
-                                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 uppercase tracking-wider font-mono"
+                                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 uppercase tracking-wider font-mono"
                                         onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
                                     />
                                     <button
@@ -353,7 +353,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                                     </button>
                                     <button
                                         onClick={() => { setShowCouponInput(false); setCouponCode(""); setCouponError("") }}
-                                        className="p-2 min-w-[40px] min-h-[40px] rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors touch-manipulation flex items-center justify-center"
+                                        className="p-2 min-w-[44px] min-h-[44px] rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors touch-manipulation flex items-center justify-center"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>

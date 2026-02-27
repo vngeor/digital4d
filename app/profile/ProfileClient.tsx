@@ -94,7 +94,7 @@ export function ProfileClient({ user, translations: t }: ProfileClientProps) {
           {/* Back link */}
           <Link
             href="/"
-            className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3 sm:mb-8"
+            className="inline-flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3 sm:mb-8"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -114,7 +114,7 @@ export function ProfileClient({ user, translations: t }: ProfileClientProps) {
               <p className="text-sm text-gray-300 flex-1">{t.addBirthday}</p>
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white text-sm font-medium hover:shadow-lg hover:shadow-pink-500/25 transition-all"
+                className="shrink-0 px-4 py-2.5 sm:py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white text-sm font-medium hover:shadow-lg hover:shadow-pink-500/25 transition-all"
               >
                 {t.addBirthdayButton}
               </button>

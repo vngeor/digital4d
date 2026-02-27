@@ -118,14 +118,22 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     return () => document.removeEventListener("keydown", handleEscape)
   }, [selectedNotification])
 
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open (iOS-safe pattern)
   useEffect(() => {
     if (selectedNotification) {
+      const scrollY = window.scrollY
+      document.body.style.position = "fixed"
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = "100%"
       document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
+      return () => {
+        document.body.style.position = ""
+        document.body.style.top = ""
+        document.body.style.width = ""
+        document.body.style.overflow = ""
+        window.scrollTo(0, scrollY)
+      }
     }
-    return () => { document.body.style.overflow = "" }
   }, [selectedNotification])
 
   // Live countdown timer for coupon expiry in modal
@@ -425,7 +433,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
   }
 
   const getModalContainerClasses = (type: string) => {
-    const base = "relative w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl animate-fade-in-up overflow-hidden"
+    const base = "relative w-full max-w-md max-h-[85dvh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl animate-fade-in-up overflow-clip"
     if (type === "auto_birthday") return `${base} bg-[#231620] border border-pink-900/40`
     if (type === "auto_christmas") return `${base} bg-[#1c1214] border border-red-900/40`
     if (type === "auto_new_year") return `${base} bg-[#1c1710] border border-amber-900/40`
@@ -532,7 +540,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
               </code>
               <button
                 onClick={(e) => handleCopyCode(notification.couponCode!, e)}
-                className="shrink-0 p-1 rounded hover:bg-white/10 transition-colors touch-manipulation"
+                className="shrink-0 p-1.5 sm:p-1 rounded hover:bg-white/10 transition-colors touch-manipulation"
                 title="Copy code"
               >
                 {copiedCode === notification.couponCode ? (
@@ -610,7 +618,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="fixed left-1/2 -translate-x-1/2 top-16 w-[calc(100vw-2rem)] max-w-80 sm:absolute sm:right-0 sm:left-auto sm:translate-x-0 sm:top-auto sm:mt-2 sm:w-80 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden">
+        <div className="fixed left-1/2 -translate-x-1/2 top-[4.5rem] w-[calc(100vw-2rem)] max-w-80 sm:absolute sm:right-0 sm:left-auto sm:translate-x-0 sm:top-auto sm:mt-2 sm:w-80 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl z-[60] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <h3 className="font-semibold text-white">{t.notifications}</h3>
@@ -623,7 +631,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="w-10 h-10 text-slate-600 mx-auto mb-2" />
@@ -652,7 +660,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       {/* Notification Detail Modal (for auto_* types) */}
       {selectedNotification && isAutoNotification(selectedNotification.type) && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe"
           onClick={() => setSelectedNotification(null)}
         >
           {/* Backdrop */}
@@ -669,13 +677,13 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
             {/* Close button */}
             <button
               onClick={() => setSelectedNotification(null)}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-10 h-10 rounded-full glass flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/20 transition-all z-20 touch-manipulation"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-11 h-11 sm:w-10 sm:h-10 rounded-full glass flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/20 transition-all z-20 touch-manipulation"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto p-5 sm:p-8">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-8" style={{ WebkitOverflowScrolling: 'touch' }}>
               {/* Icon + Type badge */}
               <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${getModalIconBg(selectedNotification.type)} flex items-center justify-center`}>
@@ -741,7 +749,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
                     </code>
                     <button
                       onClick={() => handleCopyCodeModal(selectedNotification.couponCode!)}
-                      className="shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors touch-manipulation"
+                      className="shrink-0 w-11 h-11 sm:w-10 sm:h-10 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors touch-manipulation"
                       title="Copy code"
                     >
                       {copiedCode === selectedNotification.couponCode ? (

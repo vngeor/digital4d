@@ -147,7 +147,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                 <div className="mx-auto max-w-4xl">
                     <article className="glass rounded-2xl border border-white/10 overflow-hidden">
                         {service.image && (
-                            <div className="relative h-64 md:h-96 overflow-hidden">
+                            <div className="relative h-48 sm:h-64 md:h-96 overflow-hidden">
                                 <img
                                     src={service.image}
                                     alt={serviceTitle}
@@ -156,10 +156,10 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent" />
                             </div>
                         )}
-                        <div className="p-8 md:p-12">
+                        <div className="p-4 sm:p-8 md:p-12">
                             {serviceBody ? (
                                 <div
-                                    className="prose prose-invert prose-lg max-w-none text-slate-300 leading-relaxed"
+                                    className="prose prose-invert prose sm:prose-lg max-w-none text-slate-300 leading-relaxed"
                                     dangerouslySetInnerHTML={{ __html: serviceBody }}
                                 />
                             ) : (

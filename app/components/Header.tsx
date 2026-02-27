@@ -324,7 +324,7 @@ export function Header() {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
+                        className="lg:hidden p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-white/10 transition-colors touch-manipulation flex items-center justify-center"
                         style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
                         {mobileMenuOpen ? (
@@ -343,7 +343,7 @@ export function Header() {
                         ? 'max-h-[calc(100vh-100%)] opacity-100 visible'
                         : 'max-h-0 opacity-0 invisible overflow-hidden'
                 }`}
-                style={{ maxHeight: mobileMenuOpen ? 'calc(100vh - 73px)' : '0' }}
+                style={{ maxHeight: mobileMenuOpen ? 'calc(100dvh - 73px)' : '0' }}
             >
                 <nav className="flex flex-col p-4 space-y-1 pb-safe">
                         {menuItems.map((item) => (

@@ -26,15 +26,21 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
         return () => document.removeEventListener("keydown", handleEscape)
     }, [onClose])
 
-    // Prevent body scroll when modal is open
+    // Prevent body scroll when modal is open (iOS-safe pattern)
     useEffect(() => {
         if (news) {
+            const scrollY = window.scrollY
+            document.body.style.position = "fixed"
+            document.body.style.top = `-${scrollY}px`
+            document.body.style.width = "100%"
             document.body.style.overflow = "hidden"
-        } else {
-            document.body.style.overflow = ""
-        }
-        return () => {
-            document.body.style.overflow = ""
+            return () => {
+                document.body.style.position = ""
+                document.body.style.top = ""
+                document.body.style.width = ""
+                document.body.style.overflow = ""
+                window.scrollTo(0, scrollY)
+            }
         }
     }, [news])
 
@@ -50,7 +56,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe"
             onClick={onClose}
         >
             {/* Backdrop */}
@@ -58,7 +64,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
 
             {/* Modal */}
             <div
-                className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl glass-strong shadow-2xl animate-fade-in-up"
+                className="relative w-full max-w-2xl max-h-[85dvh] flex flex-col rounded-3xl glass-strong shadow-2xl animate-fade-in-up"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Gradient line at top */}
@@ -67,7 +73,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                 {/* Close button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 w-10 h-10 rounded-full glass flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/20 transition-all z-20"
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4 w-11 h-11 sm:w-10 sm:h-10 rounded-full glass flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/20 transition-all z-20 touch-manipulation"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -75,7 +81,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                 </button>
 
                 {/* Scrollable content area */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {/* Image */}
                     {news.image && (
                         <div className="relative h-48 flex-shrink-0 overflow-hidden">
@@ -89,9 +95,9 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                     )}
 
                     {/* Content */}
-                    <div className={`p-8 ${news.image ? "-mt-12 relative z-10" : ""}`}>
+                    <div className={`p-5 sm:p-8 ${news.image ? "-mt-12 relative z-10" : ""}`}>
                         {/* Category & Date */}
-                        <div className="flex items-center gap-4 mb-6">
+                        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>
                                 {news.category}
                             </span>
@@ -99,7 +105,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                         </div>
 
                         {/* Title */}
-                        <h2 className="text-2xl sm:text-3xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent break-words">
+                        <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent break-words">
                             {news.title}
                         </h2>
 

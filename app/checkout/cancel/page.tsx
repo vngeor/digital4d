@@ -25,7 +25,7 @@ export default async function CheckoutCancelPage({ searchParams }: PageProps) {
 
             <section className="relative pt-16 sm:pt-24 md:pt-32 pb-16 px-4">
                 <div className="mx-auto max-w-2xl">
-                    <div className="glass rounded-2xl border border-white/10 p-8 md:p-12 text-center">
+                    <div className="glass rounded-2xl border border-white/10 p-4 sm:p-8 md:p-12 text-center">
                         {/* Cancel Icon */}
                         <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
                             <XCircle className="w-10 h-10 text-red-400" />
