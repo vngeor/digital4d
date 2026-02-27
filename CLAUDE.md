@@ -128,8 +128,9 @@ No test framework is configured.
 - **`BulkActionBar`**: responsive fixed positioning (`bottom-4 left-4 right-4 sm:bottom-6 sm:left-1/2`)
 - **`AdminPermissionsContext`**: React context providing `can(resource, action)` helper for client-side permission checks
 - **`AdminIdleGuard`**: wraps admin layout, auto-logout after 5 min inactivity with 1-min warning modal
-- Admin sidebar has live pending quotes badge (30s polling), mobile hamburger menu with drawer overlay
+- Admin sidebar has live pending quotes badge (30s polling via `data.pendingCount`), mobile hamburger menu with drawer overlay
 - Admin pages: dashboard, products, categories, orders, quotes, content, banners, menu, types, media, coupons, notifications, users, roles, audit logs
+- **Admin Quotes** (`/admin/quotes`): server-side pagination (page/limit/search/sort params), extracted `QuoteDetailModal` component with 2 tabs (Details + Conversation & Reply). Features: waiting time column with color-coded badges (blue < 24h, amber 1-3d, red pulsing 3+d), urgency filter row (client-side on `updatedAt`), sort toggle (newest/oldest first via API `sort=oldest` → `orderBy: updatedAt asc`), needs-reply pulsing dot, copy-to-clipboard buttons, localized chat messages via `localizeMessage()`, coupon picker, view tracking. Mobile cards show all badges.
 - **Audit logs** (`/admin/audit-logs`): action badges with icons (Plus/Pencil/Trash2), resource badges with matching sidebar icons (Package, FileText, etc.) via `ACTION_STYLES` and `RESOURCE_STYLES` maps
 
 ### Frontend Components

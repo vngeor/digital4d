@@ -11,57 +11,96 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get("status")
+    const search = searchParams.get("search")
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "15")
+    const sort = searchParams.get("sort")
 
-    const quotes = await prisma.quoteRequest.findMany({
-      where: status ? { status } : undefined,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        quoteNumber: true,
-        productId: true,
-        name: true,
-        email: true,
-        phone: true,
-        message: true,
-        fileName: true,
-        fileUrl: true,
-        fileSize: true,
-        status: true,
-        quotedPrice: true,
-        adminNotes: true,
-        userResponse: true,
-        viewedAt: true,
-        quotedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        product: {
-          select: {
-            id: true,
-            slug: true,
-            sku: true,
-            nameEn: true,
-            nameBg: true,
-            nameEs: true,
-            price: true,
-            salePrice: true,
-            onSale: true,
-            currency: true,
+    const where: Record<string, unknown> = {}
+
+    if (status) {
+      where.status = status
+    }
+
+    if (search) {
+      const searchConditions = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { quoteNumber: { contains: search, mode: "insensitive" } },
+      ]
+      if (where.status) {
+        where.AND = [{ status: where.status }, { OR: searchConditions }]
+        delete where.status
+      } else {
+        where.OR = searchConditions
+      }
+    }
+
+    const [quotes, total, pendingCount] = await Promise.all([
+      prisma.quoteRequest.findMany({
+        where,
+        orderBy: sort === "oldest" ? { updatedAt: "asc" as const } : { createdAt: "desc" as const },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          quoteNumber: true,
+          productId: true,
+          name: true,
+          email: true,
+          phone: true,
+          message: true,
+          fileName: true,
+          fileUrl: true,
+          fileSize: true,
+          status: true,
+          quotedPrice: true,
+          adminNotes: true,
+          userResponse: true,
+          viewedAt: true,
+          quotedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          product: {
+            select: {
+              id: true,
+              slug: true,
+              sku: true,
+              nameEn: true,
+              nameBg: true,
+              nameEs: true,
+              price: true,
+              salePrice: true,
+              onSale: true,
+              currency: true,
+            },
+          },
+          messages: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              senderType: true,
+              message: true,
+              quotedPrice: true,
+              createdAt: true,
+            },
           },
         },
-        messages: {
-          orderBy: { createdAt: "asc" },
-          select: {
-            id: true,
-            senderType: true,
-            message: true,
-            quotedPrice: true,
-            createdAt: true,
-          },
-        },
-      },
+      }),
+      prisma.quoteRequest.count({ where }),
+      prisma.quoteRequest.count({ where: { status: "pending" } }),
+    ])
+
+    void session
+
+    return NextResponse.json({
+      quotes,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      pendingCount,
     })
-
-    return NextResponse.json(quotes)
   } catch (error) {
     console.error("Error fetching quotes:", error)
     return NextResponse.json(

@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Trash2, Loader2, MessageSquare, Download, X, Save, Eye, Link as LinkIcon, ExternalLink, Ticket, Search } from "lucide-react"
+import { Trash2, MessageSquare, Download, Eye, Search, ChevronLeft, ChevronRight, Clock, ArrowUpDown } from "lucide-react"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { QuoteDetailModal } from "@/app/components/admin/QuoteDetailModal"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface Product {
@@ -54,14 +55,6 @@ interface QuoteRequest {
   messages?: QuoteMessage[]
 }
 
-interface CouponOption {
-  id: string
-  code: string
-  type: string
-  value: string
-  currency: string | null
-}
-
 const STATUS_BADGES: Record<string, { labelKey: string; color: string }> = {
   pending: { labelKey: "statusPending", color: "bg-amber-500/20 text-amber-400" },
   quoted: { labelKey: "statusQuoted", color: "bg-blue-500/20 text-blue-400" },
@@ -79,100 +72,73 @@ export default function QuotesPage() {
   const [loading, setLoading] = useState(true)
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
   const [viewingQuote, setViewingQuote] = useState<QuoteRequest | null>(null)
-  const [editForm, setEditForm] = useState({
-    status: "",
-    quotedPrice: "",
-    adminNotes: "",
-  })
-  const [saving, setSaving] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
-  const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
-  // Coupon picker state
-  const [selectedCoupon, setSelectedCoupon] = useState<CouponOption | null>(null)
-  const [couponSearch, setCouponSearch] = useState("")
-  const [couponResults, setCouponResults] = useState<CouponOption[]>([])
-  const [couponSearchLoading, setCouponSearchLoading] = useState(false)
-  const [showCouponDropdown, setShowCouponDropdown] = useState(false)
-  const couponSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const couponDropdownRef = useRef<HTMLDivElement>(null)
+  const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
+  const [waitingFilter, setWaitingFilter] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<string>("newest")
 
-  const fetchQuotes = async (status?: string | null) => {
-    setLoading(true)
-    const url = status
-      ? `/api/admin/quotes?status=${encodeURIComponent(status)}`
-      : "/api/admin/quotes"
-    const res = await fetch(url)
-    const data = await res.json()
-    const quotesData = Array.isArray(data) ? data : []
-    setQuotes(quotesData)
-    if (!status) {
-      setPendingCount(quotesData.filter((q: QuoteRequest) => q.status === "pending").length)
-    } else if (status === "pending") {
-      setPendingCount(quotesData.length)
+  // Server-side pagination state
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [search, setSearch] = useState("")
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  // Debounce search input
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1)
+    }, 300)
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current)
     }
-    setLoading(false)
-  }
+  }, [search])
+
+  const fetchQuotes = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (selectedStatus) params.set("status", selectedStatus)
+      if (debouncedSearch) params.set("search", debouncedSearch)
+      if (sortBy !== "newest") params.set("sort", sortBy)
+      params.set("page", String(page))
+      params.set("limit", "15")
+      const res = await fetch(`/api/admin/quotes?${params.toString()}`)
+      const data = await res.json()
+      setQuotes(data.quotes || [])
+      setTotal(data.total || 0)
+      setTotalPages(data.totalPages || 1)
+      setPendingCount(data.pendingCount || 0)
+    } catch {
+      toast.error(t("updateFailed"))
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedStatus, debouncedSearch, page, sortBy])
 
   useEffect(() => {
     fetchQuotes()
-  }, [])
+  }, [fetchQuotes])
 
+  // Reset page when status filter changes
   useEffect(() => {
-    fetchQuotes(selectedStatus)
+    setPage(1)
   }, [selectedStatus])
 
   // Deep link: open view modal when ?edit=<id> is present
   useEffect(() => {
     const editId = searchParams.get("edit")
     if (editId && quotes.length > 0 && !viewingQuote) {
-      const item = quotes.find(q => q.id === editId)
+      const item = quotes.find((q) => q.id === editId)
       if (item) {
-        handleView(item)
+        setViewingQuote(item)
         window.history.replaceState({}, "", "/admin/quotes")
       }
     }
   }, [searchParams, quotes])
-
-  const handleView = (quote: QuoteRequest) => {
-    setViewingQuote(quote)
-    setEditForm({
-      status: quote.status,
-      quotedPrice: quote.quotedPrice || "",
-      adminNotes: quote.adminNotes || "",
-    })
-    setSelectedCoupon(null)
-    setCouponSearch("")
-    setCouponResults([])
-  }
-
-  const handleSave = async () => {
-    if (!viewingQuote) return
-
-    setSaving(true)
-    const res = await fetch("/api/admin/quotes", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: viewingQuote.id,
-        ...editForm,
-        couponId: selectedCoupon?.id || null,
-      }),
-    })
-
-    if (!res.ok) {
-      const error = await res.json()
-      toast.error(error.error || t("updateFailed"))
-      setSaving(false)
-      return
-    }
-
-    setSaving(false)
-    setViewingQuote(null)
-    toast.success(t("updatedSuccess"))
-    fetchQuotes(selectedStatus)
-    // Notify sidebar to update pending count
-    window.dispatchEvent(new Event("quoteUpdated"))
-  }
 
   const handleDelete = (id: string, name: string) => {
     setDeleteItem({ id, name })
@@ -189,8 +155,7 @@ export default function QuotesPage() {
     }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
-    fetchQuotes(selectedStatus)
-    // Notify sidebar to update pending count
+    fetchQuotes()
     window.dispatchEvent(new Event("quoteUpdated"))
   }
 
@@ -202,58 +167,58 @@ export default function QuotesPage() {
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
     if (diffMins < 1) return t("justNow")
-    if (diffMins < 60) return t("minutesAgo", { minutes: diffMins })
-    if (diffHours < 24) return t("hoursAgo", { hours: diffHours })
-    return t("daysAgo", { days: diffDays })
+    if (diffMins < 60) return t("minutesAgo", { minutes: String(diffMins) })
+    if (diffHours < 24) return t("hoursAgo", { hours: String(diffHours) })
+    return t("daysAgo", { days: String(diffDays) })
   }
 
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return "-"
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  const getLastActivity = (item: QuoteRequest): string => {
+    const lastMsg = item.messages?.[item.messages.length - 1]
+    const lastMsgDate = lastMsg ? new Date(lastMsg.createdAt).getTime() : 0
+    const updatedDate = new Date(item.updatedAt).getTime()
+    const latest = lastMsgDate > updatedDate ? lastMsg!.createdAt : item.updatedAt
+    return formatTimeAgo(latest)
   }
 
-  // Coupon search
-  const searchCoupons = useCallback((query: string) => {
-    if (couponSearchTimeout.current) clearTimeout(couponSearchTimeout.current)
-    couponSearchTimeout.current = setTimeout(async () => {
-      setCouponSearchLoading(true)
-      try {
-        const res = await fetch(`/api/admin/coupons?search=${encodeURIComponent(query)}&status=active`)
-        const data = await res.json()
-        const list = Array.isArray(data.coupons) ? data.coupons : Array.isArray(data) ? data : []
-        setCouponResults(list.slice(0, 10).map((c: CouponOption & Record<string, unknown>) => ({
-          id: c.id,
-          code: c.code,
-          type: c.type,
-          value: c.value,
-          currency: c.currency,
-        })))
-      } catch {
-        setCouponResults([])
-      } finally {
-        setCouponSearchLoading(false)
-      }
-    }, 300)
-  }, [])
-
-  // Close coupon dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (couponDropdownRef.current && !couponDropdownRef.current.contains(e.target as Node)) {
-        setShowCouponDropdown(false)
-      }
+  const getWaitingBadge = (item: QuoteRequest) => {
+    if (item.status !== "pending" && item.status !== "counter_offer") return null
+    const diffMs = Date.now() - new Date(item.updatedAt).getTime()
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = diffMs / 86400000
+    if (diffDays < 1) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/20 text-blue-400">
+          <Clock className="w-3 h-3" />{diffHours}h
+        </span>
+      )
+    } else if (diffDays < 3) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-400">
+          <Clock className="w-3 h-3" />~{Math.floor(diffDays)}d
+        </span>
+      )
+    } else {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/20 text-red-400 animate-pulse">
+          <Clock className="w-3 h-3" />{Math.floor(diffDays)}d!
+        </span>
+      )
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const formatCouponValue = (coupon: CouponOption) => {
-    if (coupon.type === "percentage") return `${coupon.value}%`
-    const symbol = coupon.currency === "EUR" ? "€" : coupon.currency === "USD" ? "$" : coupon.currency || ""
-    return `${symbol}${parseFloat(coupon.value).toFixed(2)}`
   }
+
+  // Client-side urgency filter (on already-fetched data)
+  const filteredQuotes = quotes.filter((q) => {
+    if (!waitingFilter) return true
+    if (q.status !== "pending" && q.status !== "counter_offer") return false
+    const diffDays = (Date.now() - new Date(q.updatedAt).getTime()) / 86400000
+    if (waitingFilter === "fresh") return diffDays < 1
+    if (waitingFilter === "medium") return diffDays >= 1 && diffDays < 3
+    if (waitingFilter === "urgent") return diffDays >= 3
+    return true
+  })
+
+  // Whether to show urgency filter (only for statuses that have waiting time)
+  const showUrgencyFilter = !selectedStatus || selectedStatus === "pending" || selectedStatus === "counter_offer"
 
   const columns = [
     {
@@ -328,29 +293,6 @@ export default function QuotesPage() {
       },
     },
     {
-      key: "file",
-      header: t("file"),
-      className: "whitespace-nowrap hidden lg:table-cell",
-      render: (item: QuoteRequest) => (
-        <div>
-          {item.fileUrl ? (
-            <a
-              href={item.fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300"
-              title={item.fileName || "Download"}
-            >
-              <Download className="w-4 h-4 shrink-0" />
-              <span className="text-xs truncate max-w-[80px]">{item.fileName || "File"}</span>
-            </a>
-          ) : (
-            <span className="text-gray-500 text-sm">-</span>
-          )}
-        </div>
-      ),
-    },
-    {
       key: "status",
       header: t("status"),
       className: "whitespace-nowrap",
@@ -368,17 +310,55 @@ export default function QuotesPage() {
               </span>
             )}
             {item.status === "quoted" && (
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${
-                item.viewedAt
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "bg-amber-500/20 text-amber-400"
-              }`}>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium w-fit ${
+                  item.viewedAt ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                }`}
+              >
                 {item.viewedAt ? t("seen") : t("unseen")}
               </span>
             )}
           </div>
         )
       },
+    },
+    {
+      key: "waiting",
+      header: t("waitingTime"),
+      className: "whitespace-nowrap hidden md:table-cell w-[90px]",
+      render: (item: QuoteRequest) => getWaitingBadge(item) || <span className="text-gray-600">—</span>,
+    },
+    {
+      key: "messages",
+      header: t("messagesCol"),
+      className: "whitespace-nowrap hidden sm:table-cell w-[80px]",
+      render: (item: QuoteRequest) => {
+        const count = item.messages?.length || 0
+        const lastMsg = item.messages?.[item.messages.length - 1]
+        const needsReply = lastMsg?.senderType === "user"
+        return count > 0 ? (
+          <div className="flex items-center gap-1.5">
+            <MessageSquare className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-sm text-gray-400">{count}</span>
+            {needsReply && (
+              <span
+                className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"
+                title={t("needsReply")}
+              />
+            )}
+          </div>
+        ) : (
+          <span className="text-gray-600">—</span>
+        )
+      },
+    },
+    {
+      key: "lastActivity",
+      header: t("lastActivity"),
+      className: "whitespace-nowrap hidden lg:table-cell",
+      render: (item: QuoteRequest) => (
+        <span className="text-gray-400 text-xs">{getLastActivity(item)}</span>
+      ),
     },
     {
       key: "quotedPrice",
@@ -393,19 +373,6 @@ export default function QuotesPage() {
       ),
     },
     {
-      key: "date",
-      header: t("date"),
-      className: "whitespace-nowrap hidden lg:table-cell",
-      render: (item: QuoteRequest) => (
-        <span className="text-gray-400 text-xs">
-          {new Date(item.createdAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })}
-        </span>
-      ),
-    },
-    {
       key: "actions",
       header: "",
       className: "w-[80px]",
@@ -414,7 +381,7 @@ export default function QuotesPage() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              handleView(item)
+              setViewingQuote(item)
             }}
             className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
             title={t("viewQuote")}
@@ -457,39 +424,97 @@ export default function QuotesPage() {
         </div>
       </div>
 
-      {/* Status Filter Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {statusFilters.map((filter) => (
-          <button
-            key={filter.key || "all"}
-            onClick={() => setSelectedStatus(filter.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              selectedStatus === filter.key
-                ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
-            }`}
-          >
-            {filter.label}
-            {filter.key === "pending" && pendingCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 animate-pulse">
-                {pendingCount}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Search + Status Filter */}
+      <div className="space-y-4">
+        {/* Search Input */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder={t("searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+          />
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {statusFilters.map((filter) => (
+            <button
+              key={filter.key || "all"}
+              onClick={() => setSelectedStatus(filter.key)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                selectedStatus === filter.key
+                  ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              {filter.label}
+              {filter.key === "pending" && pendingCount > 0 && (
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 animate-pulse">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Urgency Filter + Sort */}
+        {showUrgencyFilter && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <Clock className="w-4 h-4 text-gray-500" />
+            {[
+              { key: null, label: t("all") },
+              { key: "fresh", label: t("filterFresh"), dot: "bg-blue-400" },
+              { key: "medium", label: t("filterMedium"), dot: "bg-amber-400" },
+              { key: "urgent", label: t("filterUrgent"), dot: "bg-red-400" },
+            ].map((f) => (
+              <button
+                key={f.key || "all"}
+                onClick={() => setWaitingFilter(f.key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  waitingFilter === f.key
+                    ? "bg-white/10 text-white border border-white/20"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                {f.dot && <span className={`w-2 h-2 rounded-full ${f.dot}`} />}
+                {f.label}
+              </button>
+            ))}
+            <div className="ml-auto">
+              <button
+                onClick={() => setSortBy(sortBy === "newest" ? "oldest" : "newest")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  sortBy === "oldest"
+                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                {sortBy === "oldest" ? t("sortOldestFirst") : t("sortNewestFirst")}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {loading ? (
         <SkeletonDataTable columns={5} />
       ) : (
         <DataTable
-          data={quotes}
+          data={filteredQuotes}
           columns={columns}
-          searchPlaceholder={t("searchPlaceholder")}
+          searchable={false}
+          pageSize={100}
           emptyMessage={t("noQuotes")}
           renderMobileCard={(item: QuoteRequest) => {
             const badge = STATUS_BADGES[item.status] || STATUS_BADGES.pending
             const hasCounterOffer = (item.status === "pending" && item.userResponse) || item.status === "counter_offer"
+            const msgCount = item.messages?.length || 0
+            const lastMsg = item.messages?.[item.messages.length - 1]
+            const needsReply = lastMsg?.senderType === "user"
             return (
               <>
                 <div className="flex items-center justify-between gap-2">
@@ -518,10 +543,22 @@ export default function QuotesPage() {
                     </span>
                   )}
                   {item.status === "quoted" && (
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                      item.viewedAt ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        item.viewedAt ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                      }`}
+                    >
                       {item.viewedAt ? t("seen") : t("unseen")}
+                    </span>
+                  )}
+                  {getWaitingBadge(item)}
+                  {msgCount > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+                      <MessageSquare className="w-3 h-3" />
+                      {msgCount}
+                      {needsReply && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      )}
                     </span>
                   )}
                 </div>
@@ -532,8 +569,7 @@ export default function QuotesPage() {
                       <span className="text-xs text-emerald-400 ml-2">
                         {item.product.onSale && item.product.salePrice
                           ? `${parseFloat(item.product.salePrice).toFixed(2)} ${item.product.currency}`
-                          : `${parseFloat(item.product.price).toFixed(2)} ${item.product.currency}`
-                        }
+                          : `${parseFloat(item.product.price).toFixed(2)} ${item.product.currency}`}
                       </span>
                     )}
                   </div>
@@ -553,22 +589,28 @@ export default function QuotesPage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
                     {item.quotedPrice && parseFloat(item.quotedPrice) >= 0 && (
-                      <span className="text-white font-medium text-sm">€{parseFloat(item.quotedPrice).toFixed(2)}</span>
+                      <span className="text-white font-medium text-sm">
+                        €{parseFloat(item.quotedPrice).toFixed(2)}
+                      </span>
                     )}
-                    <span className="text-xs text-gray-500">
-                      {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </span>
+                    <span className="text-xs text-gray-500">{getLastActivity(item)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleView(item) }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setViewingQuote(item)
+                      }}
                       className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
                     >
                       <Eye className="w-4 h-4 text-gray-400" />
                     </button>
                     {can("quotes", "delete") && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.quoteNumber) }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(item.id, item.quoteNumber)
+                        }}
                         className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
                       >
                         <Trash2 className="w-4 h-4 text-red-400" />
@@ -582,359 +624,43 @@ export default function QuotesPage() {
         />
       )}
 
-      {/* View/Edit Quote Modal */}
-      {viewingQuote && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-lg max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-emerald-400" />
-                {t("viewQuote")}
-              </h2>
-              <button
-                onClick={() => setViewingQuote(null)}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Product Info */}
-              {viewingQuote.product && (() => {
-                const product = viewingQuote.product
-                const hasDiscount = product.onSale && product.salePrice && product.price
-                const discountPercent = hasDiscount
-                  ? Math.round((1 - parseFloat(product.salePrice!) / parseFloat(product.price!)) * 100)
-                  : 0
-
-                return (
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
-                    <h3 className="text-sm font-medium text-emerald-400">{t("product")}</h3>
-                    <a
-                      href={`/products/${product.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-white font-medium text-lg hover:text-emerald-300 transition-colors group"
-                    >
-                      {product.nameEn}
-                      <ExternalLink className="w-4 h-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
-                    {product.sku && (
-                      <p className="text-gray-400 text-sm">
-                        SKU: <span className="text-white font-mono">{product.sku}</span>
-                      </p>
-                    )}
-                    {hasDiscount ? (
-                      <div className="flex items-center gap-3">
-                        <span className="text-emerald-400 font-bold text-xl">
-                          {parseFloat(product.salePrice!).toFixed(2)} {product.currency}
-                        </span>
-                        <span className="text-gray-500 line-through text-lg">
-                          {parseFloat(product.price!).toFixed(2)}
-                        </span>
-                        <span className="px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-sm font-medium">
-                          -{discountPercent}%
-                        </span>
-                      </div>
-                    ) : product.price ? (
-                      <p className="text-emerald-400 font-bold text-xl">
-                        {parseFloat(product.price).toFixed(2)} {product.currency}
-                      </p>
-                    ) : null}
-                    <a
-                      href={`/products/${product.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm"
-                    >
-                      <span>{t("viewProduct")} →</span>
-                    </a>
-                  </div>
-                )
-              })()}
-
-              {/* Customer Info */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
-                <h3 className="text-sm font-medium text-gray-300">{t("customer")}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">{t("customer")}</p>
-                    <p className="text-white">{viewingQuote.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">{t("email")}</p>
-                    <p className="text-white">{viewingQuote.email}</p>
-                  </div>
-                  {viewingQuote.phone && (
-                    <div>
-                      <p className="text-gray-500">{t("phone")}</p>
-                      <p className="text-white">{viewingQuote.phone}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-gray-500">{t("date")}</p>
-                    <p className="text-white">
-                      {new Date(viewingQuote.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Message */}
-              {viewingQuote.message && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    {t("message")}
-                  </label>
-                  <p className="text-white bg-white/5 p-4 rounded-xl border border-white/10 whitespace-pre-wrap">
-                    {viewingQuote.message}
-                  </p>
-                </div>
-              )}
-
-              {/* User Response (Counter Offer) - Legacy */}
-              {viewingQuote.userResponse && (
-                <div>
-                  <label className="block text-sm font-medium text-purple-400 mb-2">
-                    {t("customerResponse")}
-                  </label>
-                  <p className="text-white bg-purple-500/10 p-4 rounded-xl border border-purple-500/30 whitespace-pre-wrap">
-                    {viewingQuote.userResponse}
-                  </p>
-                </div>
-              )}
-
-              {/* Message History */}
-              {viewingQuote.messages && viewingQuote.messages.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-3">
-                    {t("conversationHistory")}
-                  </label>
-                  <div className="space-y-3 p-4 rounded-xl bg-white/5 border border-white/10 max-h-60 overflow-y-auto">
-                    {viewingQuote.messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.senderType === "admin" ? "justify-end" : "justify-start"}`}
-                      >
-                        <div
-                          className={`max-w-[80%] rounded-xl px-4 py-2 ${
-                            msg.senderType === "admin"
-                              ? "bg-blue-500/20 border border-blue-500/30"
-                              : "bg-emerald-500/20 border border-emerald-500/30"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-xs font-medium ${
-                              msg.senderType === "admin" ? "text-blue-400" : "text-emerald-400"
-                            }`}>
-                              {msg.senderType === "admin" ? t("you") : t("customerLabel")}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {new Date(msg.createdAt).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
-                          </div>
-                          <p className="text-sm text-white">{msg.message}</p>
-                          {msg.quotedPrice && (
-                            <p className="text-sm font-semibold text-emerald-400 mt-1">
-                              €{parseFloat(msg.quotedPrice).toFixed(2)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* File */}
-              {viewingQuote.fileUrl && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    {t("file")}
-                  </label>
-                  <a
-                    href={viewingQuote.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors"
-                  >
-                    <Download className="w-5 h-5 text-cyan-400" />
-                    <div>
-                      <p className="text-cyan-400 font-medium">{viewingQuote.fileName || t("downloadFile")}</p>
-                      {viewingQuote.fileSize && (
-                        <p className="text-xs text-cyan-400/60">{formatFileSize(viewingQuote.fileSize)}</p>
-                      )}
-                    </div>
-                  </a>
-                </div>
-              )}
-
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("status")}
-                </label>
-                <select
-                  value={editForm.status}
-                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                >
-                  <option value="pending">{t("statusPending")}</option>
-                  <option value="quoted">{t("statusQuoted")}</option>
-                  <option value="accepted">{t("statusAccepted")}</option>
-                  <option value="rejected">{t("statusRejected")}</option>
-                </select>
-              </div>
-
-              {/* Quoted Price */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("quotedPrice")} (€)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editForm.quotedPrice}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    // Prevent negative values
-                    if (value === "" || parseFloat(value) >= 0) {
-                      setEditForm({ ...editForm, quotedPrice: value })
-                    }
-                  }}
-                  placeholder="0.00"
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                />
-              </div>
-
-              {/* Admin Notes */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("adminNotes")}
-                </label>
-                <textarea
-                  value={editForm.adminNotes}
-                  onChange={(e) => setEditForm({ ...editForm, adminNotes: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
-                />
-              </div>
-
-              {/* Attach Coupon — shown only when status is "quoted" */}
-              {editForm.status === "quoted" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
-                    <Ticket className="w-4 h-4 text-amber-400" />
-                    {t("attachCoupon")}
-                    <span className="text-gray-600 font-normal">({t("optional")})</span>
-                  </label>
-
-                  {/* Selected Coupon Tag */}
-                  {selectedCoupon ? (
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
-                        <Ticket className="w-3.5 h-3.5" />
-                        <span className="font-mono font-medium">{selectedCoupon.code}</span>
-                        <span className="text-amber-400/60">({formatCouponValue(selectedCoupon)})</span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedCoupon(null)}
-                          className="hover:text-red-400 transition-colors ml-1"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="relative" ref={couponDropdownRef}>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                        <input
-                          type="text"
-                          value={couponSearch}
-                          onChange={(e) => {
-                            setCouponSearch(e.target.value)
-                            searchCoupons(e.target.value)
-                            setShowCouponDropdown(true)
-                          }}
-                          onFocus={() => {
-                            setShowCouponDropdown(true)
-                            if (!couponSearch) searchCoupons("")
-                          }}
-                          placeholder={t("searchCoupons")}
-                          className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:border-amber-500/50 transition-colors"
-                        />
-                        {couponSearchLoading && (
-                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 animate-spin" />
-                        )}
-                      </div>
-
-                      {/* Dropdown Results */}
-                      {showCouponDropdown && couponResults.length > 0 && (
-                        <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a2e] shadow-xl">
-                          {couponResults.map((coupon) => (
-                            <button
-                              key={coupon.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedCoupon(coupon)
-                                setShowCouponDropdown(false)
-                                setCouponSearch("")
-                              }}
-                              className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 text-left transition-colors"
-                            >
-                              <Ticket className="w-4 h-4 text-amber-400 shrink-0" />
-                              <span className="font-mono text-sm text-amber-400">{coupon.code}</span>
-                              <span className="text-xs text-gray-500">
-                                {formatCouponValue(coupon)}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1.5">{t("attachCouponHint")}</p>
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setViewingQuote(null)}
-                  className="flex-1 px-6 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-                >
-                  {t("cancel")}
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {saving ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Save className="w-5 h-5" />
-                  )}
-                  {t("save")}
-                </button>
-              </div>
-            </div>
+      {/* Server-side Pagination Controls */}
+      {totalPages > 1 && !loading && (
+        <div className="glass rounded-2xl border border-white/10 p-3 sm:p-4 flex items-center justify-between">
+          <p className="text-sm text-gray-400 hidden sm:block">
+            {`${(page - 1) * 15 + 1}-${Math.min(page * 15, total)} / ${total}`}
+          </p>
+          <div className="flex items-center gap-2 sm:ml-0 mx-auto sm:mx-0">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-400" />
+            </button>
+            <span className="text-sm text-gray-400">
+              {page} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
           </div>
         </div>
+      )}
+
+      {/* Quote Detail Modal */}
+      {viewingQuote && (
+        <QuoteDetailModal
+          quote={viewingQuote}
+          onClose={() => setViewingQuote(null)}
+          onSaved={() => fetchQuotes()}
+          canDelete={can("quotes", "delete")}
+          onDelete={handleDelete}
+        />
       )}
 
       <ConfirmModal

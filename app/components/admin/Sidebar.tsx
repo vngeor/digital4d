@@ -81,8 +81,8 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
       try {
         const res = await fetch("/api/admin/quotes?status=pending")
         if (res.ok) {
-          const quotes = await res.json()
-          setPendingQuotesCount(Array.isArray(quotes) ? quotes.length : 0)
+          const data = await res.json()
+          setPendingQuotesCount(data.pendingCount ?? (Array.isArray(data) ? data.length : 0))
         }
       } catch {
         // Ignore errors
