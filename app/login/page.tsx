@@ -12,6 +12,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [name, setName] = useState("")
+    const [birthDate, setBirthDate] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
@@ -104,7 +105,7 @@ export default function LoginPage() {
                 const res = await fetch("/api/auth/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, email, password }),
+                    body: JSON.stringify({ name, email, password, birthDate: birthDate || null }),
                 })
                 const data = await res.json()
 
@@ -243,6 +244,19 @@ export default function LoginPage() {
                                 <p className="text-xs text-slate-500 mt-1">{t("passwordRequirements")}</p>
                             )}
                         </div>
+                        {isRegister && (
+                            <div>
+                                <label className="block text-sm text-slate-400 mb-1">
+                                    {t("birthDate")} <span className="text-slate-600">{t("birthDateOptional")}</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    value={birthDate}
+                                    onChange={(e) => setBirthDate(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors [color-scheme:dark]"
+                                />
+                            </div>
+                        )}
 
                         {error && (
                             <p className="text-red-400 text-sm">{error}</p>

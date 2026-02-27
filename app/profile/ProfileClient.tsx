@@ -52,6 +52,8 @@ interface ProfileClientProps {
     updateSuccess: string
     updateError: string
     backToHome: string
+    addBirthday: string
+    addBirthdayButton: string
   }
 }
 
@@ -101,6 +103,22 @@ export function ProfileClient({ user, translations: t }: ProfileClientProps) {
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent mb-3">{t.title}</h1>
             <p className="text-slate-400">{t.subtitle}</p>
           </div>
+
+          {/* Birthday banner — shown when user hasn't set birthDate */}
+          {!user.birthDate && (
+            <div className="mb-8 glass rounded-2xl border border-pink-500/20 p-4 flex items-center gap-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10">
+              <div className="shrink-0 w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center">
+                <Cake className="w-5 h-5 text-pink-400" />
+              </div>
+              <p className="text-sm text-gray-300 flex-1">{t.addBirthday}</p>
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white text-sm font-medium hover:shadow-lg hover:shadow-pink-500/25 transition-all"
+              >
+                {t.addBirthdayButton}
+              </button>
+            </div>
+          )}
 
         <div className="grid gap-8 md:grid-cols-3">
           {/* Profile Card */}

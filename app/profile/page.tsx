@@ -63,6 +63,8 @@ export default async function ProfilePage() {
     updateSuccess: t("updateSuccess"),
     updateError: t("updateError"),
     backToHome: t("backToHome"),
+    addBirthday: t("addBirthday"),
+    addBirthdayButton: t("addBirthdayButton"),
   }
 
   return (
