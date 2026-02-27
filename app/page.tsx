@@ -210,7 +210,7 @@ export default async function Home() {
                         </div>
                     </div>
 
-                    <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up animation-delay-200">
+                    <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up animation-delay-200">
                         <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
                             {t("title1")}
                         </span>

@@ -292,7 +292,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
 
         <div className="space-y-8">
           {/* Quote Requests */}
-          <div className="glass rounded-2xl border border-white/10 p-6">
+          <div className="glass rounded-2xl border border-white/10 p-4 sm:p-6">
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-6">
               <MessageSquare className="w-5 h-5 text-emerald-400" />
               {t.quoteRequests}
@@ -344,7 +344,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-xs text-blue-400 font-mono shrink-0">{quote.quoteNumber}</span>
                                 {quote.product ? (
                                   <Link
@@ -375,18 +375,18 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                   {quote.product?.slug ? (
                                     <Link
                                       href={`/products/${quote.product.slug}?coupon=${quote.coupon.code}`}
-                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-colors"
+                                      className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-colors"
                                     >
                                       <Ticket className="w-3.5 h-3.5 text-amber-400" />
                                       <span className="text-xs text-amber-400 font-medium">{t.couponIncluded}:</span>
-                                      <span className="text-xs text-amber-300 font-mono font-bold tracking-wider">{quote.coupon.code}</span>
+                                      <span className="text-xs text-amber-300 font-mono font-bold sm:tracking-wider whitespace-nowrap">{quote.coupon.code}</span>
                                       <span className="text-[11px] text-amber-400/70">
                                         ({quote.coupon.type === "percentage" ? `${quote.coupon.value}% ${t.couponOff}` : `-${quote.coupon.value} ${quote.coupon.currency || ""} ${t.couponOff}`})
                                       </span>
                                       <span
                                         role="button"
                                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyCoupon(quote.coupon!.code) }}
-                                        className="ml-1 p-1.5 sm:p-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer touch-manipulation"
+                                        className="ml-1 p-1 sm:p-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer touch-manipulation"
                                         title={t.copyCouponCode}
                                       >
                                         {copiedCoupon === quote.coupon.code ? (
@@ -397,16 +397,16 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                       </span>
                                     </Link>
                                   ) : (
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                    <div className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
                                       <Ticket className="w-3.5 h-3.5 text-amber-400" />
                                       <span className="text-xs text-amber-400 font-medium">{t.couponIncluded}:</span>
-                                      <span className="text-xs text-amber-300 font-mono font-bold tracking-wider">{quote.coupon.code}</span>
+                                      <span className="text-xs text-amber-300 font-mono font-bold sm:tracking-wider whitespace-nowrap">{quote.coupon.code}</span>
                                       <span className="text-[11px] text-amber-400/70">
                                         ({quote.coupon.type === "percentage" ? `${quote.coupon.value}% ${t.couponOff}` : `-${quote.coupon.value} ${quote.coupon.currency || ""} ${t.couponOff}`})
                                       </span>
                                       <button
                                         onClick={(e) => { e.preventDefault(); handleCopyCoupon(quote.coupon!.code) }}
-                                        className="ml-1 p-1.5 sm:p-0.5 rounded hover:bg-white/10 transition-colors touch-manipulation"
+                                        className="ml-1 p-1 sm:p-0.5 rounded hover:bg-white/10 transition-colors touch-manipulation"
                                         title={t.copyCouponCode}
                                       >
                                         {copiedCoupon === quote.coupon.code ? (
@@ -463,25 +463,25 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                               </div>
                             </div>
                           ) : (
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <button
                                 onClick={() => handleQuoteResponse(quote.id, "accept")}
                                 disabled={isSubmitting}
-                                className="px-4 py-2.5 sm:py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 disabled:opacity-50 transition-colors"
+                                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 disabled:opacity-50 transition-colors"
                               >
                                 {t.acceptOffer}
                               </button>
                               <button
                                 onClick={() => setRespondingToQuote(quote.id)}
                                 disabled={isSubmitting}
-                                className="px-4 py-2.5 sm:py-2 rounded-lg bg-purple-500 text-white text-sm font-medium hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg bg-purple-500 text-white text-sm font-medium hover:bg-purple-600 disabled:opacity-50 transition-colors"
                               >
                                 {t.counterOffer}
                               </button>
                               <button
                                 onClick={() => handleQuoteResponse(quote.id, "decline")}
                                 disabled={isSubmitting}
-                                className="px-4 py-2.5 sm:py-2 rounded-lg bg-white/10 text-slate-300 text-sm font-medium hover:bg-white/20 disabled:opacity-50 transition-colors"
+                                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg bg-white/10 text-slate-300 text-sm font-medium hover:bg-white/20 disabled:opacity-50 transition-colors"
                               >
                                 {t.declineOffer}
                               </button>
@@ -528,7 +528,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                   className={`flex ${msg.senderType === "user" ? "justify-end" : "justify-start"}`}
                                 >
                                   <div
-                                    className={`max-w-[75%] rounded-lg px-2.5 py-1.5 ${
+                                    className={`max-w-[75%] rounded-lg px-2.5 py-1.5 break-words ${
                                       msg.senderType === "user"
                                         ? "bg-emerald-500/15 border border-emerald-500/20"
                                         : "bg-blue-500/15 border border-blue-500/20"

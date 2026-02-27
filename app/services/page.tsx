@@ -55,7 +55,7 @@ export default async function ServicesPage() {
                 <div className="mx-auto max-w-6xl">
                     <Link
                         href="/"
-                        className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3 sm:mb-6"
+                        className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3 sm:mb-6"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>

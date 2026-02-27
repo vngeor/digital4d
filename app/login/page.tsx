@@ -159,7 +159,7 @@ export default function LoginPage() {
 
             {/* Login Card */}
             <div className="relative z-10 w-full max-w-md">
-                <div className="glass-strong rounded-3xl p-8 shadow-2xl">
+                <div className="glass-strong rounded-3xl p-5 sm:p-8 shadow-2xl">
                     {/* Logo */}
                     <div className="text-center mb-8">
                         <a href="/" className="text-3xl font-bold tracking-tight inline-block">
@@ -214,7 +214,7 @@ export default function LoginPage() {
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
+                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
                                     placeholder={t("namePlaceholder")}
                                     autoComplete="name"
                                 />
@@ -226,7 +226,7 @@ export default function LoginPage() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
+                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
                                 placeholder={t("emailPlaceholder")}
                                 required
                                 autoComplete="email"
@@ -239,7 +239,7 @@ export default function LoginPage() {
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
+                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors"
                                 placeholder={t("passwordPlaceholder")}
                                 required
                                 autoComplete={isRegister ? "new-password" : "current-password"}
@@ -257,7 +257,7 @@ export default function LoginPage() {
                                     type="date"
                                     value={birthDate}
                                     onChange={(e) => setBirthDate(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors [color-scheme:dark]"
+                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition-colors [color-scheme:dark]"
                                     autoComplete="bday"
                                 />
                             </div>

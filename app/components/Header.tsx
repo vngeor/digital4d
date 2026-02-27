@@ -463,7 +463,7 @@ export function Header() {
                                             document.cookie = `NEXT_LOCALE=${loc};path=/;max-age=${60 * 60 * 24 * 365}`
                                             window.location.reload()
                                         }}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                                             locale === loc
                                                 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                                 : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"

@@ -742,14 +742,14 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
 
                   {/* Coupon code + copy */}
                   <div className="flex items-center gap-2">
-                    <code className={`flex-1 text-base sm:text-lg font-mono font-bold text-amber-400 bg-amber-500/10 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-center tracking-wider ${
+                    <code className={`flex-1 text-base sm:text-lg font-mono font-bold text-amber-400 bg-amber-500/10 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-center sm:tracking-wider whitespace-nowrap overflow-hidden text-ellipsis ${
                       isCouponExpired(selectedNotification.couponExpiresAt) ? "opacity-50 line-through" : ""
                     }`}>
                       {selectedNotification.couponCode}
                     </code>
                     <button
                       onClick={() => handleCopyCodeModal(selectedNotification.couponCode!)}
-                      className="shrink-0 w-11 h-11 sm:w-10 sm:h-10 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors touch-manipulation"
+                      className="shrink-0 w-10 h-10 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors touch-manipulation"
                       title="Copy code"
                     >
                       {copiedCode === selectedNotification.couponCode ? (

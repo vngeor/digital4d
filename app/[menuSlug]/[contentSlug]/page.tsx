@@ -145,7 +145,7 @@ export default async function ContentDetailPage({ params }: PageProps) {
                     {/* Mobile: Simple back arrow */}
                     <Link
                         href={`/${menuSlug}`}
-                        className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3"
+                        className="sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all mb-3"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>

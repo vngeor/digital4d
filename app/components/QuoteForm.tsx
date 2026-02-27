@@ -176,7 +176,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     placeholder={t("namePlaceholder")}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                                 />
                             </div>
                             <div className="col-span-2 sm:col-span-1">
@@ -189,7 +189,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     placeholder={t("emailPlaceholder")}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                                 />
                             </div>
                         </div>
@@ -208,7 +208,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                                 }}
                                 pattern="[0-9+\-\s()]{6,20}"
                                 placeholder={t("phonePlaceholder")}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                             />
                         </div>
 
@@ -221,7 +221,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                 placeholder={t("messagePlaceholder")}
                                 rows={4}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
                             />
                         </div>
 
@@ -237,7 +237,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                                     onDragOver={handleDrag}
                                     onDrop={handleDrop}
                                     onClick={() => fileInputRef.current?.click()}
-                                    className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                                    className={`relative border-2 border-dashed rounded-xl p-4 sm:p-6 text-center cursor-pointer transition-all ${
                                         dragActive
                                             ? "border-emerald-500 bg-emerald-500/10"
                                             : "border-white/20 hover:border-white/40 bg-white/5"

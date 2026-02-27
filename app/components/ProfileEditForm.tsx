@@ -103,10 +103,10 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl border border-white/10 p-4 sm:p-6 shadow-2xl max-h-[85dvh] overflow-y-auto overscroll-contain bg-[#1a1a2e]" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="relative w-full max-w-md rounded-2xl border border-white/10 p-3 sm:p-6 shadow-2xl max-h-[85dvh] overflow-y-auto overscroll-contain bg-[#1a1a2e]" style={{ WebkitOverflowScrolling: 'touch' }}>
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 sm:right-4 sm:top-4 p-1 text-slate-400 hover:text-white transition-colors touch-manipulation"
+          className="absolute right-3 top-3 sm:right-4 sm:top-4 p-2 text-slate-400 hover:text-white transition-colors touch-manipulation"
         >
           <X className="w-5 h-5" />
         </button>
@@ -128,7 +128,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
               }}
               pattern="[0-9+\-\s()]{6,20}"
               placeholder={t.phonePlaceholder}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
             />
           </div>
 
@@ -141,7 +141,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
               value={formData.country}
               onChange={(e) => setFormData({ ...formData, country: e.target.value })}
               placeholder={t.countryPlaceholder}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
             />
           </div>
 
@@ -154,7 +154,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               placeholder={t.cityPlaceholder}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
             />
           </div>
 
@@ -167,7 +167,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder={t.addressPlaceholder}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
             />
           </div>
 
@@ -187,7 +187,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
                   type="date"
                   value={formData.birthDate}
                   onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                  className="w-full px-4 py-3 rounded-[10px] bg-[#1a1a2e] text-white placeholder-slate-500 focus:outline-none transition-colors [color-scheme:dark]"
+                  className="w-full px-4 py-3 rounded-[10px] bg-[#1a1a2e] text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none transition-colors [color-scheme:dark]"
                 />
               </div>
             ) : (
@@ -195,7 +195,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
                 type="date"
                 value={formData.birthDate}
                 onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors [color-scheme:dark]"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors [color-scheme:dark]"
               />
             )}
           </div>

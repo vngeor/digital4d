@@ -95,7 +95,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                     )}
 
                     {/* Content */}
-                    <div className={`p-5 sm:p-8 ${news.image ? "-mt-12 relative z-10" : ""}`}>
+                    <div className={`p-4 sm:p-8 ${news.image ? "-mt-12 relative z-10" : ""}`}>
                         {/* Category & Date */}
                         <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>

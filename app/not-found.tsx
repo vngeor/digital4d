@@ -22,7 +22,7 @@ export default async function NotFound() {
             <section className="relative flex flex-1 items-start justify-center pt-8 sm:pt-16 px-4">
                 <div className="text-center max-w-2xl mx-auto">
                     {/* Title */}
-                    <div className="glass rounded-2xl border border-white/10 px-8 py-6 inline-block mb-6">
+                    <div className="glass rounded-2xl border border-white/10 px-4 py-4 sm:px-8 sm:py-6 inline-block mb-6">
                         <h1 className="text-2xl sm:text-3xl font-bold text-white">
                             {t("heading")}
                         </h1>

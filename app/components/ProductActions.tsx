@@ -155,7 +155,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-mono font-bold text-sm tracking-wider text-orange-200">
+                                <span className="font-mono font-bold text-sm sm:tracking-wider whitespace-nowrap text-orange-200">
                                     {coupon.code}
                                 </span>
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/25 text-orange-300 font-semibold">
@@ -341,13 +341,13 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                                         value={couponCode}
                                         onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError("") }}
                                         placeholder={t("enterCouponCode")}
-                                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 uppercase tracking-wider font-mono"
+                                        className="flex-1 min-w-0 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 uppercase sm:tracking-wider font-mono"
                                         onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
                                     />
                                     <button
                                         onClick={handleApplyCoupon}
                                         disabled={couponLoading || !couponCode.trim()}
-                                        className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/30 disabled:opacity-50 transition-colors"
+                                        className="px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/30 disabled:opacity-50 transition-colors whitespace-nowrap"
                                     >
                                         {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("applyCoupon")}
                                     </button>
@@ -365,10 +365,10 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                         )}
                     </div>
                 ) : (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                        <div className="flex items-center gap-2">
-                            <Check className="w-4 h-4 text-emerald-400" />
-                            <span className="text-sm text-emerald-400 font-medium font-mono">{appliedCoupon.couponCode}</span>
+                    <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span className="text-sm text-emerald-400 font-medium font-mono truncate">{appliedCoupon.couponCode}</span>
                             <span className="text-xs text-emerald-400/70">
                                 ({appliedCoupon.type === "percentage" ? `${appliedCoupon.value}%` : `-${appliedCoupon.discountAmount} ${appliedCoupon.productCurrency}`})
                             </span>
@@ -423,7 +423,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                     {t("couponDiscountAvailable")}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-mono font-bold text-amber-300 text-sm tracking-wider">{initialCouponCode.toUpperCase()}</span>
+                    <span className="font-mono font-bold text-amber-300 text-sm sm:tracking-wider whitespace-nowrap">{initialCouponCode.toUpperCase()}</span>
                     <span className="text-[11px] text-amber-400/60">— {t("couponMentionInQuote")}</span>
                 </div>
             </div>
