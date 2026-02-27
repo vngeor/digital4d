@@ -606,7 +606,7 @@ export function QuoteDetailModal({ quote, onClose, onSaved, canDelete, onDelete 
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
                           <Ticket className="w-3.5 h-3.5" />
-                          <span className="font-mono font-medium">{selectedCoupon.code}</span>
+                          <span className="font-mono font-medium whitespace-nowrap">{selectedCoupon.code}</span>
                           <span className="text-amber-400/60">({formatCouponValue(selectedCoupon)})</span>
                           <button
                             type="button"

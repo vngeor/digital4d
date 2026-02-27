@@ -375,7 +375,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                   {quote.product?.slug ? (
                                     <Link
                                       href={`/products/${quote.product.slug}?coupon=${quote.coupon.code}`}
-                                      className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-colors"
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-colors"
                                     >
                                       <Ticket className="w-3.5 h-3.5 text-amber-400" />
                                       <span className="text-xs text-amber-400 font-medium">{t.couponIncluded}:</span>
@@ -397,7 +397,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                       </span>
                                     </Link>
                                   ) : (
-                                    <div className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
                                       <Ticket className="w-3.5 h-3.5 text-amber-400" />
                                       <span className="text-xs text-amber-400 font-medium">{t.couponIncluded}:</span>
                                       <span className="text-xs text-amber-300 font-mono font-bold sm:tracking-wider whitespace-nowrap">{quote.coupon.code}</span>

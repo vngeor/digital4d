@@ -154,7 +154,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                             <Ticket className="w-5 h-5 text-orange-300" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
                                 <span className="font-mono font-bold text-sm sm:tracking-wider whitespace-nowrap text-orange-200">
                                     {coupon.code}
                                 </span>

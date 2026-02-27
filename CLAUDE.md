@@ -148,6 +148,7 @@ No test framework is configured.
 ### Styling
 
 - **Tailwind v4** with inline theme in `app/globals.css` (no separate config file)
+- **CSS Cascade Layers**: Tailwind v4 wraps all utilities in `@layer utilities`. Custom CSS in `globals.css` that could conflict with utilities MUST be wrapped in `@layer base {}` — otherwise unlayered CSS overrides all Tailwind utilities per the CSS Cascade Layers spec. The heading fonts, word-break rules, prose overrides, and cursor rules are all in `@layer base`. The `body` rule, tap-highlight rule, `@supports` blocks, `.glass`/`.glass-strong`, animations, and animation delays are safe unlayered.
 - Dark theme with glassmorphism: `.glass` and `.glass-strong` utility classes
 - Primary gradient: `from-emerald-500 to-cyan-500`
 - Fonts: `Exo_2` (headings), `Inter` (body) — both with Latin + Cyrillic subsets
@@ -157,6 +158,7 @@ No test framework is configured.
 - Animation delays: `.animation-delay-200`, `.animation-delay-400`, `.animation-delay-1000`, `.animation-delay-2000`
 - Toast notifications: `sonner`
 - **Responsive breakpoints**: mobile-first design. Key breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px — admin table/card toggle). Product detail page stacks to single column on mobile (`grid-cols-1 md:grid-cols-2`). Homepage contact section shows phone numbers on all sizes.
+- **Mobile responsive patterns**: iOS Safari input zoom prevention via `text-base sm:text-sm` (16px mobile → 14px desktop), `-webkit-tap-highlight-color: transparent` on buttons/links, `-webkit-font-smoothing: antialiased` on body, `overflow-x: hidden` on body to prevent horizontal scroll. Coupon codes use `whitespace-nowrap` + `font-mono` without `flex-wrap` on containers. Back button touch targets are `w-10 h-10` (40px minimum).
 
 ### Code Generation
 
@@ -267,3 +269,4 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 5. **Prisma serialization** — always `JSON.parse(JSON.stringify())` when passing Prisma results to client components
 6. **NextAuth v5 beta** — some APIs may change before final release
 7. **Permission changes** — when modifying role permissions on `/admin/roles`, or user-level overrides on `/admin/users`, caches are invalidated. Changing a user's role clears their user-level overrides
+8. **CSS Cascade Layers** — any custom CSS in `globals.css` that could conflict with Tailwind utilities MUST be inside `@layer base {}`. Unlayered CSS overrides ALL Tailwind utilities (including `whitespace-nowrap`, `truncate`, etc.) because Tailwind v4 puts utilities in `@layer utilities` and unlayered CSS always wins per the CSS spec. Never add global element selectors (e.g., `span { word-break: break-word }`) outside a `@layer` block.

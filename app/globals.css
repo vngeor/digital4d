@@ -43,40 +43,42 @@ button, a, [role="button"] {
   -webkit-tap-highlight-color: transparent;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-exo2), sans-serif;
-}
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-exo2), sans-serif;
+  }
 
-/* Global text overflow fixes for mobile */
-p, h1, h2, h3, h4, h5, h6, span, a, li {
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
+  /* Global text overflow fixes for mobile — span excluded so Tailwind utilities work */
+  p, h1, h2, h3, h4, h5, h6, a, li {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 
-/* Prevent gradient text clipping on descenders/ascenders */
-.bg-clip-text {
-  padding-block: 0.2em;
-  margin-block: -0.2em;
-}
+  /* Prevent gradient text clipping on descenders/ascenders */
+  .bg-clip-text {
+    padding-block: 0.2em;
+    margin-block: -0.2em;
+  }
 
-/* Ensure prose content doesn't overflow on mobile */
-.prose {
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
+  /* Ensure prose content doesn't overflow on mobile */
+  .prose {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 
-.prose pre {
-  overflow-x: auto;
-  max-width: 100%;
-}
+  .prose pre {
+    overflow-x: auto;
+    max-width: 100%;
+  }
 
-.prose img {
-  max-width: 100%;
-  height: auto;
-}
+  .prose img {
+    max-width: 100%;
+    height: auto;
+  }
 
-button, select, [role="button"] {
-  cursor: pointer;
+  button, select, [role="button"] {
+    cursor: pointer;
+  }
 }
 
 /* iOS Safari viewport height fallback for browsers without dvh support */
