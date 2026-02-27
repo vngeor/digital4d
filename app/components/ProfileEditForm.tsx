@@ -10,6 +10,7 @@ interface ProfileEditFormProps {
   city: string | null
   address: string | null
   birthDate: string | null
+  highlightBirthDate?: boolean
   onClose: () => void
   translations: {
     editProfileTitle: string
@@ -23,6 +24,7 @@ interface ProfileEditFormProps {
     address: string
     addressPlaceholder: string
     birthDate: string
+    birthDateRequired: string
     save: string
     saving: string
     cancel: string
@@ -31,7 +33,7 @@ interface ProfileEditFormProps {
   }
 }
 
-export function ProfileEditForm({ phone, country, city, address, birthDate, onClose, translations: t }: ProfileEditFormProps) {
+export function ProfileEditForm({ phone, country, city, address, birthDate, highlightBirthDate, onClose, translations: t }: ProfileEditFormProps) {
   const router = useRouter()
 
   // Format birthDate to YYYY-MM-DD for the date input
@@ -61,6 +63,11 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, onCl
 
     if (!formData.phone.trim()) {
       setError(t.phoneRequired)
+      return
+    }
+
+    if (!formData.birthDate) {
+      setError(t.birthDateRequired)
       return
     }
 
@@ -165,15 +172,32 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, onCl
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              {t.birthDate}
+            <label className={`block text-sm font-medium mb-2 ${highlightBirthDate && !formData.birthDate ? "text-pink-300" : "text-slate-300"}`}>
+              {t.birthDate} <span className="text-red-400">*</span>
+              {highlightBirthDate && !formData.birthDate && (
+                <span className="ml-1 text-xs text-pink-400">🎂</span>
+              )}
             </label>
-            <input
-              type="date"
-              value={formData.birthDate}
-              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors [color-scheme:dark]"
-            />
+            {highlightBirthDate && !formData.birthDate ? (
+              <div
+                className="rounded-xl p-[2px] animate-pulse-glow"
+                style={{ background: "linear-gradient(to right, lab(56.9303 76.8162 -8.07021) 0%, lab(56.101 79.4328 31.4532) 100%)" }}
+              >
+                <input
+                  type="date"
+                  value={formData.birthDate}
+                  onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                  className="w-full px-4 py-3 rounded-[10px] bg-[#1a1a2e] text-white placeholder-slate-500 focus:outline-none transition-colors [color-scheme:dark]"
+                />
+              </div>
+            ) : (
+              <input
+                type="date"
+                value={formData.birthDate}
+                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors [color-scheme:dark]"
+              />
+            )}
           </div>
 
           {error && (

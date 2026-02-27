@@ -1087,6 +1087,7 @@
     "cityPlaceholder": "София",
     "addressPlaceholder": "Улица и номер",
     "phoneRequired": "Телефонният номер е задължителен",
+    "birthDateRequired": "Датата на раждане е задължителна",
     "save": "Запази промените",
     "saving": "Запазване...",
     "cancel": "Отказ",

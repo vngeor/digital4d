@@ -1087,6 +1087,7 @@
     "cityPlaceholder": "Sofia",
     "addressPlaceholder": "Street address",
     "phoneRequired": "Phone number is required",
+    "birthDateRequired": "Birth date is required",
     "save": "Save Changes",
     "saving": "Saving...",
     "cancel": "Cancel",

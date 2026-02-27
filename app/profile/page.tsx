@@ -57,6 +57,7 @@ export default async function ProfilePage() {
     cityPlaceholder: t("cityPlaceholder"),
     addressPlaceholder: t("addressPlaceholder"),
     phoneRequired: t("phoneRequired"),
+    birthDateRequired: t("birthDateRequired"),
     save: t("save"),
     saving: t("saving"),
     cancel: t("cancel"),

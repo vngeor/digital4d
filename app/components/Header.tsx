@@ -9,7 +9,7 @@ import Image from "next/image"
 import { LanguageSwitcher } from "./LanguageSwitcher"
 import { locales, localeFlags, type Locale } from "@/i18n/config"
 import { NotificationBell } from "./NotificationBell"
-import { ChevronDown, Menu, X, Heart } from "lucide-react"
+import { ChevronDown, Menu, X, Heart, Cake } from "lucide-react"
 
 interface MenuContent {
     id: string
@@ -40,6 +40,7 @@ export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [expandedItem, setExpandedItem] = useState<string | null>(null)
     const [userDropdownOpen, setUserDropdownOpen] = useState(false)
+    const [missingBirthDate, setMissingBirthDate] = useState(false)
     const userDropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -56,6 +57,26 @@ export function Header() {
         }
         fetchMenu()
     }, [])
+
+    // Check if logged-in user has birthDate set
+    useEffect(() => {
+        if (status !== "authenticated") {
+            setMissingBirthDate(false)
+            return
+        }
+        const checkBirthDate = async () => {
+            try {
+                const res = await fetch("/api/user/profile")
+                if (res.ok) {
+                    const data = await res.json()
+                    setMissingBirthDate(!data.birthDate)
+                }
+            } catch {
+                // Silently ignore
+            }
+        }
+        checkBirthDate()
+    }, [status])
 
     // Close mobile menu on route change
     useEffect(() => {
@@ -205,19 +226,27 @@ export function Header() {
                                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                                 className="flex items-center gap-2 px-3 py-2 rounded-full glass hover:bg-white/10 transition-all"
                             >
-                                {session.user?.image ? (
-                                    <Image
-                                        src={session.user.image}
-                                        alt={session.user.name || "User"}
-                                        width={32}
-                                        height={32}
-                                        className="w-8 h-8 rounded-full"
-                                    />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-sm font-bold">
-                                        {session.user?.name?.charAt(0) || "U"}
-                                    </div>
-                                )}
+                                <div className="relative">
+                                    {session.user?.image ? (
+                                        <Image
+                                            src={session.user.image}
+                                            alt={session.user.name || "User"}
+                                            width={32}
+                                            height={32}
+                                            className="w-8 h-8 rounded-full"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-sm font-bold">
+                                            {session.user?.name?.charAt(0) || "U"}
+                                        </div>
+                                    )}
+                                    {missingBirthDate && (
+                                        <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" />
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-pink-500 border border-slate-900" />
+                                        </span>
+                                    )}
+                                </div>
                                 <span className="hidden lg:block text-sm max-w-[100px] truncate">
                                     {session.user?.name?.split(" ")[0]}
                                 </span>
@@ -235,9 +264,18 @@ export function Header() {
                                     <Link
                                         href="/profile"
                                         onClick={() => setUserDropdownOpen(false)}
-                                        className="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                                        className="flex items-center justify-between w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
                                     >
-                                        {t("profile")}
+                                        <span>{t("profile")}</span>
+                                        {missingBirthDate && (
+                                            <span className="flex items-center gap-1.5">
+                                                <Cake className="w-3.5 h-3.5 text-pink-400" />
+                                                <span className="relative flex h-2.5 w-2.5">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" />
+                                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500" />
+                                                </span>
+                                            </span>
+                                        )}
                                     </Link>
                                     <Link
                                         href="/my-orders"
@@ -365,9 +403,18 @@ export function Header() {
                             <>
                                 <Link
                                     href="/profile"
-                                    className="mt-4 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation"
+                                    className="relative mt-4 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation flex items-center justify-center gap-2"
                                 >
                                     {t("profile")}
+                                    {missingBirthDate && (
+                                        <span className="flex items-center gap-1.5">
+                                            <Cake className="w-3.5 h-3.5 text-pink-400" />
+                                            <span className="relative flex h-2.5 w-2.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" />
+                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500" />
+                                            </span>
+                                        </span>
+                                    )}
                                 </Link>
                                 <Link
                                     href="/my-orders"

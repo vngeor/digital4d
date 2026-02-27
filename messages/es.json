@@ -1087,6 +1087,7 @@
     "cityPlaceholder": "Madrid",
     "addressPlaceholder": "Dirección de la calle",
     "phoneRequired": "El número de teléfono es requerido",
+    "birthDateRequired": "La fecha de nacimiento es requerida",
     "save": "Guardar Cambios",
     "saving": "Guardando...",
     "cancel": "Cancelar",

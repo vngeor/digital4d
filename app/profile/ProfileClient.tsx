@@ -46,6 +46,7 @@ interface ProfileClientProps {
     cityPlaceholder: string
     addressPlaceholder: string
     phoneRequired: string
+    birthDateRequired: string
     save: string
     saving: string
     cancel: string
@@ -256,6 +257,7 @@ export function ProfileClient({ user, translations: t }: ProfileClientProps) {
           city={user.city}
           address={user.address}
           birthDate={user.birthDate}
+          highlightBirthDate={!user.birthDate}
           onClose={() => setIsEditModalOpen(false)}
           translations={{
             editProfileTitle: t.editProfileTitle,
@@ -269,6 +271,7 @@ export function ProfileClient({ user, translations: t }: ProfileClientProps) {
             address: t.address,
             addressPlaceholder: t.addressPlaceholder,
             birthDate: t.birthDate,
+            birthDateRequired: t.birthDateRequired,
             save: t.save,
             saving: t.saving,
             cancel: t.cancel,
