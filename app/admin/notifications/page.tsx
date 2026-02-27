@@ -116,6 +116,8 @@ export default function NotificationsPage() {
   const [selectedUsers, setSelectedUsers] = useState<SearchUser[]>([])
   const [selectAllChecked, setSelectAllChecked] = useState(false)
   const userSearchTimeout = useRef<NodeJS.Timeout | null>(null)
+  const [allUsers, setAllUsers] = useState<SearchUser[]>([])
+  const allUsersLoadedRef = useRef(false)
 
   // Quick filter state
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
@@ -194,10 +196,37 @@ export default function NotificationsPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  // Load all users (cached, only fetches once)
+  const loadAllUsers = useCallback(async () => {
+    if (allUsersLoadedRef.current) {
+      setUserResults(allUsers)
+      return
+    }
+    setUserSearchLoading(true)
+    try {
+      const res = await fetch("/api/admin/users")
+      if (!res.ok) throw new Error("Failed to load users")
+      const data = await res.json()
+      const users = Array.isArray(data) ? data : data.users || []
+      setAllUsers(users)
+      allUsersLoadedRef.current = true
+      setUserResults(users)
+    } catch {
+      setUserResults([])
+    } finally {
+      setUserSearchLoading(false)
+    }
+  }, [allUsers])
+
   // Search users for the send modal
   const searchUsers = useCallback(async (query: string) => {
     if (!query.trim()) {
-      setUserResults([])
+      // When query is cleared, show all users from cache
+      if (allUsersLoadedRef.current) {
+        setUserResults(allUsers)
+      } else {
+        setUserResults([])
+      }
       return
     }
     setUserSearchLoading(true)
@@ -212,12 +241,19 @@ export default function NotificationsPage() {
     } finally {
       setUserSearchLoading(false)
     }
-  }, [])
+  }, [allUsers])
 
   const handleUserSearchChange = (value: string) => {
     setUserSearch(value)
     setActiveFilter(null)
     if (userSearchTimeout.current) clearTimeout(userSearchTimeout.current)
+    if (!value.trim()) {
+      // Show all users from cache immediately when clearing
+      if (allUsersLoadedRef.current) {
+        setUserResults(allUsers)
+      }
+      return
+    }
     userSearchTimeout.current = setTimeout(() => {
       searchUsers(value)
     }, 300)
@@ -933,6 +969,11 @@ export default function NotificationsPage() {
                     type="text"
                     value={userSearch}
                     onChange={(e) => handleUserSearchChange(e.target.value)}
+                    onFocus={() => {
+                      if (!activeFilter) {
+                        loadAllUsers()
+                      }
+                    }}
                     placeholder={t("searchUsers")}
                     className="w-full pl-9 pr-9 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                   />
@@ -943,8 +984,13 @@ export default function NotificationsPage() {
                       type="button"
                       onClick={() => {
                         setUserSearch("")
-                        setUserResults([])
                         setActiveFilter(null)
+                        // Show all users from cache when clearing
+                        if (allUsersLoadedRef.current) {
+                          setUserResults(allUsers)
+                        } else {
+                          setUserResults([])
+                        }
                       }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
                     >
@@ -955,19 +1001,30 @@ export default function NotificationsPage() {
 
                 {/* User Results */}
                 {userResults.length > 0 && (
-                  <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-white/5">
-                    {/* Select All */}
-                    <label className="flex items-center gap-3 px-3 py-2 border-b border-white/10 hover:bg-white/5 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={selectAllChecked}
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
-                      />
+                  <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-white/10 bg-white/5">
+                    {/* Select All / Deselect All */}
+                    <button
+                      type="button"
+                      onClick={handleSelectAll}
+                      className="flex items-center gap-3 px-3 py-2 border-b border-white/10 hover:bg-white/5 cursor-pointer transition-colors w-full text-left"
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                        selectAllChecked
+                          ? "bg-emerald-500 border-emerald-500"
+                          : userResults.some(u => selectedUsers.some(s => s.id === u.id))
+                            ? "bg-emerald-500/50 border-emerald-500"
+                            : "border-gray-500"
+                      }`}>
+                        {selectAllChecked ? (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        ) : userResults.some(u => selectedUsers.some(s => s.id === u.id)) ? (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
+                        ) : null}
+                      </div>
                       <span className="text-sm font-medium text-emerald-400">
-                        {t("selectAll")} ({userResults.length})
+                        {selectAllChecked ? t("deselectAll") : t("selectAll")} ({userResults.length})
                       </span>
-                    </label>
+                    </button>
 
                     {/* User List */}
                     {userResults.map((user) => {

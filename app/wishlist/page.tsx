@@ -33,6 +33,41 @@ export default async function WishlistPage() {
     // Filter out unpublished products
     const items = wishlistItems.filter((w) => w.product.published)
 
+    // Fetch promoted coupons for product card badges
+    const now = new Date()
+    const promotedCouponsRaw = await prisma.coupon.findMany({
+        where: {
+            showOnProduct: true,
+            active: true,
+            AND: [
+                { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+            ],
+        },
+        select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
+    })
+
+    // Build coupon map: productId → best coupon badge info
+    const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
+    const globalCoupons = promotedCouponsRaw.filter(c => c.productIds.length === 0)
+    const specificCoupons = promotedCouponsRaw.filter(c => c.productIds.length > 0)
+
+    for (const item of items) {
+        const product = item.product
+        const isOnSale = product.onSale && product.salePrice
+        const specific = specificCoupons.find(c =>
+            c.productIds.includes(product.id) && !(isOnSale && !c.allowOnSale)
+        )
+        if (specific) {
+            couponMap[product.id] = { type: specific.type, value: specific.value.toString(), currency: specific.currency }
+            continue
+        }
+        const global = globalCoupons.find(c => !(isOnSale && !c.allowOnSale))
+        if (global) {
+            couponMap[product.id] = { type: global.type, value: global.value.toString(), currency: global.currency }
+        }
+    }
+
     // Fetch categories for display
     const categoryIds = [...new Set(items.map((w) => w.product.category))]
     const categories = categoryIds.length > 0
@@ -60,6 +95,7 @@ export default async function WishlistPage() {
             categories={JSON.parse(JSON.stringify(categories))}
             locale={locale}
             translations={translations}
+            couponMap={couponMap}
         />
     )
 }

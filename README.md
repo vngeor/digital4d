@@ -8,9 +8,12 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 
 - **Multilingual** - Full i18n support (BG/EN/ES) with next-intl
 - **E-commerce** - Product catalog, categories, digital downloads, Stripe payments
+- **Coupons & Discounts** - Percentage/fixed coupons, product-specific or global, promotional badges on product cards, live countdown timers
+- **Wishlist** - Save products for later, price drop & coupon notifications
 - **Quote System** - File uploads (STL/OBJ/3MF), quote requests, admin-customer messaging
+- **Notifications** - Unified notification system with scheduling, smart recipient selection, coupon & wishlist alerts
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content
-- **Admin Dashboard** - Products, orders, quotes, users, content, banners management
+- **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
 - **Security** - Auto-logout after 5 min inactivity, permission-gated admin pages and API routes
 - **Authentication** - Email/password + OAuth (Google, GitHub)
@@ -38,28 +41,37 @@ digital4d-next/
 ├── app/
 │   ├── [menuSlug]/        # Dynamic CMS pages
 │   ├── admin/             # Admin dashboard
+│   │   ├── audit-logs/    # Action audit trail
 │   │   ├── banners/       # Homepage banners management
 │   │   ├── content/       # News/services content
+│   │   ├── coupons/       # Coupon & discount management
+│   │   ├── media/         # Media gallery
 │   │   ├── menu/          # Navigation menu items
+│   │   ├── notifications/ # User notification management
 │   │   ├── orders/        # Order management
 │   │   ├── products/      # Product catalog management
 │   │   ├── quotes/        # Quote requests management
+│   │   ├── roles/         # Role permission matrix
 │   │   ├── types/         # Content types configuration
-│   │   ├── users/         # User management
-│   │   └── roles/         # Role permission matrix
+│   │   └── users/         # User management
 │   ├── api/               # API routes
 │   │   ├── admin/         # Admin-only endpoints
 │   │   ├── auth/          # Authentication
 │   │   ├── checkout/      # Stripe payment flow
+│   │   ├── coupons/       # Coupon validation
+│   │   ├── notifications/ # User notifications
 │   │   ├── quotes/        # Quote system
+│   │   ├── wishlist/      # Wishlist management
 │   │   └── upload/        # Image uploads
 │   ├── components/        # Reusable UI components
+│   ├── checkout/          # Stripe success/cancel pages
 │   ├── login/             # Authentication pages
 │   ├── my-orders/         # User order history
 │   ├── news/              # News listing
 │   ├── products/          # Product catalog & downloads
 │   ├── profile/           # User profile
-│   └── services/          # Services listing
+│   ├── services/          # Services listing
+│   └── wishlist/          # Saved products
 ├── lib/                   # Utilities
 │   ├── admin.ts           # Auth guards (requirePermission, requirePermissionApi)
 │   ├── permissions.ts     # Permission resolution (role + user overrides)
@@ -164,6 +176,11 @@ Key models:
 - **QuoteRequest** - Quote requests with file attachments
 - **QuoteMessage** - Quote conversation history
 - **DigitalPurchase** - Digital download tokens
+- **Coupon** - Discount codes (percentage/fixed, product-specific, date ranges)
+- **CouponUsage** - Coupon usage tracking per user
+- **Notification** - User notifications (admin messages, coupons, wishlist alerts)
+- **WishlistItem** - User wishlisted products
+- **WishlistNotification** - Prevents duplicate wishlist notifications
 - **MenuItem** - Dynamic navigation
 - **Content** - CMS content (news, services)
 - **ContentType** - Content categorization
@@ -177,11 +194,14 @@ Key models:
 - `GET /api/news` - Published news
 - `POST /api/quotes` - Submit quote request
 - `POST /api/checkout` - Stripe checkout session
+- `POST /api/coupons/validate` - Validate coupon code
 
 ### Authenticated
-- `GET /api/user/profile` - User profile
+- `GET/PUT /api/user/profile` - User profile
 - `GET /api/user/orders` - User order history
 - `GET /api/quotes/[id]/messages` - Quote messages
+- `GET /api/notifications` - User notifications
+- `GET/POST/DELETE /api/wishlist` - Wishlist management
 
 ### Admin Only
 - `/api/admin/products` - CRUD products
@@ -189,8 +209,11 @@ Key models:
 - `/api/admin/quotes` - Manage quotes
 - `/api/admin/content` - Manage CMS content
 - `/api/admin/banners` - Manage banners
+- `/api/admin/coupons` - Manage coupons
+- `/api/admin/notifications` - Manage notifications
 - `/api/admin/users` - Manage users
 - `/api/admin/users/permissions` - Per-user permission overrides
+- `/api/admin/media` - Media gallery
 - `/api/admin/menu` - Manage navigation
 - `/api/admin/types` - Manage content types
 - `/api/admin/roles` - Role permission matrix
@@ -466,6 +489,58 @@ Configure role-level permissions with a visual matrix.
 1. **User override** (highest priority) — set per-user on Users page
 2. **Role override** — set on Roles page
 3. **Code defaults** — hardcoded fallback in `lib/permissions.ts`
+
+---
+
+### Coupons (`/admin/coupons`)
+
+Manage discount codes for products and checkout.
+
+**Features:**
+- Percentage or fixed-amount discounts
+- Product-specific or global (all products) coupons
+- Usage limits (total and per-user)
+- Date range scheduling (start/expiry)
+- `showOnProduct` toggle for promotional badges on product cards and detail pages
+- Product picker with all-products-on-focus and select all/deselect all
+- Usage statistics and deep linking
+
+---
+
+### Notifications (`/admin/notifications`)
+
+Send and manage user notifications.
+
+**Features:**
+- Smart recipient selection with all-users-on-focus, search, and select all
+- Quick filters: Birthday Today/This Week/This Month, All Users, By Role
+- Schedule notifications for future delivery
+- Admin message and coupon notification types
+- Optional deep links
+
+---
+
+### Media Gallery (`/admin/media`)
+
+Manage uploaded images and files.
+
+**Features:**
+- Grid and list views
+- File type filtering
+- Image preview with metadata
+- Bulk delete support
+
+---
+
+### Audit Logs (`/admin/audit-logs`)
+
+Track all admin actions.
+
+**Features:**
+- Action badges with icons (create, edit, delete)
+- Resource badges matching sidebar icons
+- User attribution
+- Date range filtering
 
 ---
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Heart, ArrowLeft, ShoppingCart, MessageSquare, Package, Bell, Star, Tag } from "lucide-react"
+import { Heart, ArrowLeft, ShoppingCart, MessageSquare, Package, Bell, Star, Tag, Ticket } from "lucide-react"
 import { toast } from "sonner"
 import { Header } from "../components/Header"
 
@@ -40,6 +40,12 @@ interface ProductCategory {
     color: string
 }
 
+interface CouponBadge {
+    type: string
+    value: string
+    currency: string | null
+}
+
 interface WishlistClientProps {
     items: WishlistItem[]
     categories: ProductCategory[]
@@ -56,6 +62,7 @@ interface WishlistClientProps {
         priceDropAlert: string
         backToHome: string
     }
+    couponMap?: Record<string, CouponBadge>
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -77,7 +84,7 @@ const COLOR_CLASSES: Record<string, string> = {
     yellow: "bg-yellow-500/20 text-yellow-400",
 }
 
-export function WishlistClient({ items: initialItems, categories, locale, translations: t }: WishlistClientProps) {
+export function WishlistClient({ items: initialItems, categories, locale, translations: t, couponMap }: WishlistClientProps) {
     const [items, setItems] = useState(initialItems)
 
     const getLocalizedName = (item: { nameBg: string; nameEn: string; nameEs: string }) => {
@@ -243,6 +250,18 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                                         <Heart className="w-4 h-4 fill-red-400" />
                                                     </button>
                                                 </div>
+
+                                                {/* Coupon Badge */}
+                                                {couponMap?.[product.id] && (
+                                                    <div className="absolute bottom-3 left-3">
+                                                        <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-orange-500 text-white shadow-lg">
+                                                            <Ticket className="w-3 h-3" />
+                                                            -{couponMap[product.id].type === "percentage"
+                                                                ? `${couponMap[product.id].value}%`
+                                                                : `${couponMap[product.id].value} ${couponMap[product.id].currency || "EUR"}`}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </Link>
 

@@ -95,6 +95,36 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         notFound()
     }
 
+    // Fetch promoted coupons for this product
+    const now = new Date()
+    const promotedCouponsRaw = await prisma.coupon.findMany({
+        where: {
+            showOnProduct: true,
+            active: true,
+            OR: [
+                { productIds: { has: product.id } },
+                { productIds: { isEmpty: true } },
+            ],
+            AND: [
+                { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+            ],
+        },
+        select: { code: true, type: true, value: true, currency: true, expiresAt: true, allowOnSale: true },
+        take: 3,
+    })
+
+    // Filter out coupons that don't allow sale products (if product is on sale)
+    const promotedCoupons = promotedCouponsRaw
+        .filter(c => !(product.onSale && product.salePrice && !c.allowOnSale))
+        .map(c => ({
+            code: c.code,
+            type: c.type,
+            value: c.value.toString(),
+            currency: c.currency,
+            expiresAt: c.expiresAt?.toISOString() || null,
+        }))
+
     // Fetch the category
     const category = await prisma.productCategory.findFirst({
         where: { slug: product.category }
@@ -125,6 +155,39 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         take: 3,
         orderBy: [{ featured: "desc" }, { order: "asc" }]
     })
+
+    // Build coupon map for related product card badges
+    // Fetch all promoted coupons (broader query than the product-specific one above)
+    const allPromotedCoupons = await prisma.coupon.findMany({
+        where: {
+            showOnProduct: true,
+            active: true,
+            AND: [
+                { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+            ],
+        },
+        select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
+    })
+
+    const relatedCouponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
+    const relGlobalCoupons = allPromotedCoupons.filter(c => c.productIds.length === 0)
+    const relSpecificCoupons = allPromotedCoupons.filter(c => c.productIds.length > 0)
+
+    for (const related of relatedProducts) {
+        const isOnSale = related.onSale && related.salePrice
+        const specific = relSpecificCoupons.find(c =>
+            c.productIds.includes(related.id) && !(isOnSale && !c.allowOnSale)
+        )
+        if (specific) {
+            relatedCouponMap[related.id] = { type: specific.type, value: specific.value.toString(), currency: specific.currency }
+            continue
+        }
+        const global = relGlobalCoupons.find(c => !(isOnSale && !c.allowOnSale))
+        if (global) {
+            relatedCouponMap[related.id] = { type: global.type, value: global.value.toString(), currency: global.currency }
+        }
+    }
 
     const getLocalizedName = (item: { nameBg: string; nameEn: string; nameEs: string }) => {
         switch (locale) {
@@ -344,6 +407,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             <ProductActions
                                 product={JSON.parse(JSON.stringify(product))}
                                 initialCouponCode={couponCode}
+                                promotedCoupons={promotedCoupons}
                             />
 
                         </div>
@@ -410,6 +474,19 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                                 -{relatedDiscountPercent}%
                                                             </span>
                                                         )}
+                                                    </div>
+                                                )}
+                                                {/* Coupon Badge */}
+                                                {relatedCouponMap[related.id] && (
+                                                    <div className="absolute bottom-1.5 left-1.5 md:bottom-2 md:left-2">
+                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-orange-500 text-white shadow-lg">
+                                                            <svg className="w-2.5 h-2.5 md:w-3 md:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                                                            </svg>
+                                                            -{relatedCouponMap[related.id].type === "percentage"
+                                                                ? `${relatedCouponMap[related.id].value}%`
+                                                                : `${relatedCouponMap[related.id].value} ${relatedCouponMap[related.id].currency || "EUR"}`}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>

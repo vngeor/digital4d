@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       code, type, value, currency, minPurchase, maxUses,
-      perUserLimit, productIds, allowOnSale, active, startsAt, expiresAt,
+      perUserLimit, productIds, allowOnSale, showOnProduct, active, startsAt, expiresAt,
     } = body
 
     if (!code || !type || value === undefined || value === null) {
@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
         perUserLimit: perUserLimit ? parseInt(perUserLimit) : 1,
         productIds: productIds || [],
         allowOnSale: allowOnSale ?? false,
+        showOnProduct: showOnProduct ?? false,
         active: active ?? true,
         startsAt: startsAt ? new Date(startsAt) : null,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
@@ -181,7 +182,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const {
       id, type, value, currency, minPurchase, maxUses,
-      perUserLimit, productIds, allowOnSale, active, startsAt, expiresAt,
+      perUserLimit, productIds, allowOnSale, showOnProduct, active, startsAt, expiresAt,
     } = body
 
     if (!id) {
@@ -208,13 +209,14 @@ export async function PUT(request: NextRequest) {
         perUserLimit: perUserLimit !== undefined ? parseInt(perUserLimit) : undefined,
         productIds: productIds !== undefined ? productIds : undefined,
         allowOnSale: allowOnSale !== undefined ? allowOnSale : undefined,
+        showOnProduct: showOnProduct !== undefined ? showOnProduct : undefined,
         active: active !== undefined ? active : undefined,
         startsAt: startsAt !== undefined ? (startsAt ? new Date(startsAt) : null) : undefined,
         expiresAt: expiresAt !== undefined ? (expiresAt ? new Date(expiresAt) : null) : undefined,
       },
     })
 
-    const trackFields = ["type", "value", "currency", "minPurchase", "maxUses", "perUserLimit", "productIds", "allowOnSale", "active", "startsAt", "expiresAt"]
+    const trackFields = ["type", "value", "currency", "minPurchase", "maxUses", "perUserLimit", "productIds", "allowOnSale", "showOnProduct", "active", "startsAt", "expiresAt"]
     const details = getChangeDetails(
       oldCoupon as unknown as Record<string, unknown>,
       updated as unknown as Record<string, unknown>,

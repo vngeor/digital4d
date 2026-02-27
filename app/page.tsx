@@ -44,6 +44,20 @@ export default async function Home() {
     const productCategories = await prisma.productCategory.findMany()
     const categoryMap = new Map(productCategories.map(cat => [cat.slug, cat]))
 
+    // Fetch promoted coupons for product card badges
+    const now = new Date()
+    const promotedCouponsRaw = await prisma.coupon.findMany({
+        where: {
+            showOnProduct: true,
+            active: true,
+            AND: [
+                { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+            ],
+        },
+        select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
+    })
+
     // Fetch published banners
     const dbBanners = await prisma.banner.findMany({
         where: { published: true },
@@ -132,6 +146,26 @@ export default async function Home() {
             featured: product.featured,
         }
     })
+
+    // Build coupon map: productId → best coupon badge info
+    const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
+    const globalCoupons = promotedCouponsRaw.filter(c => c.productIds.length === 0)
+    const specificCoupons = promotedCouponsRaw.filter(c => c.productIds.length > 0)
+
+    for (const product of products) {
+        const isOnSale = product.onSale && product.salePrice
+        const specific = specificCoupons.find(c =>
+            c.productIds.includes(product.id) && !(isOnSale && !c.allowOnSale)
+        )
+        if (specific) {
+            couponMap[product.id] = { type: specific.type, value: specific.value.toString(), currency: specific.currency }
+            continue
+        }
+        const global = globalCoupons.find(c => !(isOnSale && !c.allowOnSale))
+        if (global) {
+            couponMap[product.id] = { type: global.type, value: global.value.toString(), currency: global.currency }
+        }
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
@@ -227,7 +261,7 @@ export default async function Home() {
             {cardBanners.length > 0 && <FeaturedCards cards={cardBanners} />}
 
             {/* Products Section */}
-            <HomeProductsSection products={products} />
+            <HomeProductsSection products={products} couponMap={couponMap} />
 
             {/* News Section */}
             <NewsSection newsItems={newsItems} showAllLink={true} compact={true} />

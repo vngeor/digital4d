@@ -42,6 +42,40 @@ export default async function ProductsPage() {
         orderBy: [{ order: "asc" }],
     })
 
+    // Fetch promoted coupons for product card badges
+    const now = new Date()
+    const promotedCouponsRaw = await prisma.coupon.findMany({
+        where: {
+            showOnProduct: true,
+            active: true,
+            AND: [
+                { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+            ],
+        },
+        select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
+    })
+
+    // Build coupon map: productId → best coupon badge info
+    const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
+    const globalCoupons = promotedCouponsRaw.filter(c => c.productIds.length === 0)
+    const specificCoupons = promotedCouponsRaw.filter(c => c.productIds.length > 0)
+
+    for (const product of products) {
+        const isOnSale = product.onSale && product.salePrice
+        const specific = specificCoupons.find(c =>
+            c.productIds.includes(product.id) && !(isOnSale && !c.allowOnSale)
+        )
+        if (specific) {
+            couponMap[product.id] = { type: specific.type, value: specific.value.toString(), currency: specific.currency }
+            continue
+        }
+        const global = globalCoupons.find(c => !(isOnSale && !c.allowOnSale))
+        if (global) {
+            couponMap[product.id] = { type: global.type, value: global.value.toString(), currency: global.currency }
+        }
+    }
+
     // Fetch wishlisted product IDs for authenticated user
     const session = await auth()
     let wishlistedProductIds: string[] = []
@@ -86,6 +120,7 @@ export default async function ProductsPage() {
                 categories={JSON.parse(JSON.stringify(categories))}
                 locale={locale}
                 wishlistedProductIds={wishlistedProductIds}
+                couponMap={couponMap}
             />
 
             {/* Footer */}

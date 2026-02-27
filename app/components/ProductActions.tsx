@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { ShoppingCart, MessageSquare, Send, Loader2, Ticket, X, Check } from "lucide-react"
+import { ShoppingCart, MessageSquare, Send, Loader2, Ticket, X, Check, Clock } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
 
 interface Product {
@@ -29,12 +29,21 @@ interface CouponDiscount {
     value: string
 }
 
+interface PromotedCoupon {
+    code: string
+    type: string
+    value: string
+    currency: string | null
+    expiresAt: string | null
+}
+
 interface ProductActionsProps {
     product: Product
     initialCouponCode?: string
+    promotedCoupons?: PromotedCoupon[]
 }
 
-export function ProductActions({ product, initialCouponCode }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons }: ProductActionsProps) {
     const t = useTranslations("products")
     const [loading, setLoading] = useState(false)
     const [showQuoteForm, setShowQuoteForm] = useState(false)
@@ -44,6 +53,134 @@ export function ProductActions({ product, initialCouponCode }: ProductActionsPro
     const [couponLoading, setCouponLoading] = useState(false)
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
     const [couponError, setCouponError] = useState("")
+
+    // Live countdown timer for promoted coupons
+    const [countdownKey, setCountdownKey] = useState(0)
+    useEffect(() => {
+        if (!promotedCoupons?.some(c => c.expiresAt)) return
+        const interval = setInterval(() => setCountdownKey(k => k + 1), 1000)
+        return () => clearInterval(interval)
+    }, [promotedCoupons])
+
+    // Helper: format live countdown from expiresAt
+    const getCountdownText = (expiresAt: string | null): string | null => {
+        void countdownKey // trigger re-render
+        if (!expiresAt) return null
+        const now = new Date()
+        const expiry = new Date(expiresAt)
+        const diffMs = expiry.getTime() - now.getTime()
+        if (diffMs <= 0) return null
+
+        const totalSeconds = Math.floor(diffMs / 1000)
+        const days = Math.floor(totalSeconds / 86400)
+        const hours = Math.floor((totalSeconds % 86400) / 3600)
+        const minutes = Math.floor((totalSeconds % 3600) / 60)
+        const seconds = totalSeconds % 60
+
+        const pad = (n: number) => String(n).padStart(2, "0")
+
+        // > 1 day: "2d 5h 30m"
+        if (days > 0) return `${days}d ${hours}h ${pad(minutes)}m`
+        // < 1 day but > 1 hour: "05:30:12"
+        if (hours > 0) return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+        // < 1 hour: "30:12"
+        return `${pad(minutes)}:${pad(seconds)}`
+    }
+
+    // Helper: get discount label for promoted coupons
+    const getDiscountLabel = (coupon: PromotedCoupon): string => {
+        if (coupon.type === "percentage") return `${coupon.value}%`
+        return `${coupon.value} ${coupon.currency || "EUR"}`
+    }
+
+    // Handle clicking a promoted coupon banner
+    const handlePromotedCouponClick = (code: string) => {
+        setCouponCode(code)
+        setShowCouponInput(true)
+        setCouponError("")
+        // Auto-apply after setting state
+        setTimeout(() => {
+            const applyPromoted = async () => {
+                setCouponLoading(true)
+                try {
+                    const res = await fetch("/api/coupons/validate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ code, productId: product.id }),
+                    })
+                    const data = await res.json()
+                    if (data.valid) {
+                        setAppliedCoupon({
+                            couponId: data.coupon.id,
+                            couponCode: data.coupon.code,
+                            original: data.discount.original,
+                            discountAmount: data.discount.discountAmount,
+                            final: data.discount.final,
+                            productCurrency: data.discount.productCurrency,
+                            type: data.coupon.type,
+                            value: data.coupon.value,
+                        })
+                        toast.success(t("couponApplied"))
+                    } else {
+                        setCouponError(t("invalidCoupon"))
+                    }
+                } catch {
+                    setCouponError(t("invalidCoupon"))
+                } finally {
+                    setCouponLoading(false)
+                }
+            }
+            applyPromoted()
+        }, 0)
+    }
+
+    // Promoted coupon banners (shown when admin enables showOnProduct)
+    const promotedBanners = promotedCoupons && promotedCoupons.length > 0 && !appliedCoupon ? (
+        <div className="space-y-2">
+            {promotedCoupons.map((coupon) => {
+                const expiryText = getCountdownText(coupon.expiresAt)
+                const isDigital = product.fileType === "digital"
+                return (
+                    <button
+                        key={coupon.code}
+                        onClick={() => isDigital ? handlePromotedCouponClick(coupon.code) : undefined}
+                        className={`w-full p-3 rounded-xl border flex items-center gap-3 transition-all text-left ${
+                            isDigital
+                                ? "bg-gradient-to-r from-orange-500/15 to-amber-500/15 border-orange-500/30 hover:from-orange-500/25 hover:to-amber-500/25 hover:border-orange-500/50 cursor-pointer"
+                                : "bg-gradient-to-r from-orange-500/15 to-amber-500/15 border-orange-500/30 cursor-default"
+                        }`}
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/30 to-amber-500/30 flex items-center justify-center shrink-0">
+                            <Ticket className="w-5 h-5 text-orange-300" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono font-bold text-sm tracking-wider text-orange-200">
+                                    {coupon.code}
+                                </span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/25 text-orange-300 font-semibold">
+                                    -{getDiscountLabel(coupon)}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                {isDigital ? (
+                                    <span className="text-[11px] text-orange-400/70">{t("clickToApply")}</span>
+                                ) : (
+                                    <span className="text-[11px] text-orange-400/70">{t("couponMentionInQuote")}</span>
+                                )}
+                                {expiryText && (
+                                    <span className="text-sm text-red-400 flex items-center gap-1 font-mono font-bold animate-sale-blink">
+                                        <Clock className="w-4 h-4" />
+                                        {expiryText}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </button>
+                )
+            })}
+        </div>
+    ) : null
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return
@@ -182,6 +319,9 @@ export function ProductActions({ product, initialCouponCode }: ProductActionsPro
     if (product.fileType === "digital") {
         return (
             <div className="space-y-3">
+                {/* Promoted Coupon Banners */}
+                {promotedBanners}
+
                 {/* Coupon Section */}
                 {!appliedCoupon ? (
                     <div>
@@ -294,6 +434,7 @@ export function ProductActions({ product, initialCouponCode }: ProductActionsPro
     if (product.fileType === "service") {
         return (
             <div className="space-y-3">
+                {promotedBanners}
                 {couponBanner}
                 <button
                     onClick={() => setShowQuoteForm(true)}
@@ -317,6 +458,7 @@ export function ProductActions({ product, initialCouponCode }: ProductActionsPro
     // Physical product - Order Now button (opens contact/inquiry form)
     return (
         <div className="space-y-3">
+            {promotedBanners}
             {couponBanner}
             <button
                 onClick={() => setShowContactForm(true)}

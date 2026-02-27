@@ -388,6 +388,7 @@ model Coupon {
   perUserLimit  Int       @default(1)          // Max uses per email address
   productIds    String[]                       // Empty = all products, specific IDs = only those
   allowOnSale   Boolean   @default(false)      // Can this coupon be used on products already on sale?
+  showOnProduct Boolean   @default(false)      // Show coupon banner on product pages
   active        Boolean   @default(true)
   startsAt      DateTime?                      // When coupon becomes valid
   expiresAt     DateTime?                      // When coupon expires

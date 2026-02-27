@@ -82,6 +82,11 @@ button, select, [role="button"] {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes sale-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -100,6 +105,10 @@ button, select, [role="button"] {
 
 .animate-fade-in-up {
   animation: fade-in-up 0.8s ease-out forwards;
+}
+
+.animate-sale-blink {
+  animation: sale-blink 1.5s ease-in-out infinite;
 }
 
 

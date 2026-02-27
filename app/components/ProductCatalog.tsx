@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X } from "lucide-react"
+import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X, Ticket } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 
 interface Product {
@@ -37,11 +37,18 @@ interface ProductCategory {
     color: string
 }
 
+interface CouponBadge {
+    type: string
+    value: string
+    currency: string | null
+}
+
 interface ProductCatalogProps {
     products: Product[]
     categories: ProductCategory[]
     locale: string
     wishlistedProductIds?: string[]
+    couponMap?: Record<string, CouponBadge>
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -63,7 +70,7 @@ const COLOR_CLASSES: Record<string, string> = {
     yellow: "bg-yellow-500/20 text-yellow-400",
 }
 
-export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [] }: ProductCatalogProps) {
+export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap }: ProductCatalogProps) {
     const t = useTranslations("products")
     const searchParams = useSearchParams()
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -289,6 +296,18 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 </span>
                                             )}
                                         </div>
+
+                                        {/* Coupon Badge */}
+                                        {couponMap?.[product.id] && (
+                                            <div className="absolute bottom-3 left-3">
+                                                <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-orange-500 text-white shadow-lg">
+                                                    <Ticket className="w-3 h-3" />
+                                                    -{couponMap[product.id].type === "percentage"
+                                                        ? `${couponMap[product.id].value}%`
+                                                        : `${couponMap[product.id].value} ${couponMap[product.id].currency || "EUR"}`}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Content */}

@@ -149,7 +149,7 @@ No test framework is configured.
 - Fonts: `Exo_2` (headings), `Inter` (body) — both with Latin + Cyrillic subsets
 - Icons: `lucide-react`
 - Badge colors: 16 predefined in `lib/colors.ts` with `getColorClass()` helper
-- Custom animations: `animate-float`, `animate-float-slow`, `animate-float-reverse`, `animate-pulse-glow`, `animate-fade-in-up`
+- Custom animations: `animate-float`, `animate-float-slow`, `animate-float-reverse`, `animate-pulse-glow`, `animate-fade-in-up`, `animate-sale-blink` (urgency blink for coupon timers)
 - Animation delays: `.animation-delay-200`, `.animation-delay-400`, `.animation-delay-1000`, `.animation-delay-2000`
 - Toast notifications: `sonner`
 - **Responsive breakpoints**: mobile-first design. Key breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px — admin table/card toggle). Product detail page stacks to single column on mobile (`grid-cols-1 md:grid-cols-2`). Homepage contact section shows phone numbers on all sizes.
@@ -161,11 +161,14 @@ No test framework is configured.
 
 ### Coupons & Discounts
 
-- **Coupon model**: code, type (percentage/fixed), value, currency, minPurchase, maxUses, perUserLimit, productIds[], allowOnSale, active, startsAt/expiresAt
-- **Admin CRUD** (`/admin/coupons`): create/edit/delete coupons, product picker, usage stats, deep linking
+- **Coupon model**: code, type (percentage/fixed), value, currency, minPurchase, maxUses, perUserLimit, productIds[], allowOnSale, showOnProduct, active, startsAt/expiresAt
+- **Admin CRUD** (`/admin/coupons`): create/edit/delete coupons, product picker (all-products-on-focus + select all/deselect all), usage stats, deep linking
 - **Validation API** (`/api/coupons/validate`): checks active, dates, usage limits, product match, sale compatibility
 - **Checkout integration**: coupon code applied at Stripe checkout, usage recorded in webhook via `CouponUsage` model
 - **Customer UX**: coupon input on digital product pages (auto-apply via `?coupon=CODE` URL param), discount banner for service/physical products
+- **Promoted coupon display** (`showOnProduct` toggle):
+  - **Product detail pages**: orange gradient banner with coupon code, discount amount, live countdown timer (blinking `animate-sale-blink`), click-to-apply for digital products
+  - **Product card badges**: small orange badge (bottom-left) on all product cards — homepage, catalog, wishlist, and related products. Uses coupon map pattern: single DB query → `Record<productId, CouponBadge>` for O(1) lookup. Global coupons (empty `productIds`) apply to all products; specific coupons apply only to matching. Skips badge if product is on sale and coupon has `allowOnSale: false`
 - **Quote integration**: admin can attach coupon when sending quote offer, customer sees coupon badge on My Orders page
 - **Quote conversation messages**: admin offers stored as multi-line text (notes + 💰 price + 🎟️ coupon). User responses (accept/decline/counter) stored as JSON with i18n keys, localized at display time via `localizeMessage()` in MyOrdersClient
 
@@ -174,6 +177,7 @@ No test framework is configured.
 - **Notification model**: userId, type (quote_offer/admin_message/coupon/wishlist_price_drop/wishlist_coupon), title, message, link, couponId, quoteId, productId, read/readAt, scheduledAt, createdById
 - **i18n pattern**: Notification `title`/`message` fields store JSON with translation keys (e.g., `"quote_offer"`, `{"price":"7.50","hasCoupon":true}`). Localized at display time in `NotificationBell` using `getLocalizedTitle()`/`getLocalizedMessage()` helpers. Use `t.raw()` for template strings with placeholders.
 - **Admin page** (`/admin/notifications`): send notifications to users with smart recipient selection
+  - **User picker**: all-users-on-focus (cached), debounced search, select all/deselect all with 3-state checkbox
   - **Quick filters**: Birthday Today/This Week/This Month, All Users (with count confirmation), By Role dropdown
   - **Schedule/snooze**: toggle to schedule notifications for future delivery with datetime picker
   - **Types**: admin messages and coupon notifications with optional deep links
@@ -188,7 +192,7 @@ No test framework is configured.
 - **API routes**: `/api/wishlist` (GET/POST/DELETE), `/api/wishlist/check` (GET)
 - **Price drop detection**: when admin changes product price, compares old vs new; if price dropped, creates notifications for all users who wishlisted that product
 - **Coupon detection**: when admin creates/edits a coupon with specific productIds, notifies users who wishlisted those products
-- **Wishlist page** (`app/wishlist/`): displays saved products with current prices, sale badges, and remove button
+- **Wishlist page** (`app/wishlist/`): displays saved products with current prices, sale badges, coupon badges, and remove button
 
 ### Payments
 

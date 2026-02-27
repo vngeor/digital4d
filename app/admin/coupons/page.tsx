@@ -19,6 +19,7 @@ import {
   DollarSign,
   Calendar,
   Package,
+  Megaphone,
 } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
@@ -37,6 +38,7 @@ interface Coupon {
   perUserLimit: number
   productIds: string[]
   allowOnSale: boolean
+  showOnProduct: boolean
   active: boolean
   startsAt: string | null
   expiresAt: string | null
@@ -55,6 +57,7 @@ interface CouponFormData {
   perUserLimit: number
   productIds: string[]
   allowOnSale: boolean
+  showOnProduct: boolean
   active: boolean
   startsAt: string | null
   expiresAt: string | null
@@ -87,10 +90,11 @@ function getStatusBadgeClass(status: "active" | "expired" | "inactive"): string 
   }
 }
 
-function formatCurrency(value: number, currency: string): string {
+function formatCurrency(value: number | string, currency: string): string {
   const symbols: Record<string, string> = { EUR: "\u20ac", BGN: "лв", USD: "$" }
   const symbol = symbols[currency] || currency
-  return `${symbol}${value.toFixed(2)}`
+  const num = typeof value === "string" ? parseFloat(value) : value
+  return `${symbol}${num.toFixed(2)}`
 }
 
 function formatDateShort(dateStr: string | null): string {
@@ -211,6 +215,9 @@ export default function CouponsPage() {
       render: (item: Coupon) => (
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm text-emerald-400 font-medium">{item.code}</span>
+          {item.showOnProduct && (
+            <span title={t("showOnProduct")}><Megaphone className="w-3.5 h-3.5 text-amber-400" /></span>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -447,6 +454,9 @@ export default function CouponsPage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="font-mono text-sm text-emerald-400 font-medium truncate">{item.code}</span>
+                    {item.showOnProduct && (
+                      <Megaphone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); handleCopyCode(item) }}
                       className="p-1 rounded hover:bg-white/10 transition-colors shrink-0"
@@ -558,6 +568,7 @@ function CouponForm({
     perUserLimit: initialData?.perUserLimit ?? 1,
     productIds: initialData?.productIds ?? [],
     allowOnSale: initialData?.allowOnSale ?? false,
+    showOnProduct: initialData?.showOnProduct ?? false,
     active: initialData?.active ?? true,
     startsAt: initialData?.startsAt ?? null,
     expiresAt: initialData?.expiresAt ?? null,
@@ -619,13 +630,45 @@ function CouponForm({
     }
   }
 
+  // All products cache (loaded once on first dropdown open)
+  const [allProducts, setAllProducts] = useState<ProductOption[]>([])
+  const allProductsLoadedRef = useRef(false)
+
+  const loadAllProducts = useCallback(async () => {
+    if (allProductsLoadedRef.current) return
+    setSearchingProducts(true)
+    try {
+      const res = await fetch("/api/admin/products")
+      if (res.ok) {
+        const data = await res.json()
+        const products = Array.isArray(data) ? data : []
+        const mapped = products.map((p: ProductOption & Record<string, unknown>) => ({
+          id: p.id,
+          nameEn: p.nameEn,
+          nameBg: p.nameBg,
+          image: p.image,
+        }))
+        setAllProducts(mapped)
+        setProductResults(mapped)
+        allProductsLoadedRef.current = true
+      }
+    } catch {
+      setProductResults([])
+    } finally {
+      setSearchingProducts(false)
+    }
+  }, [])
+
   const searchProducts = useCallback(
     (query: string) => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current)
       }
       if (!query.trim()) {
-        setProductResults([])
+        // Show all products when search is empty
+        if (allProductsLoadedRef.current) {
+          setProductResults(allProducts)
+        }
         return
       }
       searchTimeoutRef.current = setTimeout(async () => {
@@ -651,7 +694,7 @@ function CouponForm({
         }
       }, 300)
     },
-    []
+    [allProducts]
   )
 
   const toggleProduct = (product: ProductOption) => {
@@ -901,12 +944,22 @@ function CouponForm({
                   type="text"
                   value={productSearch}
                   onChange={(e) => {
-                    setProductSearch(e.target.value)
-                    searchProducts(e.target.value)
+                    const val = e.target.value
+                    setProductSearch(val)
+                    if (!val.trim() && allProductsLoadedRef.current) {
+                      setProductResults(allProducts)
+                    } else {
+                      searchProducts(val)
+                    }
                     setShowProductDropdown(true)
                   }}
                   onFocus={() => {
-                    if (productSearch.trim()) setShowProductDropdown(true)
+                    setShowProductDropdown(true)
+                    if (!allProductsLoadedRef.current) {
+                      loadAllProducts()
+                    } else if (!productSearch.trim()) {
+                      setProductResults(allProducts)
+                    }
                   }}
                   placeholder={t("searchPlaceholder")}
                   className="w-full pl-9 pr-9 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
@@ -930,7 +983,58 @@ function CouponForm({
 
               {/* Dropdown Results */}
               {showProductDropdown && (productResults.length > 0 || searchingProducts) && (
-                <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a2e] shadow-xl">
+                <div className="absolute z-10 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a2e] shadow-xl">
+                  {/* Select All / Deselect All */}
+                  {productResults.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allResultIds = productResults.map(p => p.id)
+                        const allSelected = allResultIds.every(id => formData.productIds.includes(id))
+                        if (allSelected) {
+                          // Deselect all visible results
+                          setFormData(prev => ({
+                            ...prev,
+                            productIds: prev.productIds.filter(id => !allResultIds.includes(id)),
+                          }))
+                          setSelectedProducts(prev => prev.filter(p => !allResultIds.includes(p.id)))
+                        } else {
+                          // Select all visible results
+                          const newIds = allResultIds.filter(id => !formData.productIds.includes(id))
+                          const newProducts = productResults.filter(p => !formData.productIds.includes(p.id))
+                          setFormData(prev => ({
+                            ...prev,
+                            productIds: [...prev.productIds, ...newIds],
+                          }))
+                          setSelectedProducts(prev => [...prev, ...newProducts])
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium border-b border-white/10 hover:bg-white/5 transition-colors text-emerald-400"
+                    >
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                          productResults.length > 0 && productResults.every(p => formData.productIds.includes(p.id))
+                            ? "bg-emerald-500 border-emerald-500"
+                            : productResults.some(p => formData.productIds.includes(p.id))
+                              ? "bg-emerald-500/50 border-emerald-500"
+                              : "border-white/20"
+                        }`}
+                      >
+                        {productResults.length > 0 && productResults.every(p => formData.productIds.includes(p.id)) && (
+                          <Check className="w-3 h-3 text-white" />
+                        )}
+                        {productResults.some(p => formData.productIds.includes(p.id)) && !productResults.every(p => formData.productIds.includes(p.id)) && (
+                          <div className="w-2 h-0.5 bg-white rounded" />
+                        )}
+                      </div>
+                      <span>
+                        {productResults.every(p => formData.productIds.includes(p.id))
+                          ? t("deselectAll")
+                          : t("selectAll")}
+                        {" "}({productResults.length})
+                      </span>
+                    </button>
+                  )}
                   {productResults.map((product) => {
                     const isSelected = formData.productIds.includes(product.id)
                     return (
@@ -972,8 +1076,8 @@ function CouponForm({
             </div>
           </div>
 
-          {/* Toggles: Allow on Sale + Active */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Toggles: Allow on Sale + Show on Product + Active */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -987,6 +1091,21 @@ function CouponForm({
                   {t("allowOnSale")}
                 </label>
                 <p className="text-xs text-gray-500">{t("allowOnSaleHint")}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="showOnProduct"
+                checked={formData.showOnProduct}
+                onChange={(e) => updateField("showOnProduct", e.target.checked)}
+                className="w-5 h-5 rounded bg-white/5 border-white/10 text-emerald-500 focus:ring-emerald-500/50"
+              />
+              <div>
+                <label htmlFor="showOnProduct" className="text-sm text-gray-300 cursor-pointer">
+                  {t("showOnProduct")}
+                </label>
+                <p className="text-xs text-gray-500">{t("showOnProductHint")}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
