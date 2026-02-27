@@ -53,13 +53,13 @@ No test framework is configured.
 ### Database
 
 - **Prisma 7** with Neon HTTP adapter (`lib/prisma.ts`) — **no transaction support**
-- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission, Coupon, CouponUsage, Notification, WishlistItem, WishlistNotification
+- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission, Coupon, CouponUsage, Notification, WishlistItem, WishlistNotification, NotificationTemplate, TemplateSendLog
 - Prisma results must be serialized for client components: `JSON.parse(JSON.stringify(data))`
 
 ### API Layer
 
 - **No server actions** — all mutations through API routes in `app/api/`
-- Admin CRUD routes in `app/api/admin/` (types, products, categories, content, banners, menu, orders, quotes, users, roles, users/permissions, coupons, notifications)
+- Admin CRUD routes in `app/api/admin/` (types, products, categories, content, banners, menu, orders, quotes, users, roles, users/permissions, coupons, notifications, notification-templates)
 - HTTP methods per route: GET (list/filter), POST (create), PUT (update by ID), PATCH (bulk operations like reordering), DELETE (by ID in query params)
 - Error format: `{ error: "message" }` with appropriate HTTP status
 - No optimistic updates — refetch after mutations
@@ -89,6 +89,9 @@ No test framework is configured.
 - `POST /api/auth/register` — user registration
 - `/api/auth/[...nextauth]` — NextAuth handler
 - `POST /api/checkout/webhook` — Stripe webhook
+
+**Cron routes:**
+- `GET /api/cron/notifications` — daily cron job (8 AM UTC) processes notification templates, protected by `CRON_SECRET`
 
 ### Storage & Images
 
@@ -174,14 +177,26 @@ No test framework is configured.
 
 ### Notifications
 
-- **Notification model**: userId, type (quote_offer/admin_message/coupon/wishlist_price_drop/wishlist_coupon), title, message, link, couponId, quoteId, productId, read/readAt, scheduledAt, createdById
+- **Notification model**: userId, type (quote_offer/admin_message/coupon/wishlist_price_drop/wishlist_coupon/auto_birthday/auto_holiday/auto_custom), title, message, link, couponId, quoteId, productId, read/readAt, scheduledAt, createdById
 - **i18n pattern**: Notification `title`/`message` fields store JSON with translation keys (e.g., `"quote_offer"`, `{"price":"7.50","hasCoupon":true}`). Localized at display time in `NotificationBell` using `getLocalizedTitle()`/`getLocalizedMessage()` helpers. Use `t.raw()` for template strings with placeholders.
 - **Admin page** (`/admin/notifications`): send notifications to users with smart recipient selection
   - **User picker**: all-users-on-focus (cached), debounced search, select all/deselect all with 3-state checkbox
   - **Quick filters**: Birthday Today/This Week/This Month, All Users (with count confirmation), By Role dropdown
   - **Schedule/snooze**: toggle to schedule notifications for future delivery with datetime picker
-  - **Types**: admin messages and coupon notifications with optional deep links
-- **Customer bell** (`NotificationBell`): unified notifications from quotes, admin messages, coupons, and wishlist; scheduled notifications hidden until delivery time; quote notifications show admin's last message as preview
+  - **Types**: admin messages, coupon, and auto notifications with optional deep links
+  - **Tab navigation**: Notifications | Templates tabs — templates page at `/admin/notification-templates`
+- **Notification Templates** (`/admin/notification-templates`):
+  - **NotificationTemplate model**: name, trigger (birthday/christmas/new_year/orthodox_easter/custom_date), daysBefore, customMonth/customDay, recurring, titleBg/En/Es, messageBg/En/Es, link, couponEnabled + coupon config fields, active, lastRunAt/lastRunCount
+  - **TemplateSendLog model**: templateId, userId, year, couponId — `@@unique([templateId, userId, year])` prevents duplicates
+  - **Triggers**: birthday (match user birthDate month/day), christmas (Dec 25), new_year (Jan 1), orthodox_easter (Julian calendar computus), custom_date (admin-defined month/day)
+  - **Auto-coupon**: optional personal coupon generation per recipient with configurable type, value, currency, duration, product restrictions
+  - **Placeholders**: `{name}`, `{couponCode}`, `{couponValue}`, `{expiresAt}` — resolved at send time per locale
+  - **Cron job**: Vercel Cron daily at 8 AM UTC (`/api/cron/notifications`), protected by `CRON_SECRET` env var
+  - **Test send**: admin can test-send to a single user without dedup restrictions
+  - **Feb 29 birthdays**: in non-leap years, Feb 28 also matches Feb 29 birthdays
+  - **Orthodox Easter**: Julian calendar computus algorithm (`lib/orthodoxEaster.ts`)
+  - **Permission reuse**: templates use `"notifications"` resource — no new permission type needed
+- **Customer bell** (`NotificationBell`): unified notifications from quotes, admin messages, coupons, wishlist, and auto-scheduled; auto_* types display locale-aware JSON titles with Cake (birthday) and Gift (holiday/custom) icons; scheduled notifications hidden until delivery time; quote notifications show admin's last message as preview
 - **Quote auto-notification**: when admin sends a quote offer, a Notification record is auto-created with rich JSON message including adminMessage, price, and coupon info
 - **Wishlist notifications**: price drop and coupon availability notifications for wishlisted products
 
@@ -227,6 +242,9 @@ STRIPE_WEBHOOK_SECRET=           # Stripe webhook signing secret
 # Public
 NEXT_PUBLIC_BASE_URL=            # Public base URL
 NEXT_PUBLIC_SITE_URL=            # Public site URL (e.g., https://www.digital4d.eu)
+
+# Cron
+CRON_SECRET=                     # Secret for Vercel Cron job authentication (generate random 32-byte hex)
 ```
 
 ## Key Constraints

@@ -73,7 +73,7 @@ export async function GET() {
     // Build unified notifications list
     const unified: Array<{
       id: string
-      type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon"
+      type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_holiday" | "auto_custom"
       title: string
       message: string
       link: string | null
@@ -138,7 +138,7 @@ export async function GET() {
 
       unified.push({
         id: n.id,
-        type: n.type as "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon",
+        type: n.type as "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_holiday" | "auto_custom",
         title: n.title,
         message: n.message,
         link: n.link,

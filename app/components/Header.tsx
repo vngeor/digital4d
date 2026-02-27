@@ -189,6 +189,9 @@ export function Header() {
                                 quoteOfferMessageWithCoupon: t.raw("quoteOfferMessageWithCoupon"),
                                 quoteOfferMessageGeneric: t("quoteOfferMessageGeneric"),
                                 quotePriceMessage: t.raw("quotePriceMessage"),
+                                autoBirthday: t("autoBirthday"),
+                                autoHoliday: t("autoHoliday"),
+                                autoCustom: t("autoCustom"),
                             }}
                         />
                     )}

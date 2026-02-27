@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
     const where: Record<string, unknown> = {}
 
     if (type) {
-      where.type = type
+      if (type === "auto") {
+        where.type = { startsWith: "auto_" }
+      } else {
+        where.type = type
+      }
     }
 
     // Status filter: scheduled (future) vs delivered (immediate or past)

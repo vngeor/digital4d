@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Bell, X, MessageSquare, Ticket, Copy, Check, Heart, TrendingDown } from "lucide-react"
+import { Bell, X, MessageSquare, Ticket, Copy, Check, Heart, TrendingDown, Cake, Gift } from "lucide-react"
 
 interface Notification {
   id: string
-  type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon"
+  type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_holiday" | "auto_custom"
   title: string
   message: string
   link: string | null
@@ -48,6 +48,9 @@ interface NotificationBellProps {
     quoteOfferMessageWithCoupon: string
     quoteOfferMessageGeneric: string
     quotePriceMessage: string
+    autoBirthday: string
+    autoHoliday: string
+    autoCustom: string
   }
   locale?: string
 }
@@ -175,6 +178,16 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     if (notification.type === "coupon") {
       return t.quoteOfferWithCouponTitle
     }
+    // Auto-scheduled notifications (birthday, holiday, custom)
+    if (notification.type.startsWith("auto_")) {
+      const parsed = tryParseJson(notification.title)
+      if (parsed && parsed[locale]) return parsed[locale]
+      if (parsed && parsed.en) return parsed.en
+      // Fallback to label
+      if (notification.type === "auto_birthday") return t.autoBirthday
+      if (notification.type === "auto_holiday") return t.autoHoliday
+      if (notification.type === "auto_custom") return t.autoCustom
+    }
     return notification.title
   }
 
@@ -230,6 +243,12 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       }
       return t.quoteOfferMessageGeneric
     }
+    // Auto-scheduled notifications
+    if (notification.type.startsWith("auto_")) {
+      const parsed = tryParseJson(notification.message)
+      if (parsed && parsed[locale]) return parsed[locale]
+      if (parsed && parsed.en) return parsed.en
+    }
     return notification.message
   }
 
@@ -259,6 +278,20 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       return (
         <div className="shrink-0 w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center">
           <Heart className="w-5 h-5 text-pink-400" />
+        </div>
+      )
+    }
+    if (notification.type === "auto_birthday") {
+      return (
+        <div className="shrink-0 w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center">
+          <Cake className="w-5 h-5 text-rose-400" />
+        </div>
+      )
+    }
+    if (notification.type === "auto_holiday" || notification.type === "auto_custom") {
+      return (
+        <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+          <Gift className="w-5 h-5 text-emerald-400" />
         </div>
       )
     }

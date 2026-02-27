@@ -48,6 +48,7 @@ digital4d-next/
 │   │   ├── media/         # Media gallery
 │   │   ├── menu/          # Navigation menu items
 │   │   ├── notifications/ # User notification management
+│   │   ├── notification-templates/ # Auto-scheduled templates
 │   │   ├── orders/        # Order management
 │   │   ├── products/      # Product catalog management
 │   │   ├── quotes/        # Quote requests management
@@ -146,6 +147,9 @@ NEXT_PUBLIC_BASE_URL="https://your-domain.com"
 
 # Local Development (optional)
 USE_LOCAL_UPLOADS="true"  # Use local storage instead of Vercel Blob
+
+# Cron (optional)
+CRON_SECRET="generate-random-32-byte-hex"  # For scheduled notification templates
 ```
 
 ## Scripts
@@ -178,7 +182,9 @@ Key models:
 - **DigitalPurchase** - Digital download tokens
 - **Coupon** - Discount codes (percentage/fixed, product-specific, date ranges)
 - **CouponUsage** - Coupon usage tracking per user
-- **Notification** - User notifications (admin messages, coupons, wishlist alerts)
+- **Notification** - User notifications (admin messages, coupons, wishlist alerts, auto-scheduled)
+- **NotificationTemplate** - Auto-scheduled notification templates (birthday, holidays, custom dates with optional auto-coupon)
+- **TemplateSendLog** - Tracks template sends per user per year (dedup)
 - **WishlistItem** - User wishlisted products
 - **WishlistNotification** - Prevents duplicate wishlist notifications
 - **MenuItem** - Dynamic navigation
@@ -211,6 +217,8 @@ Key models:
 - `/api/admin/banners` - Manage banners
 - `/api/admin/coupons` - Manage coupons
 - `/api/admin/notifications` - Manage notifications
+- `/api/admin/notification-templates` - Manage auto-scheduled notification templates
+- `/api/cron/notifications` - Daily cron job for processing templates
 - `/api/admin/users` - Manage users
 - `/api/admin/users/permissions` - Per-user permission overrides
 - `/api/admin/media` - Media gallery
@@ -509,14 +517,32 @@ Manage discount codes for products and checkout.
 
 ### Notifications (`/admin/notifications`)
 
-Send and manage user notifications.
+Send and manage user notifications. Tab navigation to Templates page.
 
 **Features:**
 - Smart recipient selection with all-users-on-focus, search, and select all
 - Quick filters: Birthday Today/This Week/This Month, All Users, By Role
 - Schedule notifications for future delivery
-- Admin message and coupon notification types
+- Admin message, coupon, and auto notification types
 - Optional deep links
+- "Auto" filter tab to view template-generated notifications
+
+---
+
+### Notification Templates (`/admin/notification-templates`)
+
+Manage auto-scheduled notification templates for recurring events.
+
+**Features:**
+- Template triggers: Birthday, Christmas, New Year, Orthodox Easter, Custom Date
+- Configurable "days before" event scheduling
+- Multi-language message templates with placeholder support (`{name}`, `{couponCode}`, `{couponValue}`, `{expiresAt}`)
+- Auto-coupon generation: personal coupon per recipient with configurable type, value, duration, product restrictions
+- Product picker with all-products-on-focus and select all/deselect all
+- Test send to a single user for verification
+- Active/inactive toggle and last run statistics
+- Daily Vercel Cron job at 8 AM UTC processes active templates
+- Duplicate prevention: one notification per user per template per year
 
 ---
 

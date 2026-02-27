@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import {
@@ -20,6 +21,9 @@ import {
   Shield,
   Clock,
   ChevronDown,
+  CalendarClock,
+  Gift,
+  Sparkles,
 } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
@@ -42,7 +46,7 @@ interface NotificationCoupon {
 
 interface Notification {
   id: string
-  type: "quote_offer" | "admin_message" | "coupon"
+  type: "quote_offer" | "admin_message" | "coupon" | "auto_birthday" | "auto_holiday" | "auto_custom" | "wishlist_price_drop" | "wishlist_coupon"
   title: string
   message: string
   link: string | null
@@ -73,6 +77,9 @@ const TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
   admin_message: { labelKey: "adminMessage", color: "bg-purple-500/20 text-purple-400" },
   coupon: { labelKey: "couponNotification", color: "bg-amber-500/20 text-amber-400" },
   quote_offer: { labelKey: "quoteOffer", color: "bg-blue-500/20 text-blue-400" },
+  auto_birthday: { labelKey: "auto", color: "bg-pink-500/20 text-pink-400" },
+  auto_holiday: { labelKey: "auto", color: "bg-red-500/20 text-red-400" },
+  auto_custom: { labelKey: "auto", color: "bg-cyan-500/20 text-cyan-400" },
 }
 
 const ROLES = ["ADMIN", "EDITOR", "AUTHOR", "SUBSCRIBER"] as const
@@ -80,6 +87,7 @@ const ROLES = ["ADMIN", "EDITOR", "AUTHOR", "SUBSCRIBER"] as const
 export default function NotificationsPage() {
   const t = useTranslations("admin.notifications")
   const tAdmin = useTranslations("admin")
+  const tTemplates = useTranslations("admin.notificationTemplates")
   const router = useRouter()
   const { can } = useAdminPermissions()
 
@@ -642,12 +650,13 @@ export default function NotificationsPage() {
     },
   ]
 
-  // Filter tabs — added "scheduled"
+  // Filter tabs — added "scheduled" and "auto"
   const typeFilters = [
     { key: null, label: t("all"), icon: null },
     { key: "admin_message", label: t("adminMessage"), icon: MessageSquare },
     { key: "coupon", label: t("couponNotification"), icon: Ticket },
     { key: "quote_offer", label: t("quoteOffer"), icon: BellRing },
+    { key: "auto", label: t("auto"), icon: Sparkles },
     { key: "scheduled", label: t("scheduled"), icon: Clock },
   ]
 
@@ -660,6 +669,21 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Tab navigation */}
+      <div className="flex gap-2">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-white border border-emerald-500/30">
+          <BellRing className="w-4 h-4" />
+          {t("title")}
+        </div>
+        <Link
+          href="/admin/notification-templates"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"
+        >
+          <CalendarClock className="w-4 h-4" />
+          {tTemplates("title")}
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

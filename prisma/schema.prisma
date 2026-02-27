@@ -69,6 +69,7 @@ model User {
   mediaFiles       MediaFile[]
   notifications    Notification[]
   couponsCreated   Coupon[]       @relation("CouponCreator")
+  templatesCreated NotificationTemplate[] @relation("TemplateCreator")
   wishlistItems    WishlistItem[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -470,4 +471,58 @@ model WishlistNotificationLog {
 
   @@index([userId, productId])
   @@index([createdAt])
+}
+
+// Notification template for auto-scheduled notifications (birthday, holiday, custom dates)
+model NotificationTemplate {
+  id               String    @id @default(cuid())
+  name             String                          // Admin-friendly name
+  trigger          String                          // "birthday" | "christmas" | "new_year" | "orthodox_easter" | "custom_date"
+  daysBefore       Int       @default(0)           // Days before event to send (e.g., 7 for birthday)
+  customMonth      Int?                            // 1-12, for custom_date trigger only
+  customDay        Int?                            // 1-31, for custom_date trigger only
+  recurring        Boolean   @default(true)        // Every year or one-time
+  titleBg          String                          // Multi-language title with placeholders
+  titleEn          String
+  titleEs          String
+  messageBg        String    @db.Text              // Multi-language message with placeholders
+  messageEn        String    @db.Text
+  messageEs        String    @db.Text
+  link             String?                         // Optional deep link
+  couponEnabled    Boolean   @default(false)       // Toggle auto-coupon generation
+  couponType       String?                         // "percentage" | "fixed"
+  couponValue      Decimal?  @db.Decimal(10, 2)    // 10 for 10%, 5.00 for €5
+  couponCurrency   String?                         // Required for "fixed" type
+  couponDuration   Int?      @default(30)          // Days until coupon expiry
+  couponPerUser    Int       @default(1)           // Max uses per user
+  couponProductIds String[]                        // Empty = all products
+  couponAllowOnSale Boolean  @default(false)       // Can coupon be used on sale items?
+  couponMinPurchase Decimal? @db.Decimal(10, 2)    // Minimum purchase amount
+  active           Boolean   @default(true)
+  lastRunAt        DateTime?                       // Last cron run timestamp
+  lastRunCount     Int       @default(0)           // Notifications sent last run
+  createdById      String?
+  createdBy        User?     @relation("TemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  sendLogs         TemplateSendLog[]
+
+  @@index([trigger])
+  @@index([active])
+  @@index([createdById])
+}
+
+// Track which notifications were sent per template per user per year (dedup)
+model TemplateSendLog {
+  id         String   @id @default(cuid())
+  templateId String
+  template   NotificationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  userId     String
+  year       Int                            // Dedup key — one notification per user per template per year
+  couponId   String?                        // Auto-generated coupon ID (if applicable)
+  createdAt  DateTime @default(now())
+
+  @@unique([templateId, userId, year])
+  @@index([templateId])
+  @@index([userId])
 }
