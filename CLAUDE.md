@@ -158,7 +158,8 @@ No test framework is configured.
 - Animation delays: `.animation-delay-200`, `.animation-delay-400`, `.animation-delay-1000`, `.animation-delay-2000`
 - Toast notifications: `sonner`
 - **Responsive breakpoints**: mobile-first design. Key breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px — admin table/card toggle). Product detail page stacks to single column on mobile (`grid-cols-1 md:grid-cols-2`). Homepage contact section shows phone numbers on all sizes.
-- **Mobile responsive patterns**: iOS Safari input zoom prevention via `text-base sm:text-sm` (16px mobile → 14px desktop), `-webkit-tap-highlight-color: transparent` on buttons/links, `-webkit-font-smoothing: antialiased` on body, `overflow-x: hidden` on body to prevent horizontal scroll. Coupon codes use `whitespace-nowrap` + `font-mono` without `flex-wrap` on containers. Back button touch targets are `w-10 h-10` (40px minimum).
+- **Mobile responsive patterns**: iOS Safari input zoom prevention via `text-base sm:text-sm` (16px mobile → 14px desktop), `-webkit-tap-highlight-color: transparent` on buttons/links, `-webkit-font-smoothing: antialiased` on body, `overflow-x: hidden` on body to prevent horizontal scroll. Coupon codes use `truncate` + `font-mono` in block two-row layouts (not `inline-flex`). Back button touch targets are `w-10 h-10` (40px minimum).
+- **Modal/popup mobile patterns**: All modals use `fixed inset-0 p-4 pt-safe pb-safe` outer container (minimum 16px margin from edges). Modal boxes use `w-full max-w-md` (or `max-w-2xl`) + `max-h-[85-90dvh]` + `overflow-y-auto`. Content padding `p-4 sm:p-8` (16px mobile, 32px desktop). Close buttons `w-11 h-11 sm:w-10 sm:h-10` (44px touch target). Bottom-sheet modals (QuoteForm) use `p-3` minimum margin. Notification dropdown constrained by `max-h-[calc(100dvh-6rem)]`.
 
 ### Code Generation
 

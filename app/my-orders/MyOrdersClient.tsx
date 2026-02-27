@@ -369,56 +369,6 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                   {t.quotedPrice}: €{parseFloat(quote.quotedPrice).toFixed(2)}
                                 </p>
                               )}
-                              {/* Coupon badge — always links to product page */}
-                              {quote.coupon && (
-                                <div className="flex items-center gap-2 mt-1.5">
-                                  {quote.product?.slug ? (
-                                    <Link
-                                      href={`/products/${quote.product.slug}?coupon=${quote.coupon.code}`}
-                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-colors"
-                                    >
-                                      <Ticket className="w-3.5 h-3.5 text-amber-400" />
-                                      <span className="text-xs text-amber-400 font-medium">{t.couponIncluded}:</span>
-                                      <span className="text-xs text-amber-300 font-mono font-bold sm:tracking-wider whitespace-nowrap">{quote.coupon.code}</span>
-                                      <span className="text-[11px] text-amber-400/70">
-                                        ({quote.coupon.type === "percentage" ? `${quote.coupon.value}% ${t.couponOff}` : `-${quote.coupon.value} ${quote.coupon.currency || ""} ${t.couponOff}`})
-                                      </span>
-                                      <span
-                                        role="button"
-                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyCoupon(quote.coupon!.code) }}
-                                        className="ml-1 p-1 sm:p-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer touch-manipulation"
-                                        title={t.copyCouponCode}
-                                      >
-                                        {copiedCoupon === quote.coupon.code ? (
-                                          <Check className="w-3 h-3 text-emerald-400" />
-                                        ) : (
-                                          <Copy className="w-3 h-3 text-amber-400/60 hover:text-amber-400" />
-                                        )}
-                                      </span>
-                                    </Link>
-                                  ) : (
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                                      <Ticket className="w-3.5 h-3.5 text-amber-400" />
-                                      <span className="text-xs text-amber-400 font-medium">{t.couponIncluded}:</span>
-                                      <span className="text-xs text-amber-300 font-mono font-bold sm:tracking-wider whitespace-nowrap">{quote.coupon.code}</span>
-                                      <span className="text-[11px] text-amber-400/70">
-                                        ({quote.coupon.type === "percentage" ? `${quote.coupon.value}% ${t.couponOff}` : `-${quote.coupon.value} ${quote.coupon.currency || ""} ${t.couponOff}`})
-                                      </span>
-                                      <button
-                                        onClick={(e) => { e.preventDefault(); handleCopyCoupon(quote.coupon!.code) }}
-                                        className="ml-1 p-1 sm:p-0.5 rounded hover:bg-white/10 transition-colors touch-manipulation"
-                                        title={t.copyCouponCode}
-                                      >
-                                        {copiedCoupon === quote.coupon.code ? (
-                                          <Check className="w-3 h-3 text-emerald-400" />
-                                        ) : (
-                                          <Copy className="w-3 h-3 text-amber-400/60 hover:text-amber-400" />
-                                        )}
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
                             </div>
                             <span
                               className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
@@ -430,6 +380,60 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                               {getQuoteStatusLabel(quote.status, !!quote.userResponse)}
                             </span>
                           </div>
+                          {/* Coupon badge — block two-row layout for mobile */}
+                          {quote.coupon && (
+                            <div className="mt-1.5">
+                              {quote.product?.slug ? (
+                                <Link
+                                  href={`/products/${quote.product.slug}?coupon=${quote.coupon.code}`}
+                                  className="block p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-colors"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Ticket className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                    <span className="text-xs text-amber-300 font-mono font-bold sm:tracking-wider truncate">{quote.coupon.code}</span>
+                                    <span className="text-[11px] text-amber-400/70 shrink-0 whitespace-nowrap">
+                                      ({quote.coupon.type === "percentage" ? `${quote.coupon.value}% ${t.couponOff}` : `-${quote.coupon.value} ${quote.coupon.currency || ""} ${t.couponOff}`})
+                                    </span>
+                                    <span
+                                      role="button"
+                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyCoupon(quote.coupon!.code) }}
+                                      className="ml-auto p-1 rounded hover:bg-white/10 transition-colors cursor-pointer touch-manipulation shrink-0"
+                                      title={t.copyCouponCode}
+                                    >
+                                      {copiedCoupon === quote.coupon.code ? (
+                                        <Check className="w-3 h-3 text-emerald-400" />
+                                      ) : (
+                                        <Copy className="w-3 h-3 text-amber-400/60 hover:text-amber-400" />
+                                      )}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-amber-400/60 mt-0.5 ml-[22px]">{t.couponIncluded}</p>
+                                </Link>
+                              ) : (
+                                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                  <div className="flex items-center gap-2">
+                                    <Ticket className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                    <span className="text-xs text-amber-300 font-mono font-bold sm:tracking-wider truncate">{quote.coupon.code}</span>
+                                    <span className="text-[11px] text-amber-400/70 shrink-0 whitespace-nowrap">
+                                      ({quote.coupon.type === "percentage" ? `${quote.coupon.value}% ${t.couponOff}` : `-${quote.coupon.value} ${quote.coupon.currency || ""} ${t.couponOff}`})
+                                    </span>
+                                    <button
+                                      onClick={(e) => { e.preventDefault(); handleCopyCoupon(quote.coupon!.code) }}
+                                      className="ml-auto p-1 rounded hover:bg-white/10 transition-colors touch-manipulation shrink-0"
+                                      title={t.copyCouponCode}
+                                    >
+                                      {copiedCoupon === quote.coupon.code ? (
+                                        <Check className="w-3 h-3 text-emerald-400" />
+                                      ) : (
+                                        <Copy className="w-3 h-3 text-amber-400/60 hover:text-amber-400" />
+                                      )}
+                                    </button>
+                                  </div>
+                                  <p className="text-[11px] text-amber-400/60 mt-0.5 ml-[22px]">{t.couponIncluded}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
 

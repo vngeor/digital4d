@@ -19,7 +19,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Birthday Prompts** - Registration birthDate field, profile banner for missing birthDate, header indicator with pulsing dot
 - **Authentication** - Email/password + OAuth (Google, GitHub)
 - **Image Optimization** - Automatic compression, WebP conversion, Vercel Blob storage
-- **Mobile Responsive** - iOS Safari optimized (input zoom prevention, tap highlight removal, font smoothing), touch-friendly targets, responsive coupon badges, CSS cascade layer architecture for Tailwind v4 compatibility
+- **Mobile Responsive** - iOS Safari optimized (input zoom prevention, tap highlight removal, font smoothing), touch-friendly targets, responsive coupon badges, mobile-safe modals/popups with proper viewport constraints, CSS cascade layer architecture for Tailwind v4 compatibility
 
 ## Tech Stack
 
