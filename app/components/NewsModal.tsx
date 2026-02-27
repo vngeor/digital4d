@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { createPortal } from "react-dom"
 
 interface NewsItem {
     title: string
@@ -54,7 +55,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
 
     const colors = categoryColors[categoryIndex] || categoryColors[2]
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe"
             onClick={onClose}
@@ -117,6 +118,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }

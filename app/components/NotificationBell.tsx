@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { Bell, X, MessageSquare, Ticket, Copy, Check, Heart, TrendingDown, Cake, Gift, ExternalLink, Percent, Clock, TreePine, PartyPopper, Egg, CalendarDays } from "lucide-react"
 
@@ -75,6 +76,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const [countdownKey, setCountdownKey] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const portalDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -100,7 +102,10 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+        (!portalDropdownRef.current || !portalDropdownRef.current.contains(event.target as Node))
+      ) {
         setIsOpen(false)
       }
     }
@@ -616,9 +621,9 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
         )}
       </button>
 
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div className="fixed left-1/2 -translate-x-1/2 top-[4.5rem] w-[calc(100vw-2rem)] max-w-80 sm:absolute sm:right-0 sm:left-auto sm:translate-x-0 sm:top-auto sm:mt-2 sm:w-80 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl z-[60] overflow-hidden max-h-[calc(100dvh-6rem)]">
+      {/* Dropdown Menu — portaled to body to escape Header's backdrop-filter containing block */}
+      {isOpen && createPortal(
+        <div ref={portalDropdownRef} className="fixed left-1/2 -translate-x-1/2 top-[4.5rem] w-[calc(100vw-2rem)] max-w-80 sm:fixed sm:right-4 sm:left-auto sm:translate-x-0 sm:top-[4.5rem] sm:w-80 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl z-[60] overflow-hidden max-h-[calc(100dvh-6rem)]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <h3 className="font-semibold text-white">{t.notifications}</h3>
@@ -654,11 +659,12 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
               </Link>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Notification Detail Modal (for auto_* types) */}
-      {selectedNotification && isAutoNotification(selectedNotification.type) && (
+      {/* Notification Detail Modal — portaled to body to escape Header's backdrop-filter containing block */}
+      {selectedNotification && isAutoNotification(selectedNotification.type) && createPortal(
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe"
           onClick={() => setSelectedNotification(null)}
@@ -809,7 +815,8 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

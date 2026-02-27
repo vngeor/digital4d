@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
 
@@ -94,7 +95,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
     }
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-safe pb-safe">
       {/* Backdrop */}
       <div
@@ -222,6 +223,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

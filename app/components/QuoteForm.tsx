@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { useTranslations } from "next-intl"
 import { X, Upload, File, Loader2, CheckCircle } from "lucide-react"
 
@@ -123,7 +124,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
     }
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center z-50 p-3 pb-safe sm:p-4 sm:pb-safe">
             <div className="glass-strong rounded-2xl border border-white/10 w-full sm:max-w-lg max-h-[90dvh] sm:max-h-[85dvh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
@@ -302,6 +303,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                     </form>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
