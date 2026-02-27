@@ -55,7 +55,7 @@ export async function GET() {
           },
           include: {
             coupon: {
-              select: { code: true, type: true, value: true, currency: true },
+              select: { code: true, type: true, value: true, currency: true, expiresAt: true },
             },
           },
           orderBy: { createdAt: "desc" },
@@ -73,7 +73,7 @@ export async function GET() {
     // Build unified notifications list
     const unified: Array<{
       id: string
-      type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_holiday" | "auto_custom"
+      type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "coupon_reminder"
       title: string
       message: string
       link: string | null
@@ -88,6 +88,7 @@ export async function GET() {
       couponType: string | null
       couponValue: string | null
       couponCurrency: string | null
+      couponExpiresAt: string | null
       createdAt: string
       isLegacy: boolean
       quoteId: string | null
@@ -116,6 +117,7 @@ export async function GET() {
           couponType: null,
           couponValue: null,
           couponCurrency: null,
+          couponExpiresAt: null,
           createdAt: n.quotedAt?.toISOString() || new Date().toISOString(),
           isLegacy: true,
           quoteId: n.id,
@@ -138,7 +140,7 @@ export async function GET() {
 
       unified.push({
         id: n.id,
-        type: n.type as "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_holiday" | "auto_custom",
+        type: n.type as "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "coupon_reminder",
         title: n.title,
         message: n.message,
         link: n.link,
@@ -153,6 +155,7 @@ export async function GET() {
         couponType: n.coupon?.type || null,
         couponValue: n.coupon?.value?.toString() || null,
         couponCurrency: n.coupon?.currency || null,
+        couponExpiresAt: n.coupon?.expiresAt?.toISOString() || null,
         createdAt: n.createdAt.toISOString(),
         isLegacy: false,
         quoteId: n.quoteId || null,

@@ -566,7 +566,7 @@ export function QuoteDetailModal({ quote, onClose, onSaved, canDelete, onDelete 
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     value={editForm.quotedPrice}
                     onChange={(e) => {

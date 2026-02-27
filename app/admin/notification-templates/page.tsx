@@ -18,7 +18,7 @@ import {
   Cake,
   TreePine,
   PartyPopper,
-  Church,
+  Egg,
   CalendarDays,
   Ticket,
   ShieldOff,
@@ -29,6 +29,7 @@ import {
 import { DataTable } from "@/app/components/admin/DataTable"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { RichTextEditor } from "@/app/components/admin/RichTextEditor"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 type Locale = "bg" | "en" | "es"
@@ -57,6 +58,8 @@ interface Template {
   couponProductIds: string[]
   couponAllowOnSale: boolean
   couponMinPurchase: number | null
+  couponExpiryMode: string | null
+  couponExpiresAt: string | null
   active: boolean
   lastRunAt: string | null
   lastRunCount: number
@@ -83,7 +86,7 @@ const TRIGGER_BADGES: Record<string, { icon: LucideIcon; color: string }> = {
   birthday: { icon: Cake, color: "bg-pink-500/20 text-pink-400" },
   christmas: { icon: TreePine, color: "bg-red-500/20 text-red-400" },
   new_year: { icon: PartyPopper, color: "bg-amber-500/20 text-amber-400" },
-  orthodox_easter: { icon: Church, color: "bg-purple-500/20 text-purple-400" },
+  orthodox_easter: { icon: Egg, color: "bg-purple-500/20 text-purple-400" },
   custom_date: { icon: CalendarDays, color: "bg-blue-500/20 text-blue-400" },
 }
 
@@ -111,6 +114,8 @@ const emptyForm = {
   couponValue: "",
   couponCurrency: "EUR",
   couponDuration: 30,
+  couponExpiryMode: "duration",
+  couponExpiresAt: "",
   couponPerUser: 1,
   couponProductIds: [] as string[],
   couponAllowOnSale: false,
@@ -328,6 +333,8 @@ export default function NotificationTemplatesPage() {
       couponValue: template.couponValue != null ? String(template.couponValue) : "",
       couponCurrency: template.couponCurrency || "EUR",
       couponDuration: template.couponDuration || 30,
+      couponExpiryMode: template.couponExpiryMode || "duration",
+      couponExpiresAt: template.couponExpiresAt ? new Date(template.couponExpiresAt).toISOString().slice(0, 16) : "",
       couponPerUser: template.couponPerUser,
       couponProductIds: template.couponProductIds || [],
       couponAllowOnSale: template.couponAllowOnSale,
@@ -342,6 +349,10 @@ export default function NotificationTemplatesPage() {
   const handleSave = async () => {
     if (!form.name.trim() || !form.titleEn.trim() || !form.messageEn.trim()) {
       toast.error(t("saveFailed"))
+      return
+    }
+    if (form.couponEnabled && !form.couponValue) {
+      toast.error("Coupon value is required when auto-coupon is enabled")
       return
     }
     setSaving(true)
@@ -366,6 +377,9 @@ export default function NotificationTemplatesPage() {
         couponValue: form.couponEnabled && form.couponValue ? parseFloat(form.couponValue) : null,
         couponCurrency: form.couponEnabled ? form.couponCurrency : null,
         couponDuration: form.couponEnabled ? form.couponDuration : null,
+        couponExpiryMode: form.couponEnabled ? form.couponExpiryMode : null,
+        couponExpiresAt: form.couponEnabled && form.couponExpiryMode === "date" && form.couponExpiresAt
+          ? new Date(form.couponExpiresAt).toISOString() : null,
         couponPerUser: form.couponEnabled ? form.couponPerUser : 1,
         couponProductIds: form.couponEnabled ? form.couponProductIds : [],
         couponAllowOnSale: form.couponEnabled ? form.couponAllowOnSale : false,
@@ -380,8 +394,14 @@ export default function NotificationTemplatesPage() {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || "Failed to save")
+        let errorMsg = "Failed to save"
+        try {
+          const data = await res.json()
+          errorMsg = data.error || errorMsg
+        } catch {
+          // response not JSON
+        }
+        throw new Error(errorMsg)
       }
 
       toast.success(editingTemplate ? t("updatedSuccess") : t("createdSuccess"))
@@ -584,7 +604,7 @@ export default function NotificationTemplatesPage() {
             <button
               onClick={() => setDeleteItem({ id: item.id, name: item.name })}
               className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-red-400 transition-colors"
-              title={tAdmin("delete")}
+              title={t("delete")}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -859,14 +879,12 @@ export default function NotificationTemplatesPage() {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1">{t("message")}</label>
-                <textarea
-                  rows={4}
+                <RichTextEditor
                   value={activeTab === "bg" ? form.messageBg : activeTab === "es" ? form.messageEs : form.messageEn}
-                  onChange={(e) => {
+                  onChange={(html) => {
                     const key = `message${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as "messageBg" | "messageEn" | "messageEs"
-                    setForm({ ...form, [key]: e.target.value })
+                    setForm({ ...form, [key]: html })
                   }}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors resize-none"
                 />
               </div>
 
@@ -930,7 +948,7 @@ export default function NotificationTemplatesPage() {
                       <input
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="any"
                         value={form.couponValue}
                         onChange={(e) => setForm({ ...form, couponValue: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
@@ -945,25 +963,48 @@ export default function NotificationTemplatesPage() {
                           className="w-full px-3 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                         >
                           <option value="EUR" className="bg-slate-800">EUR</option>
-                          <option value="BGN" className="bg-slate-800">BGN</option>
-                          <option value="USD" className="bg-slate-800">USD</option>
                         </select>
                       </div>
                     )}
                   </div>
 
-                  {/* Duration + Per user */}
+                  {/* Expiry mode + Per user */}
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="block text-sm text-gray-400 mb-1">{t("couponDuration")}</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="365"
-                        value={form.couponDuration}
-                        onChange={(e) => setForm({ ...form, couponDuration: parseInt(e.target.value) || 30 })}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
-                      />
+                      <label className="block text-sm text-gray-400 mb-1">{t("couponExpiryMode")}</label>
+                      <div className="flex gap-2 mb-2">
+                        <button type="button"
+                          onClick={() => setForm({ ...form, couponExpiryMode: "duration" })}
+                          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                            form.couponExpiryMode === "duration"
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                              : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10"
+                          }`}>
+                          {t("expiryByDuration")}
+                        </button>
+                        <button type="button"
+                          onClick={() => setForm({ ...form, couponExpiryMode: "date" })}
+                          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                            form.couponExpiryMode === "date"
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                              : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10"
+                          }`}>
+                          {t("expiryByDate")}
+                        </button>
+                      </div>
+                      {form.couponExpiryMode === "duration" ? (
+                        <input type="number" min="1" max="365"
+                          value={form.couponDuration}
+                          onChange={(e) => setForm({ ...form, couponDuration: parseInt(e.target.value) || 30 })}
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+                        />
+                      ) : (
+                        <input type="datetime-local"
+                          value={form.couponExpiresAt}
+                          onChange={(e) => setForm({ ...form, couponExpiresAt: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors [color-scheme:dark]"
+                        />
+                      )}
                     </div>
                     <div className="flex-1">
                       <label className="block text-sm text-gray-400 mb-1">{t("couponPerUser")}</label>
@@ -984,7 +1025,7 @@ export default function NotificationTemplatesPage() {
                     <input
                       type="number"
                       min="0"
-                      step="0.01"
+                      step="any"
                       value={form.couponMinPurchase}
                       onChange={(e) => setForm({ ...form, couponMinPurchase: e.target.value })}
                       placeholder="0.00"

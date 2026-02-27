@@ -125,11 +125,9 @@ export async function POST(request: NextRequest) {
 
     // Map currency codes
     const currencyMap: Record<string, string> = {
-      BGN: "bgn",
       EUR: "eur",
-      USD: "usd",
     }
-    const currency = currencyMap[product.currency] || "bgn"
+    const currency = currencyMap[product.currency] || "eur"
 
     // Get base URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.headers.get("origin") || "http://localhost:3000"

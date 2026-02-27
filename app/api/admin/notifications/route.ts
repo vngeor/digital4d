@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     if (error) return error
 
     const body = await request.json()
-    const { userIds, type, title, message, couponId, link, scheduledAt } = body
+    const { userIds, type, title, message, couponId, link, scheduledAt, couponExpiresAt } = body
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json({ error: "At least one user must be selected" }, { status: 400 })
@@ -128,6 +128,17 @@ export async function POST(request: NextRequest) {
       const coupon = await prisma.coupon.findUnique({ where: { id: couponId } })
       if (!coupon) {
         return NextResponse.json({ error: "Coupon not found" }, { status: 404 })
+      }
+    }
+
+    // Update coupon expiration if provided
+    if (couponId && couponExpiresAt) {
+      const expiresDate = new Date(couponExpiresAt)
+      if (!isNaN(expiresDate.getTime()) && expiresDate > new Date()) {
+        await prisma.coupon.update({
+          where: { id: couponId },
+          data: { expiresAt: expiresDate },
+        })
       }
     }
 

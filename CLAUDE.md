@@ -136,7 +136,7 @@ No test framework is configured.
 ### Frontend Components
 
 - **`Header`**: navigation with dynamic menu, user dropdown, language switcher, mobile responsive. Includes birthday indicator: pulsing pink dot on avatar + Cake icon on "My Profile" link (desktop dropdown & mobile menu) when user hasn't set birthDate — fetches `/api/user/profile` on mount to check
-- **`NotificationBell`**: unified notifications with i18n support; quote notifications show admin message preview, link to specific quote on my-orders with auto-scroll
+- **`NotificationBell`**: unified notifications with i18n support; per-type icons (Cake for birthday, TreePine for Christmas, PartyPopper for New Year, Egg for Easter, CalendarDays for custom, Gift for generic holiday); HTML message rendering via `dangerouslySetInnerHTML`; locale-aware JSON title/message parsing; quote notifications show admin message preview, link to specific quote on my-orders with auto-scroll
 - **`WishlistButton`**: heart toggle on product cards/detail pages, adds/removes from wishlist
 - **`LanguageSwitcher`**: locale switching with `useTransition`
 - **`ProductCatalog`**: product filtering, search, category tabs
@@ -178,13 +178,17 @@ No test framework is configured.
 
 ### Notifications
 
-- **Notification model**: userId, type (quote_offer/admin_message/coupon/wishlist_price_drop/wishlist_coupon/auto_birthday/auto_holiday/auto_custom), title, message, link, couponId, quoteId, productId, read/readAt, scheduledAt, createdById
+- **Notification model**: userId, type (quote_offer/admin_message/coupon/wishlist_price_drop/wishlist_coupon/auto_birthday/auto_christmas/auto_new_year/auto_easter/auto_custom), title, message, link, couponId, quoteId, productId, read/readAt, scheduledAt, createdById
+- **Per-trigger notification types**: each holiday trigger maps to a distinct type (`auto_christmas`, `auto_new_year`, `auto_easter`) via `getNotificationType()` in `lib/cronNotifications.ts`, enabling per-type icons and colors
 - **i18n pattern**: Notification `title`/`message` fields store JSON with translation keys (e.g., `"quote_offer"`, `{"price":"7.50","hasCoupon":true}`). Localized at display time in `NotificationBell` using `getLocalizedTitle()`/`getLocalizedMessage()` helpers. Use `t.raw()` for template strings with placeholders.
 - **Admin page** (`/admin/notifications`): send notifications to users with smart recipient selection
   - **User picker**: all-users-on-focus (cached), debounced search, select all/deselect all with 3-state checkbox
   - **Quick filters**: Birthday Today/This Week/This Month, All Users (with count confirmation), By Role dropdown
   - **Schedule/snooze**: toggle to schedule notifications for future delivery with datetime picker
-  - **Types**: admin messages, coupon, and auto notifications with optional deep links
+  - **Types**: admin messages, coupon, and auto notifications with optional deep links. Type badges show specific labels (Birthday, Christmas, New Year, Easter, Template) with per-type colors
+  - **RichTextEditor**: message field uses TipTap HTML editor (same as templates page). HTML content rendered in notification modal, stripped in list preview
+  - **Locale-aware display**: title/message columns parse JSON and show localized text instead of raw JSON. Uses `getLocalizedText()`, `stripHtml()` helpers
+  - **Mobile responsive**: modal uses `p-4 sm:p-6` pattern, responsive button/input padding, localized delete confirmation
   - **Tab navigation**: Notifications | Templates tabs — templates page at `/admin/notification-templates`
 - **Notification Templates** (`/admin/notification-templates`):
   - **NotificationTemplate model**: name, trigger (birthday/christmas/new_year/orthodox_easter/custom_date), daysBefore, customMonth/customDay, recurring, titleBg/En/Es, messageBg/En/Es, link, couponEnabled + coupon config fields, active, lastRunAt/lastRunCount

@@ -114,7 +114,7 @@ const PRICE_TYPES = [
   { value: "quote", labelKey: "priceTypeQuote" },
 ]
 
-const CURRENCIES = ["EUR", "BGN", "USD"]
+const CURRENCIES = ["EUR"]
 
 export function ProductForm({
   initialData,
@@ -463,7 +463,7 @@ export function ProductForm({
                 </label>
                 <input
                   type="number"
-                  step="0.01"
+                  step="any"
                   value={formData.price}
                   onChange={(e) => updateField("price", e.target.value)}
                   placeholder="0.00"
@@ -494,7 +494,7 @@ export function ProductForm({
                 </label>
                 <input
                   type="number"
-                  step="0.01"
+                  step="any"
                   value={formData.salePrice}
                   onChange={(e) => updateField("salePrice", e.target.value)}
                   placeholder="0.00"

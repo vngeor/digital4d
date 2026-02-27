@@ -13,7 +13,9 @@ const COUPON_PREFIXES: Record<string, string> = {
 /** Map trigger type to notification type */
 function getNotificationType(trigger: string): string {
   if (trigger === "birthday") return "auto_birthday"
-  if (trigger === "christmas" || trigger === "new_year" || trigger === "orthodox_easter") return "auto_holiday"
+  if (trigger === "christmas") return "auto_christmas"
+  if (trigger === "new_year") return "auto_new_year"
+  if (trigger === "orthodox_easter") return "auto_easter"
   return "auto_custom"
 }
 
@@ -220,9 +222,33 @@ export async function processTemplates(): Promise<{
             if (existingCoupon) {
               couponId = existingCoupon.id
               couponCode = existingCoupon.code
+              // Update coupon settings in case template changed
+              const updatedExpiresAt = new Date()
+              if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+                updatedExpiresAt.setTime(new Date(template.couponExpiresAt).getTime())
+              } else {
+                updatedExpiresAt.setDate(updatedExpiresAt.getDate() + (template.couponDuration || 30))
+              }
+              await prisma.coupon.update({
+                where: { id: existingCoupon.id },
+                data: {
+                  expiresAt: updatedExpiresAt,
+                  type: template.couponType,
+                  value: template.couponValue,
+                  currency: template.couponCurrency,
+                  minPurchase: template.couponMinPurchase,
+                  perUserLimit: template.couponPerUser,
+                  productIds: template.couponProductIds,
+                  allowOnSale: template.couponAllowOnSale,
+                },
+              })
             } else {
               const expiresAt = new Date()
-              expiresAt.setDate(expiresAt.getDate() + (template.couponDuration || 30))
+              if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+                expiresAt.setTime(new Date(template.couponExpiresAt).getTime())
+              } else {
+                expiresAt.setDate(expiresAt.getDate() + (template.couponDuration || 30))
+              }
 
               const coupon = await prisma.coupon.create({
                 data: {
@@ -249,8 +275,13 @@ export async function processTemplates(): Promise<{
               ? `${template.couponValue}%`
               : `${template.couponValue} ${template.couponCurrency || "EUR"}`
 
-            const expDate = new Date()
-            expDate.setDate(expDate.getDate() + (template.couponDuration || 30))
+            let expDate: Date
+            if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+              expDate = new Date(template.couponExpiresAt)
+            } else {
+              expDate = new Date()
+              expDate.setDate(expDate.getDate() + (template.couponDuration || 30))
+            }
             expiresAtStr = expDate.toLocaleDateString("en-GB") // DD/MM/YYYY
           }
 
@@ -363,9 +394,33 @@ export async function testSendTemplate(
 
     if (existingCoupon) {
       couponId = existingCoupon.id
+      // Update coupon settings in case template changed
+      const updatedExpiresAt = new Date()
+      if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+        updatedExpiresAt.setTime(new Date(template.couponExpiresAt).getTime())
+      } else {
+        updatedExpiresAt.setDate(updatedExpiresAt.getDate() + (template.couponDuration || 30))
+      }
+      await prisma.coupon.update({
+        where: { id: existingCoupon.id },
+        data: {
+          expiresAt: updatedExpiresAt,
+          type: template.couponType,
+          value: template.couponValue,
+          currency: template.couponCurrency,
+          minPurchase: template.couponMinPurchase,
+          perUserLimit: template.couponPerUser,
+          productIds: template.couponProductIds,
+          allowOnSale: template.couponAllowOnSale,
+        },
+      })
     } else {
       const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + (template.couponDuration || 30))
+      if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+        expiresAt.setTime(new Date(template.couponExpiresAt).getTime())
+      } else {
+        expiresAt.setDate(expiresAt.getDate() + (template.couponDuration || 30))
+      }
 
       const coupon = await prisma.coupon.create({
         data: {
@@ -391,9 +446,14 @@ export async function testSendTemplate(
       ? `${template.couponValue}%`
       : `${template.couponValue} ${template.couponCurrency || "EUR"}`
 
-    const expDate = new Date()
-    expDate.setDate(expDate.getDate() + (template.couponDuration || 30))
-    expiresAtStr = expDate.toLocaleDateString("en-GB")
+    let expDateTest: Date
+    if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+      expDateTest = new Date(template.couponExpiresAt)
+    } else {
+      expDateTest = new Date()
+      expDateTest.setDate(expDateTest.getDate() + (template.couponDuration || 30))
+    }
+    expiresAtStr = expDateTest.toLocaleDateString("en-GB")
   }
 
   const placeholderData = {
@@ -429,4 +489,92 @@ export async function testSendTemplate(
   })
 
   return { couponId, notificationId: notification.id }
+}
+
+/**
+ * Process 48-hour coupon reminder notifications.
+ * Finds notifications with coupons that were opened (read) but not yet used,
+ * and whose coupon expires within the next 48 hours.
+ */
+export async function processReminderNotifications(): Promise<{
+  sent: number
+  errors: string[]
+}> {
+  const result = { sent: 0, errors: [] as string[] }
+  const now = new Date()
+  const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000)
+
+  try {
+    // Find notifications with coupons that were opened but not yet reminded
+    const candidates = await prisma.notification.findMany({
+      where: {
+        couponId: { not: null },
+        read: true,
+        reminderSentAt: null,
+        type: { in: ["auto_birthday", "auto_christmas", "auto_new_year", "auto_easter", "auto_custom", "coupon"] },
+      },
+      include: {
+        coupon: { select: { id: true, code: true, type: true, value: true, currency: true, expiresAt: true } },
+        user: { select: { id: true, email: true, name: true } },
+      },
+    })
+
+    for (const notification of candidates) {
+      try {
+        if (!notification.coupon?.expiresAt) continue
+        const expiresAt = new Date(notification.coupon.expiresAt)
+
+        // Check: expires within next 48 hours (not already expired)
+        if (expiresAt <= now || expiresAt > in48h) continue
+
+        // Check: coupon not yet used by this user
+        const usage = await prisma.couponUsage.findFirst({
+          where: { couponId: notification.coupon.id, email: notification.user.email },
+        })
+        if (usage) continue // Already used, skip
+
+        // Build i18n reminder title/message
+        const couponValueStr = notification.coupon.type === "percentage"
+          ? `${notification.coupon.value}%`
+          : `${notification.coupon.value} ${notification.coupon.currency || "EUR"}`
+
+        const title = JSON.stringify({
+          bg: "⏰ Не забравяй купона си!",
+          en: "⏰ Don't forget your coupon!",
+          es: "⏰ ¡No olvides tu cupón!",
+        })
+        const message = JSON.stringify({
+          bg: `Купонът ти ${notification.coupon.code} за ${couponValueStr} изтича скоро! Използвай го преди да е късно.`,
+          en: `Your coupon ${notification.coupon.code} for ${couponValueStr} expires soon! Use it before it's gone.`,
+          es: `Tu cupón ${notification.coupon.code} por ${couponValueStr} expira pronto. ¡Úsalo antes de que caduque!`,
+        })
+
+        // Create reminder notification
+        await prisma.notification.create({
+          data: {
+            userId: notification.userId,
+            type: "coupon_reminder",
+            title,
+            message,
+            link: notification.link,
+            couponId: notification.couponId,
+          },
+        })
+
+        // Mark original as reminded
+        await prisma.notification.update({
+          where: { id: notification.id },
+          data: { reminderSentAt: now },
+        })
+
+        result.sent++
+      } catch (err) {
+        result.errors.push(`Reminder for notification ${notification.id}: ${err}`)
+      }
+    }
+  } catch (err) {
+    result.errors.push(`Reminder processing failed: ${err}`)
+  }
+
+  return result
 }

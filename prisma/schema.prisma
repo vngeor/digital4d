@@ -382,7 +382,7 @@ model Coupon {
   code          String    @unique              // "SUMMER20", "WELCOME10"
   type          String                         // "percentage" | "fixed"
   value         Decimal   @db.Decimal(10, 2)   // 20 for 20%, 5.00 for €5 off
-  currency      String?                        // Required for "fixed" type (EUR, BGN, USD)
+  currency      String?                        // Required for "fixed" type (EUR only)
   minPurchase   Decimal?  @db.Decimal(10, 2)   // Minimum purchase amount to use coupon
   maxUses       Int?                           // Total uses allowed (null = unlimited)
   usedCount     Int       @default(0)          // Current usage count
@@ -437,8 +437,9 @@ model Notification {
   read        Boolean   @default(false)
   readAt      DateTime?
   createdById String?                   // Admin who sent it
-  scheduledAt DateTime?                 // null = immediate, future date = scheduled delivery
-  createdAt   DateTime  @default(now())
+  scheduledAt    DateTime?                 // null = immediate, future date = scheduled delivery
+  reminderSentAt DateTime?                 // When 48h reminder was sent for this notification's coupon
+  createdAt      DateTime  @default(now())
 
   @@index([userId])
   @@index([read])
@@ -498,6 +499,8 @@ model NotificationTemplate {
   couponProductIds String[]                        // Empty = all products
   couponAllowOnSale Boolean  @default(false)       // Can coupon be used on sale items?
   couponMinPurchase Decimal? @db.Decimal(10, 2)    // Minimum purchase amount
+  couponExpiryMode  String?  @default("duration")  // "duration" | "date"
+  couponExpiresAt   DateTime?                       // Specific expiry date (when mode = "date")
   active           Boolean   @default(true)
   lastRunAt        DateTime?                       // Last cron run timestamp
   lastRunCount     Int       @default(0)           // Notifications sent last run

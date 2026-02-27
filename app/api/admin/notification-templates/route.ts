@@ -84,11 +84,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Currency is required for fixed coupon type" }, { status: 400 })
     }
 
-    const template = await prisma.notificationTemplate.create({
+    // Ensure numeric values are properly typed for Prisma Decimal fields
+    const couponValue = data.couponEnabled && data.couponValue != null ? Number(data.couponValue) : null
+    const couponMinPurchase = data.couponEnabled && data.couponMinPurchase != null ? Number(data.couponMinPurchase) : null
+
+    // Create without include to avoid Neon HTTP transaction limitation
+    const created = await prisma.notificationTemplate.create({
       data: {
         name: data.name,
         trigger: data.trigger,
-        daysBefore: data.daysBefore || 0,
+        daysBefore: typeof data.daysBefore === "number" ? data.daysBefore : 0,
         customMonth: data.trigger === "custom_date" ? data.customMonth : null,
         customDay: data.trigger === "custom_date" ? data.customDay : null,
         recurring: data.recurring !== false,
@@ -101,16 +106,23 @@ export async function POST(request: NextRequest) {
         link: data.link || null,
         couponEnabled: data.couponEnabled || false,
         couponType: data.couponEnabled ? data.couponType : null,
-        couponValue: data.couponEnabled ? data.couponValue : null,
-        couponCurrency: data.couponEnabled ? data.couponCurrency : null,
+        couponValue: isNaN(couponValue as number) ? null : couponValue,
+        couponCurrency: data.couponEnabled ? (data.couponCurrency || null) : null,
         couponDuration: data.couponEnabled ? (data.couponDuration || 30) : null,
         couponPerUser: data.couponEnabled ? (data.couponPerUser || 1) : 1,
         couponProductIds: data.couponEnabled ? (data.couponProductIds || []) : [],
         couponAllowOnSale: data.couponEnabled ? (data.couponAllowOnSale || false) : false,
-        couponMinPurchase: data.couponEnabled ? data.couponMinPurchase : null,
+        couponMinPurchase: isNaN(couponMinPurchase as number) ? null : couponMinPurchase,
+        couponExpiryMode: data.couponEnabled ? (data.couponExpiryMode || "duration") : null,
+        couponExpiresAt: data.couponEnabled && data.couponExpiryMode === "date" && data.couponExpiresAt ? new Date(data.couponExpiresAt) : null,
         active: data.active !== false,
         createdById: session.user.id,
       },
+    })
+
+    // Fetch with relations separately (Neon HTTP doesn't support transactions in create+include)
+    const template = await prisma.notificationTemplate.findUnique({
+      where: { id: created.id },
       include: {
         createdBy: {
           select: { id: true, name: true, email: true },
@@ -125,15 +137,16 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       action: "create",
       resource: "notifications",
-      recordId: template.id,
-      recordTitle: `Template: ${template.name}`,
+      recordId: created.id,
+      recordTitle: `Template: ${created.name}`,
     }).catch(() => {})
 
-    return NextResponse.json(template, { status: 201 })
+    return NextResponse.json(template ?? created, { status: 201 })
   } catch (error) {
     console.error("Error creating notification template:", error)
+    const message = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: message },
       { status: 500 }
     )
   }
@@ -213,6 +226,8 @@ export async function PUT(request: NextRequest) {
       if (data.couponProductIds !== undefined) updateData.couponProductIds = data.couponProductIds
       if (data.couponAllowOnSale !== undefined) updateData.couponAllowOnSale = data.couponAllowOnSale
       if (data.couponMinPurchase !== undefined) updateData.couponMinPurchase = data.couponMinPurchase
+      if (data.couponExpiryMode !== undefined) updateData.couponExpiryMode = data.couponExpiryMode
+      if (data.couponExpiresAt !== undefined) updateData.couponExpiresAt = data.couponExpiresAt ? new Date(data.couponExpiresAt) : null
     } else if (data.couponEnabled === false) {
       updateData.couponType = null
       updateData.couponValue = null
@@ -222,11 +237,19 @@ export async function PUT(request: NextRequest) {
       updateData.couponProductIds = []
       updateData.couponAllowOnSale = false
       updateData.couponMinPurchase = null
+      updateData.couponExpiryMode = null
+      updateData.couponExpiresAt = null
     }
 
-    const template = await prisma.notificationTemplate.update({
+    // Update without include to avoid Neon HTTP transaction limitation
+    await prisma.notificationTemplate.update({
       where: { id: data.id },
       data: updateData,
+    })
+
+    // Fetch with relations separately
+    const template = await prisma.notificationTemplate.findUnique({
+      where: { id: data.id },
       include: {
         createdBy: {
           select: { id: true, name: true, email: true },
@@ -241,8 +264,8 @@ export async function PUT(request: NextRequest) {
       userId: session.user.id,
       action: "edit",
       resource: "notifications",
-      recordId: template.id,
-      recordTitle: `Template: ${template.name}`,
+      recordId: data.id,
+      recordTitle: `Template: ${template?.name ?? data.name}`,
     }).catch(() => {})
 
     return NextResponse.json(template)

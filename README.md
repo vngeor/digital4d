@@ -529,6 +529,10 @@ Send and manage user notifications. Tab navigation to Templates page.
 - Admin message, coupon, and auto notification types
 - Optional deep links
 - "Auto" filter tab to view template-generated notifications
+- RichTextEditor (TipTap) for HTML message composition
+- Per-type badges: Birthday, Christmas, New Year, Easter, Template — each with distinct color
+- Locale-aware title/message display (auto-notifications store JSON, parsed per locale)
+- Mobile responsive with proper touch targets and spacing
 
 ---
 

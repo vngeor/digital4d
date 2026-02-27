@@ -213,6 +213,13 @@ export function Header() {
                                 autoBirthday: t("autoBirthday"),
                                 autoHoliday: t("autoHoliday"),
                                 autoCustom: t("autoCustom"),
+                                notificationDetails: t("notificationDetails"),
+                                visitLink: t("visitLink"),
+                                couponExpires: t.raw("couponExpires"),
+                                couponTimeLeft: t("couponTimeLeft"),
+                                couponExpired: t("couponExpired"),
+                                couponReminder: t("couponReminder"),
+                                closeModal: t("closeModal"),
                             }}
                         />
                     )}

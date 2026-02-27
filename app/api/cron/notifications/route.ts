@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { processTemplates } from "@/lib/cronNotifications"
+import { processTemplates, processReminderNotifications } from "@/lib/cronNotifications"
 
 /**
  * Vercel Cron endpoint — runs daily at 8 AM UTC.
@@ -27,7 +27,14 @@ export async function GET(request: NextRequest) {
       result.errors.length > 0 ? `Errors: ${result.errors.join("; ")}` : ""
     )
 
-    return NextResponse.json(result, { status: 200 })
+    // Process 48h coupon reminders
+    const reminderResult = await processReminderNotifications()
+    console.log(
+      `[Cron Reminders] Sent: ${reminderResult.sent}`,
+      reminderResult.errors.length > 0 ? `Errors: ${reminderResult.errors.join("; ")}` : ""
+    )
+
+    return NextResponse.json({ ...result, reminders: reminderResult }, { status: 200 })
   } catch (error) {
     console.error("[Cron Notifications] Fatal error:", error)
     return NextResponse.json(

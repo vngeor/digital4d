@@ -12,26 +12,45 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const search = searchParams.get("search")
     const status = searchParams.get("status") // "active" | "expired" | "inactive" | null (all)
+    const source = searchParams.get("source") // "auto" | null
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "20")
 
-    const where: Record<string, unknown> = {}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const conditions: any[] = []
 
     if (search) {
-      where.code = { contains: search.toUpperCase(), mode: "insensitive" }
+      conditions.push({ code: { contains: search.toUpperCase(), mode: "insensitive" } })
     }
 
     if (status === "active") {
-      where.active = true
-      where.OR = [
-        { expiresAt: null },
-        { expiresAt: { gt: new Date() } },
-      ]
+      conditions.push({ active: true })
+      conditions.push({
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } },
+        ],
+      })
     } else if (status === "expired") {
-      where.expiresAt = { lte: new Date() }
+      conditions.push({ expiresAt: { lte: new Date() } })
     } else if (status === "inactive") {
-      where.active = false
+      conditions.push({ active: false })
     }
+
+    // Filter by source: auto-generated coupons have known prefixes
+    if (source === "auto") {
+      conditions.push({
+        OR: [
+          { code: { startsWith: "BDAY-" } },
+          { code: { startsWith: "XMAS-" } },
+          { code: { startsWith: "NEWYEAR-" } },
+          { code: { startsWith: "EASTER-" } },
+          { code: { startsWith: "TMPL-" } },
+        ],
+      })
+    }
+
+    const where: Record<string, unknown> = conditions.length > 0 ? { AND: conditions } : {}
 
     const [coupons, total] = await Promise.all([
       prisma.coupon.findMany({

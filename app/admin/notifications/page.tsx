@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
 import {
   BellRing,
@@ -28,6 +28,7 @@ import {
 import { DataTable } from "@/app/components/admin/DataTable"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
+import { RichTextEditor } from "@/app/components/admin/RichTextEditor"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
 interface NotificationUser {
@@ -46,7 +47,7 @@ interface NotificationCoupon {
 
 interface Notification {
   id: string
-  type: "quote_offer" | "admin_message" | "coupon" | "auto_birthday" | "auto_holiday" | "auto_custom" | "wishlist_price_drop" | "wishlist_coupon"
+  type: "quote_offer" | "admin_message" | "coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "wishlist_price_drop" | "wishlist_coupon"
   title: string
   message: string
   link: string | null
@@ -77,9 +78,11 @@ const TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
   admin_message: { labelKey: "adminMessage", color: "bg-purple-500/20 text-purple-400" },
   coupon: { labelKey: "couponNotification", color: "bg-amber-500/20 text-amber-400" },
   quote_offer: { labelKey: "quoteOffer", color: "bg-blue-500/20 text-blue-400" },
-  auto_birthday: { labelKey: "auto", color: "bg-pink-500/20 text-pink-400" },
-  auto_holiday: { labelKey: "auto", color: "bg-red-500/20 text-red-400" },
-  auto_custom: { labelKey: "auto", color: "bg-cyan-500/20 text-cyan-400" },
+  auto_birthday: { labelKey: "autoBirthday", color: "bg-pink-500/20 text-pink-400" },
+  auto_christmas: { labelKey: "autoChristmas", color: "bg-red-500/20 text-red-400" },
+  auto_new_year: { labelKey: "autoNewYear", color: "bg-amber-500/20 text-amber-400" },
+  auto_easter: { labelKey: "autoEaster", color: "bg-purple-500/20 text-purple-400" },
+  auto_custom: { labelKey: "autoCustom", color: "bg-blue-500/20 text-blue-400" },
 }
 
 const ROLES = ["ADMIN", "EDITOR", "AUTHOR", "SUBSCRIBER"] as const
@@ -89,7 +92,29 @@ export default function NotificationsPage() {
   const tAdmin = useTranslations("admin")
   const tTemplates = useTranslations("admin.notificationTemplates")
   const router = useRouter()
+  const locale = useLocale()
   const { can } = useAdminPermissions()
+
+  // Helper to parse JSON title/message and extract localized value
+  const tryParseJson = (str: string): Record<string, string> | null => {
+    try {
+      const parsed = JSON.parse(str)
+      if (parsed && typeof parsed === "object") return parsed
+    } catch { /* not JSON */ }
+    return null
+  }
+
+  const getLocalizedText = (text: string): string => {
+    const parsed = tryParseJson(text)
+    if (parsed) {
+      return parsed[locale] || parsed.en || parsed.bg || text
+    }
+    return text
+  }
+
+  const stripHtml = (html: string): string => {
+    return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim()
+  }
 
   // List state
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -110,6 +135,7 @@ export default function NotificationsPage() {
     title: "",
     message: "",
     link: "",
+    couponExpiresAt: "",
   })
   const [sending, setSending] = useState(false)
 
@@ -408,7 +434,8 @@ export default function NotificationsPage() {
       toast.error(t("titleRequired"))
       return
     }
-    if (!sendForm.message.trim()) {
+    const plainMessage = sendForm.message.replace(/<[^>]*>/g, "").trim()
+    if (!plainMessage) {
       toast.error(t("messageRequired"))
       return
     }
@@ -419,10 +446,13 @@ export default function NotificationsPage() {
         userIds: selectedUsers.map((u) => u.id),
         type: sendForm.type,
         title: sendForm.title.trim(),
-        message: sendForm.message.trim(),
+        message: sendForm.message,
       }
       if (sendForm.link.trim()) body.link = sendForm.link.trim()
       if (sendForm.type === "coupon" && selectedCoupon) body.couponId = selectedCoupon.id
+      if (sendForm.type === "coupon" && selectedCoupon && sendForm.couponExpiresAt) {
+        body.couponExpiresAt = new Date(sendForm.couponExpiresAt).toISOString()
+      }
       if (scheduleEnabled && scheduledAt) body.scheduledAt = new Date(scheduledAt).toISOString()
 
       const res = await fetch("/api/admin/notifications", {
@@ -451,7 +481,7 @@ export default function NotificationsPage() {
 
   // Reset form
   const resetSendForm = () => {
-    setSendForm({ type: "admin_message", title: "", message: "", link: "" })
+    setSendForm({ type: "admin_message", title: "", message: "", link: "", couponExpiresAt: "" })
     setSelectedUsers([])
     setUserSearch("")
     setUserResults([])
@@ -517,9 +547,9 @@ export default function NotificationsPage() {
     {
       key: "recipient",
       header: t("recipients"),
-      className: "min-w-[180px]",
+      className: "w-[200px]",
       render: (item: Notification) => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {item.user.image ? (
             <img
               src={item.user.image}
@@ -541,16 +571,16 @@ export default function NotificationsPage() {
     {
       key: "type",
       header: t("type"),
-      className: "whitespace-nowrap w-[130px]",
+      className: "w-[110px]",
       render: (item: Notification) => {
         const badge = TYPE_BADGES[item.type] || TYPE_BADGES.admin_message
         return (
           <div className="flex flex-col gap-1">
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.color} inline-block w-fit`}>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${badge.color} inline-block w-fit whitespace-nowrap`}>
               {t(badge.labelKey)}
             </span>
             {isScheduled(item) && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-400 inline-flex items-center gap-1 w-fit">
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-400 inline-flex items-center gap-1 w-fit whitespace-nowrap">
                 <Clock className="w-3 h-3" />
                 {t("scheduled")}
               </span>
@@ -562,30 +592,36 @@ export default function NotificationsPage() {
     {
       key: "title",
       header: t("titleField"),
-      className: "min-w-[140px] max-w-[200px]",
-      render: (item: Notification) => (
-        <p className="text-white text-sm truncate" title={item.title}>
-          {item.title}
-        </p>
-      ),
+      className: "min-w-[120px] max-w-[180px]",
+      render: (item: Notification) => {
+        const localized = stripHtml(getLocalizedText(item.title))
+        return (
+          <p className="text-white text-sm truncate" title={localized}>
+            {localized}
+          </p>
+        )
+      },
     },
     {
       key: "message",
       header: t("messageField"),
-      className: "min-w-[160px] max-w-[240px] hidden md:table-cell",
-      render: (item: Notification) => (
-        <p className="text-gray-400 text-sm truncate" title={item.message}>
-          {item.message}
-        </p>
-      ),
+      className: "min-w-[140px] max-w-[220px] hidden md:table-cell",
+      render: (item: Notification) => {
+        const localized = stripHtml(getLocalizedText(item.message))
+        return (
+          <p className="text-gray-400 text-sm truncate" title={localized}>
+            {localized}
+          </p>
+        )
+      },
     },
     {
       key: "coupon",
       header: t("couponNotification"),
-      className: "whitespace-nowrap w-[120px] hidden lg:table-cell",
+      className: "w-[140px] hidden lg:table-cell",
       render: (item: Notification) =>
         item.coupon ? (
-          <span className="font-mono text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+          <span className="font-mono text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded whitespace-nowrap">
             {item.coupon.code}
           </span>
         ) : (
@@ -595,15 +631,15 @@ export default function NotificationsPage() {
     {
       key: "read",
       header: t("readStatus"),
-      className: "whitespace-nowrap w-[80px]",
+      className: "w-[100px]",
       render: (item: Notification) => (
         <div className="flex items-center gap-2">
           <div
-            className={`w-2.5 h-2.5 rounded-full ${
+            className={`w-2.5 h-2.5 rounded-full shrink-0 ${
               isScheduled(item) ? "bg-cyan-400" : item.read ? "bg-emerald-400" : "bg-gray-500"
             }`}
           />
-          <span className={`text-xs ${
+          <span className={`text-xs whitespace-nowrap ${
             isScheduled(item) ? "text-cyan-400" : item.read ? "text-emerald-400" : "text-gray-500"
           }`}>
             {isScheduled(item) ? t("scheduled") : item.read ? t("read") : t("unread")}
@@ -614,14 +650,14 @@ export default function NotificationsPage() {
     {
       key: "createdAt",
       header: t("sentAt"),
-      className: "whitespace-nowrap w-[140px] hidden lg:table-cell",
+      className: "w-[160px] hidden lg:table-cell",
       render: (item: Notification) => (
         <div>
-          <span className="text-gray-400 text-xs">{formatDate(item.createdAt)}</span>
+          <span className="text-gray-400 text-xs whitespace-nowrap">{formatDate(item.createdAt)}</span>
           {isScheduled(item) && item.scheduledAt && (
             <div className="flex items-center gap-1 mt-0.5">
               <Clock className="w-3 h-3 text-cyan-400" />
-              <span className="text-cyan-400 text-xs">{formatDate(item.scheduledAt)}</span>
+              <span className="text-cyan-400 text-xs whitespace-nowrap">{formatDate(item.scheduledAt)}</span>
             </div>
           )}
         </div>
@@ -637,7 +673,7 @@ export default function NotificationsPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                handleDelete(item.id, item.title)
+                handleDelete(item.id, stripHtml(getLocalizedText(item.title)))
               }}
               className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
               title={t("delete")}
@@ -771,8 +807,8 @@ export default function NotificationsPage() {
                     </span>
                   </div>
                 </div>
-                <p className="text-sm text-white truncate">{item.title}</p>
-                <p className="text-sm text-gray-400 truncate">{item.message}</p>
+                <p className="text-sm text-white truncate">{stripHtml(getLocalizedText(item.title))}</p>
+                <p className="text-sm text-gray-400 truncate">{stripHtml(getLocalizedText(item.message))}</p>
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     {item.coupon && (
@@ -784,7 +820,7 @@ export default function NotificationsPage() {
                   <div className="flex items-center gap-2">
                     {can("notifications", "delete") && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.title) }}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id, stripHtml(getLocalizedText(item.title))) }}
                         className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
                       >
                         <Trash2 className="w-4 h-4 text-red-400" />
@@ -801,10 +837,10 @@ export default function NotificationsPage() {
       {/* Send Notification Modal */}
       {showSendModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
+          <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
+              <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                 <BellRing className="w-5 h-5 text-emerald-400" />
                 {t("sendNotification")}
               </h2>
@@ -816,7 +852,7 @@ export default function NotificationsPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* User Selector */}
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
@@ -869,7 +905,7 @@ export default function NotificationsPage() {
                     type="button"
                     onClick={() => fetchFilteredUsers("birthday_today")}
                     disabled={filterLoading}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all ${
                       activeFilter === "birthday_today"
                         ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
                         : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
@@ -884,7 +920,7 @@ export default function NotificationsPage() {
                     type="button"
                     onClick={() => fetchFilteredUsers("birthday_week")}
                     disabled={filterLoading}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all ${
                       activeFilter === "birthday_week"
                         ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
                         : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
@@ -899,7 +935,7 @@ export default function NotificationsPage() {
                     type="button"
                     onClick={() => fetchFilteredUsers("birthday_month")}
                     disabled={filterLoading}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all ${
                       activeFilter === "birthday_month"
                         ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
                         : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
@@ -914,7 +950,7 @@ export default function NotificationsPage() {
                     type="button"
                     onClick={handleAllUsersFilter}
                     disabled={filterLoading}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all ${
                       activeFilter === "all"
                         ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                         : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
@@ -930,7 +966,7 @@ export default function NotificationsPage() {
                       type="button"
                       onClick={() => setShowRoleDropdown(!showRoleDropdown)}
                       disabled={filterLoading}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all ${
                         activeFilter?.startsWith("role_")
                           ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                           : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
@@ -1099,7 +1135,7 @@ export default function NotificationsPage() {
                   <button
                     type="button"
                     onClick={() => setSendForm({ ...sendForm, type: "admin_message" })}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-medium transition-all ${
                       sendForm.type === "admin_message"
                         ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
                         : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10"
@@ -1111,7 +1147,7 @@ export default function NotificationsPage() {
                   <button
                     type="button"
                     onClick={() => setSendForm({ ...sendForm, type: "coupon" })}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-medium transition-all ${
                       sendForm.type === "coupon"
                         ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                         : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10"
@@ -1133,7 +1169,7 @@ export default function NotificationsPage() {
                   value={sendForm.title}
                   onChange={(e) => setSendForm({ ...sendForm, title: e.target.value })}
                   placeholder={t("titleField")}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
 
@@ -1142,12 +1178,9 @@ export default function NotificationsPage() {
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("messageField")}
                 </label>
-                <textarea
+                <RichTextEditor
                   value={sendForm.message}
-                  onChange={(e) => setSendForm({ ...sendForm, message: e.target.value })}
-                  placeholder={t("messageField")}
-                  rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                  onChange={(html) => setSendForm({ ...sendForm, message: html })}
                 />
               </div>
 
@@ -1225,6 +1258,23 @@ export default function NotificationsPage() {
                 </div>
               )}
 
+              {/* Coupon Expiration Date */}
+              {sendForm.type === "coupon" && selectedCoupon && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    {t("couponExpiresAtLabel")}
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={sendForm.couponExpiresAt}
+                    onChange={(e) => setSendForm({ ...sendForm, couponExpiresAt: e.target.value })}
+                    min={minScheduleDate()}
+                    className="w-full px-3 sm:px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-amber-500/50 transition-colors [color-scheme:dark]"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{t("couponExpiresAtHint")}</p>
+                </div>
+              )}
+
               {/* Optional Link */}
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
@@ -1236,7 +1286,7 @@ export default function NotificationsPage() {
                   value={sendForm.link}
                   onChange={(e) => setSendForm({ ...sendForm, link: e.target.value })}
                   placeholder="https://..."
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full px-3 sm:px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
 
@@ -1268,7 +1318,7 @@ export default function NotificationsPage() {
                       value={scheduledAt}
                       onChange={(e) => setScheduledAt(e.target.value)}
                       min={minScheduleDate()}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500/50 transition-colors [color-scheme:dark]"
+                      className="w-full px-3 sm:px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500/50 transition-colors [color-scheme:dark]"
                     />
                     {scheduledAt && (
                       <p className="text-xs text-cyan-400 mt-1.5 flex items-center gap-1">
@@ -1281,18 +1331,18 @@ export default function NotificationsPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2 sm:gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowSendModal(false)}
-                  className="flex-1 px-6 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 >
                   {t("cancel")}
                 </button>
                 <button
                   onClick={handleSend}
-                  disabled={sending || selectedUsers.length === 0 || !sendForm.title.trim() || !sendForm.message.trim() || (scheduleEnabled && !scheduledAt)}
-                  className={`flex-1 px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                  disabled={sending || selectedUsers.length === 0 || !sendForm.title.trim() || !sendForm.message.replace(/<[^>]*>/g, "").trim() || (scheduleEnabled && !scheduledAt)}
+                  className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                     scheduleEnabled
                       ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-cyan-500/30"
                       : "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-emerald-500/30"
