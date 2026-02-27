@@ -16,6 +16,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
 - **Security** - Auto-logout after 5 min inactivity, permission-gated admin pages and API routes
+- **Birthday Prompts** - Registration birthDate field, profile banner for missing birthDate, header indicator with pulsing dot
 - **Authentication** - Email/password + OAuth (Google, GitHub)
 - **Image Optimization** - Automatic compression, WebP conversion, Vercel Blob storage
 
@@ -78,7 +79,9 @@ digital4d-next/
 │   ├── permissions.ts     # Permission resolution (role + user overrides)
 │   ├── blob.ts            # Vercel Blob helpers
 │   ├── prisma.ts          # Database client
-│   └── generateCode.ts    # Order/quote number generation
+│   ├── generateCode.ts    # Order/quote number generation
+│   ├── cronNotifications.ts # Cron job logic for auto-scheduled notifications
+│   └── orthodoxEaster.ts  # Orthodox Easter date calculation
 ├── messages/              # i18n translations (bg, en, es)
 ├── prisma/
 │   └── schema.prisma      # Database schema

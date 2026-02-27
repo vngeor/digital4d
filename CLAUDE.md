@@ -86,7 +86,7 @@ No test framework is configured.
 - `GET /api/wishlist/check` — check if product is in wishlist
 
 **Auth routes:**
-- `POST /api/auth/register` — user registration
+- `POST /api/auth/register` — user registration (accepts optional birthDate)
 - `/api/auth/[...nextauth]` — NextAuth handler
 - `POST /api/checkout/webhook` — Stripe webhook
 
@@ -107,11 +107,11 @@ No test framework is configured.
 - **News** (`app/news/`): listing and detail pages with modal view
 - **Services** (`app/services/`): listing and detail pages
 - **Dynamic CMS** (`app/[menuSlug]/`): menu-driven pages with nested content
-- **Profile** (`app/profile/`): user profile management
+- **Profile** (`app/profile/`): user profile management with birthday banner (shown when birthDate missing) that opens edit modal
 - **My Orders** (`app/my-orders/`): order history, quote conversations with auto-scroll from notifications
 - **Wishlist** (`app/wishlist/`): saved products with price drop tracking
 - **Checkout** (`app/checkout/`): Stripe success/cancel pages
-- **Login** (`app/login/`): auth with OAuth + credentials
+- **Login** (`app/login/`): auth with OAuth + credentials, optional birthDate field on registration
 - **404** (`app/not-found.tsx`): custom page with interactive 3D dinosaur (Three.js + React Three Fiber)
 - **OG Images** (`app/opengraph-image.tsx`, `app/twitter-image.tsx`): dynamic social media images using `next/og` (edge runtime)
 
@@ -134,13 +134,13 @@ No test framework is configured.
 
 ### Frontend Components
 
-- **`Header`**: navigation with dynamic menu, user dropdown, language switcher, mobile responsive
+- **`Header`**: navigation with dynamic menu, user dropdown, language switcher, mobile responsive. Includes birthday indicator: pulsing pink dot on avatar + Cake icon on "My Profile" link (desktop dropdown & mobile menu) when user hasn't set birthDate — fetches `/api/user/profile` on mount to check
 - **`NotificationBell`**: unified notifications with i18n support; quote notifications show admin message preview, link to specific quote on my-orders with auto-scroll
 - **`WishlistButton`**: heart toggle on product cards/detail pages, adds/removes from wishlist
 - **`LanguageSwitcher`**: locale switching with `useTransition`
 - **`ProductCatalog`**: product filtering, search, category tabs
 - **`QuoteForm`**: drag-and-drop file upload, auto-fill from profile
-- **`ProfileEditForm`**: modal form with validation
+- **`ProfileEditForm`**: modal form with validation. BirthDate is required; when empty, field gets a pulsing pink-to-rose gradient border (`animate-pulse-glow`) with `highlightBirthDate` prop. Gradient: `linear-gradient(to right, lab(56.9303 76.8162 -8.07021), lab(56.101 79.4328 31.4532))`
 - **`NewsModal`**: article display with category colors
 - **`Dinosaur3D` / `Dinosaur3DWrapper`**: 3D T-Rex model (Three.js, React Three Fiber, OrbitControls), dynamically imported with SSR disabled
 
@@ -196,6 +196,12 @@ No test framework is configured.
   - **Feb 29 birthdays**: in non-leap years, Feb 28 also matches Feb 29 birthdays
   - **Orthodox Easter**: Julian calendar computus algorithm (`lib/orthodoxEaster.ts`)
   - **Permission reuse**: templates use `"notifications"` resource — no new permission type needed
+- **BirthDate collection** (for birthday notifications to work):
+  - **Registration form** (`/login`): optional birthDate field for email/password registrations
+  - **Profile banner** (`/profile`): glassmorphic pink banner with Cake icon shown when `!user.birthDate`, opens edit modal on click
+  - **Header indicator**: pulsing pink dot on avatar + Cake icon on "My Profile" link prompts users to add birthDate
+  - **Profile edit form**: birthDate is required; gradient-highlighted field when empty, validation error if not filled
+  - **OAuth users** (Google/GitHub): prompted via profile banner since they skip registration form
 - **Customer bell** (`NotificationBell`): unified notifications from quotes, admin messages, coupons, wishlist, and auto-scheduled; auto_* types display locale-aware JSON titles with Cake (birthday) and Gift (holiday/custom) icons; scheduled notifications hidden until delivery time; quote notifications show admin's last message as preview
 - **Quote auto-notification**: when admin sends a quote offer, a Notification record is auto-created with rich JSON message including adminMessage, price, and coupon info
 - **Wishlist notifications**: price drop and coupon availability notifications for wishlisted products
