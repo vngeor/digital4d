@@ -167,3 +167,13 @@ button, a, [role="button"] {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
+
+/* Performance containment utilities */
+@utility contain-content {
+  contain: content;
+}
+
+@utility cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}

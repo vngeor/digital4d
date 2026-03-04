@@ -97,7 +97,7 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
               {banner.link && banner.linkText && (
                 <Link
                   href={banner.link}
-                  className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full font-semibold text-white text-sm sm:text-base shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 transition-all"
+                  className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full font-semibold text-white text-sm sm:text-base shadow-lg shadow-emerald-500/25 hover:scale-105 transition-transform"
                 >
                   {banner.linkText}
                 </Link>
@@ -112,13 +112,13 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
         <>
           <button
             onClick={prev}
-            className="hidden md:flex absolute left-4 z-20 w-12 h-12 rounded-full glass items-center justify-center text-white hover:bg-white/20 transition-all"
+            className="hidden md:flex absolute left-4 z-20 w-12 h-12 rounded-full glass items-center justify-center text-white hover:bg-white/20 transition-colors"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button
             onClick={next}
-            className="hidden md:flex absolute right-4 z-20 w-12 h-12 rounded-full glass items-center justify-center text-white hover:bg-white/20 transition-all"
+            className="hidden md:flex absolute right-4 z-20 w-12 h-12 rounded-full glass items-center justify-center text-white hover:bg-white/20 transition-colors"
           >
             <ChevronRight className="w-6 h-6" />
           </button>
@@ -134,7 +134,7 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
               onClick={() => goTo(i)}
               className="w-8 h-8 flex items-center justify-center touch-manipulation"
             >
-              <span className={`block w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all ${
+              <span className={`block w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-[transform,background-color] duration-200 ${
                 i === current
                   ? "bg-emerald-400 scale-125"
                   : "bg-white/30 hover:bg-white/50"

@@ -522,7 +522,7 @@ export function GlobalSearch() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={handleDesktopFocus}
             placeholder={t("placeholder")}
-            className="w-full pl-9 pr-9 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all min-w-0"
+            className="w-full pl-9 pr-9 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-[border-color,box-shadow] min-w-0"
           />
           {query.length > 0 && (
             <button

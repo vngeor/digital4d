@@ -70,7 +70,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                     <p className="text-slate-400 text-sm sm:text-base">{t("subtitle")}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4 contain-content">
                     {products.map((product) => {
                         const discountPercent = product.onSale && product.price && product.salePrice
                             ? Math.round((1 - parseFloat(product.salePrice) / parseFloat(product.price)) * 100)
@@ -80,7 +80,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                             <Link
                                 key={product.id}
                                 href={`/products/${product.slug}`}
-                                className="group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300"
+                                className="group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300"
                             >
                                 {/* Image */}
                                 <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
@@ -90,7 +90,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                                                 src={product.image}
                                                 alt={product.name}
                                                 loading="lazy"
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                className="w-full h-full object-cover"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
                                         </>
@@ -218,7 +218,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                 <div className="mt-4 sm:mt-6 text-center">
                     <Link
                         href="/products"
-                        className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-all"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-[transform,background-color] duration-200"
                     >
                         {t("viewAll")}
                         <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

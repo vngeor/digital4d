@@ -35,7 +35,7 @@ export function LanguageSwitcher() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg glass hover:bg-white/10 transition-all text-sm touch-manipulation"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg glass hover:bg-white/10 transition-colors text-sm touch-manipulation"
         disabled={isPending}
       >
         <span className="text-base">{localeFlags[currentLocale]}</span>

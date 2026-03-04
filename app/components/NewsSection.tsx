@@ -46,7 +46,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                             src={item.image}
                             alt={item.title}
                             loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
                     </>
@@ -86,7 +86,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                 })()}
                 <div className="flex items-center justify-between mt-2">
                     <span className={`${compact ? 'text-[10px] sm:text-xs' : 'text-[10px] sm:text-xs'} text-slate-500`}>{item.date}</span>
-                    <span className={`text-emerald-400 ${compact ? 'text-xs sm:text-sm' : 'text-xs sm:text-sm'} font-semibold flex items-center gap-1 group-hover:gap-2 transition-all`}>
+                    <span className={`text-emerald-400 ${compact ? 'text-xs sm:text-sm' : 'text-xs sm:text-sm'} font-semibold flex items-center gap-1 group-hover:gap-2 transition-[gap] duration-200`}>
                         {t("readMore")}
                         <svg className={`${compact ? 'w-3 h-3 sm:w-4 sm:h-4' : 'w-3 h-3 sm:w-4 sm:h-4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -99,7 +99,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
 
     return (
         <>
-            <section id="news" className={`relative ${compact ? 'py-10 sm:py-12' : 'py-12 sm:py-24'} px-4`}>
+            <section id="news" className={`relative ${compact ? 'py-10 sm:py-12' : 'py-12 sm:py-24'} px-4 cv-auto`}>
                 <div className={`mx-auto ${compact ? 'max-w-4xl' : 'max-w-6xl'}`}>
                     <div className={`text-center ${compact ? 'mb-6 sm:mb-8' : 'mb-8 sm:mb-16'}`}>
                         <h2 className={`${compact ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl'} font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent`}>
@@ -108,7 +108,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                         <p className={`text-slate-400 ${compact ? 'text-sm sm:text-base' : 'text-sm sm:text-lg'}`}>{t("subtitle")}</p>
                     </div>
 
-                    <div className={`grid ${compact ? 'grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6'}`}>
+                    <div className={`grid ${compact ? 'grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6'} contain-content`}>
                         {visibleItems.map((item, index) => {
                             const hasSlug = item.slug && item.slug.trim() !== ""
 
@@ -117,7 +117,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                                     <Link
                                         key={index}
                                         href={`/news/${item.slug}`}
-                                        className={`group glass ${compact ? 'rounded-xl' : 'rounded-2xl'} overflow-hidden hover:bg-white/10 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300`}
+                                        className={`group glass ${compact ? 'rounded-xl' : 'rounded-2xl'} overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300`}
                                     >
                                         {renderNewsCard(item, index, compact)}
                                     </Link>
@@ -127,7 +127,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                             return (
                                 <article
                                     key={index}
-                                    className={`group glass ${compact ? 'rounded-xl' : 'rounded-2xl'} overflow-hidden hover:bg-white/10 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 cursor-pointer`}
+                                    className={`group glass ${compact ? 'rounded-xl' : 'rounded-2xl'} overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 cursor-pointer`}
                                     onClick={() => setSelectedNews({ item, index })}
                                 >
                                     {renderNewsCard(item, index, compact)}
@@ -141,7 +141,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                         <div className="mt-8 text-center">
                             <button
                                 onClick={loadMore}
-                                className="inline-flex items-center gap-2 px-6 py-3 glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-all"
+                                className="inline-flex items-center gap-2 px-6 py-3 glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-[transform,background-color] duration-200"
                             >
                                 {t("readMore")}
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +156,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                         <div className={`${compact ? 'mt-4 sm:mt-6' : 'mt-6 sm:mt-12'} text-center`}>
                             <Link
                                 href="/news"
-                                className={`inline-flex items-center gap-1.5 ${compact ? 'px-4 py-2 text-xs sm:text-sm' : 'px-4 sm:px-8 py-2 sm:py-4'} glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-all`}
+                                className={`inline-flex items-center gap-1.5 ${compact ? 'px-4 py-2 text-xs sm:text-sm' : 'px-4 sm:px-8 py-2 sm:py-4'} glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-[transform,background-color] duration-200`}
                             >
                                 {t("seeAll")}
                                 <svg className={`${compact ? 'w-3 h-3 sm:w-4 sm:h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

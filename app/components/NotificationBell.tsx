@@ -703,7 +703,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
             {/* Close button */}
             <button
               onClick={() => setSelectedNotification(null)}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-11 h-11 sm:w-10 sm:h-10 rounded-full glass flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/20 transition-all z-20 touch-manipulation"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-11 h-11 sm:w-10 sm:h-10 rounded-full glass flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/20 transition-colors z-20 touch-manipulation"
             >
               <X className="w-5 h-5" />
             </button>
@@ -818,7 +818,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
                   <Link
                     href={selectedNotification.link}
                     onClick={() => setSelectedNotification(null)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm hover:shadow-lg hover:shadow-emerald-500/30 transition-all touch-manipulation"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm transition-transform touch-manipulation"
                   >
                     <ExternalLink className="w-4 h-4" />
                     {t.visitLink}
@@ -826,7 +826,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
                 )}
                 <button
                   onClick={() => setSelectedNotification(null)}
-                  className={`flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium touch-manipulation ${
+                  className={`flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium touch-manipulation ${
                     !selectedNotification.link ? "w-full" : ""
                   }`}
                 >
