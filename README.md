@@ -18,6 +18,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Security** - Auto-logout after 5 min inactivity, permission-gated admin pages and API routes
 - **Birthday Prompts** - Registration birthDate field, profile banner for missing birthDate, header indicator with pulsing dot
 - **Authentication** - Email/password + OAuth (Google, GitHub)
+- **Global Search** - Site-wide search with Cmd+K shortcut, "View All" results page, keyboard navigation, recent searches
 - **Image Optimization** - Automatic compression, WebP conversion, Vercel Blob storage
 - **Mobile Responsive** - iOS Safari optimized (input zoom prevention, tap highlight removal, font smoothing), touch-friendly targets, responsive coupon badges, mobile-safe modals/popups with proper viewport constraints, CSS cascade layer architecture for Tailwind v4 compatibility
 
@@ -64,6 +65,7 @@ digital4d-next/
 │   │   ├── coupons/       # Coupon validation
 │   │   ├── notifications/ # User notifications
 │   │   ├── quotes/        # Quote system
+│   │   ├── search/        # Global site search
 │   │   ├── wishlist/      # Wishlist management
 │   │   └── upload/        # Image uploads
 │   ├── components/        # Reusable UI components
@@ -73,6 +75,7 @@ digital4d-next/
 │   ├── news/              # News listing
 │   ├── products/          # Product catalog & downloads
 │   ├── profile/           # User profile
+│   ├── search/            # Search results page
 │   ├── services/          # Services listing
 │   └── wishlist/          # Saved products
 ├── lib/                   # Utilities
@@ -205,6 +208,7 @@ Key models:
 - `POST /api/quotes` - Submit quote request
 - `POST /api/checkout` - Stripe checkout session
 - `POST /api/coupons/validate` - Validate coupon code
+- `GET /api/search?q=&limit=` - Global site search
 
 ### Authenticated
 - `GET/PUT /api/user/profile` - User profile

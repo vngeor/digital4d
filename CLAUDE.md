@@ -72,6 +72,7 @@ No test framework is configured.
 - `POST /api/checkout` — create Stripe checkout session (supports coupon codes)
 - `GET /api/products/download/[token]` — token-based digital download
 - `POST /api/coupons/validate` — validate coupon code for a product
+- `GET /api/search?q=<query>&limit=5` — global site search across products, content, menu items (locale-aware, debounced)
 
 **Authenticated user routes:**
 - `GET/PUT /api/user/profile` — user profile management
@@ -110,6 +111,7 @@ No test framework is configured.
 - **Profile** (`app/profile/`): user profile management with birthday banner (shown when birthDate missing) that opens edit modal
 - **My Orders** (`app/my-orders/`): order history, quote conversations with auto-scroll from notifications
 - **Wishlist** (`app/wishlist/`): saved products with price drop tracking
+- **Search** (`app/search/`): dedicated search results page with URL-driven query (`/search?q=...`), full results across products/content/menu with category badges, sale labels, discount percentages
 - **Checkout** (`app/checkout/`): Stripe success/cancel pages
 - **Login** (`app/login/`): auth with OAuth + credentials, optional birthDate field on registration
 - **404** (`app/not-found.tsx`): custom page with interactive 3D dinosaur (Three.js + React Three Fiber)
@@ -135,8 +137,9 @@ No test framework is configured.
 
 ### Frontend Components
 
-- **`Header`**: navigation with dynamic menu, user dropdown, language switcher, mobile responsive. Includes birthday indicator: pulsing pink dot on avatar + Cake icon on "My Profile" link (desktop dropdown & mobile menu) when user hasn't set birthDate — fetches `/api/user/profile` on mount to check
-- **`NotificationBell`**: unified notifications with i18n support; per-type icons (Cake for birthday, TreePine for Christmas, PartyPopper for New Year, Egg for Easter, CalendarDays for custom, Gift for generic holiday); HTML message rendering via `dangerouslySetInnerHTML`; locale-aware JSON title/message parsing; quote notifications show admin message preview, link to specific quote on my-orders with auto-scroll
+- **`Header`**: navigation with dynamic menu, user dropdown, language switcher, global search, mobile responsive. Includes birthday indicator: pulsing pink dot on avatar + Cake icon on "My Profile" link (desktop dropdown & mobile menu) when user hasn't set birthDate — fetches `/api/user/profile` on mount to check. Social media icons use brand-colored hover (Facebook `#1877F2`, Instagram `#C32AA3`, YouTube `#FF0000`, TikTok `#69C9D0`)
+- **`GlobalSearch`**: public site search with dual-mode rendering. Desktop (lg+): visible glass-styled input in header with dropdown results panel. Mobile (<lg): search icon button → full-screen portal modal with backdrop blur. Features: Cmd+K/Ctrl+K shortcut, 300ms debounced search with AbortController, keyboard navigation (Arrow Up/Down, Enter, Escape), results grouped by type (Products/News/Services/Pages), recent searches in localStorage, loading skeletons. "View All" button navigates to dedicated `/search?q=...` results page. X button clears query. Outside-click hides dropdown without clearing query — re-focusing input re-opens with previous results. URL resolution: products → `/products/${slug}`, news → `/news/${slug}`, content with menuItemSlug → `/${menuItemSlug}/${slug}`, menu items → `/${slug}`
+- **`NotificationBell`**: unified notifications with i18n support; per-type icons (Cake for birthday, TreePine for Christmas, PartyPopper for New Year, Egg for Easter, CalendarDays for custom, Gift for generic holiday); HTML message rendering via `dangerouslySetInnerHTML`; locale-aware JSON title/message parsing; quote notifications show admin message preview, link to specific quote on my-orders with auto-scroll. Dropdown portaled to body with dynamic positioning (measures bell button rect on open) to align under the bell icon
 - **`WishlistButton`**: heart toggle on product cards/detail pages, adds/removes from wishlist
 - **`LanguageSwitcher`**: locale switching with `useTransition`
 - **`ProductCatalog`**: product filtering, search, category tabs

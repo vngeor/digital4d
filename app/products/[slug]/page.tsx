@@ -267,7 +267,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* JSON-LD: Product + Breadcrumb */}
             <script
                 type="application/ld+json"

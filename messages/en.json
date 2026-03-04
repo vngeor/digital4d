@@ -1216,5 +1216,24 @@
     "loginToWishlist": "Sign in to add items to your wishlist",
     "priceDropAlert": "We'll notify you when prices drop or new deals are available on your wishlisted items!",
     "backToHome": "Back to Home"
+  },
+  "search": {
+    "placeholder": "Search products, news, pages...",
+    "products": "Products",
+    "news": "News",
+    "services": "Services",
+    "pages": "Pages",
+    "noResults": "No results found",
+    "recentSearches": "Recent",
+    "clearRecent": "Clear",
+    "navigate": "Navigate",
+    "select": "Select",
+    "close": "Close",
+    "searchTip": "Search",
+    "viewAll": "View all results",
+    "searchResults": "Search Results",
+    "searchResultsFor": "Search results for",
+    "noResultsDescription": "Try a different search term or browse our pages.",
+    "resultCount": "results found"
   }
 }

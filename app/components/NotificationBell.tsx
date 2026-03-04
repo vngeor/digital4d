@@ -75,6 +75,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const [countdownKey, setCountdownKey] = useState(0)
+  const [bellRight, setBellRight] = useState<number | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const portalDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -112,6 +113,14 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Measure bell button position to align dropdown
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect()
+      setBellRight(window.innerWidth - rect.right)
+    }
+  }, [isOpen])
 
   // Close modal on Escape key
   useEffect(() => {
@@ -623,7 +632,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
 
       {/* Dropdown Menu — portaled to body to escape Header's backdrop-filter containing block */}
       {isOpen && createPortal(
-        <div ref={portalDropdownRef} className="fixed left-1/2 -translate-x-1/2 top-[4.5rem] w-[calc(100vw-2rem)] max-w-80 sm:fixed sm:right-4 sm:left-auto sm:translate-x-0 sm:top-[4.5rem] sm:w-80 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl z-[60] overflow-hidden max-h-[calc(100dvh-6rem)]">
+        <div ref={portalDropdownRef} style={{ right: bellRight ?? 16 }} className="fixed left-1/2 -translate-x-1/2 top-[4.5rem] w-[calc(100vw-2rem)] max-w-80 sm:fixed sm:left-auto sm:translate-x-0 sm:top-[4.5rem] sm:w-80 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl z-[60] overflow-hidden max-h-[calc(100dvh-6rem)]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <h3 className="font-semibold text-white">{t.notifications}</h3>

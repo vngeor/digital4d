@@ -102,7 +102,7 @@ export default async function DynamicPage({ params }: PageProps) {
     if (menuItem?.type === "landing") {
         const body = getLocalizedBody(menuItem)
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
                 {/* Animated Background Orbs */}
                 <div className="fixed inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />
@@ -176,7 +176,7 @@ export default async function DynamicPage({ params }: PageProps) {
         yellow: "bg-yellow-500/20 text-yellow-400",
     }
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* Animated Background Orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />

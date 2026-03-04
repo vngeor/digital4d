@@ -1216,5 +1216,24 @@
     "loginToWishlist": "Inicia sesión para añadir a favoritos",
     "priceDropAlert": "¡Te notificaremos cuando bajen los precios o haya nuevas ofertas en tus productos favoritos!",
     "backToHome": "Volver al inicio"
+  },
+  "search": {
+    "placeholder": "Buscar productos, noticias, páginas...",
+    "products": "Productos",
+    "news": "Noticias",
+    "services": "Servicios",
+    "pages": "Páginas",
+    "noResults": "No se encontraron resultados",
+    "recentSearches": "Recientes",
+    "clearRecent": "Limpiar",
+    "navigate": "Navegar",
+    "select": "Seleccionar",
+    "close": "Cerrar",
+    "searchTip": "Buscar",
+    "viewAll": "Ver todos los resultados",
+    "searchResults": "Resultados de búsqueda",
+    "searchResultsFor": "Resultados para",
+    "noResultsDescription": "Intenta con otro término de búsqueda o explora nuestras páginas.",
+    "resultCount": "resultados encontrados"
   }
 }

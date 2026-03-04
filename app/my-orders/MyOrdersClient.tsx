@@ -264,7 +264,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
       {/* Animated Background Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />
