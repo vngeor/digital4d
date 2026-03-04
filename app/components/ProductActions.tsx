@@ -155,7 +155,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-sm sm:tracking-wider whitespace-nowrap text-orange-200">
+                                <span className="font-mono font-bold text-sm sm:tracking-wider whitespace-nowrap text-orange-200 truncate">
                                     {coupon.code}
                                 </span>
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/25 text-orange-300 font-semibold">
@@ -399,7 +399,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                 <button
                     onClick={handleBuyNow}
                     disabled={loading || !product.inStock}
-                    className="w-full flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -423,7 +423,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                     {t("couponDiscountAvailable")}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-mono font-bold text-amber-300 text-sm sm:tracking-wider whitespace-nowrap">{initialCouponCode.toUpperCase()}</span>
+                    <span className="font-mono font-bold text-amber-300 text-sm sm:tracking-wider whitespace-nowrap truncate">{initialCouponCode.toUpperCase()}</span>
                     <span className="text-[11px] text-amber-400/60">— {t("couponMentionInQuote")}</span>
                 </div>
             </div>
@@ -438,7 +438,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                 {couponBanner}
                 <button
                     onClick={() => setShowQuoteForm(true)}
-                    className="w-full flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+                    className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:shadow-lg hover:shadow-amber-500/30 transition-all"
                 >
                     <MessageSquare className="w-5 h-5" />
                     {t("getQuote")}
@@ -463,7 +463,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
             <button
                 onClick={() => setShowContactForm(true)}
                 disabled={!product.inStock}
-                className="w-full flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <Send className="w-5 h-5" />
                 {t("orderNow")}

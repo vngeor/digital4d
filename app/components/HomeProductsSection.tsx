@@ -150,7 +150,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
 
                                 {/* Content */}
                                 <div className="p-3 sm:p-4 pt-1">
-                                    <h3 className="text-base sm:text-lg font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2">
+                                    <h3 className="text-sm sm:text-base md:text-lg font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2">
                                         {product.name}
                                     </h3>
                                     {product.description && (

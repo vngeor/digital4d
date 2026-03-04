@@ -141,7 +141,7 @@ No test framework is configured.
 - **`LanguageSwitcher`**: locale switching with `useTransition`
 - **`ProductCatalog`**: product filtering, search, category tabs
 - **`QuoteForm`**: drag-and-drop file upload, auto-fill from profile
-- **`ProfileEditForm`**: modal form with validation. BirthDate is required; when empty, field gets a pulsing pink-to-rose gradient border (`animate-pulse-glow`) with `highlightBirthDate` prop. Gradient: `linear-gradient(to right, lab(56.9303 76.8162 -8.07021), lab(56.101 79.4328 31.4532))`
+- **`ProfileEditForm`**: modal form with validation, portaled to `document.body`. BirthDate is required; when empty, field gets a pulsing pink-to-rose gradient border (`animate-pulse-glow`) with `highlightBirthDate` prop. Gradient: `linear-gradient(to right, lab(56.9303 76.8162 -8.07021), lab(56.101 79.4328 31.4532))`. iOS-safe: body scroll lock (`position: fixed` pattern), `max-h-[85svh]` for stable sizing, flex-col layout (fixed header + scrollable body), date inputs wrapped in `overflow-hidden` with `min-w-0`
 - **`NewsModal`**: article display with category colors
 - **`Dinosaur3D` / `Dinosaur3DWrapper`**: 3D T-Rex model (Three.js, React Three Fiber, OrbitControls), dynamically imported with SSR disabled
 
@@ -157,9 +157,9 @@ No test framework is configured.
 - Custom animations: `animate-float`, `animate-float-slow`, `animate-float-reverse`, `animate-pulse-glow`, `animate-fade-in-up`, `animate-sale-blink` (urgency blink for coupon timers)
 - Animation delays: `.animation-delay-200`, `.animation-delay-400`, `.animation-delay-1000`, `.animation-delay-2000`
 - Toast notifications: `sonner`
-- **Responsive breakpoints**: mobile-first design. Key breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px — admin table/card toggle). Product detail page stacks to single column on mobile (`grid-cols-1 md:grid-cols-2`). Homepage contact section shows phone numbers on all sizes.
+- **Responsive breakpoints**: mobile-first design. Key breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px — admin table/card toggle). Product detail page stacks to single column on mobile (`grid-cols-1 md:grid-cols-2`). Homepage contact grid stacks to single column on mobile (`grid-cols-1 sm:grid-cols-3`). NewsSection full-mode uses single column on mobile (`grid-cols-1 sm:grid-cols-2 md:grid-cols-3`). HeroCarousel dots have 32px touch targets (`w-8 h-8` buttons wrapping visual dots).
 - **Mobile responsive patterns**: iOS Safari input zoom prevention via `text-base sm:text-sm` (16px mobile → 14px desktop), `-webkit-tap-highlight-color: transparent` on buttons/links, `-webkit-font-smoothing: antialiased` on body, `overflow-x: hidden` on body to prevent horizontal scroll. Coupon codes use `truncate` + `font-mono` in block two-row layouts (not `inline-flex`). Back button touch targets are `w-10 h-10` (40px minimum).
-- **Modal/popup mobile patterns**: All modals use `fixed inset-0 p-4 pt-safe pb-safe` outer container (minimum 16px margin from edges). Modal boxes use `w-full max-w-md` (or `max-w-2xl`) + `max-h-[85-90dvh]` + `overflow-y-auto`. Content padding `p-4 sm:p-8` (16px mobile, 32px desktop). Close buttons `w-11 h-11 sm:w-10 sm:h-10` (44px touch target). Bottom-sheet modals (QuoteForm) use `p-3` minimum margin. Notification dropdown constrained by `max-h-[calc(100dvh-6rem)]`.
+- **Modal/popup mobile patterns**: All modals use `fixed inset-0 p-4 pt-safe pb-safe` outer container (minimum 16px margin from edges). Modal boxes use `w-full max-w-md` (or `max-w-2xl`) + `max-h-[85svh]` + flex-col (fixed header + scrollable body via `overflow-y-auto overscroll-contain`). Content padding `p-4 sm:p-6` (16px mobile, 24px desktop). Close buttons `w-11 h-11 sm:w-10 sm:h-10` (44px touch target). Bottom-sheet modals (QuoteForm) use `p-3` minimum margin. Notification dropdown constrained by `max-h-[min(16rem,calc(100dvh-8rem))]`. iOS date inputs must be wrapped in `overflow-hidden` containers with `min-w-0`. Use `svh` instead of `dvh` for stable iOS viewport sizing.
 
 ### Code Generation
 

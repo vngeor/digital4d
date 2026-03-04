@@ -138,7 +138,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
+                        className="w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
                     >
                         <X className="w-5 h-5 text-gray-400" />
                     </button>

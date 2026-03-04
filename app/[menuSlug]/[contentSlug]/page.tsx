@@ -190,7 +190,7 @@ export default async function ContentDetailPage({ params }: PageProps) {
                 <div className="mx-auto max-w-4xl">
                     <article className="glass rounded-2xl border border-white/10 overflow-hidden">
                         {content.image && (
-                            <div className="relative h-64 md:h-96 overflow-hidden">
+                            <div className="relative h-48 sm:h-64 md:h-96 overflow-hidden">
                                 <img
                                     src={content.image}
                                     alt={contentTitle}
@@ -199,10 +199,10 @@ export default async function ContentDetailPage({ params }: PageProps) {
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent" />
                             </div>
                         )}
-                        <div className="p-8 md:p-12">
+                        <div className="p-4 sm:p-8 md:p-12">
                             {contentBody ? (
                                 <div
-                                    className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white"
+                                    className="prose prose-sm sm:prose-lg prose-invert max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white"
                                     dangerouslySetInnerHTML={{ __html: contentBody }}
                                 />
                             ) : (

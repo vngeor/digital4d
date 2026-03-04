@@ -236,7 +236,7 @@ export default async function Home() {
 
                     {/* 3D Printer Illustration */}
                     <div className="mt-20 relative animate-fade-in-up animation-delay-600">
-                        <div className="w-64 h-64 md:w-80 md:h-80 relative">
+                        <div className="w-40 h-40 sm:w-56 sm:h-56 md:w-80 md:h-80 relative">
                             {/* Base */}
                             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-4 bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg shadow-xl" />
                             {/* Printer Body */}
@@ -274,7 +274,7 @@ export default async function Home() {
                     </h2>
                     <p className="text-slate-400 mb-8 sm:mb-16 text-sm sm:text-lg">{tContact("subtitle")}</p>
 
-                    <div className="grid grid-cols-3 gap-3 sm:gap-6">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-6">
                         {/* WhatsApp */}
                         <a href="https://wa.me/359888123456" target="_blank" rel="noopener noreferrer"
                            className="group flex flex-col items-center p-3 sm:p-8 rounded-xl sm:rounded-2xl glass hover:bg-white/10 hover:scale-105 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300">

@@ -69,7 +69,7 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
           )}
 
           {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-4 py-20">
+          <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-4 py-10 sm:py-16 md:py-20">
             <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 max-w-4xl">
               <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
                 {banner.title}
@@ -114,17 +114,19 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
 
       {/* Dots */}
       {banners.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-0">
           {banners.map((_, i) => (
             <button
               key={i}
               onClick={() => goTo(i)}
-              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all ${
+              className="w-8 h-8 flex items-center justify-center touch-manipulation"
+            >
+              <span className={`block w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all ${
                 i === current
                   ? "bg-emerald-400 scale-125"
                   : "bg-white/30 hover:bg-white/50"
-              }`}
-            />
+              }`} />
+            </button>
           ))}
         </div>
       )}

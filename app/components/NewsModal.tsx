@@ -85,7 +85,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                 <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {/* Image */}
                     {news.image && (
-                        <div className="relative h-48 flex-shrink-0 overflow-hidden">
+                        <div className="relative h-36 sm:h-48 flex-shrink-0 overflow-hidden">
                             <img
                                 src={news.image}
                                 alt={news.title}

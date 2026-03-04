@@ -438,7 +438,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
   }
 
   const getModalContainerClasses = (type: string) => {
-    const base = "relative w-full max-w-md max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl animate-fade-in-up overflow-hidden"
+    const base = "relative w-full max-w-md max-h-[95dvh] sm:max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl animate-fade-in-up overflow-hidden"
     if (type === "auto_birthday") return `${base} bg-[#231620] border border-pink-900/40`
     if (type === "auto_christmas") return `${base} bg-[#1c1214] border border-red-900/40`
     if (type === "auto_new_year") return `${base} bg-[#1c1710] border border-amber-900/40`
@@ -575,7 +575,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       </>
     )
 
-    const className = `flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0 ${!notification.read ? "bg-white/[0.02]" : ""}`
+    const className = `flex items-start gap-3 px-3 sm:px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0 ${!notification.read ? "bg-white/[0.02]" : ""}`
 
     // Auto notifications open modal instead of navigating
     if (isAutoNotification(notification.type)) {
@@ -629,14 +629,14 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
             <h3 className="font-semibold text-white">{t.notifications}</h3>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-2.5 sm:p-1 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
+              className="p-3 sm:p-1.5 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
             >
               <X className="w-4 h-4 text-slate-400" />
             </button>
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-64 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="max-h-[min(16rem,calc(100dvh-8rem))] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="w-10 h-10 text-slate-600 mx-auto mb-2" />
@@ -666,7 +666,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       {/* Notification Detail Modal — portaled to body to escape Header's backdrop-filter containing block */}
       {selectedNotification && isAutoNotification(selectedNotification.type) && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pt-safe pb-safe"
           onClick={() => setSelectedNotification(null)}
         >
           {/* Backdrop */}

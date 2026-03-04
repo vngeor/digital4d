@@ -237,7 +237,7 @@ export default async function DynamicPage({ params }: PageProps) {
                             <p>{t("menu.noContent")}</p>
                         </div>
                     ) : (
-                        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-4 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {contents.map((content) => {
                                 const title = getLocalizedTitle(content)
                                 const body = getLocalizedBody(content)
@@ -261,13 +261,13 @@ export default async function DynamicPage({ params }: PageProps) {
                                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
                                             </div>
                                         )}
-                                        <div className="p-6">
+                                        <div className="p-4 md:p-6">
                                             {typeMap[content.type] && (
                                                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${colorClasses[typeMap[content.type].color] || colorClasses.purple}`}>
                                                     {typeMap[content.type].name}
                                                 </span>
                                             )}
-                                            <h3 className="text-xl font-bold text-white group-hover:text-emerald-400 transition-colors mb-3">
+                                            <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-emerald-400 transition-colors mb-3">
                                                 {title}
                                             </h3>
                                             {body && (

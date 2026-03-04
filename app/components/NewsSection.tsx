@@ -39,7 +39,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
     const renderNewsCard = (item: NewsItem, index: number, compact: boolean = false) => (
         <>
             {/* Image */}
-            <div className={`relative ${compact ? 'h-32 sm:h-40' : 'h-40'} overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900`}>
+            <div className={`relative ${compact ? 'h-32 sm:h-40' : 'h-32 sm:h-40'} overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900`}>
                 {item.image ? (
                     <>
                         <img
@@ -61,14 +61,14 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
             </div>
 
             {/* Category Badge */}
-            <div className={`${compact ? 'px-3 sm:px-4 pt-2' : 'px-6 pt-4'} -mt-4 relative z-10`}>
+            <div className={`${compact ? 'px-3 sm:px-4 pt-2' : 'px-3 sm:px-6 pt-2 sm:pt-4'} -mt-4 relative z-10`}>
                 <span className={`inline-block px-2 py-0.5 rounded-full ${compact ? 'text-[10px] sm:text-xs' : 'text-xs'} font-semibold ${getColorClass(item.categoryColor || 'cyan')}`}>
                     {item.category}
                 </span>
             </div>
 
             {/* Content */}
-            <div className={`${compact ? 'p-3 sm:p-4 pt-1' : 'p-3 sm:p-6 pt-2 sm:pt-3'}`}>
+            <div className={`${compact ? 'p-3 sm:p-4 pt-1' : 'p-3 sm:p-4 pt-2 sm:pt-3'}`}>
                 <h3 className={`${compact ? 'text-base sm:text-lg' : 'text-base sm:text-xl'} font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2`}>
                     {item.title}
                 </h3>
@@ -98,16 +98,16 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
 
     return (
         <>
-            <section id="news" className={`relative ${compact ? 'py-10 sm:py-12' : 'py-24'} px-4`}>
+            <section id="news" className={`relative ${compact ? 'py-10 sm:py-12' : 'py-12 sm:py-24'} px-4`}>
                 <div className={`mx-auto ${compact ? 'max-w-4xl' : 'max-w-6xl'}`}>
-                    <div className={`text-center ${compact ? 'mb-6 sm:mb-8' : 'mb-16'}`}>
+                    <div className={`text-center ${compact ? 'mb-6 sm:mb-8' : 'mb-8 sm:mb-16'}`}>
                         <h2 className={`${compact ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl'} font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent`}>
                             {t("title")}
                         </h2>
-                        <p className={`text-slate-400 ${compact ? 'text-sm sm:text-base' : 'text-lg'}`}>{t("subtitle")}</p>
+                        <p className={`text-slate-400 ${compact ? 'text-sm sm:text-base' : 'text-sm sm:text-lg'}`}>{t("subtitle")}</p>
                     </div>
 
-                    <div className={`grid ${compact ? 'grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6'}`}>
+                    <div className={`grid ${compact ? 'grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6'}`}>
                         {visibleItems.map((item, index) => {
                             const hasSlug = item.slug && item.slug.trim() !== ""
 
@@ -152,10 +152,10 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
 
                     {/* See All Button */}
                     {showAllLink && (
-                        <div className={`${compact ? 'mt-4 sm:mt-6' : 'mt-12'} text-center`}>
+                        <div className={`${compact ? 'mt-4 sm:mt-6' : 'mt-6 sm:mt-12'} text-center`}>
                             <Link
                                 href="/news"
-                                className={`inline-flex items-center gap-1.5 ${compact ? 'px-4 py-2 text-xs sm:text-sm' : 'px-8 py-4'} glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-all`}
+                                className={`inline-flex items-center gap-1.5 ${compact ? 'px-4 py-2 text-xs sm:text-sm' : 'px-4 sm:px-8 py-2 sm:py-4'} glass rounded-full font-semibold hover:bg-white/10 hover:scale-105 transition-all`}
                             >
                                 {t("seeAll")}
                                 <svg className={`${compact ? 'w-3 h-3 sm:w-4 sm:h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
