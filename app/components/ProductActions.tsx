@@ -54,12 +54,17 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
     const [couponError, setCouponError] = useState("")
 
-    // Live countdown timer for promoted coupons
+    // Live countdown timer for promoted coupons, pause when tab hidden
     const [countdownKey, setCountdownKey] = useState(0)
     useEffect(() => {
         if (!promotedCoupons?.some(c => c.expiresAt)) return
-        const interval = setInterval(() => setCountdownKey(k => k + 1), 1000)
-        return () => clearInterval(interval)
+        let interval: ReturnType<typeof setInterval> | null = null
+        const start = () => { if (!interval) interval = setInterval(() => setCountdownKey(k => k + 1), 1000) }
+        const stop = () => { if (interval) { clearInterval(interval); interval = null } }
+        const onVisibility = () => { document.hidden ? stop() : start() }
+        start()
+        document.addEventListener("visibilitychange", onVisibility)
+        return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
     }, [promotedCoupons])
 
     // Helper: format live countdown from expiresAt

@@ -35,64 +35,77 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
     goTo((current - 1 + banners.length) % banners.length)
   }, [current, banners.length, goTo])
 
+  // Auto-advance slides, pause when tab hidden
   useEffect(() => {
     if (banners.length <= 1) return
-    const timer = setInterval(next, 5000)
-    return () => clearInterval(timer)
+    let timer: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!timer) timer = setInterval(next, 5000) }
+    const stop = () => { if (timer) { clearInterval(timer); timer = null } }
+    const onVisibility = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
   }, [next, banners.length])
 
   if (!banners.length) return null
 
   return (
     <section className="relative min-h-[50vh] md:min-h-[70vh] flex items-center justify-center overflow-hidden">
-      {/* Slides */}
-      {banners.map((banner, i) => (
-        <div
-          key={i}
-          className={`absolute inset-0 transition-opacity duration-500 ${
-            i === current ? "opacity-100 z-10" : "opacity-0 z-0"
-          }`}
-        >
-          {/* Background Image */}
-          {banner.image && (
-            <div className="absolute inset-0">
-              <Image
-                src={banner.image}
-                alt=""
-                fill
-                sizes="100vw"
-                priority={i === 0}
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/50 to-slate-950/80" />
+      {/* Slides — only render current + adjacent for performance */}
+      {banners.map((banner, i) => {
+        const prev = (current - 1 + banners.length) % banners.length
+        const next = (current + 1) % banners.length
+        const isVisible = i === current || i === prev || i === next
+        if (!isVisible && banners.length > 3) return null
+
+        return (
+          <div
+            key={i}
+            className={`absolute inset-0 transition-opacity duration-500 ${
+              i === current ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
+          >
+            {/* Background Image */}
+            {banner.image && (
+              <div className="absolute inset-0">
+                <Image
+                  src={banner.image}
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  priority={i === 0}
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/50 to-slate-950/80" />
+              </div>
+            )}
+
+            {/* Content */}
+            <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-4 py-10 sm:py-16 md:py-20">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 max-w-4xl">
+                <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                  {banner.title}
+                </span>
+              </h1>
+
+              {banner.subtitle && (
+                <p className="text-sm sm:text-lg md:text-xl text-slate-300 max-w-2xl mb-6 sm:mb-10">
+                  {banner.subtitle}
+                </p>
+              )}
+
+              {banner.link && banner.linkText && (
+                <Link
+                  href={banner.link}
+                  className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full font-semibold text-white text-sm sm:text-base shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 transition-all"
+                >
+                  {banner.linkText}
+                </Link>
+              )}
             </div>
-          )}
-
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-4 py-10 sm:py-16 md:py-20">
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 max-w-4xl">
-              <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                {banner.title}
-              </span>
-            </h1>
-
-            {banner.subtitle && (
-              <p className="text-sm sm:text-lg md:text-xl text-slate-300 max-w-2xl mb-6 sm:mb-10">
-                {banner.subtitle}
-              </p>
-            )}
-
-            {banner.link && banner.linkText && (
-              <Link
-                href={banner.link}
-                className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full font-semibold text-white text-sm sm:text-base shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 transition-all"
-              >
-                {banner.linkText}
-              </Link>
-            )}
           </div>
-        </div>
-      ))}
+        )
+      })}
 
       {/* Arrows (desktop only) */}
       {banners.length > 1 && (

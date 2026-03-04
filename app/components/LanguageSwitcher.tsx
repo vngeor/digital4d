@@ -13,14 +13,15 @@ export function LanguageSwitcher() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (!isOpen) return
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside, { passive: true })
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  }, [isOpen])
 
   const changeLocale = (newLocale: Locale) => {
     setIsOpen(false)
@@ -51,7 +52,7 @@ export function LanguageSwitcher() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-40 max-w-[calc(100vw-2rem)] py-2 bg-slate-900/95 backdrop-blur-xl rounded-xl z-[60] border border-white/10 shadow-xl">
+        <div className="absolute right-0 mt-2 w-40 max-w-[calc(100vw-2rem)] py-2 bg-slate-900 rounded-xl z-[60] border border-white/10 shadow-xl">
           {locales.map((locale) => (
             <button
               key={locale}

@@ -236,14 +236,15 @@ export function GlobalSearch() {
 
   // Close dropdown when clicking outside (desktop)
   useEffect(() => {
+    if (!desktopFocused) return
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDesktopFocused(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside, { passive: true })
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  }, [desktopFocused])
 
   // Body scroll lock for mobile modal
   useEffect(() => {

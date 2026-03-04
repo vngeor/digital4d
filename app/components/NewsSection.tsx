@@ -45,6 +45,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                         <img
                             src={item.image}
                             alt={item.title}
+                            loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />

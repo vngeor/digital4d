@@ -87,14 +87,15 @@ export function Header() {
 
     // Close user dropdown when clicking outside
     useEffect(() => {
+        if (!userDropdownOpen) return
         const handleClickOutside = (event: MouseEvent) => {
             if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
                 setUserDropdownOpen(false)
             }
         }
-        document.addEventListener("mousedown", handleClickOutside)
+        document.addEventListener("mousedown", handleClickOutside, { passive: true })
         return () => document.removeEventListener("mousedown", handleClickOutside)
-    }, [])
+    }, [userDropdownOpen])
 
     const getLocalizedTitle = (item: { titleBg: string; titleEn: string; titleEs: string }) => {
         switch (locale) {
@@ -114,7 +115,7 @@ export function Header() {
     return (
         <>
         {/* Main Header - sticky */}
-        <header className="bg-slate-950/95 backdrop-blur-md sticky top-0 z-50 border-b border-white/10 relative">
+        <header className="bg-slate-950 sticky top-0 z-50 border-b border-white/10 relative">
             {/* Row 1: Logo + actions */}
             <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 lg:gap-6 px-4 py-3">
                 <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight whitespace-nowrap shrink-0">
@@ -230,7 +231,7 @@ export function Header() {
                             </button>
                             {/* Dropdown */}
                             {userDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] py-2 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl z-50">
+                                <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] py-2 bg-slate-900 rounded-xl border border-white/10 shadow-xl z-50">
                                     <div className="px-4 py-2 border-b border-white/10">
                                         <p className="text-sm font-medium truncate">{session.user?.name}</p>
                                         <p className="text-xs text-slate-400 truncate">{session.user?.email}</p>
@@ -320,7 +321,7 @@ export function Header() {
                         </Link>
                         {item.contents.length > 0 && (
                             <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                                <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 py-2 min-w-[200px] shadow-xl">
+                                <div className="bg-slate-900 rounded-xl border border-white/10 py-2 min-w-[200px] shadow-xl">
                                     {item.contents.map((content) => {
                                         const href = content.slug
                                             ? `/${item.slug}/${content.slug}`
@@ -348,7 +349,7 @@ export function Header() {
 
             {/* Mobile Menu */}
             <div
-                className={`lg:hidden bg-slate-900/98 backdrop-blur-xl border-t border-white/10 absolute left-0 right-0 top-full overflow-y-auto z-50 transition-all duration-300 ${
+                className={`lg:hidden bg-slate-900 border-t border-white/10 absolute left-0 right-0 top-full overflow-y-auto z-50 transition-all duration-300 ${
                     mobileMenuOpen
                         ? 'max-h-[calc(100vh-100%)] opacity-100 visible'
                         : 'max-h-0 opacity-0 invisible overflow-hidden'

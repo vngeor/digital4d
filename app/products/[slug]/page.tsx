@@ -6,6 +6,7 @@ import { ProductActions } from "../../components/ProductActions"
 import { WishlistButton } from "../../components/WishlistButton"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
+import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 import type { Product } from "@prisma/client"
 import type { Metadata } from "next"
@@ -274,12 +275,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                 dangerouslySetInnerHTML={{ __html: JSON.stringify([productJsonLd, breadcrumbJsonLd]) }}
             />
 
-            {/* Animated Background Orbs */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />
-                <div className="absolute top-40 right-20 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl animate-pulse-glow animation-delay-1000" />
-                <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse-glow animation-delay-2000" />
-            </div>
+            <BackgroundOrbs />
 
             <Header />
 

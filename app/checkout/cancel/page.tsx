@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../../components/Header"
+import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { XCircle, RefreshCw, ArrowLeft } from "lucide-react"
 
 interface PageProps {
@@ -14,12 +15,7 @@ export default async function CheckoutCancelPage({ searchParams }: PageProps) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
-            {/* Animated Background Orbs */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />
-                <div className="absolute top-40 right-20 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl animate-pulse-glow animation-delay-1000" />
-                <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse-glow animation-delay-2000" />
-            </div>
+            <BackgroundOrbs />
 
             <Header />
 

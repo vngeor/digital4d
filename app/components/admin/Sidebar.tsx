@@ -89,11 +89,17 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
       }
     }
     fetchPendingQuotes()
-    const interval = setInterval(fetchPendingQuotes, 30000)
+    let interval: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!interval) interval = setInterval(fetchPendingQuotes, 30000) }
+    const stop = () => { if (interval) { clearInterval(interval); interval = null } }
+    const onVisibility = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener("visibilitychange", onVisibility)
     const handleQuoteUpdate = () => fetchPendingQuotes()
     window.addEventListener("quoteUpdated", handleQuoteUpdate)
     return () => {
-      clearInterval(interval)
+      stop()
+      document.removeEventListener("visibilitychange", onVisibility)
       window.removeEventListener("quoteUpdated", handleQuoteUpdate)
     }
   }, [visibleNavHrefs])

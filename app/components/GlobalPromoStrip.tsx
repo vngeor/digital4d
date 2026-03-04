@@ -59,19 +59,25 @@ export function GlobalPromoStrip() {
     fetchBanners()
   }, [locale])
 
-  // Rotate banners
+  // Rotate banners, pause when tab hidden
   useEffect(() => {
     if (banners.length <= 1) return
 
-    const interval = setInterval(() => {
+    const rotate = () => {
       setVisible(false)
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % banners.length)
         setVisible(true)
       }, 300)
-    }, 4000)
+    }
 
-    return () => clearInterval(interval)
+    let interval: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!interval) interval = setInterval(rotate, 4000) }
+    const stop = () => { if (interval) { clearInterval(interval); interval = null } }
+    const onVisibility = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
   }, [banners.length])
 
   if (loading || !banners.length || isAdminPage) return null

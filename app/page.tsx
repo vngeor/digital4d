@@ -4,6 +4,7 @@ import { NewsSection } from "./components/NewsSection"
 import { HomeProductsSection } from "./components/HomeProductsSection"
 import { HeroCarousel } from "./components/HeroCarousel"
 import { FeaturedCards } from "./components/FeaturedCards"
+import { BackgroundOrbs } from "./components/BackgroundOrbs"
 import prisma from "@/lib/prisma"
 
 export default async function Home() {
@@ -169,28 +170,23 @@ export default async function Home() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
-            {/* Animated Background Orbs */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow" />
-                <div className="absolute top-40 right-20 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl animate-pulse-glow animation-delay-1000" />
-                <div className="absolute bottom-20 left-1/3 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse-glow animation-delay-2000" />
-            </div>
+            <BackgroundOrbs />
 
             {/* Floating 3D Shapes */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-32 right-[15%] w-16 h-16 animate-float">
+                <div className="absolute top-32 right-[15%] w-16 h-16 animate-float will-change-transform">
                     <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl rotate-45 shadow-lg shadow-emerald-500/30" />
                 </div>
-                <div className="absolute top-[60%] left-[10%] w-12 h-12 animate-float-slow animation-delay-400">
+                <div className="absolute top-[60%] left-[10%] w-12 h-12 animate-float-slow animation-delay-400 will-change-transform">
                     <div className="w-full h-full bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full shadow-lg shadow-cyan-500/30" />
                 </div>
-                <div className="absolute top-[20%] left-[20%] w-8 h-8 animate-float-reverse animation-delay-600">
+                <div className="absolute top-[20%] left-[20%] w-8 h-8 animate-float-reverse animation-delay-600 will-change-transform">
                     <div className="w-full h-full bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg rotate-12 shadow-lg shadow-purple-500/30" />
                 </div>
-                <div className="absolute bottom-[30%] right-[10%] w-10 h-10 animate-float animation-delay-200">
+                <div className="absolute bottom-[30%] right-[10%] w-10 h-10 animate-float animation-delay-200 will-change-transform">
                     <div className="w-full h-full bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl rotate-[-20deg] shadow-lg shadow-pink-500/30" />
                 </div>
-                <div className="absolute top-[45%] right-[25%] w-6 h-6 animate-float-slow">
+                <div className="absolute top-[45%] right-[25%] w-6 h-6 animate-float-slow will-change-transform">
                     <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 rounded-full shadow-lg shadow-amber-500/30" />
                 </div>
             </div>
