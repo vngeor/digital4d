@@ -16,11 +16,15 @@ function withRetry(adapter: Adapter): Adapter {
   for (const [key, value] of Object.entries(wrapped)) {
     if (typeof value === "function") {
       ;(wrapped as Record<string, unknown>)[key] = async (...args: unknown[]) => {
-        try {
-          return await (value as (...a: unknown[]) => Promise<unknown>)(...args)
-        } catch (error) {
-          console.warn(`[Auth] Retrying adapter.${key} after error:`, error)
-          return await (value as (...a: unknown[]) => Promise<unknown>)(...args)
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            return await (value as (...a: unknown[]) => Promise<unknown>)(...args)
+          } catch (error) {
+            if (attempt === 2) throw error
+            const delay = (attempt + 1) * 1000 // 1s, then 2s
+            console.warn(`[Auth] adapter.${key} failed (attempt ${attempt + 1}/3), retrying in ${delay}ms...`, error)
+            await new Promise(r => setTimeout(r, delay))
+          }
         }
       }
     }

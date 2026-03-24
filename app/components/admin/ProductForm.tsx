@@ -474,17 +474,9 @@ export function ProductForm({
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("currency")}
                 </label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => updateField("currency", e.target.value)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                >
-                  {CURRENCIES.map((cur) => (
-                    <option key={cur} value={cur}>
-                      {cur}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white">
+                  EUR
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
