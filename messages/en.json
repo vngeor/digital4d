@@ -125,6 +125,7 @@
     "birthDateOptional": "(optional)",
     "userExists": "An account with this email already exists",
     "loginFailedAfterRegister": "Account created but login failed. Please try signing in.",
+    "rememberMe": "Remember me",
     "somethingWentWrong": "Something went wrong. Please try again.",
     "backHome": "Back to homepage",
     "terms": "By continuing, you agree to our",
