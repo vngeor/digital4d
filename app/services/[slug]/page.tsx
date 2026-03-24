@@ -3,6 +3,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../../components/Header"
 import prisma from "@/lib/prisma"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 
@@ -156,7 +157,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                             {serviceBody ? (
                                 <div
                                     className="prose prose-invert prose sm:prose-lg max-w-none text-slate-300 leading-relaxed"
-                                    dangerouslySetInnerHTML={{ __html: serviceBody }}
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(serviceBody) }}
                                 />
                             ) : (
                                 <p className="text-slate-400 italic">{t("menu.noContent")}</p>

@@ -3,6 +3,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../components/Header"
 import prisma from "@/lib/prisma"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 
@@ -127,7 +128,7 @@ export default async function DynamicPage({ params }: PageProps) {
                 <section className="relative py-8 px-4">
                     <div className="mx-auto max-w-4xl">
                         <article className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white">
-                            <div dangerouslySetInnerHTML={{ __html: body || '' }} />
+                            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(body || '') }} />
                         </article>
                     </div>
                 </section>
@@ -198,7 +199,7 @@ export default async function DynamicPage({ params }: PageProps) {
                                 return (
                                     <div
                                         className="mt-6 prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white"
-                                        dangerouslySetInnerHTML={{ __html: body }}
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(body) }}
                                     />
                                 )
                             }
@@ -210,7 +211,7 @@ export default async function DynamicPage({ params }: PageProps) {
                                 return (
                                     <div
                                         className="mt-6 prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white"
-                                        dangerouslySetInnerHTML={{ __html: desc }}
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(desc) }}
                                     />
                                 )
                             }

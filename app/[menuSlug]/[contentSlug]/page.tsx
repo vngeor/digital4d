@@ -3,6 +3,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../../components/Header"
 import prisma from "@/lib/prisma"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 
@@ -199,7 +200,7 @@ export default async function ContentDetailPage({ params }: PageProps) {
                             {contentBody ? (
                                 <div
                                     className="prose prose-sm sm:prose-lg prose-invert max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-emerald-400 prose-strong:text-white"
-                                    dangerouslySetInnerHTML={{ __html: contentBody }}
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(contentBody) }}
                                 />
                             ) : (
                                 <p className="text-slate-400 italic">{t("menu.noContent")}</p>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
+import { validateLength, MAX_MESSAGE } from "@/lib/validation"
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +15,12 @@ export async function POST(request: NextRequest) {
 
     if (!quoteId || !action) {
       return NextResponse.json({ error: "Quote ID and action required" }, { status: 400 })
+    }
+
+    // Input length validation
+    const lengthError = validateLength(message, "Message", MAX_MESSAGE)
+    if (lengthError) {
+      return NextResponse.json({ error: lengthError }, { status: 400 })
     }
 
     // Verify the quote belongs to this user

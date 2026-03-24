@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { createPortal } from "react-dom"
+import { sanitizeHtml } from "@/lib/sanitize"
 
 interface NewsItem {
     title: string
@@ -113,7 +114,7 @@ export function NewsModal({ news, onClose, categoryIndex }: NewsModalProps) {
                         {/* Description - render HTML content */}
                         <div
                             className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed pb-4"
-                            dangerouslySetInnerHTML={{ __html: news.description }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(news.description) }}
                         />
                     </div>
                 </div>

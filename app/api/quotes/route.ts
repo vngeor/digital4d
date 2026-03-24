@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { generateQuoteNumber } from "@/lib/generateCode"
 import { uploadBlob } from "@/lib/blob"
+import { validateLength, firstError, MAX_NAME, MAX_EMAIL, MAX_PHONE, MAX_MESSAGE } from "@/lib/validation"
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +21,17 @@ export async function POST(request: NextRequest) {
         { error: "Name and email are required" },
         { status: 400 }
       )
+    }
+
+    // Input length validation
+    const lengthError = firstError(
+      validateLength(name, "Name", MAX_NAME),
+      validateLength(email, "Email", MAX_EMAIL),
+      validateLength(phone, "Phone", MAX_PHONE),
+      validateLength(message, "Message", MAX_MESSAGE)
+    )
+    if (lengthError) {
+      return NextResponse.json({ error: lengthError }, { status: 400 })
     }
 
     // Email validation
