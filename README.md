@@ -15,9 +15,9 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content
 - **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
-- **Security** - Auto-logout after 5 min inactivity, permission-gated admin pages and API routes
+- **Security** - Rate limiting (login, register, search, coupons, quotes), CSP & security headers, XSS sanitization (sanitize-html), input validation, checkout origin whitelist, sanitized error logging, auto-logout after 5 min inactivity, permission-gated admin pages and API routes
 - **Birthday Prompts** - Registration birthDate field, profile banner for missing birthDate, header indicator with pulsing dot
-- **Authentication** - Email/password + OAuth (Google, GitHub)
+- **Authentication** - Email/password + OAuth (Google, GitHub), "Remember me" checkbox, auto-retry on OAuth cold-start errors
 - **Global Search** - Site-wide search with Cmd+K shortcut, "View All" results page, keyboard navigation, recent searches
 - **Image Optimization** - Automatic compression, WebP conversion, Vercel Blob storage
 - **Mobile Responsive** - iOS Safari optimized (input zoom prevention, tap highlight removal, font smoothing), touch-friendly targets, responsive coupon badges, mobile-safe modals/popups with proper viewport constraints, CSS cascade layer architecture for Tailwind v4 compatibility
@@ -83,6 +83,9 @@ digital4d-next/
 │   ├── permissions.ts     # Permission resolution (role + user overrides)
 │   ├── blob.ts            # Vercel Blob helpers
 │   ├── prisma.ts          # Database client
+│   ├── rateLimit.ts       # In-memory rate limiter (per-IP)
+│   ├── validation.ts      # Input length validation helpers
+│   ├── sanitize.ts        # HTML sanitization (sanitize-html)
 │   ├── generateCode.ts    # Order/quote number generation
 │   ├── cronNotifications.ts # Cron job logic for auto-scheduled notifications
 │   └── orthodoxEaster.ts  # Orthodox Easter date calculation
@@ -267,7 +270,14 @@ npm run start
 
 **Roles:** Admin (full access), Editor (configurable), Author (configurable), Subscriber (no admin access)
 
-**Security:** Admin panel auto-logs out after 5 minutes of inactivity with a 1-minute warning countdown.
+**Security:**
+- Admin panel auto-logs out after 5 minutes of inactivity with 1-minute warning
+- Rate limiting: login (5/15min), register (3/hr), search (20/min), coupons (10/min), quotes (5/hr)
+- Security headers: CSP, HSTS, X-Frame-Options (DENY), nosniff, Referrer-Policy
+- XSS sanitization on all user-facing HTML rendering (sanitize-html)
+- Input validation with max length checks on all public API routes
+- Checkout origin whitelisting (prevents open redirect)
+- Sanitized error logging (no stack traces or DB details in production logs)
 
 ---
 
