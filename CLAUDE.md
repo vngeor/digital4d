@@ -46,7 +46,7 @@ No test framework is configured.
   - `requireAdminAccess()` — any admin role (ADMIN/EDITOR/AUTHOR) for layout-level access
 - **3-tier permission resolution** (`lib/permissions.ts`): User override → Role override → Code defaults. Resources: dashboard, products, categories, content, types, banners, menu, orders, quotes, media, coupons, notifications, users, roles, audit. Actions: view, create, edit, delete
 - **Admin idle timeout**: `AdminIdleGuard` component auto-logs out after 5 minutes of inactivity with 1-minute warning countdown
-- **Neon cold start handling**: `withRetry()` wrapper around PrismaAdapter auto-retries on first request timeout after DB inactivity
+- **Neon cold start handling**: Two-layer defense: (1) `warmupDb()` in auth route handler (`app/api/auth/[...nextauth]/route.ts`) pre-warms Neon with a cheap query before NextAuth processes the request; (2) `withRetry()` wrapper around PrismaAdapter retries up to 3 times with 1s/2s delays as a safety net
 - **OAuth config**: `allowDangerousEmailAccountLinking: true` for Google & GitHub; Google has `access_type: "offline"`; GitHub requests `"read:user user:email"` scope
 - **Password**: bcryptjs hashing, min 6 chars + at least one special character
 
