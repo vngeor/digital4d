@@ -88,8 +88,9 @@ No test framework is configured.
 
 **Auth routes:**
 - `POST /api/auth/register` — user registration (accepts optional birthDate)
-- `/api/auth/[...nextauth]` — NextAuth handler
+- `/api/auth/[...nextauth]` — NextAuth handler with Neon pre-warmup (3 attempts with graduated delays)
 - `POST /api/checkout/webhook` — Stripe webhook
+- **Domain redirect**: `vercel.json` redirects `digital4d.eu` → `www.digital4d.eu` (fixes OAuth PKCE cookie mismatch)
 
 **Cron routes:**
 - `GET /api/cron/notifications` — daily cron job (8 AM UTC) processes notification templates, protected by `CRON_SECRET`
@@ -113,7 +114,7 @@ No test framework is configured.
 - **Wishlist** (`app/wishlist/`): saved products with price drop tracking
 - **Search** (`app/search/`): dedicated search results page with URL-driven query (`/search?q=...`), full results across products/content/menu with category badges, sale labels, discount percentages
 - **Checkout** (`app/checkout/`): Stripe success/cancel pages
-- **Login** (`app/login/`): auth with OAuth + credentials, optional birthDate field on registration
+- **Login** (`app/login/`): auth with OAuth + credentials, optional birthDate field on registration, "Remember me" checkbox (saves email in localStorage), auto-retry on OAuth Configuration errors
 - **404** (`app/not-found.tsx`): custom page with interactive 3D dinosaur (Three.js + React Three Fiber)
 - **OG Images** (`app/opengraph-image.tsx`, `app/twitter-image.tsx`): dynamic social media images using `next/og` (edge runtime)
 
@@ -274,3 +275,7 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 6. **NextAuth v5 beta** — some APIs may change before final release
 7. **Permission changes** — when modifying role permissions on `/admin/roles`, or user-level overrides on `/admin/users`, caches are invalidated. Changing a user's role clears their user-level overrides
 8. **CSS Cascade Layers** — any custom CSS in `globals.css` that could conflict with Tailwind utilities MUST be inside `@layer base {}`. Unlayered CSS overrides ALL Tailwind utilities (including `whitespace-nowrap`, `truncate`, etc.) because Tailwind v4 puts utilities in `@layer utilities` and unlayered CSS always wins per the CSS spec. Never add global element selectors (e.g., `span { word-break: break-word }`) outside a `@layer` block.
+
+## Roadmap
+
+- **Forgot password**: requires email service (recommended: Resend). Needs: PasswordResetToken model, `/api/auth/forgot-password` endpoint, `/api/auth/reset-password` endpoint, `/forgot-password` and `/reset-password` pages
