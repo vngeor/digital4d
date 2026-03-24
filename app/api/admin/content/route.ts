@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(content)
   } catch (error) {
-    console.error("Error fetching content:", error)
+    console.error("Error fetching content:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ...content, menuItem }, { status: 201 })
   } catch (error) {
-    console.error("Error creating content:", error)
+    console.error("Error creating content:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -161,7 +161,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ ...content, menuItem })
   } catch (error) {
-    console.error("Error updating content:", error)
+    console.error("Error updating content:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -240,7 +240,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 })
   } catch (error) {
-    console.error("Error in bulk content operation:", error)
+    console.error("Error in bulk content operation:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -268,7 +268,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting content:", error)
+    console.error("Error deleting content:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

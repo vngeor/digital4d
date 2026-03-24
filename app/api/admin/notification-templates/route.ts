@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(templates)
   } catch (error) {
-    console.error("Error fetching notification templates:", error)
+    console.error("Error fetching notification templates:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(template ?? created, { status: 201 })
   } catch (error) {
-    console.error("Error creating notification template:", error)
+    console.error("Error creating notification template:", error instanceof Error ? error.message : "Unknown")
     const message = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json(
       { error: message },
@@ -270,7 +270,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(template)
   } catch (error) {
-    console.error("Error updating notification template:", error)
+    console.error("Error updating notification template:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -305,7 +305,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting notification template:", error)
+    console.error("Error deleting notification template:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

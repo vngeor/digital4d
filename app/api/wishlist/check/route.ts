@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       wishlisted: items.map((i) => i.productId),
     })
   } catch (error) {
-    console.error("Error checking wishlist:", error)
+    console.error("Error checking wishlist:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json({ wishlisted: [] })
   }
 }

@@ -46,7 +46,7 @@ export async function GET(
 
     return NextResponse.json(messages)
   } catch (error) {
-    console.error("Error fetching quote messages:", error)
+    console.error("Error fetching quote messages:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

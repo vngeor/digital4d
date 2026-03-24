@@ -23,7 +23,7 @@ export async function GET() {
     const permissions = await getAllPermissions()
     return NextResponse.json(permissions)
   } catch (error) {
-    console.error("Error fetching permissions:", error)
+    console.error("Error fetching permissions:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error saving permissions:", error)
+    console.error("Error saving permissions:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

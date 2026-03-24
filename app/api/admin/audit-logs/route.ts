@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / limit),
     })
   } catch (error) {
-    console.error("Error fetching audit logs:", error)
+    console.error("Error fetching audit logs:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -129,7 +129,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ error: "Provide 'id' or 'clearAll=true'" }, { status: 400 })
   } catch (error) {
-    console.error("Error deleting audit logs:", error)
+    console.error("Error deleting audit logs:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

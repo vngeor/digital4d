@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(updatedQuote)
   } catch (error) {
-    console.error("Error responding to quote:", error)
+    console.error("Error responding to quote:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

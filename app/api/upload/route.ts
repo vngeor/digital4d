@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url, originalSize, compressedSize, savings: `${savings}%` })
   } catch (error) {
-    console.error("Upload error:", error)
+    console.error("Upload error:", error instanceof Error ? error.message : "Unknown")
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json({ error: `Failed to upload: ${errorMessage}` }, { status: 500 })
   }

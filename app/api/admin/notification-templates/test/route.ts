@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       couponId: result.couponId || null,
     })
   } catch (error) {
-    console.error("Error test-sending template:", error)
+    console.error("Error test-sending template:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

@@ -14,7 +14,7 @@ export async function GET() {
 
     return NextResponse.json(types)
   } catch (error) {
-    console.error("Error fetching types:", error)
+    console.error("Error fetching types:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(contentType, { status: 201 })
   } catch (error) {
-    console.error("Error creating type:", error)
+    console.error("Error creating type:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -118,7 +118,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(contentType)
   } catch (error) {
-    console.error("Error updating type:", error)
+    console.error("Error updating type:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting type:", error)
+    console.error("Error deleting type:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

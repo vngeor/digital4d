@@ -41,7 +41,7 @@ export async function GET() {
 
     return NextResponse.json(JSON.parse(JSON.stringify(items)))
   } catch (error) {
-    console.error("Error fetching wishlist:", error)
+    console.error("Error fetching wishlist:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(item, { status: 201 })
   } catch (error) {
-    console.error("Error adding to wishlist:", error)
+    console.error("Error adding to wishlist:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -121,7 +121,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error removing from wishlist:", error)
+    console.error("Error removing from wishlist:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -14,7 +14,7 @@ export async function GET() {
 
     return NextResponse.json({ hero, promo, cards })
   } catch (error) {
-    console.error("Error fetching banners:", error)
+    console.error("Error fetching banners:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

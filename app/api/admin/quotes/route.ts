@@ -265,7 +265,7 @@ export async function DELETE(request: NextRequest) {
     // Delete the associated blob file (non-blocking)
     if (quote?.fileUrl) {
       deleteBlobSafe(quote.fileUrl).catch(err => {
-        console.error("Failed to delete quote file blob:", err)
+        console.error("Failed to delete quote file blob:", err instanceof Error ? err.message : "Unknown")
       })
     }
 
