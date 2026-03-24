@@ -16,8 +16,18 @@ export default function LoginPage() {
     const [birthDate, setBirthDate] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
+    const [rememberMe, setRememberMe] = useState(false)
 
     const callbackUrl = searchParams.get("callbackUrl") || "/"
+
+    // Load remembered email from localStorage
+    useEffect(() => {
+        const savedEmail = localStorage.getItem("rememberEmail")
+        if (savedEmail) {
+            setEmail(savedEmail)
+            setRememberMe(true)
+        }
+    }, [])
 
     // Handle OAuth error redirects — auto-retry Configuration errors once
     // (caused by Neon cold start; the failed attempt wakes the DB so retry succeeds)
@@ -148,6 +158,12 @@ export default function LoginPage() {
                 if (result?.error) {
                     setError(t("loginFailedAfterRegister"))
                 } else {
+                    // Save or clear remembered email
+                    if (rememberMe) {
+                        localStorage.setItem("rememberEmail", email)
+                    } else {
+                        localStorage.removeItem("rememberEmail")
+                    }
                     window.location.href = callbackUrl
                 }
             } else {
@@ -161,6 +177,12 @@ export default function LoginPage() {
                 if (result?.error) {
                     setError(t("invalidCredentials"))
                 } else {
+                    // Save or clear remembered email
+                    if (rememberMe) {
+                        localStorage.setItem("rememberEmail", email)
+                    } else {
+                        localStorage.removeItem("rememberEmail")
+                    }
                     window.location.href = callbackUrl
                 }
             }
@@ -279,6 +301,18 @@ export default function LoginPage() {
                                     autoComplete="bday"
                                 />
                             </div>
+                        )}
+
+                        {!isRegister && (
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    className="w-4 h-4 rounded border-white/20 bg-white/5 accent-emerald-500 cursor-pointer"
+                                />
+                                <span className="text-sm text-slate-400">{t("rememberMe")}</span>
+                            </label>
                         )}
 
                         {error && (
