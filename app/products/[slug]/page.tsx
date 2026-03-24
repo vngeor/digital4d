@@ -6,6 +6,7 @@ import { ProductActions } from "../../components/ProductActions"
 import { WishlistButton } from "../../components/WishlistButton"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
+import { headers } from "next/headers"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 import type { Product } from "@prisma/client"
@@ -80,6 +81,7 @@ const COLOR_CLASSES: Record<string, string> = {
 export default async function ProductDetailPage({ params, searchParams }: PageProps) {
     const { slug } = await params
     const resolvedSearchParams = await searchParams
+    const nonce = (await headers()).get("x-nonce") || ""
     const couponCode = typeof resolvedSearchParams.coupon === "string" ? resolvedSearchParams.coupon : undefined
     const t = await getTranslations()
     const locale = await getLocale()
@@ -271,6 +273,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* JSON-LD: Product + Breadcrumb */}
             <script
+                nonce={nonce}
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify([productJsonLd, breadcrumbJsonLd]) }}
             />

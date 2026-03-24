@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Header } from "../../components/Header"
 import prisma from "@/lib/prisma"
 import { sanitizeHtml } from "@/lib/sanitize"
+import { headers } from "next/headers"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 
@@ -15,6 +16,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     const { slug } = await params
     const t = await getTranslations()
     const locale = await getLocale()
+    const nonce = (await headers()).get("x-nonce") || ""
 
     // Fetch the service content by slug
     const service = await prisma.content.findFirst({
@@ -87,6 +89,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* JSON-LD: Service + Breadcrumb */}
             <script
+                nonce={nonce}
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify([serviceJsonLd, breadcrumbJsonLd]) }}
             />
