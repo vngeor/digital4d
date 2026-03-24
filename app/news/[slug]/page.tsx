@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Header } from "../../components/Header"
 import prisma from "@/lib/prisma"
 import { sanitizeHtml } from "@/lib/sanitize"
+import { headers } from "next/headers"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
@@ -59,6 +60,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
     const { slug } = await params
     const t = await getTranslations()
     const locale = await getLocale()
+    const nonce = (await headers()).get("x-nonce") || ""
 
     // Fetch the news content by slug
     const news = await prisma.content.findFirst({
@@ -132,6 +134,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* JSON-LD: NewsArticle + Breadcrumb */}
             <script
+                nonce={nonce}
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify([articleJsonLd, breadcrumbJsonLd]) }}
             />

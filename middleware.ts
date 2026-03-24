@@ -37,8 +37,44 @@ function getLocaleFromAcceptLanguage(acceptLanguage: string | null): Locale | nu
   return null
 }
 
+// Security headers applied to all page responses
+const securityHeaders: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+  "X-DNS-Prefetch-Control": "on",
+}
+
+function buildCspHeader(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-eval' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://platform-lookaside.fbsbx.com https://graph.facebook.com https://*.public.blob.vercel-storage.com https://*.blob.vercel-storage.com https://avatars.githubusercontent.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "connect-src 'self' https://api.stripe.com https://*.blob.vercel-storage.com",
+    "frame-src 'self' https://js.stripe.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join("; ")
+}
+
+function applySecurityHeaders(response: NextResponse, nonce: string): void {
+  response.headers.set("Content-Security-Policy", buildCspHeader(nonce))
+  for (const [key, value] of Object.entries(securityHeaders)) {
+    response.headers.set(key, value)
+  }
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Generate CSP nonce for this request
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64")
 
   // Skip middleware for API routes, static files, etc.
   if (
@@ -48,6 +84,10 @@ export function middleware(request: NextRequest) {
   ) {
     return NextResponse.next()
   }
+
+  // Pass nonce to server components via request header
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set("x-nonce", nonce)
 
   // Admin route protection
   if (pathname.startsWith("/admin")) {
@@ -63,7 +103,9 @@ export function middleware(request: NextRequest) {
   // Check existing locale cookie
   const localeCookie = request.cookies.get("NEXT_LOCALE")?.value as Locale | undefined
   if (localeCookie && locales.includes(localeCookie)) {
-    return NextResponse.next()
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
+    applySecurityHeaders(response, nonce)
+    return response
   }
 
   // Auto-detect locale
@@ -84,12 +126,13 @@ export function middleware(request: NextRequest) {
   }
 
   // Set locale cookie
-  const response = NextResponse.next()
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
   response.cookies.set("NEXT_LOCALE", detectedLocale, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   })
+  applySecurityHeaders(response, nonce)
 
   return response
 }
