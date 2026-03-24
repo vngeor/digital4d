@@ -129,8 +129,11 @@ export async function POST(request: NextRequest) {
     }
     const currency = currencyMap[product.currency] || "eur"
 
-    // Get base URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.headers.get("origin") || "http://localhost:3000"
+    // Get base URL — validate origin against whitelist to prevent open redirects
+    const ALLOWED_ORIGINS = ["https://www.digital4d.eu", "https://digital4d.eu", "http://localhost:3000"]
+    const origin = request.headers.get("origin") || ""
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+      || (ALLOWED_ORIGINS.includes(origin) ? origin : "https://www.digital4d.eu")
 
     // Build product description with discount info
     let description = product.descEn || undefined
@@ -169,7 +172,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error) {
-    console.error("Error creating checkout session:", error)
+    console.error("Checkout error:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

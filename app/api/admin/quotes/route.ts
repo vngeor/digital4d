@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       pendingCount,
     })
   } catch (error) {
-    console.error("Error fetching quotes:", error)
+    console.error("Error fetching quotes:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -231,7 +231,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(quote)
   } catch (error) {
-    console.error("Error updating quote:", error)
+    console.error("Error updating quote:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -273,7 +273,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting quote:", error)
+    console.error("Error deleting quote:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
