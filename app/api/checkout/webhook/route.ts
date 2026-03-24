@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      console.log(`Digital purchase created for ${customerEmail}, product ${productId}`)
+      console.log(`Digital purchase created, product ${productId}`)
 
       // Record coupon usage if a coupon was used
       const couponId = session.metadata?.couponId
@@ -98,9 +98,9 @@ export async function POST(request: NextRequest) {
             data: { usedCount: { increment: 1 } },
           })
 
-          console.log(`Coupon usage recorded for ${customerEmail}, coupon ${couponId}`)
+          console.log(`Coupon usage recorded, coupon ${couponId}`)
         } catch (couponError) {
-          console.error("Error recording coupon usage:", couponError)
+          console.error("Error recording coupon usage:", couponError instanceof Error ? couponError.message : "Unknown")
           // Non-critical — purchase still valid
         }
       }

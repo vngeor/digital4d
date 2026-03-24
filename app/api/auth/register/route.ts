@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
     })
   } catch (error) {
-    console.error("Registration error:", error)
+    console.error("Registration error:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

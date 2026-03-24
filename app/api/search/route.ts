@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import { rateLimit, getClientIp } from "@/lib/rateLimit"
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 20 searches per IP per minute
+    const ip = getClientIp(request)
+    const { success } = rateLimit(`search:${ip}`, { limit: 20, windowMs: 60_000 })
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const q = searchParams.get("q")?.trim()
     const limit = Math.min(parseInt(searchParams.get("limit") || "5"), 20)
@@ -92,7 +100,7 @@ export async function GET(request: NextRequest) {
       JSON.parse(JSON.stringify({ products, content, menu }))
     )
   } catch (error) {
-    console.error("Error in search:", error)
+    console.error("Search error:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

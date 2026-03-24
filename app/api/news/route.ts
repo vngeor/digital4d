@@ -3,8 +3,14 @@ import prisma from "@/lib/prisma"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
-  const type = searchParams.get("type") || "news"
-  const limit = parseInt(searchParams.get("limit") || "10")
+
+  // Validate type against whitelist
+  const ALLOWED_TYPES = ["news", "service"]
+  const rawType = searchParams.get("type") || "news"
+  const type = ALLOWED_TYPES.includes(rawType) ? rawType : "news"
+
+  // Cap limit to prevent excessive data retrieval
+  const limit = Math.min(parseInt(searchParams.get("limit") || "10") || 10, 50)
 
   const content = await prisma.content.findMany({
     where: {

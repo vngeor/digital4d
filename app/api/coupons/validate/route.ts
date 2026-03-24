@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import { rateLimit, getClientIp } from "@/lib/rateLimit"
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 validations per IP per minute (prevents coupon brute-force)
+    const ip = getClientIp(request)
+    const { success } = rateLimit(`coupon:${ip}`, { limit: 10, windowMs: 60_000 })
+    if (!success) {
+      return NextResponse.json({ valid: false, error: "TOO_MANY_REQUESTS" }, { status: 429 })
+    }
+
     const { code, productId, email } = await request.json()
 
     if (!code || !productId) {

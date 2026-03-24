@@ -121,17 +121,17 @@ export async function POST(request: NextRequest) {
     if (useLocalStorage) {
       // Use local storage
       url = await uploadToLocal(compressedBuffer, uniqueName)
-      console.log("File uploaded locally:", url)
+      console.log("File uploaded locally")
     } else {
       // Try Vercel Blob first
       try {
         url = await uploadToVercelBlob(compressedBuffer, uniqueName, contentType)
-        console.log("File uploaded to Vercel Blob:", url)
+        console.log("File uploaded to Vercel Blob")
       } catch (blobError) {
         // Fall back to local storage if Vercel Blob fails
-        console.warn("Vercel Blob failed, falling back to local storage:", blobError)
+        console.warn("Vercel Blob failed, falling back to local storage:", blobError instanceof Error ? blobError.message : "Unknown")
         url = await uploadToLocal(compressedBuffer, uniqueName)
-        console.log("File uploaded locally (fallback):", url)
+        console.log("File uploaded locally (fallback)")
       }
     }
 

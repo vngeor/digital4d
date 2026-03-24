@@ -3,9 +3,17 @@ import prisma from "@/lib/prisma"
 import { generateQuoteNumber } from "@/lib/generateCode"
 import { uploadBlob } from "@/lib/blob"
 import { validateLength, firstError, MAX_NAME, MAX_EMAIL, MAX_PHONE, MAX_MESSAGE } from "@/lib/validation"
+import { rateLimit, getClientIp } from "@/lib/rateLimit"
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 quote submissions per IP per hour
+    const ip = getClientIp(request)
+    const { success } = rateLimit(`quote:${ip}`, { limit: 5, windowMs: 60 * 60 * 1000 })
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
+    }
+
     const formData = await request.formData()
 
     const name = formData.get("name") as string
@@ -96,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, quoteId: quote.id }, { status: 201 })
   } catch (error) {
-    console.error("Error creating quote request:", error)
+    console.error("Quote creation error:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
