@@ -30,7 +30,7 @@ No test framework is configured.
 
 - **Locales**: Bulgarian (default), English, Spanish — configured in `i18n/config.ts`
 - **Translations**: `messages/{bg,en,es}.json` — uses `next-intl`
-- **Middleware** (`middleware.ts`): detects locale from cookie → IP country (`x-vercel-ip-country`, `cf-ipcountry`, `x-country-code`) → Accept-Language header, sets `NEXT_LOCALE` cookie. Also protects `/admin/*` routes by checking for auth session cookie
+- **Middleware** (`middleware.ts`): detects locale from cookie → IP country (`x-vercel-ip-country`, `cf-ipcountry`, `x-country-code`) → Accept-Language header, sets `NEXT_LOCALE` cookie. Also protects `/admin/*` routes by checking for auth session cookie. Generates per-request CSP nonce and sets all security headers (CSP, HSTS, X-Frame-Options, etc.)
 - **Multilingual DB fields**: every user-facing text has `fieldBg`, `fieldEn`, `fieldEs` columns. Access pattern: `` `field${locale.charAt(0).toUpperCase() + locale.slice(1)}` ``
 - **Country mapping**: BG→Bulgarian, 19 Spanish-speaking countries→Spanish, all others→English
 
@@ -269,7 +269,7 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 
 ## Security
 
-- **Security headers** (`next.config.ts`): CSP, X-Frame-Options (DENY), HSTS, X-Content-Type-Options (nosniff), Referrer-Policy, Permissions-Policy applied to all routes
+- **Security headers** (`middleware.ts`): per-request nonce-based CSP (`script-src 'nonce-xxx' 'strict-dynamic'` — no `unsafe-inline` for scripts), X-Frame-Options (DENY), HSTS, X-Content-Type-Options (nosniff), Referrer-Policy, Permissions-Policy. Nonce applied to JSON-LD scripts in layout, news, services, products pages. Next.js auto-applies nonce to its own hydration scripts
 - **XSS sanitization** (`lib/sanitize.ts`): `sanitize-html` library applied to all 7 `dangerouslySetInnerHTML` locations (NotificationBell, NewsModal, news/services/menu pages). Allows TipTap-produced tags, strips `<script>`, `<iframe>`, event handlers, `javascript:` URLs
 - **Checkout origin validation**: Stripe success/cancel URLs validated against domain whitelist (prevents open redirect)
 - **Error logging**: all `console.error()` across 30 API route files sanitized to only log `error.message`, not raw error objects (prevents stack trace/DB detail leakage)
@@ -290,6 +290,5 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 
 - **Forgot password**: requires email service (recommended: Resend). Needs: PasswordResetToken model, `/api/auth/forgot-password` endpoint, `/api/auth/reset-password` endpoint, `/forgot-password` and `/reset-password` pages
 - **Upgrade rate limiting to Redis**: current in-memory rate limiter is per-instance on Vercel serverless. Upgrade to Upstash Redis for cross-instance rate limiting
-- **CSP nonce-based scripts**: replace `unsafe-inline`/`unsafe-eval` in CSP with nonce-based approach for stronger XSS protection
 - **Email verification**: verify email addresses on registration before allowing full account access
 - **OAuth email linking review**: `allowDangerousEmailAccountLinking: true` is intentional but could be replaced with explicit email verification flow
