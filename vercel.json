@@ -1,4 +1,12 @@
 {
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "digital4d.eu" }],
+      "destination": "https://www.digital4d.eu/$1",
+      "permanent": true
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/notifications",
