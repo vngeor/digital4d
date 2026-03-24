@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
+import { validateLength, validateBirthDate, firstError, MAX_PHONE, MAX_CITY, MAX_COUNTRY, MAX_ADDRESS } from "@/lib/validation"
 
 export async function GET() {
   const session = await auth()
@@ -42,6 +43,18 @@ export async function PUT(request: Request) {
 
   if (!phone || typeof phone !== "string" || phone.trim() === "") {
     return NextResponse.json({ error: "Phone number is required" }, { status: 400 })
+  }
+
+  // Input length validation
+  const lengthError = firstError(
+    validateLength(phone, "Phone", MAX_PHONE),
+    validateLength(country, "Country", MAX_COUNTRY),
+    validateLength(city, "City", MAX_CITY),
+    validateLength(address, "Address", MAX_ADDRESS),
+    validateBirthDate(birthDate)
+  )
+  if (lengthError) {
+    return NextResponse.json({ error: lengthError }, { status: 400 })
   }
 
   const user = await prisma.user.update({

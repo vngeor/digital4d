@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import prisma from "@/lib/prisma"
+import { rateLimit, getClientIp } from "@/lib/rateLimit"
+import { validateLength, validateBirthDate, firstError, MAX_NAME, MAX_EMAIL, MAX_PASSWORD } from "@/lib/validation"
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 registrations per IP per hour
+    const ip = getClientIp(request)
+    const { success, resetAt } = rateLimit(`register:${ip}`, {
+      limit: 3,
+      windowMs: 60 * 60 * 1000,
+    })
+    if (!success) {
+      const retryAfter = Math.ceil((resetAt - Date.now()) / 1000)
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
+      )
+    }
+
     const { name, email, password, birthDate } = await request.json()
 
     if (!email || !password) {
@@ -11,6 +27,17 @@ export async function POST(request: NextRequest) {
         { error: "Email and password are required" },
         { status: 400 }
       )
+    }
+
+    // Input length validation
+    const lengthError = firstError(
+      validateLength(name, "Name", MAX_NAME),
+      validateLength(email, "Email", MAX_EMAIL),
+      validateLength(password, "Password", MAX_PASSWORD),
+      validateBirthDate(birthDate)
+    )
+    if (lengthError) {
+      return NextResponse.json({ error: lengthError }, { status: 400 })
     }
 
     if (password.length < 6) {

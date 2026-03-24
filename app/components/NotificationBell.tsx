@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { Bell, X, MessageSquare, Ticket, Copy, Check, Heart, TrendingDown, Cake, Gift, ExternalLink, Percent, Clock, TreePine, PartyPopper, Egg, CalendarDays } from "lucide-react"
 
 interface Notification {
@@ -744,7 +745,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
               {/* Full message */}
               <div
                 className="text-sm sm:text-base text-slate-300 leading-relaxed mb-5 sm:mb-6 prose prose-invert max-w-none prose-a:text-emerald-400 prose-a:underline prose-a:hover:text-emerald-300 prose-p:my-2 prose-headings:text-white"
-                dangerouslySetInnerHTML={{ __html: getLocalizedMessage(selectedNotification) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(getLocalizedMessage(selectedNotification)) }}
               />
 
               {/* Coupon section */}

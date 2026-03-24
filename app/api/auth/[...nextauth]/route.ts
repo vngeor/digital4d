@@ -1,6 +1,7 @@
 import { handlers } from "@/auth"
 import prisma from "@/lib/prisma"
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { rateLimit, getClientIp } from "@/lib/rateLimit"
 
 // Pre-warm Neon serverless compute before NextAuth runs adapter queries.
 // On cold start, the first query wakes Neon; graduated retries give it time to initialize.
@@ -32,6 +33,23 @@ const GET = async (req: NextRequest) => {
 }
 
 const POST = async (req: NextRequest) => {
+  // Rate limit credentials login: 5 attempts per IP per 15 minutes
+  const ip = getClientIp(req)
+  const { success, resetAt } = rateLimit(`login:${ip}`, {
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (!success) {
+    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000)
+    return NextResponse.json(
+      { error: "Too many login attempts. Please try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(retryAfter) },
+      }
+    )
+  }
+
   await warmupDb()
   return handlers.POST(req)
 }
