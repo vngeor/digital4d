@@ -220,7 +220,7 @@ export async function GET() {
       notifications: unified,
     })
   } catch (error) {
-    console.error("Error fetching notifications:", error)
+    console.error("Error fetching notifications:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json({ count: 0, notifications: [] })
   }
 }

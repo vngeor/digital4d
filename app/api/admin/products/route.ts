@@ -233,7 +233,7 @@ export async function PUT(request: NextRequest) {
         product.onSale,
         newSalePriceNum,
         product.currency
-      ).catch((err) => console.error("Failed to send wishlist price drop notifications:", err))
+      ).catch((err) => console.error("Failed to send wishlist price drop notifications:", err instanceof Error ? err.message : "Unknown"))
     }
 
     return NextResponse.json(product)
@@ -292,7 +292,7 @@ export async function PATCH(request: NextRequest) {
       // Clean up blob files (non-blocking)
       const urlsToDelete = products.flatMap((p) => [p.image, p.fileUrl, ...(p.gallery || [])])
       deleteBlobsBatch(urlsToDelete).catch((err) => {
-        console.error("Failed to delete product file blobs:", err)
+        console.error("Failed to delete product file blobs:", err instanceof Error ? err.message : "Unknown")
       })
 
       for (const p of products) {
@@ -368,7 +368,7 @@ export async function DELETE(request: NextRequest) {
       ]
 
       deleteBlobsBatch(urlsToDelete).catch(err => {
-        console.error("Failed to delete product file blobs:", err)
+        console.error("Failed to delete product file blobs:", err instanceof Error ? err.message : "Unknown")
       })
     }
 

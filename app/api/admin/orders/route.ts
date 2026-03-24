@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(orders)
   } catch (error) {
-    console.error("Error fetching orders:", error)
+    console.error("Error fetching orders:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(order, { status: 201 })
   } catch (error) {
-    console.error("Error creating order:", error)
+    console.error("Error creating order:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -99,7 +99,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(order)
   } catch (error) {
-    console.error("Error updating order:", error)
+    console.error("Error updating order:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -127,7 +127,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting order:", error)
+    console.error("Error deleting order:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ ...result, reminders: reminderResult }, { status: 200 })
   } catch (error) {
-    console.error("[Cron Notifications] Fatal error:", error)
+    console.error("[Cron Notifications] Fatal error:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

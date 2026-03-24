@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(banners)
   } catch (error) {
-    console.error("Error fetching banners:", error)
+    console.error("Error fetching banners:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(banner, { status: 201 })
   } catch (error) {
-    console.error("Error creating banner:", error)
+    console.error("Error creating banner:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -107,7 +107,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(banner)
   } catch (error) {
-    console.error("Error updating banner:", error)
+    console.error("Error updating banner:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -137,7 +137,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error reordering banners:", error)
+    console.error("Error reordering banners:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -165,7 +165,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting banner:", error)
+    console.error("Error deleting banner:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

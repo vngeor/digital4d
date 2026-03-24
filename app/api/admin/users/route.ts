@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(users)
   } catch (error) {
-    console.error("Error fetching users:", error)
+    console.error("Error fetching users:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -245,7 +245,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(user)
   } catch (error) {
-    console.error("Error updating user:", error)
+    console.error("Error updating user:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -281,7 +281,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting user:", error)
+    console.error("Error deleting user:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

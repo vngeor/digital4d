@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Error validating coupon:", error)
+    console.error("Error validating coupon:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { valid: false, error: "INTERNAL_ERROR" },
       { status: 500 }

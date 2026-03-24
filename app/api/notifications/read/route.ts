@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error marking notification as read:", error)
+    console.error("Error marking notification as read:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

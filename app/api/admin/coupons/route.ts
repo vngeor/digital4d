@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / limit),
     })
   } catch (error) {
-    console.error("Error fetching coupons:", error)
+    console.error("Error fetching coupons:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -180,12 +180,12 @@ export async function POST(request: NextRequest) {
         parseFloat(coupon.value.toString()),
         coupon.currency,
         coupon.productIds
-      ).catch((err) => console.error("Failed to send wishlist coupon notifications:", err))
+      ).catch((err) => console.error("Failed to send wishlist coupon notifications:", err instanceof Error ? err.message : "Unknown"))
     }
 
     return NextResponse.json(coupon, { status: 201 })
   } catch (error) {
-    console.error("Error creating coupon:", error)
+    console.error("Error creating coupon:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -259,12 +259,12 @@ export async function PUT(request: NextRequest) {
         parseFloat(updated.value.toString()),
         updated.currency,
         updated.productIds
-      ).catch((err) => console.error("Failed to send wishlist coupon notifications:", err))
+      ).catch((err) => console.error("Failed to send wishlist coupon notifications:", err instanceof Error ? err.message : "Unknown"))
     }
 
     return NextResponse.json(updated)
   } catch (error) {
-    console.error("Error updating coupon:", error)
+    console.error("Error updating coupon:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -306,7 +306,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting coupon:", error)
+    console.error("Error deleting coupon:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

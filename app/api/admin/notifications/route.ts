@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / limit),
     })
   } catch (error) {
-    console.error("Error fetching notifications:", error)
+    console.error("Error fetching notifications:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, count: createdCount }, { status: 201 })
   } catch (error) {
-    console.error("Error sending notifications:", error)
+    console.error("Error sending notifications:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -209,7 +209,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting notification:", error)
+    console.error("Error deleting notification:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

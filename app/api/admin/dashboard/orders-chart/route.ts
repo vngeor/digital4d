@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data })
   } catch (error) {
-    console.error("Error fetching orders chart data:", error)
+    console.error("Error fetching orders chart data:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

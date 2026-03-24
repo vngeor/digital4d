@@ -37,7 +37,7 @@ export async function POST(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error marking quote as viewed:", error)
+    console.error("Error marking quote as viewed:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

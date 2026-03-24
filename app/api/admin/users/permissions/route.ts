@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ rolePermissions, userOverrides })
   } catch (error) {
-    console.error("Error fetching user permissions:", error)
+    console.error("Error fetching user permissions:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -111,7 +111,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error saving user permissions:", error)
+    console.error("Error saving user permissions:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -139,7 +139,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error resetting user permissions:", error)
+    console.error("Error resetting user permissions:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
