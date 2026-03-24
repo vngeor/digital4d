@@ -15,7 +15,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content
 - **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
-- **Security** - Rate limiting (login, register, search, coupons, quotes), CSP & security headers, XSS sanitization (sanitize-html), input validation, checkout origin whitelist, sanitized error logging, auto-logout after 5 min inactivity, permission-gated admin pages and API routes
+- **Security** - Nonce-based CSP (per-request, strict-dynamic), rate limiting (login, register, search, coupons, quotes), security headers (HSTS, X-Frame-Options, nosniff), XSS sanitization (sanitize-html), input validation, checkout origin whitelist, sanitized error logging, auto-logout after 5 min inactivity, permission-gated admin pages and API routes
 - **Birthday Prompts** - Registration birthDate field, profile banner for missing birthDate, header indicator with pulsing dot
 - **Authentication** - Email/password + OAuth (Google, GitHub), "Remember me" checkbox, auto-retry on OAuth cold-start errors
 - **Global Search** - Site-wide search with Cmd+K shortcut, "View All" results page, keyboard navigation, recent searches
@@ -273,7 +273,8 @@ npm run start
 **Security:**
 - Admin panel auto-logs out after 5 minutes of inactivity with 1-minute warning
 - Rate limiting: login (5/15min), register (3/hr), search (20/min), coupons (10/min), quotes (5/hr)
-- Security headers: CSP, HSTS, X-Frame-Options (DENY), nosniff, Referrer-Policy
+- Nonce-based CSP: per-request cryptographic nonces with `strict-dynamic` (no `unsafe-inline` for scripts)
+- Security headers: HSTS, X-Frame-Options (DENY), nosniff, Referrer-Policy, Permissions-Policy
 - XSS sanitization on all user-facing HTML rendering (sanitize-html)
 - Input validation with max length checks on all public API routes
 - Checkout origin whitelisting (prevents open redirect)
