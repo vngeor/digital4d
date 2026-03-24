@@ -9,20 +9,25 @@ import type { Adapter } from "next-auth/adapters"
 import bcrypt from "bcryptjs"
 
 // Wrap PrismaAdapter methods with retry logic to handle Neon cold starts.
-// On first request after inactivity, Neon's compute may fail/timeout.
-// Retrying once lets the warmed-up connection succeed.
+// This is a safety net — the warmup in route.ts should have already woken Neon,
+// so these retries use shorter delays (500ms, 1s) for quick recovery from transient errors.
 function withRetry(adapter: Adapter): Adapter {
   const wrapped = { ...adapter }
   for (const [key, value] of Object.entries(wrapped)) {
     if (typeof value === "function") {
       ;(wrapped as Record<string, unknown>)[key] = async (...args: unknown[]) => {
+        const start = Date.now()
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
             return await (value as (...a: unknown[]) => Promise<unknown>)(...args)
           } catch (error) {
-            if (attempt === 2) throw error
-            const delay = (attempt + 1) * 1000 // 1s, then 2s
-            console.warn(`[Auth] adapter.${key} failed (attempt ${attempt + 1}/3), retrying in ${delay}ms...`, error)
+            const elapsed = Date.now() - start
+            if (attempt === 2 || elapsed > 8000) {
+              console.error(`[Auth] adapter.${key} failed permanently (${elapsed}ms):`, error instanceof Error ? error.message : error)
+              throw error
+            }
+            const delay = attempt === 0 ? 500 : 1000
+            console.warn(`[Auth] adapter.${key} failed (attempt ${attempt + 1}/3, ${elapsed}ms), retrying in ${delay}ms`)
             await new Promise(r => setTimeout(r, delay))
           }
         }

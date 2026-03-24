@@ -19,32 +19,53 @@ export default function LoginPage() {
 
     const callbackUrl = searchParams.get("callbackUrl") || "/"
 
-    // Handle OAuth error redirects
+    // Handle OAuth error redirects — auto-retry Configuration errors once
+    // (caused by Neon cold start; the failed attempt wakes the DB so retry succeeds)
     useEffect(() => {
         const errorParam = searchParams.get("error")
         if (errorParam) {
-            switch (errorParam) {
-                case "Configuration":
-                    setError(t("somethingWentWrong") + " (Configuration)")
-                    break
-                case "AccessDenied":
-                    setError(t("somethingWentWrong") + " (Access Denied)")
-                    break
-                case "OAuthSignin":
-                case "OAuthCallback":
-                case "OAuthAccountNotLinked":
-                    setError(t("somethingWentWrong") + " (OAuth Error)")
-                    break
-                default:
-                    setError(t("somethingWentWrong"))
+            if (errorParam === "Configuration") {
+                const retried = sessionStorage.getItem("oauth_retry_attempted")
+                const provider = sessionStorage.getItem("oauth_provider")
+                if (!retried && provider) {
+                    // First Configuration error — auto-retry (Neon is now warm from failed attempt)
+                    sessionStorage.setItem("oauth_retry_attempted", "1")
+                    setLoading(true)
+                    setTimeout(() => {
+                        signIn(provider, { callbackUrl })
+                    }, 500)
+                    return
+                }
+                // Already retried or no provider stored — show error
+                sessionStorage.removeItem("oauth_retry_attempted")
+                sessionStorage.removeItem("oauth_provider")
+                setError(t("somethingWentWrong") + " (Configuration)")
+            } else {
+                switch (errorParam) {
+                    case "AccessDenied":
+                        setError(t("somethingWentWrong") + " (Access Denied)")
+                        break
+                    case "OAuthSignin":
+                    case "OAuthCallback":
+                    case "OAuthAccountNotLinked":
+                        setError(t("somethingWentWrong") + " (OAuth Error)")
+                        break
+                    default:
+                        setError(t("somethingWentWrong"))
+                }
             }
+        } else {
+            // Successful navigation (no error) — clear retry flags
+            sessionStorage.removeItem("oauth_retry_attempted")
+            sessionStorage.removeItem("oauth_provider")
         }
-    }, [searchParams, t])
+    }, [searchParams, t, callbackUrl])
 
     const handleGoogleSignIn = async () => {
         setError("")
         setLoading(true)
         try {
+            sessionStorage.setItem("oauth_provider", "google")
             await signIn("google", { callbackUrl })
         } catch {
             setError(t("somethingWentWrong"))
@@ -56,6 +77,7 @@ export default function LoginPage() {
         setError("")
         setLoading(true)
         try {
+            sessionStorage.setItem("oauth_provider", "github")
             await signIn("github", { callbackUrl })
         } catch {
             setError(t("somethingWentWrong"))
