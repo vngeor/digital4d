@@ -46,7 +46,9 @@ No test framework is configured.
   - `requireAdminAccess()` — any admin role (ADMIN/EDITOR/AUTHOR) for layout-level access
 - **3-tier permission resolution** (`lib/permissions.ts`): User override → Role override → Code defaults. Resources: dashboard, products, categories, content, types, banners, menu, orders, quotes, media, coupons, notifications, users, roles, audit. Actions: view, create, edit, delete
 - **Admin idle timeout**: `AdminIdleGuard` component auto-logs out after 5 minutes of inactivity with 1-minute warning countdown
-- **Neon cold start handling**: Two-layer defense: (1) `warmupDb()` in auth route handler (`app/api/auth/[...nextauth]/route.ts`) pre-warms Neon with a cheap query before NextAuth processes the request; (2) `withRetry()` wrapper around PrismaAdapter retries up to 3 times with 1s/2s delays as a safety net
+- **Neon cold start handling**: Three-layer defense: (1) `warmupDb()` in auth route handler with 3 attempts and graduated delays (1s/2s/3s); (2) `withRetry()` wrapper around PrismaAdapter with 500ms/1s delays as safety net; (3) client-side auto-retry on Configuration error in login page
+- **Rate limiting** (`lib/rateLimit.ts`): in-memory Map-based per-IP rate limiter. Applied to: login (5/15min), register (3/hr), search (20/min), coupon validate (10/min), quotes (5/hr)
+- **Input validation** (`lib/validation.ts`): max length checks on all public API routes — name (100), email (254), password (128), phone (20), message (5000), address (500). Birth date validation (valid date, not future, not before 1900)
 - **OAuth config**: `allowDangerousEmailAccountLinking: true` for Google & GitHub; Google has `access_type: "offline"`; GitHub requests `"read:user user:email"` scope
 - **Password**: bcryptjs hashing, min 6 chars + at least one special character
 
@@ -265,6 +267,14 @@ NEXT_PUBLIC_SITE_URL=            # Public site URL (e.g., https://www.digital4d.
 CRON_SECRET=                     # Secret for Vercel Cron job authentication (generate random 32-byte hex)
 ```
 
+## Security
+
+- **Security headers** (`next.config.ts`): CSP, X-Frame-Options (DENY), HSTS, X-Content-Type-Options (nosniff), Referrer-Policy, Permissions-Policy applied to all routes
+- **XSS sanitization** (`lib/sanitize.ts`): `sanitize-html` library applied to all 7 `dangerouslySetInnerHTML` locations (NotificationBell, NewsModal, news/services/menu pages). Allows TipTap-produced tags, strips `<script>`, `<iframe>`, event handlers, `javascript:` URLs
+- **Checkout origin validation**: Stripe success/cancel URLs validated against domain whitelist (prevents open redirect)
+- **Error logging**: all `console.error()` across 30 API route files sanitized to only log `error.message`, not raw error objects (prevents stack trace/DB detail leakage)
+- **Query parameter validation**: news API type whitelisted (`news`/`service`), limit capped at 50
+
 ## Key Constraints
 
 1. **No transactions** — Neon HTTP adapter doesn't support them; use sequential operations
@@ -279,3 +289,7 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 ## Roadmap
 
 - **Forgot password**: requires email service (recommended: Resend). Needs: PasswordResetToken model, `/api/auth/forgot-password` endpoint, `/api/auth/reset-password` endpoint, `/forgot-password` and `/reset-password` pages
+- **Upgrade rate limiting to Redis**: current in-memory rate limiter is per-instance on Vercel serverless. Upgrade to Upstash Redis for cross-instance rate limiting
+- **CSP nonce-based scripts**: replace `unsafe-inline`/`unsafe-eval` in CSP with nonce-based approach for stronger XSS protection
+- **Email verification**: verify email addresses on registration before allowing full account access
+- **OAuth email linking review**: `allowDangerousEmailAccountLinking: true` is intentional but could be replaced with explicit email verification flow
