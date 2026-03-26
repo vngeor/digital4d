@@ -269,7 +269,12 @@ export default function AuditLogsPage() {
     if (val === null || val === undefined) return "—"
     if (typeof val === "boolean") return val ? "true" : "false"
     if (typeof val === "object") return JSON.stringify(val)
-    return String(val)
+    let str = String(val)
+    // Strip HTML tags for readability
+    str = str.replace(/<[^>]*>/g, "").trim()
+    // Truncate long values
+    if (str.length > 80) str = str.slice(0, 80) + "…"
+    return str
   }
 
   // Render a value with clickable product links when IDs are resolved
@@ -570,11 +575,11 @@ export default function AuditLogsPage() {
                             <span className="text-gray-300">{log.recordTitle || log.recordId}</span>
                           )}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 max-w-[300px]">
                           {log.details ? (
                             <button
                               onClick={() => setViewingDetails(log)}
-                              className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors text-left"
+                              className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors text-left truncate block max-w-full"
                             >
                               {getInlineChangeSummary(log.details) || t("viewDetails")}
                             </button>
