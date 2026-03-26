@@ -135,15 +135,21 @@ export default function ProductsPage() {
     fetchProducts(selectedCategory)
   }, [selectedCategory])
 
-  // Deep link: open edit form when ?edit=<id> is present
+  // Deep link: open edit form when ?edit=<id> or create form when ?action=create
   useEffect(() => {
+    const action = searchParams.get("action")
+    if (action === "create" && !showForm) {
+      setEditingProduct(null)
+      setShowForm(true)
+      window.history.replaceState({}, "", "/admin/products")
+      return
+    }
     const editId = searchParams.get("edit")
     if (editId && products.length > 0 && !showForm) {
       const item = products.find(p => p.id === editId)
       if (item) {
         setEditingProduct(item)
         setShowForm(true)
-        // Clean up URL
         window.history.replaceState({}, "", "/admin/products")
       }
     }
