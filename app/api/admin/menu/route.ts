@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
         order: data.order || 0,
         published: data.published ?? true,
         showInNav: data.showInNav ?? true,
+        titleAlign: data.titleAlign || "left",
       },
     })
 
@@ -149,6 +150,7 @@ export async function PUT(request: NextRequest) {
         order: data.order,
         published: data.published,
         showInNav: data.showInNav,
+        titleAlign: data.titleAlign,
       },
     })
 

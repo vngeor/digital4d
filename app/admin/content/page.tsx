@@ -31,6 +31,7 @@ interface Content {
   bodyEs: string | null
   image: string | null
   published: boolean
+  titleAlign: string
   order: number
   createdAt: string
   updatedAt: string

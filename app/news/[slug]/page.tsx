@@ -174,7 +174,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
                         {t("news.title")}
                     </Link>
 
-                    <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
+                    <h1 className={`text-2xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words ${news.titleAlign === "center" ? "text-center" : news.titleAlign === "right" ? "text-right" : ""}`}>
                         {newsTitle}
                     </h1>
 

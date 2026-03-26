@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { X, Save, Loader2 } from "lucide-react"
+import { X, Save, Loader2, AlignLeft, AlignCenter, AlignRight } from "lucide-react"
 import { RichTextEditor } from "./RichTextEditor"
 
 interface MenuItemFormData {
@@ -18,6 +18,7 @@ interface MenuItemFormData {
   order: number
   published: boolean
   showInNav: boolean
+  titleAlign: string
 }
 
 interface MenuItemFormProps {
@@ -34,6 +35,7 @@ interface MenuItemFormProps {
     order?: number
     published?: boolean
     showInNav?: boolean
+    titleAlign?: string
   }
   onSubmit: (data: MenuItemFormData) => Promise<void>
   onCancel: () => void
@@ -70,6 +72,7 @@ export function MenuItemForm({
     order: initialData?.order ?? 0,
     published: initialData?.published ?? true,
     showInNav: initialData?.showInNav ?? true,
+    titleAlign: initialData?.titleAlign ?? "left",
   })
 
   // Auto-generate slug from English title
@@ -164,7 +167,7 @@ export function MenuItemForm({
                 className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            <div className="flex items-end gap-6">
+            <div className="flex flex-col gap-3">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -205,9 +208,31 @@ export function MenuItemForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("title")} ({activeTab.toUpperCase()})
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-400">
+                  {t("title")} ({activeTab.toUpperCase()})
+                </label>
+                <div className="flex items-center gap-1">
+                  {(["left", "center", "right"] as const).map((align) => {
+                    const Icon = align === "left" ? AlignLeft : align === "center" ? AlignCenter : AlignRight
+                    return (
+                      <button
+                        key={align}
+                        type="button"
+                        onClick={() => updateField("titleAlign", align)}
+                        className={`p-1.5 rounded-lg transition-all ${
+                          formData.titleAlign === align
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : "text-gray-500 hover:text-white hover:bg-white/5"
+                        }`}
+                        title={align.charAt(0).toUpperCase() + align.slice(1)}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
               <input
                 type="text"
                 value={
