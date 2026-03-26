@@ -248,7 +248,7 @@ export default function ProductsPage() {
       fetchProducts()
       fetchAllProducts()
     } else {
-      toast.error("Failed to delete products")
+      toast.error(t("deleteFailed"))
     }
   }
 
@@ -268,7 +268,7 @@ export default function ProductsPage() {
       fetchProducts()
       fetchAllProducts()
     } else {
-      toast.error("Failed to update products")
+      toast.error(t("updateFailed"))
     }
   }
 

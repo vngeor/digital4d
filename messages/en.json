@@ -288,7 +288,9 @@
       "sourceBanners": "Banners",
       "sourceNews": "News",
       "sourceCategories": "Categories",
-      "sourceUnused": "Unused"
+      "sourceUnused": "Unused",
+      "saveFailed": "Failed to save",
+      "deleteFailed": "Failed to delete"
     },
     "coupons": {
       "title": "Coupon Management",
@@ -509,16 +511,17 @@
       "cancel": "Cancel",
       "create": "Create",
       "basicInfo": "Basic Info",
-      "titleField": "Title"
+      "titleField": "Title",
+      "couponValueRequired": "Coupon value is required when auto-coupon is enabled"
     },
     "menu": {
-      "title": "Menu Management",
+      "title": "Title",
       "subtitle": "Manage navigation menu items",
       "addMenuItem": "Add Menu Item",
       "editMenuItem": "Edit Menu Item",
+      "preview": "Preview page",
       "slug": "Slug",
       "slugHelp": "URL-friendly identifier (e.g., services)",
-      "title": "Title",
       "type": "Type",
       "typeGeneral": "General",
       "typeServices": "Services",
@@ -573,13 +576,15 @@
       "newProduct": "New Product",
       "newContent": "New Content",
       "viewQuotes": "View Quotes",
-      "viewUsers": "View Users"
+      "viewUsers": "View Users",
+      "viewAll": "View All"
     },
     "content": {
-      "title": "Content Management",
+      "title": "Title",
       "subtitle": "Manage your news and services content",
       "addContent": "Add Content",
       "editContent": "Edit Content",
+      "preview": "Preview page",
       "type": "Type",
       "typeHelp": "News can be standalone. Services need a menu item.",
       "customType": "Custom...",
@@ -587,7 +592,6 @@
       "news": "News",
       "service": "Service",
       "all": "All",
-      "title": "Title",
       "body": "Body",
       "imageUrl": "Image URL",
       "order": "Order",
@@ -916,7 +920,8 @@
       "confirmDeleteTitle": "Confirm Delete",
       "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
       "homepage": "Home",
-      "deleteFailed": "Failed to delete product"
+      "deleteFailed": "Failed to delete product",
+      "updateFailed": "Failed to update product"
     },
     "productCategories": {
       "title": "Product Categories",
@@ -1183,7 +1188,6 @@
     "quoteUserDeclined": "Declined by You",
     "respondToOffer": "Respond to this offer",
     "counterOfferSent": "Your counter offer",
-    "cancel": "Cancel",
     "newBadge": "New",
     "conversationHistory": "Conversation History",
     "you": "You",

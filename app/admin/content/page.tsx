@@ -228,7 +228,7 @@ export default function ContentPage() {
       fetchAllTypes()
       fetchAllContent()
     } else {
-      toast.error("Failed to delete content")
+      toast.error(t("deleteFailed"))
     }
   }
 
@@ -248,7 +248,7 @@ export default function ContentPage() {
       fetchContent()
       fetchAllContent()
     } else {
-      toast.error("Failed to update content")
+      toast.error(t("updateFailed"))
     }
   }
 

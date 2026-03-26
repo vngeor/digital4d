@@ -1,9 +1,11 @@
+import Link from "next/link"
 import { LucideIcon } from "lucide-react"
 
 interface StatsCardProps {
   title: string
   value: number | string
   icon: LucideIcon
+  href?: string
   trend?: {
     value: number
     isPositive: boolean
@@ -48,37 +50,46 @@ export function StatsCard({
   title,
   value,
   icon: Icon,
+  href,
   trend,
   color = "emerald",
 }: StatsCardProps) {
   const colors = colorClasses[color]
 
-  return (
-    <div
-      className={`glass rounded-2xl p-4 sm:p-6 border ${colors.border} bg-gradient-to-br ${colors.bg}`}
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-gray-400 mb-1">{title}</p>
-          <p className="text-2xl sm:text-3xl font-bold text-white">{value}</p>
-          {trend && (
-            <p
-              className={`text-sm mt-2 ${
-                trend.isPositive ? "text-emerald-400" : "text-red-400"
-              }`}
-            >
-              {trend.isPositive ? "+" : "-"}
-              {Math.abs(trend.value)}%
-              <span className="text-gray-500 ml-1">vs last month</span>
-            </p>
-          )}
-        </div>
-        <div
-          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${colors.icon} flex items-center justify-center`}
-        >
-          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-        </div>
+  const content = (
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm text-gray-400 mb-1">{title}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-white">{value}</p>
+        {trend && (
+          <p
+            className={`text-sm mt-2 ${
+              trend.isPositive ? "text-emerald-400" : "text-red-400"
+            }`}
+          >
+            {trend.isPositive ? "+" : "-"}
+            {Math.abs(trend.value)}%
+            <span className="text-gray-500 ml-1">vs last month</span>
+          </p>
+        )}
+      </div>
+      <div
+        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${colors.icon} flex items-center justify-center`}
+      >
+        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
       </div>
     </div>
   )
+
+  const className = `glass rounded-2xl p-4 sm:p-6 border ${colors.border} bg-gradient-to-br ${colors.bg}${href ? " hover:scale-[1.02] transition-all cursor-pointer" : ""}`
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className={className}>{content}</div>
 }
