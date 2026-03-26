@@ -17,6 +17,7 @@ interface MenuItemFormData {
   bodyEs: string
   order: number
   published: boolean
+  showInNav: boolean
 }
 
 interface MenuItemFormProps {
@@ -32,6 +33,7 @@ interface MenuItemFormProps {
     bodyEs?: string | null
     order?: number
     published?: boolean
+    showInNav?: boolean
   }
   onSubmit: (data: MenuItemFormData) => Promise<void>
   onCancel: () => void
@@ -67,6 +69,7 @@ export function MenuItemForm({
     bodyEs: initialData?.bodyEs ?? "",
     order: initialData?.order ?? 0,
     published: initialData?.published ?? true,
+    showInNav: initialData?.showInNav ?? true,
   })
 
   // Auto-generate slug from English title
@@ -161,7 +164,7 @@ export function MenuItemForm({
                 className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end gap-6">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -170,6 +173,15 @@ export function MenuItemForm({
                   className="w-5 h-5 rounded bg-white/5 border-white/10 text-emerald-500 focus:ring-emerald-500/50"
                 />
                 <span className="text-sm text-gray-300">{t("published")}</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.showInNav}
+                  onChange={(e) => updateField("showInNav", e.target.checked)}
+                  className="w-5 h-5 rounded bg-white/5 border-white/10 text-emerald-500 focus:ring-emerald-500/50"
+                />
+                <span className="text-sm text-gray-300">{t("showInNav")}</span>
               </label>
             </div>
           </div>

@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
         bodyEs: data.bodyEs || null,
         order: data.order || 0,
         published: data.published ?? true,
+        showInNav: data.showInNav ?? true,
       },
     })
 
@@ -147,6 +148,7 @@ export async function PUT(request: NextRequest) {
         bodyEs: data.bodyEs,
         order: data.order,
         published: data.published,
+        showInNav: data.showInNav,
       },
     })
 

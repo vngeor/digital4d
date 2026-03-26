@@ -23,6 +23,7 @@ interface MenuItem {
   bodyEs: string | null
   order: number
   published: boolean
+  showInNav: boolean
   createdAt: string
   updatedAt: string
   _count: {

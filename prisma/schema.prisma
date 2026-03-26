@@ -118,6 +118,7 @@ model MenuItem {
   bodyEs    String?   @db.Text
   order     Int       @default(0)
   published Boolean   @default(true)
+  showInNav Boolean   @default(true) // Whether to display in navigation bar (separate from published)
   contents  Content[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma"
 
 export async function GET() {
   const menuItems = await prisma.menuItem.findMany({
-    where: { published: true },
+    where: { published: true, showInNav: true },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     include: {
       contents: {
