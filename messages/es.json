@@ -544,6 +544,7 @@
       "savedSuccess": "Elemento de menú guardado correctamente",
       "deletedSuccess": "Elemento de menú eliminado",
       "saveFailed": "Error al guardar el elemento de menú",
+      "showInNav": "Mostrar en navegación",
       "confirmDeleteTitle": "Confirmar eliminación",
       "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
     },

@@ -544,6 +544,7 @@
       "savedSuccess": "Menu item saved successfully",
       "deletedSuccess": "Menu item deleted",
       "saveFailed": "Failed to save menu item",
+      "showInNav": "Show in Navigation",
       "confirmDeleteTitle": "Confirm Delete",
       "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
     },
