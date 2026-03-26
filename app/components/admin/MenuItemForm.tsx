@@ -72,7 +72,7 @@ export function MenuItemForm({
     order: initialData?.order ?? 0,
     published: initialData?.published ?? true,
     showInNav: initialData?.showInNav ?? true,
-    titleAlign: initialData?.titleAlign ?? "left",
+    titleAlign: initialData?.titleAlign ?? "center",
   })
 
   // Auto-generate slug from English title
