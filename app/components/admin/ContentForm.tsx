@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { X, Save, Loader2, Upload, Image as ImageIcon } from "lucide-react"
+import { X, Save, Loader2, Upload, Image as ImageIcon, AlignLeft, AlignCenter, AlignRight } from "lucide-react"
 import { RichTextEditor } from "./RichTextEditor"
 
 function stripHtmlTags(html: string): string {
@@ -39,6 +39,7 @@ interface ContentFormData {
   bodyEs: string
   image: string
   published: boolean
+  titleAlign: string
   order: number
   menuItemId: string
 }
@@ -56,6 +57,7 @@ interface ContentFormProps {
     bodyEs?: string | null
     image?: string | null
     published?: boolean
+    titleAlign?: string
     order?: number
     menuItemId?: string | null
   }
@@ -100,6 +102,7 @@ export function ContentForm({
     bodyEs: initialData?.bodyEs ?? "",
     image: initialData?.image ?? "",
     published: initialData?.published ?? false,
+    titleAlign: initialData?.titleAlign ?? "left",
     order: initialData?.order ?? 0,
     menuItemId: initialData?.menuItemId ?? "",
   })
@@ -433,9 +436,31 @@ export function ContentForm({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("title")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-400">
+                    {t("title")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
+                  </label>
+                  <div className="flex items-center gap-1">
+                    {(["left", "center", "right"] as const).map((align) => {
+                      const Icon = align === "left" ? AlignLeft : align === "center" ? AlignCenter : AlignRight
+                      return (
+                        <button
+                          key={align}
+                          type="button"
+                          onClick={() => updateField("titleAlign", align)}
+                          className={`p-1.5 rounded-lg transition-all ${
+                            formData.titleAlign === align
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                              : "text-gray-500 hover:text-white hover:bg-white/5"
+                          }`}
+                          title={align.charAt(0).toUpperCase() + align.slice(1)}
+                        >
+                          <Icon className="w-4 h-4" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
                 <input
                   type="text"
                   value={

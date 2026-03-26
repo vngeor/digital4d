@@ -24,6 +24,7 @@ interface MenuItem {
   order: number
   published: boolean
   showInNav: boolean
+  titleAlign: string
   createdAt: string
   updatedAt: string
   _count: {
