@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { X, Save, Loader2, Upload } from "lucide-react"
+import { useKeyboardSave } from "./useKeyboardSave"
 import { COLOR_CLASSES } from "./TypeForm"
 
 interface CategoryFormData {
@@ -73,6 +74,8 @@ export function ProductCategoryForm({
 }: ProductCategoryFormProps) {
   const t = useTranslations("admin.productCategories")
   const tc = useTranslations("admin.common")
+  const formRef = useRef<HTMLFormElement>(null)
+  useKeyboardSave(formRef)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -196,7 +199,7 @@ export function ProductCategoryForm({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">

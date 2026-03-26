@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
 import { X, Save, Loader2, Upload, Sparkles } from "lucide-react"
+import { useKeyboardSave } from "./useKeyboardSave"
 
 interface ProductFormData {
   id?: string
@@ -125,6 +126,8 @@ export function ProductForm({
   const t = useTranslations("admin.products")
   const tc = useTranslations("admin.common")
   const locale = useLocale()
+  const formRef = useRef<HTMLFormElement>(null)
+  useKeyboardSave(formRef)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -264,7 +267,7 @@ export function ProductForm({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

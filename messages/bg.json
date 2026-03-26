@@ -567,7 +567,13 @@
       "dateTo": "До",
       "orders": "поръчки",
       "noChartData": "Няма поръчки в избрания период",
-      "chartLoadError": "Грешка при зареждане на данните"
+      "chartLoadError": "Грешка при зареждане на данните",
+      "pendingQuotes": "Чакащи оферти",
+      "quickActions": "Бързи действия",
+      "newProduct": "Нов продукт",
+      "newContent": "Ново съдържание",
+      "viewQuotes": "Виж оферти",
+      "viewUsers": "Виж потребители"
     },
     "content": {
       "title": "Управление на съдържание",

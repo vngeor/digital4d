@@ -1,8 +1,9 @@
 import { getTranslations, getLocale } from "next-intl/server"
-import { Users, ShoppingCart, FileText, TrendingUp } from "lucide-react"
+import { Users, ShoppingCart, FileText, TrendingUp, MessageSquare } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { StatsCard } from "../components/admin/StatsCard"
 import { InteractiveOrdersChart } from "../components/admin/InteractiveOrdersChart"
+import { QuickActions } from "../components/admin/QuickActions"
 import type { Order, User } from "@prisma/client"
 
 type RecentOrder = Pick<Order, "id" | "customerName" | "customerEmail" | "status"> & {
@@ -12,11 +13,12 @@ type RecentOrder = Pick<Order, "id" | "customerName" | "customerEmail" | "status
 type RecentUser = Pick<User, "id" | "name" | "email" | "image" | "createdAt">
 
 async function getStats() {
-  const [userCount, orderCount, contentCount, pendingOrders] = await Promise.all([
+  const [userCount, orderCount, contentCount, pendingOrders, pendingQuotes] = await Promise.all([
     prisma.user.count(),
     prisma.order.count(),
     prisma.content.count(),
     prisma.order.count({ where: { status: "PENDING" } }),
+    prisma.quoteRequest.count({ where: { status: "pending" } }),
   ])
 
   const recentOrders = await prisma.order.findMany({
@@ -47,6 +49,7 @@ async function getStats() {
     orderCount,
     contentCount,
     pendingOrders,
+    pendingQuotes,
     recentOrders,
     recentUsers,
     monthlyOrders,
@@ -79,7 +82,7 @@ export default async function AdminDashboard() {
         <p className="text-gray-400">{t("dashboard.subtitle")}</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
         <StatsCard
           title={t("dashboard.totalUsers")}
           value={stats.userCount}
@@ -104,7 +107,15 @@ export default async function AdminDashboard() {
           icon={FileText}
           color="purple"
         />
+        <StatsCard
+          title={t("dashboard.pendingQuotes")}
+          value={stats.pendingQuotes}
+          icon={MessageSquare}
+          color="pink"
+        />
       </div>
+
+      <QuickActions />
 
       <InteractiveOrdersChart
         initialData={chartData}
