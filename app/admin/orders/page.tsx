@@ -50,7 +50,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
-  const [filter, setFilter] = useState<string>("all")
+  const [filter, setFilter] = useState<string>(searchParams.get("status") || "all")
   const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
 
   const fetchOrders = async () => {

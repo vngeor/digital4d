@@ -103,7 +103,7 @@ export default async function AdminDashboard() {
           value={stats.pendingOrders}
           icon={TrendingUp}
           color="amber"
-          href="/admin/orders"
+          href="/admin/orders?status=PENDING"
         />
         <StatsCard
           title={t("dashboard.contentItems")}
@@ -117,7 +117,7 @@ export default async function AdminDashboard() {
           value={stats.pendingQuotes}
           icon={MessageSquare}
           color="pink"
-          href="/admin/quotes"
+          href="/admin/quotes?status=pending"
         />
       </div>
 
