@@ -273,7 +273,6 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* JSON-LD: Product + Breadcrumb */}
             <script
-                nonce={nonce}
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify([productJsonLd, breadcrumbJsonLd]) }}
             />

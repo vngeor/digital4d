@@ -132,7 +132,6 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* JSON-LD: Service + Breadcrumb */}
             <script
-                nonce={nonce}
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify([serviceJsonLd, breadcrumbJsonLd]) }}
             />
