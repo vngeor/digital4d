@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma"
 import { sanitizeHtml } from "@/lib/sanitize"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
+import type { Metadata } from "next"
 
 const RESERVED_SLUGS = ['news', 'admin', 'login', 'api', 'register', 'services']
 
@@ -13,6 +14,32 @@ const stripHtmlTags = (html: string) => html.replace(/<[^>]*>/g, "").trim()
 
 interface PageProps {
     params: Promise<{ menuSlug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { menuSlug } = await params
+    if (RESERVED_SLUGS.includes(menuSlug)) return {}
+    const locale = await getLocale()
+
+    const menuItem = await prisma.menuItem.findFirst({
+        where: { slug: menuSlug, published: true },
+    })
+
+    if (!menuItem) return { title: "Page Not Found" }
+
+    const title = locale === "bg" ? menuItem.titleBg : locale === "es" ? menuItem.titleEs : menuItem.titleEn
+    const body = locale === "bg" ? menuItem.bodyBg : locale === "es" ? menuItem.bodyEs : menuItem.bodyEn
+    const description = body ? stripHtmlTags(body).slice(0, 160) : title
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title: `${title} | digital4d`,
+            description,
+            locale: locale === "bg" ? "bg_BG" : locale === "es" ? "es_ES" : "en_US",
+        },
+    }
 }
 
 export default async function DynamicPage({ params }: PageProps) {

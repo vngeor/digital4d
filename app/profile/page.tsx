@@ -3,6 +3,12 @@ import { getTranslations } from "next-intl/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { ProfileClient } from "./ProfileClient"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+    title: "My Profile",
+    robots: { index: false, follow: false },
+}
 
 export default async function ProfilePage() {
   const session = await auth()
