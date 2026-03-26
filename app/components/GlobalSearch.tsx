@@ -446,7 +446,7 @@ export function GlobalSearch() {
                     {item.image ? (
                       <img
                         src={item.image}
-                        alt={item.title || ""}
+                        alt={item.label || ""}
                         className="w-8 h-8 rounded-lg object-cover shrink-0"
                       />
                     ) : (
