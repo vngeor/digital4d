@@ -119,7 +119,7 @@ model MenuItem {
   order     Int       @default(0)
   published Boolean   @default(true)
   showInNav  Boolean   @default(true) // Whether to display in navigation bar (separate from published)
-  titleAlign String    @default("left") // Title alignment on public page: "left", "center", "right"
+  titleAlign String    @default("center") // Title alignment on public page: "left", "center", "right"
   contents   Content[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -160,7 +160,7 @@ model Content {
   bodyEs     String?   @db.Text
   image      String?
   published    Boolean   @default(false)
-  titleAlign   String    @default("left") // Title alignment on public page: "left", "center", "right"
+  titleAlign   String    @default("center") // Title alignment on public page: "left", "center", "right"
   order        Int       @default(0)
   menuItemId   String?
   menuItem     MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)

@@ -102,7 +102,7 @@ export function ContentForm({
     bodyEs: initialData?.bodyEs ?? "",
     image: initialData?.image ?? "",
     published: initialData?.published ?? false,
-    titleAlign: initialData?.titleAlign ?? "left",
+    titleAlign: initialData?.titleAlign ?? "center",
     order: initialData?.order ?? 0,
     menuItemId: initialData?.menuItemId ?? "",
   })
