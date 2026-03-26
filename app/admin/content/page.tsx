@@ -112,8 +112,15 @@ export default function ContentPage() {
     fetchContent()
   }, [filter])
 
-  // Deep link: open edit form when ?edit=<id> is present
+  // Deep link: open create form when ?action=create or edit form when ?edit=<id>
   useEffect(() => {
+    const action = searchParams.get("action")
+    if (action === "create" && !showForm) {
+      setEditingContent(null)
+      setShowForm(true)
+      window.history.replaceState({}, "", "/admin/content")
+      return
+    }
     const editId = searchParams.get("edit")
     if (editId && content.length > 0 && !showForm) {
       const item = content.find(c => c.id === editId)

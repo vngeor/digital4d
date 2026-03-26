@@ -8,7 +8,7 @@ import { useAdminPermissions } from "./AdminPermissionsContext"
 const actions = [
   {
     labelKey: "newProduct",
-    href: "/admin/products",
+    href: "/admin/products?action=create",
     icon: Package,
     overlay: Plus,
     color: "from-emerald-500 to-emerald-600",
@@ -16,7 +16,7 @@ const actions = [
   },
   {
     labelKey: "newContent",
-    href: "/admin/content",
+    href: "/admin/content?action=create",
     icon: FileText,
     overlay: Plus,
     color: "from-cyan-500 to-cyan-600",
