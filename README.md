@@ -600,6 +600,21 @@ All admin tables include:
 
 ---
 
+## Roadmap
+
+### Blocked on External Services
+- **Forgot password** — requires email service (Resend)
+- **Email verification** — verify on registration
+- **Newsletter registration** — subscriber model, footer signup
+- **Upgrade rate limiting to Redis** — Upstash for cross-instance protection
+
+### Planned
+- **GA4 / Meta Pixel tracking**
+- **Product reviews/ratings**
+- **Testimonials section**
+
+---
+
 ## License
 
 Private - All rights reserved

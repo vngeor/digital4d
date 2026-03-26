@@ -290,7 +290,18 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 
 ## Roadmap
 
+### Blocked on External Services
 - **Forgot password**: requires email service (recommended: Resend). Needs: PasswordResetToken model, `/api/auth/forgot-password` endpoint, `/api/auth/reset-password` endpoint, `/forgot-password` and `/reset-password` pages
-- **Upgrade rate limiting to Redis**: current in-memory rate limiter is per-instance on Vercel serverless. Upgrade to Upstash Redis for cross-instance rate limiting
 - **Email verification**: verify email addresses on registration before allowing full account access
+- **Email notifications (orders, quotes)**: transactional emails for order confirmations, quote updates
+- **Newsletter registration**: subscriber model, footer signup form, email campaigns
+- **Upgrade rate limiting to Redis**: current in-memory rate limiter is per-instance on Vercel serverless. Upgrade to Upstash Redis for cross-instance rate limiting
 - **OAuth email linking review**: `allowDangerousEmailAccountLinking: true` is intentional but could be replaced with explicit email verification flow
+
+### No Blockers
+- **GA4 / Meta Pixel tracking**: needs tracking IDs from admin
+- **Product reviews/ratings**: user reviews with star ratings on product pages
+- **Testimonials section**: customer testimonials on homepage
+
+### Postponed
+- **Live chat widget**: Tawk.to (free) — script tag integration, deferred
