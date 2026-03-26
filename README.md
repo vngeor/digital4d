@@ -15,9 +15,9 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content
 - **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
-- **Security** - Auto-logout after 5 min inactivity, permission-gated admin pages and API routes
+- **Security** - Nonce-based CSP (no unsafe-inline for scripts), XSS sanitization, rate limiting, input validation, auto-logout after 5 min inactivity, permission-gated admin pages and API routes
 - **Birthday Prompts** - Registration birthDate field, profile banner for missing birthDate, header indicator with pulsing dot
-- **Authentication** - Email/password + OAuth (Google, GitHub)
+- **Authentication** - Email/password + OAuth (Google, GitHub), "Remember me", Neon cold-start auto-retry
 - **Global Search** - Site-wide search with Cmd+K shortcut, "View All" results page, keyboard navigation, recent searches
 - **Image Optimization** - Automatic compression, WebP conversion, Vercel Blob storage
 - **Mobile Responsive** - iOS Safari optimized (input zoom prevention, tap highlight removal, font smoothing), touch-friendly targets, responsive coupon badges, mobile-safe modals/popups with proper viewport constraints, CSS cascade layer architecture for Tailwind v4 compatibility
