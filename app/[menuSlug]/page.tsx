@@ -160,12 +160,6 @@ export default async function DynamicPage({ params }: PageProps) {
                     </div>
                 </section>
 
-                {/* Footer */}
-                <footer className="glass border-t border-white/10 py-8 mt-12">
-                    <div className="mx-auto max-w-6xl px-4 text-center text-slate-400">
-                        <p>&copy; 2024 digital4d. {t("footer.rights")}</p>
-                    </div>
-                </footer>
             </div>
         )
     }
@@ -179,6 +173,7 @@ export default async function DynamicPage({ params }: PageProps) {
 
     // Get content list
     const contents = menuItem ? menuItem.contents : (typeContents || [])
+    const hasBody = menuItem ? !!getLocalizedBody(menuItem) : false
 
     // Color classes for content type badge (all 16 colors)
     const colorClasses: Record<string, string> = {
@@ -252,9 +247,11 @@ export default async function DynamicPage({ params }: PageProps) {
             <section className="relative py-8 px-4">
                 <div className="mx-auto max-w-6xl">
                     {contents.length === 0 ? (
-                        <div className="text-center py-12 text-slate-400">
-                            <p>{t("menu.noContent")}</p>
-                        </div>
+                        !hasBody ? (
+                            <div className="text-center py-12 text-slate-400">
+                                <p>{t("menu.noContent")}</p>
+                            </div>
+                        ) : null
                     ) : (
                         <div className="grid gap-4 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {contents.map((content) => {
