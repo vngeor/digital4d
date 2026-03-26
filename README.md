@@ -12,7 +12,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Wishlist** - Save products for later, price drop & coupon notifications
 - **Quote System** - File uploads (STL/OBJ/3MF), quote requests, admin-customer messaging
 - **Notifications** - Unified notification system with scheduling, smart recipient selection, coupon & wishlist alerts
-- **CMS** - Dynamic pages, rich text editor, banners, news/services content
+- **CMS** - Dynamic pages, rich text editor, banners, news/services content, show/hide from nav, title alignment
 - **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
 - **Security** - Nonce-based CSP (no unsafe-inline for scripts), XSS sanitization, rate limiting, input validation, auto-logout after 5 min inactivity, permission-gated admin pages and API routes
@@ -20,6 +20,8 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Authentication** - Email/password + OAuth (Google, GitHub), "Remember me", Neon cold-start auto-retry
 - **Global Search** - Site-wide search with Cmd+K shortcut, "View All" results page, keyboard navigation, recent searches
 - **Image Optimization** - Automatic compression, WebP conversion, Vercel Blob storage
+- **SEO** - Dynamic OG tags, Twitter cards, JSON-LD schemas (Product, NewsArticle, Service, Organization), sitemap, robots.txt, per-page generateMetadata
+- **Footer** - Site-wide footer with Terms of Use and Privacy Policy links
 - **Mobile Responsive** - iOS Safari optimized (input zoom prevention, tap highlight removal, font smoothing), touch-friendly targets, responsive coupon badges, mobile-safe modals/popups with proper viewport constraints, CSS cascade layer architecture for Tailwind v4 compatibility
 
 ## Tech Stack

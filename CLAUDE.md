@@ -110,7 +110,7 @@ No test framework is configured.
 - **Products** (`app/products/`): catalog with filtering, detail pages, digital download
 - **News** (`app/news/`): listing and detail pages with modal view
 - **Services** (`app/services/`): listing and detail pages
-- **Dynamic CMS** (`app/[menuSlug]/`): menu-driven pages with nested content
+- **Dynamic CMS** (`app/[menuSlug]/`): menu-driven pages with nested content. Menu items have `showInNav` (hide from nav but keep page accessible) and `titleAlign` (left/center/right)
 - **Profile** (`app/profile/`): user profile management with birthday banner (shown when birthDate missing) that opens edit modal
 - **My Orders** (`app/my-orders/`): order history, quote conversations with auto-scroll from notifications
 - **Wishlist** (`app/wishlist/`): saved products with price drop tracking
@@ -118,7 +118,9 @@ No test framework is configured.
 - **Checkout** (`app/checkout/`): Stripe success/cancel pages
 - **Login** (`app/login/`): auth with OAuth + credentials, optional birthDate field on registration, "Remember me" checkbox (saves email in localStorage), auto-retry on OAuth Configuration errors
 - **404** (`app/not-found.tsx`): custom page with interactive 3D dinosaur (Three.js + React Three Fiber)
+- **Footer** (`app/components/Footer.tsx`): site-wide footer with copyright, Terms of Use and Privacy Policy links
 - **OG Images** (`app/opengraph-image.tsx`, `app/twitter-image.tsx`): dynamic social media images using `next/og` (edge runtime)
+- **SEO metadata**: `generateMetadata()` on all public pages (products, news, services, CMS pages) with dynamic OG tags, Twitter cards, and locale-aware descriptions. Protected pages (login, profile, my-orders) have `noindex`
 
 ### Admin UI Patterns
 
