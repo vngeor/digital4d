@@ -70,7 +70,7 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
               <div className="absolute inset-0">
                 <Image
                   src={banner.image}
-                  alt=""
+                  alt={banner.title || "Banner"}
                   fill
                   sizes="100vw"
                   priority={i === 0}

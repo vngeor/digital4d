@@ -288,7 +288,9 @@
       "sourceBanners": "Banners",
       "sourceNews": "Noticias",
       "sourceCategories": "Categorías",
-      "sourceUnused": "Sin usar"
+      "sourceUnused": "Sin usar",
+      "saveFailed": "Error al guardar",
+      "deleteFailed": "Error al eliminar"
     },
     "coupons": {
       "title": "Gestión de Cupones",
@@ -509,16 +511,17 @@
       "cancel": "Cancelar",
       "create": "Crear",
       "basicInfo": "Información Básica",
-      "titleField": "Título"
+      "titleField": "Título",
+      "couponValueRequired": "El valor del cupón es obligatorio cuando el cupón automático está habilitado"
     },
     "menu": {
-      "title": "Gestión de Menú",
+      "title": "Título",
       "subtitle": "Gestiona los elementos del menú de navegación",
       "addMenuItem": "Añadir Elemento",
       "editMenuItem": "Editar Elemento",
+      "preview": "Vista previa",
       "slug": "Slug",
       "slugHelp": "Identificador amigable para URL (ej. servicios)",
-      "title": "Título",
       "type": "Tipo",
       "typeGeneral": "General",
       "typeServices": "Servicios",
@@ -573,13 +576,15 @@
       "newProduct": "Nuevo producto",
       "newContent": "Nuevo contenido",
       "viewQuotes": "Ver cotizaciones",
-      "viewUsers": "Ver usuarios"
+      "viewUsers": "Ver usuarios",
+      "viewAll": "Ver todo"
     },
     "content": {
-      "title": "Gestión de Contenido",
+      "title": "Título",
       "subtitle": "Gestiona tus noticias y servicios",
       "addContent": "Añadir Contenido",
       "editContent": "Editar Contenido",
+      "preview": "Vista previa",
       "type": "Tipo",
       "typeHelp": "Las noticias pueden ser independientes. Los servicios necesitan un menú.",
       "customType": "Otro...",
@@ -587,7 +592,6 @@
       "news": "Noticia",
       "service": "Servicio",
       "all": "Todos",
-      "title": "Título",
       "body": "Cuerpo",
       "imageUrl": "URL de Imagen",
       "order": "Orden",
@@ -916,7 +920,8 @@
       "confirmDeleteTitle": "Confirmar eliminación",
       "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
       "homepage": "Inicio",
-      "deleteFailed": "Error al eliminar el producto"
+      "deleteFailed": "Error al eliminar el producto",
+      "updateFailed": "Error al actualizar producto"
     },
     "productCategories": {
       "title": "Categorías de Productos",
@@ -1183,7 +1188,6 @@
     "quoteUserDeclined": "Rechazado por Ti",
     "respondToOffer": "Responde a esta oferta",
     "counterOfferSent": "Tu contraoferta",
-    "cancel": "Cancelar",
     "newBadge": "Nuevo",
     "conversationHistory": "Historial de conversación",
     "you": "Tú",

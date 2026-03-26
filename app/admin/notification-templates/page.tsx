@@ -352,7 +352,7 @@ export default function NotificationTemplatesPage() {
       return
     }
     if (form.couponEnabled && !form.couponValue) {
-      toast.error("Coupon value is required when auto-coupon is enabled")
+      toast.error(t("couponValueRequired"))
       return
     }
     setSaving(true)

@@ -238,10 +238,10 @@ export default function MediaGalleryPage() {
         fetchMedia()
       } else {
         const err = await res.json()
-        toast.error(err.error || "Error saving")
+        toast.error(err.error || t("saveFailed"))
       }
     } catch {
-      toast.error("Error saving")
+      toast.error(t("saveFailed"))
     }
     setSaving(false)
   }
@@ -272,7 +272,7 @@ export default function MediaGalleryPage() {
         }
       }
     } catch {
-      toast.error("Error deleting")
+      toast.error(t("deleteFailed"))
     }
   }
 
@@ -297,7 +297,7 @@ export default function MediaGalleryPage() {
         fetchMedia()
       }
     } catch {
-      toast.error("Error deleting")
+      toast.error(t("deleteFailed"))
     }
   }
 

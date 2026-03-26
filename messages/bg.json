@@ -288,7 +288,9 @@
       "sourceBanners": "Банери",
       "sourceNews": "Новини",
       "sourceCategories": "Категории",
-      "sourceUnused": "Неизползвани"
+      "sourceUnused": "Неизползвани",
+      "saveFailed": "Грешка при запазване",
+      "deleteFailed": "Грешка при изтриване"
     },
     "coupons": {
       "title": "Управление на купони",
@@ -509,16 +511,17 @@
       "cancel": "Отказ",
       "create": "Създай",
       "basicInfo": "Основна информация",
-      "titleField": "Заглавие"
+      "titleField": "Заглавие",
+      "couponValueRequired": "Стойността на купона е задължителна, когато автоматичният купон е активиран"
     },
     "menu": {
-      "title": "Управление на меню",
+      "title": "Заглавие",
       "subtitle": "Управлявайте навигационните елементи",
       "addMenuItem": "Добави елемент",
       "editMenuItem": "Редактирай елемент",
+      "preview": "Преглед на страницата",
       "slug": "Slug",
       "slugHelp": "URL-friendly идентификатор (напр. услуги)",
-      "title": "Заглавие",
       "type": "Тип",
       "typeGeneral": "Общо",
       "typeServices": "Услуги",
@@ -573,13 +576,15 @@
       "newProduct": "Нов продукт",
       "newContent": "Ново съдържание",
       "viewQuotes": "Виж оферти",
-      "viewUsers": "Виж потребители"
+      "viewUsers": "Виж потребители",
+      "viewAll": "Виж всички"
     },
     "content": {
-      "title": "Управление на съдържание",
+      "title": "Заглавие",
       "subtitle": "Управлявайте вашите новини и услуги",
       "addContent": "Добави съдържание",
       "editContent": "Редактирай съдържание",
+      "preview": "Преглед на страницата",
       "type": "Тип",
       "typeHelp": "Новините могат да са самостоятелни. Услугите изискват меню.",
       "customType": "Друг...",
@@ -587,7 +592,6 @@
       "news": "Новина",
       "service": "Услуга",
       "all": "Всички",
-      "title": "Заглавие",
       "body": "Съдържание",
       "imageUrl": "URL на изображение",
       "order": "Ред",
@@ -916,7 +920,8 @@
       "confirmDeleteTitle": "Потвърждаване на изтриване",
       "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
       "homepage": "Начало",
-      "deleteFailed": "Грешка при изтриване на продукт"
+      "deleteFailed": "Грешка при изтриване на продукт",
+      "updateFailed": "Грешка при обновяване на продукт"
     },
     "productCategories": {
       "title": "Категории продукти",
@@ -1183,7 +1188,6 @@
     "quoteUserDeclined": "Отказана от Вас",
     "respondToOffer": "Отговорете на тази оферта",
     "counterOfferSent": "Вашата контра оферта",
-    "cancel": "Отказ",
     "newBadge": "Ново",
     "conversationHistory": "История на разговора",
     "you": "Вие",

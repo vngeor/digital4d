@@ -93,7 +93,6 @@ export default async function RootLayout({
       >
         {/* JSON-LD: Organization + WebSite */}
         <script
-          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify([

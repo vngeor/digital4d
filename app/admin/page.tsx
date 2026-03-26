@@ -1,5 +1,6 @@
+import Link from "next/link"
 import { getTranslations, getLocale } from "next-intl/server"
-import { Users, ShoppingCart, FileText, TrendingUp, MessageSquare } from "lucide-react"
+import { Users, ShoppingCart, FileText, TrendingUp, MessageSquare, ArrowRight } from "lucide-react"
 import prisma from "@/lib/prisma"
 import { StatsCard } from "../components/admin/StatsCard"
 import { InteractiveOrdersChart } from "../components/admin/InteractiveOrdersChart"
@@ -88,30 +89,35 @@ export default async function AdminDashboard() {
           value={stats.userCount}
           icon={Users}
           color="emerald"
+          href="/admin/users"
         />
         <StatsCard
           title={t("dashboard.totalOrders")}
           value={stats.orderCount}
           icon={ShoppingCart}
           color="cyan"
+          href="/admin/orders"
         />
         <StatsCard
           title={t("dashboard.pendingOrders")}
           value={stats.pendingOrders}
           icon={TrendingUp}
           color="amber"
+          href="/admin/orders"
         />
         <StatsCard
           title={t("dashboard.contentItems")}
           value={stats.contentCount}
           icon={FileText}
           color="purple"
+          href="/admin/content"
         />
         <StatsCard
           title={t("dashboard.pendingQuotes")}
           value={stats.pendingQuotes}
           icon={MessageSquare}
           color="pink"
+          href="/admin/quotes"
         />
       </div>
 
@@ -124,17 +130,23 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="glass rounded-2xl border border-white/10 p-6">
-          <h2 className="text-xl font-bold text-white mb-4">
-            {t("dashboard.recentOrders")}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">
+              {t("dashboard.recentOrders")}
+            </h2>
+            <Link href="/admin/orders" className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors">
+              {t("dashboard.viewAll")} <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
           {stats.recentOrders.length === 0 ? (
             <p className="text-gray-500">{t("dashboard.noOrders")}</p>
           ) : (
             <div className="space-y-4">
               {stats.recentOrders.map((order: RecentOrder) => (
-                <div
+                <Link
                   key={order.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5"
+                  href="/admin/orders"
+                  className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:scale-[1.01] transition-all cursor-pointer"
                 >
                   <div>
                     <p className="font-medium text-white">{order.customerName}</p>
@@ -153,24 +165,30 @@ export default async function AdminDashboard() {
                   >
                     {order.status}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           )}
         </div>
 
         <div className="glass rounded-2xl border border-white/10 p-6">
-          <h2 className="text-xl font-bold text-white mb-4">
-            {t("dashboard.recentUsers")}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">
+              {t("dashboard.recentUsers")}
+            </h2>
+            <Link href="/admin/users" className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors">
+              {t("dashboard.viewAll")} <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
           {stats.recentUsers.length === 0 ? (
             <p className="text-gray-500">{t("dashboard.noUsers")}</p>
           ) : (
             <div className="space-y-4">
               {stats.recentUsers.map((user: RecentUser) => (
-                <div
+                <Link
                   key={user.id}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5"
+                  href="/admin/users"
+                  className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:scale-[1.01] transition-all cursor-pointer"
                 >
                   {user.image ? (
                     <img
@@ -192,7 +210,7 @@ export default async function AdminDashboard() {
                   <span className="text-xs text-gray-500">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           )}

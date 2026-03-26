@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
-import { X, Save, Loader2, AlignLeft, AlignCenter, AlignRight } from "lucide-react"
+import { X, Save, Loader2, AlignLeft, AlignCenter, AlignRight, ExternalLink } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
 import { RichTextEditor } from "./RichTextEditor"
 
@@ -115,12 +115,24 @@ export function MenuItemForm({
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? t("editMenuItem") : t("addMenuItem")}
           </h2>
-          <button
-            onClick={onCancel}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-400" />
-          </button>
+          <div className="flex items-center gap-1">
+            {initialData?.id && formData.slug && (
+              <button
+                type="button"
+                onClick={() => window.open(`/${formData.slug}`, "_blank")}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                title={t("preview")}
+              >
+                <ExternalLink className="w-5 h-5 text-emerald-400" />
+              </button>
+            )}
+            <button
+              onClick={onCancel}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
         </div>
 
         <form ref={formRef} onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
