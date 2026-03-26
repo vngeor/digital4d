@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
-import { X, Save, Loader2, Upload, Sparkles } from "lucide-react"
+import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
 
 interface ProductFormData {
@@ -131,6 +131,10 @@ export function ProductForm({
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [categorySearch, setCategorySearch] = useState("")
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+  const categoryDropdownRef = useRef<HTMLDivElement>(null)
+  const categorySearchInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const [autoSlug, setAutoSlug] = useState(!initialData?.id)
   const [formData, setFormData] = useState<ProductFormData>({
@@ -165,6 +169,29 @@ export function ProductForm({
       setFormData(prev => ({ ...prev, slug: generateSlug(formData.nameEn) }))
     }
   }, [formData.nameEn, autoSlug])
+
+  // Click-outside handler for category dropdown
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  const getCategoryName = (cat: ProductCategory) => {
+    const nameKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof ProductCategory
+    return (cat[nameKey] as string) || cat.nameEn
+  }
+
+  const filteredCategories = categories.filter(cat =>
+    getCategoryName(cat).toLowerCase().includes(categorySearch.toLowerCase())
+  )
+
+  const selectedCategory = categories.find(c => c.slug === formData.category)
+  const selectedCategoryName = selectedCategory ? getCategoryName(selectedCategory) : t("selectCategory")
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -318,26 +345,65 @@ export function ProductForm({
               <label className="block text-sm font-medium text-gray-400 mb-2">
                 {t("category")} <span className="text-red-400">*</span>
               </label>
-              <select
-                value={formData.category}
-                onChange={(e) => updateField("category", e.target.value)}
-                className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors ${
-                  errors.category ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
-                }`}
-              >
-                {categories.length === 0 && (
-                  <option value="">No categories available</option>
+              <div ref={categoryDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCategoryDropdown(!showCategoryDropdown)
+                    setCategorySearch("")
+                    setTimeout(() => categorySearchInputRef.current?.focus(), 50)
+                  }}
+                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors flex items-center justify-between ${
+                    errors.category ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+                  }`}
+                >
+                  <span className={selectedCategory ? "text-white" : "text-gray-500"}>
+                    {selectedCategoryName}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
+                </button>
+                {showCategoryDropdown && (
+                  <div className="absolute z-50 w-full mt-1 rounded-xl border border-white/10 bg-[#1a1a2e] shadow-2xl overflow-hidden">
+                    <div className="p-2 border-b border-white/10">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <input
+                          ref={categorySearchInputRef}
+                          type="text"
+                          value={categorySearch}
+                          onChange={(e) => setCategorySearch(e.target.value)}
+                          placeholder={t("searchCategory")}
+                          className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredCategories.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">{t("noCategoriesFound")}</div>
+                      ) : (
+                        filteredCategories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => {
+                              updateField("category", cat.slug)
+                              setShowCategoryDropdown(false)
+                              setCategorySearch("")
+                            }}
+                            className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-white/10 ${
+                              formData.category === cat.slug
+                                ? "text-emerald-400 bg-emerald-500/10"
+                                : "text-white"
+                            }`}
+                          >
+                            {getCategoryName(cat)}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 )}
-                {categories.map((cat) => {
-                  const nameKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof cat
-                  const categoryName = (cat[nameKey] as string) || cat.nameEn
-                  return (
-                    <option key={cat.id} value={cat.slug}>
-                      {categoryName}
-                    </option>
-                  )
-                })}
-              </select>
+              </div>
               {errors.category && (
                 <p className="text-xs text-red-400 mt-1">{errors.category}</p>
               )}
