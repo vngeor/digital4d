@@ -567,7 +567,13 @@
       "dateTo": "To",
       "orders": "orders",
       "noChartData": "No orders in the selected range",
-      "chartLoadError": "Failed to load chart data"
+      "chartLoadError": "Failed to load chart data",
+      "pendingQuotes": "Pending Quotes",
+      "quickActions": "Quick Actions",
+      "newProduct": "New Product",
+      "newContent": "New Content",
+      "viewQuotes": "View Quotes",
+      "viewUsers": "View Users"
     },
     "content": {
       "title": "Content Management",

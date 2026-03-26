@@ -567,7 +567,13 @@
       "dateTo": "Hasta",
       "orders": "pedidos",
       "noChartData": "No hay pedidos en el rango seleccionado",
-      "chartLoadError": "Error al cargar los datos del gráfico"
+      "chartLoadError": "Error al cargar los datos del gráfico",
+      "pendingQuotes": "Cotizaciones pendientes",
+      "quickActions": "Acciones rápidas",
+      "newProduct": "Nuevo producto",
+      "newContent": "Nuevo contenido",
+      "viewQuotes": "Ver cotizaciones",
+      "viewUsers": "Ver usuarios"
     },
     "content": {
       "title": "Gestión de Contenido",
