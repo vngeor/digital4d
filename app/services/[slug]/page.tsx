@@ -7,9 +7,52 @@ import { sanitizeHtml } from "@/lib/sanitize"
 import { headers } from "next/headers"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
+import type { Metadata } from "next"
 
 interface PageProps {
     params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { slug } = await params
+    const locale = await getLocale()
+
+    const service = await prisma.content.findFirst({
+        where: { slug, type: "service", published: true }
+    })
+
+    if (!service) {
+        return { title: "Service Not Found" }
+    }
+
+    const title = locale === "bg" ? service.titleBg : locale === "es" ? service.titleEs : service.titleEn
+    const body = locale === "bg" ? service.bodyBg : locale === "es" ? service.bodyEs : service.bodyEn
+    const description = body ? body.slice(0, 160).replace(/<[^>]*>/g, "") : title
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title: `${title} | digital4d`,
+            description,
+            type: "website",
+            locale: locale === "bg" ? "bg_BG" : locale === "es" ? "es_ES" : "en_US",
+            images: service.image ? [
+                {
+                    url: service.image,
+                    width: 1200,
+                    height: 630,
+                    alt: title,
+                }
+            ] : undefined,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: service.image ? [service.image] : undefined,
+        },
+    }
 }
 
 export default async function ServiceDetailPage({ params }: PageProps) {

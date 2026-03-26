@@ -6,11 +6,45 @@ import prisma from "@/lib/prisma"
 import { sanitizeHtml } from "@/lib/sanitize"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
+import type { Metadata } from "next"
 
 const RESERVED_SLUGS = ['news', 'admin', 'login', 'api', 'register', 'services']
 
 interface PageProps {
     params: Promise<{ menuSlug: string; contentSlug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { menuSlug, contentSlug } = await params
+    if (RESERVED_SLUGS.includes(menuSlug)) return {}
+    const locale = await getLocale()
+
+    const content = await prisma.content.findFirst({
+        where: { slug: contentSlug, published: true },
+    })
+
+    if (!content) return { title: "Content Not Found" }
+
+    const title = locale === "bg" ? content.titleBg : locale === "es" ? content.titleEs : content.titleEn
+    const body = locale === "bg" ? content.bodyBg : locale === "es" ? content.bodyEs : content.bodyEn
+    const description = body ? body.slice(0, 160).replace(/<[^>]*>/g, "") : title
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title: `${title} | digital4d`,
+            description,
+            locale: locale === "bg" ? "bg_BG" : locale === "es" ? "es_ES" : "en_US",
+            images: content.image ? [{ url: content.image, width: 1200, height: 630, alt: title }] : undefined,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: content.image ? [content.image] : undefined,
+        },
+    }
 }
 
 export default async function ContentDetailPage({ params }: PageProps) {

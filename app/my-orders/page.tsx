@@ -4,6 +4,12 @@ import { getTranslations } from "next-intl/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { MyOrdersClient } from "./MyOrdersClient"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+    title: "My Orders",
+    robots: { index: false, follow: false },
+}
 
 export default async function MyOrdersPage() {
   const session = await auth()

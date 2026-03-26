@@ -4,6 +4,25 @@ import { Header } from "../components/Header"
 import prisma from "@/lib/prisma"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
+import type { Metadata } from "next"
+
+export async function generateMetadata(): Promise<Metadata> {
+    const t = await getTranslations("services")
+    const locale = await getLocale()
+
+    const title = t("title")
+    const description = t("badge")
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title: `${title} | digital4d`,
+            description,
+            locale: locale === "bg" ? "bg_BG" : locale === "es" ? "es_ES" : "en_US",
+        },
+    }
+}
 
 export default async function ServicesPage() {
     const t = await getTranslations()
