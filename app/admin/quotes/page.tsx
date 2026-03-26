@@ -70,7 +70,7 @@ export default function QuotesPage() {
   const searchParams = useSearchParams()
   const [quotes, setQuotes] = useState<QuoteRequest[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(searchParams.get("status") || null)
   const [viewingQuote, setViewingQuote] = useState<QuoteRequest | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
