@@ -86,7 +86,9 @@
     "email": "Email"
   },
   "footer": {
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "termsLink": "Terms of Use",
+    "privacyLink": "Privacy Policy"
   },
   "menu": {
     "noContent": "No content available",

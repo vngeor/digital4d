@@ -11,7 +11,6 @@ export default async function Home() {
     const t = await getTranslations("hero")
     const tNews = await getTranslations("news")
     const tContact = await getTranslations("contact")
-    const tFooter = await getTranslations("footer")
     const tProducts = await getTranslations("homeProducts")
     const locale = await getLocale()
 
@@ -310,12 +309,6 @@ export default async function Home() {
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer className="glass border-t border-white/10 py-8 mt-12 cv-auto">
-                <div className="mx-auto max-w-6xl px-4 text-center text-slate-400">
-                    <p>&copy; 2024 digital4d. {tFooter("rights")}</p>
-                </div>
-            </footer>
         </div>
     );
 }
