@@ -359,9 +359,9 @@ export default function LoginPage() {
                 {/* Footer text */}
                 <p className="text-center text-slate-500 text-sm mt-6">
                     {t("terms")}{" "}
-                    <a href="#" className="text-emerald-400 hover:underline">{t("termsLink")}</a>
+                    <a href="/terms" className="text-emerald-400 hover:underline">{t("termsLink")}</a>
                     {" "}{t("and")}{" "}
-                    <a href="#" className="text-emerald-400 hover:underline">{t("privacyLink")}</a>
+                    <a href="/privacy" className="text-emerald-400 hover:underline">{t("privacyLink")}</a>
                 </p>
             </div>
         </div>
