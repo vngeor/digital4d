@@ -56,6 +56,7 @@ No test framework is configured.
 
 - **Prisma 7** with Neon HTTP adapter (`lib/prisma.ts`) — **no transaction support**
 - Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission, Coupon, CouponUsage, Notification, WishlistItem, WishlistNotification, NotificationTemplate, TemplateSendLog
+- **Product categories**: self-referencing hierarchy via `parentId` — supports subcategories (e.g., Филаменти → PLA, PETG, ABS). `Product.category` stores slug string (not FK). Category slug changes cascade to all linked products. Admin form has parent selector. Public products page has accordion dropdown (parent shows count, expands to show children). Clicking parent filters by parent + all children; clicking child filters by that subcategory only
 - Prisma results must be serialized for client components: `JSON.parse(JSON.stringify(data))`
 
 ### API Layer
