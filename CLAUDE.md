@@ -305,6 +305,7 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 - **Testimonials section**: customer testimonials on homepage
 - **Cookie consent popup**: GDPR-compliant cookie banner with accept/reject options
 - **Product color variants**: one product with multiple color options (e.g., PLA Red, Blue, Green). Needs: ProductVariant model, admin variant management, color selector on product detail page
+- **Product brand**: brand field on products with admin management, filtering by brand on product pages, brand display on product cards/detail
 
 ### Postponed
 - **Live chat widget**: Tawk.to (free) — script tag integration, deferred
