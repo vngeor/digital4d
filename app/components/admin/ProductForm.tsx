@@ -39,6 +39,7 @@ interface ProductCategory {
   nameBg: string
   nameEn: string
   nameEs: string
+  parentId?: string | null
 }
 
 interface ProductFormProps {
@@ -186,7 +187,24 @@ export function ProductForm({
     return (cat[nameKey] as string) || cat.nameEn
   }
 
-  const filteredCategories = categories.filter(cat =>
+  // Build hierarchical sorted list: parents first, children indented under them
+  const sortedCategories = (() => {
+    const parents = categories.filter(c => !c.parentId).sort((a, b) => getCategoryName(a).localeCompare(getCategoryName(b)))
+    const result: ProductCategory[] = []
+    for (const parent of parents) {
+      result.push(parent)
+      const children = categories.filter(c => c.parentId === parent.id).sort((a, b) => getCategoryName(a).localeCompare(getCategoryName(b)))
+      result.push(...children)
+    }
+    // Add orphans (parentId set but parent not in list)
+    const ids = new Set(result.map(c => c.id))
+    for (const cat of categories) {
+      if (!ids.has(cat.id)) result.push(cat)
+    }
+    return result
+  })()
+
+  const filteredCategories = sortedCategories.filter(cat =>
     getCategoryName(cat).toLowerCase().includes(categorySearch.toLowerCase())
   )
 
@@ -390,12 +408,15 @@ export function ProductForm({
                               setShowCategoryDropdown(false)
                               setCategorySearch("")
                             }}
-                            className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-white/10 ${
+                            className={`w-full text-left text-sm transition-colors hover:bg-white/10 ${
+                              cat.parentId ? "pl-8 py-2" : "px-4 py-2.5 font-medium"
+                            } ${
                               formData.category === cat.slug
                                 ? "text-emerald-400 bg-emerald-500/10"
-                                : "text-white"
+                                : cat.parentId ? "text-gray-300" : "text-white"
                             }`}
                           >
+                            {cat.parentId && <span className="text-gray-600 mr-1">—</span>}
                             {getCategoryName(cat)}
                           </button>
                         ))

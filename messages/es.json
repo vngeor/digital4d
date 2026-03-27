@@ -952,7 +952,9 @@
       "confirmDeleteTitle": "Confirmar eliminación",
       "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
       "backToProducts": "Volver a Productos",
-      "deleteFailed": "Error al eliminar la categoría"
+      "deleteFailed": "Error al eliminar la categoría",
+      "parentCategory": "Categoría principal",
+      "noParent": "— Ninguna (nivel superior)"
     },
     "quotes": {
       "title": "Solicitudes de Cotización",

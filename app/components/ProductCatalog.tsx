@@ -35,6 +35,7 @@ interface ProductCategory {
     nameEn: string
     nameEs: string
     color: string
+    parentId?: string | null
 }
 
 interface CouponBadge {
@@ -124,14 +125,25 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
     const filteredProducts = useMemo(() => {
         return products.filter((product) => {
-            const matchesCategory = !selectedCategory || product.category === selectedCategory
+            const matchesCategory = !selectedCategory || (() => {
+                if (product.category === selectedCategory) return true
+                // If selected is a parent category, also match its children
+                const selectedCat = categories.find(c => c.slug === selectedCategory)
+                if (selectedCat && !selectedCat.parentId) {
+                    const childSlugs = categories
+                        .filter(c => c.parentId === selectedCat.id)
+                        .map(c => c.slug)
+                    return childSlugs.includes(product.category)
+                }
+                return false
+            })()
             const matchesSearch = !searchQuery ||
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase())
             const matchesSale = !saleFilter || product.onSale
             return matchesCategory && matchesSearch && matchesSale
         })
-    }, [products, selectedCategory, searchQuery, saleFilter])
+    }, [products, selectedCategory, searchQuery, saleFilter, categories])
 
     const getCategoryColor = (categorySlug: string) => {
         const category = categories.find((c) => c.slug === categorySlug)
@@ -238,18 +250,59 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         >
                                             {t("allCategories")}
                                         </button>
-                                        {categories.map((category) => (
-                                            <button
-                                                key={category.id}
-                                                onClick={() => { setSelectedCategory(category.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
-                                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory === category.slug
-                                                        ? "text-emerald-400 bg-emerald-500/10"
-                                                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                                        {/* Render categories hierarchically: parents then children */}
+                                        {(() => {
+                                            const parents = categories.filter(c => !c.parentId)
+                                            const items: React.ReactNode[] = []
+                                            for (const parent of parents) {
+                                                items.push(
+                                                    <button
+                                                        key={parent.id}
+                                                        onClick={() => { setSelectedCategory(parent.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${selectedCategory === parent.slug
+                                                                ? "text-emerald-400 bg-emerald-500/10"
+                                                                : "text-gray-200 hover:bg-white/5 hover:text-white"
+                                                            }`}
+                                                    >
+                                                        {getLocalizedName(parent)}
+                                                    </button>
+                                                )
+                                                const children = categories.filter(c => c.parentId === parent.id)
+                                                for (const child of children) {
+                                                    items.push(
+                                                        <button
+                                                            key={child.id}
+                                                            onClick={() => { setSelectedCategory(child.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                            className={`w-full text-left pl-8 pr-4 py-2 text-sm transition-colors ${selectedCategory === child.slug
+                                                                    ? "text-emerald-400 bg-emerald-500/10"
+                                                                    : "text-gray-400 hover:bg-white/5 hover:text-white"
+                                                                }`}
+                                                        >
+                                                            <span className="text-gray-600 mr-1">—</span>
+                                                            {getLocalizedName(child)}
+                                                        </button>
+                                                    )
+                                                }
+                                            }
+                                            // Orphan categories (parentId set but parent not found)
+                                            const parentIds = new Set(parents.map(p => p.id))
+                                            const orphans = categories.filter(c => c.parentId && !parentIds.has(c.parentId))
+                                            for (const orphan of orphans) {
+                                                items.push(
+                                                    <button
+                                                        key={orphan.id}
+                                                        onClick={() => { setSelectedCategory(orphan.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory === orphan.slug
+                                                                ? "text-emerald-400 bg-emerald-500/10"
+                                                                : "text-gray-300 hover:bg-white/5 hover:text-white"
                                                     }`}
-                                            >
-                                                {getLocalizedName(category)}
-                                            </button>
-                                        ))}
+                                                    >
+                                                        {getLocalizedName(orphan)}
+                                                    </button>
+                                                )
+                                            }
+                                            return items
+                                        })()}
                                     </div>
                                 )}
                             </div>

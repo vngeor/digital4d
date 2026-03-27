@@ -8,6 +8,7 @@ export async function GET() {
     if (error) return error
 
     const categories = await prisma.productCategory.findMany({
+      include: { children: true, parent: true },
       orderBy: [{ order: "asc" }, { nameBg: "asc" }],
     })
 
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
         image: data.image || null,
         color: data.color || "emerald",
         order: data.order || 0,
+        parentId: data.parentId || null,
       },
     })
 
@@ -79,6 +81,20 @@ export async function PUT(request: NextRequest) {
       select: { slug: true },
     })
 
+    // Prevent circular parent references
+    if (data.parentId) {
+      if (data.parentId === data.id) {
+        return NextResponse.json({ error: "Category cannot be its own parent" }, { status: 400 })
+      }
+      const children = await prisma.productCategory.findMany({
+        where: { parentId: data.id },
+        select: { id: true },
+      })
+      if (children.some(c => c.id === data.parentId)) {
+        return NextResponse.json({ error: "Cannot set a subcategory as parent" }, { status: 400 })
+      }
+    }
+
     // Check for duplicate slug
     if (data.slug) {
       const existing = await prisma.productCategory.findFirst({
@@ -108,6 +124,7 @@ export async function PUT(request: NextRequest) {
         image: data.image || null,
         color: data.color || "emerald",
         order: data.order || 0,
+        parentId: data.parentId || null,
       },
     })
 
@@ -142,6 +159,18 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ error: "Category ID required" }, { status: 400 })
+    }
+
+    // Prevent deletion of parent categories with children
+    const children = await prisma.productCategory.findMany({
+      where: { parentId: id },
+      select: { id: true },
+    })
+    if (children.length > 0) {
+      return NextResponse.json(
+        { error: "Cannot delete category with subcategories. Remove subcategories first." },
+        { status: 400 }
+      )
     }
 
     await prisma.productCategory.delete({
