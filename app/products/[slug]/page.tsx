@@ -128,9 +128,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             expiresAt: c.expiresAt?.toISOString() || null,
         }))
 
-    // Fetch the category
+    // Fetch the category with parent for breadcrumb display
     const category = await prisma.productCategory.findFirst({
-        where: { slug: product.category }
+        where: { slug: product.category },
+        include: { parent: true },
     })
 
     // Check wishlist state for authenticated user
@@ -217,6 +218,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     const productName = getLocalizedName(product)
     const productDesc = getLocalizedDesc(product)
     const categoryName = category ? getLocalizedName(category) : product.category
+    const parentCategoryName = category?.parent ? getLocalizedName(category.parent) : null
     const categoryColor = category?.color || "gray"
 
     const formatPrice = () => {
@@ -329,14 +331,26 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
 
                         {/* Details */}
                         <div className="space-y-3 md:space-y-6">
-                            {/* Category Badge */}
-                            <Link
-                                href={`/products?category=${product.category}`}
-                                className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"
-                                    }`}
-                            >
-                                {categoryName}
-                            </Link>
+                            {/* Category Badge with breadcrumb */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                {parentCategoryName && (
+                                    <>
+                                        <Link
+                                            href={`/products?category=${category?.parent?.slug || ""}`}
+                                            className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[category?.parent?.color || "gray"] || "bg-gray-500/20 text-gray-400"}`}
+                                        >
+                                            {parentCategoryName}
+                                        </Link>
+                                        <span className="text-gray-500 text-xs">→</span>
+                                    </>
+                                )}
+                                <Link
+                                    href={`/products?category=${product.category}`}
+                                    className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"}`}
+                                >
+                                    {categoryName}
+                                </Link>
+                            </div>
 
                             {/* Name + Wishlist */}
                             <div className="flex items-start gap-3">

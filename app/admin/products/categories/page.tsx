@@ -24,6 +24,9 @@ interface ProductCategory {
   image: string | null
   color: string
   order: number
+  parentId: string | null
+  parent?: ProductCategory | null
+  children?: ProductCategory[]
 }
 
 export default function CategoriesPage() {
@@ -39,7 +42,21 @@ export default function CategoriesPage() {
     setLoading(true)
     const res = await fetch("/api/admin/products/categories")
     const data = await res.json()
-    setCategories(Array.isArray(data) ? data : [])
+    const flat: ProductCategory[] = Array.isArray(data) ? data : []
+    // Sort hierarchically: parents first, then their children grouped under them
+    const sorted: ProductCategory[] = []
+    const parents = flat.filter(c => !c.parentId).sort((a, b) => a.order - b.order)
+    for (const parent of parents) {
+      sorted.push(parent)
+      const children = flat.filter(c => c.parentId === parent.id).sort((a, b) => a.order - b.order)
+      sorted.push(...children)
+    }
+    // Add any orphaned children
+    const sortedIds = new Set(sorted.map(c => c.id))
+    for (const cat of flat) {
+      if (!sortedIds.has(cat.id)) sorted.push(cat)
+    }
+    setCategories(sorted)
     setLoading(false)
   }
 
@@ -112,8 +129,11 @@ export default function CategoriesPage() {
       key: "nameEn",
       header: t("name"),
       render: (item: ProductCategory) => (
-        <div>
-          <p className="font-medium text-white">{item.nameEn}</p>
+        <div className={item.parentId ? "pl-6" : ""}>
+          <p className={`font-medium ${item.parentId ? "text-gray-300" : "text-white"}`}>
+            {item.parentId && <span className="text-gray-600 mr-1">└</span>}
+            {item.nameEn}
+          </p>
           <p className="text-xs text-gray-500">{item.nameBg}</p>
         </div>
       ),
@@ -210,6 +230,11 @@ export default function CategoriesPage() {
             <>
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
+                  {item.parentId && (
+                    <p className="text-xs text-gray-500 truncate mb-0.5">
+                      └ {categories.find(c => c.id === item.parentId)?.nameEn || ""}
+                    </p>
+                  )}
                   <p className="font-medium text-white truncate">{item.nameEn}</p>
                   <p className="text-xs text-gray-500 truncate">{item.nameBg}</p>
                 </div>
@@ -250,6 +275,7 @@ export default function CategoriesPage() {
       {showForm && (
         <ProductCategoryForm
           initialData={editingCategory || undefined}
+          allCategories={categories}
           onSubmit={handleSubmit}
           onCancel={() => {
             setShowForm(false)

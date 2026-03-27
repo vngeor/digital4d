@@ -19,6 +19,16 @@ interface CategoryFormData {
   image: string
   color: string
   order: number
+  parentId: string
+}
+
+interface ProductCategoryItem {
+  id: string
+  slug: string
+  nameBg: string
+  nameEn: string
+  nameEs: string
+  parentId: string | null
 }
 
 interface ProductCategoryFormProps {
@@ -34,7 +44,9 @@ interface ProductCategoryFormProps {
     image?: string | null
     color?: string
     order?: number
+    parentId?: string | null
   }
+  allCategories?: ProductCategoryItem[]
   onSubmit: (data: CategoryFormData) => Promise<void>
   onCancel: () => void
 }
@@ -69,6 +81,7 @@ const COLOR_OPTIONS = [
 
 export function ProductCategoryForm({
   initialData,
+  allCategories = [],
   onSubmit,
   onCancel,
 }: ProductCategoryFormProps) {
@@ -93,6 +106,7 @@ export function ProductCategoryForm({
     image: initialData?.image || "",
     color: initialData?.color ?? "emerald",
     order: initialData?.order ?? 0,
+    parentId: initialData?.parentId ?? "",
   })
 
   useEffect(() => {
@@ -243,16 +257,43 @@ export function ProductCategoryForm({
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              {t("order")}
-            </label>
-            <input
-              type="number"
-              value={formData.order}
-              onChange={(e) => updateField("order", parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {t("parentCategory")}
+              </label>
+              <select
+                value={formData.parentId}
+                onChange={(e) => updateField("parentId", e.target.value)}
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              >
+                <option value="">{t("noParent")}</option>
+                {allCategories
+                  .filter(cat => {
+                    // Exclude self and own children (prevent circular)
+                    if (cat.id === initialData?.id) return false
+                    if (cat.parentId === initialData?.id) return false
+                    // Only show top-level categories as potential parents
+                    if (cat.parentId) return false
+                    return true
+                  })
+                  .map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.nameEn} / {cat.nameBg}</option>
+                  ))
+                }
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {t("order")}
+              </label>
+              <input
+                type="number"
+                value={formData.order}
+                onChange={(e) => updateField("order", parseInt(e.target.value) || 0)}
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+              />
+            </div>
           </div>
 
           <div>

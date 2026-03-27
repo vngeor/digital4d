@@ -952,7 +952,9 @@
       "confirmDeleteTitle": "Confirm Delete",
       "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
       "backToProducts": "Back to Products",
-      "deleteFailed": "Failed to delete category"
+      "deleteFailed": "Failed to delete category",
+      "parentCategory": "Parent Category",
+      "noParent": "— None (top-level)"
     },
     "quotes": {
       "title": "Quote Requests",

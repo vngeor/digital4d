@@ -41,7 +41,9 @@ export default async function Home() {
     })
 
     // Fetch product categories for badge colors
-    const productCategories = await prisma.productCategory.findMany()
+    const productCategories = await prisma.productCategory.findMany({
+      include: { children: true },
+    })
     const categoryMap = new Map(productCategories.map(cat => [cat.slug, cat]))
 
     // Fetch promoted coupons for product card badges

@@ -40,6 +40,7 @@ export default async function ProductsPage() {
 
     // Fetch all categories
     const categories = await prisma.productCategory.findMany({
+        include: { children: true, parent: true },
         orderBy: [{ order: "asc" }],
     })
 

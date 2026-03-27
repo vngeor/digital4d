@@ -215,7 +215,7 @@ model Product {
   @@index([createdById])
 }
 
-// Product category model
+// Product category model (supports parent/child hierarchy for subcategories)
 model ProductCategory {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -228,8 +228,12 @@ model ProductCategory {
   image       String?
   color       String   @default("emerald")
   order       Int      @default(0)
+  parentId    String?
+  parent      ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    ProductCategory[] @relation("CategoryHierarchy")
 
   @@index([order])
+  @@index([parentId])
 }
 
 // Quote request model for custom services
