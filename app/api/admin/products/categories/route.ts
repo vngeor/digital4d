@@ -73,6 +73,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Category ID required" }, { status: 400 })
     }
 
+    // Fetch current category to detect slug changes
+    const current = await prisma.productCategory.findUnique({
+      where: { id: data.id },
+      select: { slug: true },
+    })
+
     // Check for duplicate slug
     if (data.slug) {
       const existing = await prisma.productCategory.findFirst({
@@ -104,6 +110,17 @@ export async function PUT(request: NextRequest) {
         order: data.order || 0,
       },
     })
+
+    // Cascade slug change to all products referencing the old slug
+    if (current && data.slug && current.slug !== data.slug) {
+      const updated = await prisma.product.updateMany({
+        where: { category: current.slug },
+        data: { category: data.slug },
+      })
+      if (updated.count > 0) {
+        console.log(`[Categories] Cascaded slug change "${current.slug}" → "${data.slug}" to ${updated.count} product(s)`)
+      }
+    }
 
     return NextResponse.json(category)
   } catch (error) {
