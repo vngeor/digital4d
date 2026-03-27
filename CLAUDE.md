@@ -302,6 +302,9 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 - **GA4 / Meta Pixel tracking**: needs tracking IDs from admin
 - **Product reviews/ratings**: user reviews with star ratings on product pages
 - **Testimonials section**: customer testimonials on homepage
+- **Cookie consent popup**: GDPR-compliant cookie banner with accept/reject options
 
 ### Postponed
 - **Live chat widget**: Tawk.to (free) — script tag integration, deferred
+- **Dark/light admin mode**: large task (~20 files, ~500 class changes), low priority
+- **Content versioning**: revision history for content changes, needs new DB model
