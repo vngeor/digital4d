@@ -78,6 +78,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const [searchQuery, setSearchQuery] = useState("")
     const [saleFilter, setSaleFilter] = useState(false)
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
     const categoryDropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -87,8 +88,13 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         const categoryParam = searchParams.get("category")
         if (categoryParam) {
             setSelectedCategory(categoryParam)
+            // Auto-expand parent if this is a child category
+            const cat = categories.find(c => c.slug === categoryParam)
+            if (cat?.parentId) {
+                setExpandedCategories(new Set([cat.parentId]))
+            }
         }
-    }, [searchParams])
+    }, [searchParams, categories])
 
     // Close category dropdown on click outside
     useEffect(() => {
@@ -203,11 +209,11 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     </div>
 
                     {/* Category Filter */}
-                    <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
-                        <div className="flex gap-2 sm:flex-wrap min-w-max sm:min-w-0">
+                    <div>
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <button
-                                onClick={() => { setSelectedCategory(null); setSaleFilter(false); setShowCategoryDropdown(false) }}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === null && !saleFilter
+                                onClick={() => { setSelectedCategory(null); setSaleFilter(false); setShowCategoryDropdown(false); setExpandedCategories(new Set()) }}
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === null && !saleFilter
                                         ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                         : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                     }`}
@@ -216,7 +222,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             </button>
                             <button
                                 onClick={() => { setSaleFilter(!saleFilter); setSelectedCategory(null) }}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center gap-1.5 ${saleFilter
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${saleFilter
                                         ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
                                         : "text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20"
                                     }`}
@@ -228,21 +234,23 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             <div ref={categoryDropdownRef} className="relative">
                                 <button
                                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center gap-1.5 ${selectedCategory
+                                    className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${selectedCategory
                                             ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                             : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                         }`}
                                 >
-                                    {selectedCategory
-                                        ? getLocalizedName(categories.find(c => c.slug === selectedCategory) || categories[0])
-                                        : t("allCategories")}
+                                    {(() => {
+                                        const selectedCat = selectedCategory ? categories.find(c => c.slug === selectedCategory) : null
+                                        return selectedCat ? getLocalizedName(selectedCat) : t("allCategories")
+                                    })()}
                                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
                                 </button>
 
                                 {showCategoryDropdown && (
-                                    <div className="absolute top-full mt-2 left-0 sm:left-auto sm:right-0 w-56 max-h-64 overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 py-1">
+                                    <div className="absolute top-full mt-2 left-0 right-0 sm:right-auto sm:w-64 max-h-80 overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 py-1">
+                                        {/* All Categories */}
                                         <button
-                                            onClick={() => { setSelectedCategory(null); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                            onClick={() => { setSelectedCategory(null); setSaleFilter(false); setShowCategoryDropdown(false); setExpandedCategories(new Set()) }}
                                             className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${!selectedCategory
                                                     ? "text-emerald-400 bg-emerald-500/10"
                                                     : "text-gray-300 hover:bg-white/5 hover:text-white"
@@ -250,41 +258,76 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         >
                                             {t("allCategories")}
                                         </button>
-                                        {/* Render categories hierarchically: parents then children */}
+                                        {/* Hierarchical categories with accordion */}
                                         {(() => {
                                             const parents = categories.filter(c => !c.parentId)
                                             const items: React.ReactNode[] = []
                                             for (const parent of parents) {
-                                                items.push(
-                                                    <button
-                                                        key={parent.id}
-                                                        onClick={() => { setSelectedCategory(parent.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
-                                                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${selectedCategory === parent.slug
-                                                                ? "text-emerald-400 bg-emerald-500/10"
-                                                                : "text-gray-200 hover:bg-white/5 hover:text-white"
-                                                            }`}
-                                                    >
-                                                        {getLocalizedName(parent)}
-                                                    </button>
-                                                )
                                                 const children = categories.filter(c => c.parentId === parent.id)
-                                                for (const child of children) {
+                                                const childCount = children.length
+                                                const isExpanded = expandedCategories.has(parent.id)
+                                                const isSelected = selectedCategory === parent.slug
+
+                                                if (childCount > 0) {
+                                                    // Parent with children — accordion
                                                     items.push(
                                                         <button
-                                                            key={child.id}
-                                                            onClick={() => { setSelectedCategory(child.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
-                                                            className={`w-full text-left pl-8 pr-4 py-2 text-sm transition-colors ${selectedCategory === child.slug
+                                                            key={parent.id}
+                                                            onClick={() => {
+                                                                setExpandedCategories(prev => {
+                                                                    const next = new Set(prev)
+                                                                    if (next.has(parent.id)) next.delete(parent.id)
+                                                                    else next.add(parent.id)
+                                                                    return next
+                                                                })
+                                                                setSelectedCategory(parent.slug)
+                                                                setSaleFilter(false)
+                                                            }}
+                                                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 ${isSelected
                                                                     ? "text-emerald-400 bg-emerald-500/10"
-                                                                    : "text-gray-400 hover:bg-white/5 hover:text-white"
+                                                                    : "text-gray-200 hover:bg-white/5 hover:text-white"
                                                                 }`}
                                                         >
-                                                            <span className="text-gray-600 mr-1">—</span>
-                                                            {getLocalizedName(child)}
+                                                            <span className="flex-1">{getLocalizedName(parent)}</span>
+                                                            <span className="text-xs text-gray-500">({childCount})</span>
+                                                            <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                                        </button>
+                                                    )
+                                                    // Children — only when expanded
+                                                    if (isExpanded) {
+                                                        for (const child of children) {
+                                                            items.push(
+                                                                <button
+                                                                    key={child.id}
+                                                                    onClick={() => { setSelectedCategory(child.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                                    className={`w-full text-left pl-8 pr-4 py-2 text-sm transition-colors ${selectedCategory === child.slug
+                                                                            ? "text-emerald-400 bg-emerald-500/10"
+                                                                            : "text-gray-400 hover:bg-white/5 hover:text-white"
+                                                                        }`}
+                                                                >
+                                                                    <span className="text-gray-600 mr-1">—</span>
+                                                                    {getLocalizedName(child)}
+                                                                </button>
+                                                            )
+                                                        }
+                                                    }
+                                                } else {
+                                                    // Parent without children — simple button, closes dropdown
+                                                    items.push(
+                                                        <button
+                                                            key={parent.id}
+                                                            onClick={() => { setSelectedCategory(parent.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${isSelected
+                                                                    ? "text-emerald-400 bg-emerald-500/10"
+                                                                    : "text-gray-200 hover:bg-white/5 hover:text-white"
+                                                                }`}
+                                                        >
+                                                            {getLocalizedName(parent)}
                                                         </button>
                                                     )
                                                 }
                                             }
-                                            // Orphan categories (parentId set but parent not found)
+                                            // Orphan categories
                                             const parentIds = new Set(parents.map(p => p.id))
                                             const orphans = categories.filter(c => c.parentId && !parentIds.has(c.parentId))
                                             for (const orphan of orphans) {
@@ -295,7 +338,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory === orphan.slug
                                                                 ? "text-emerald-400 bg-emerald-500/10"
                                                                 : "text-gray-300 hover:bg-white/5 hover:text-white"
-                                                    }`}
+                                                            }`}
                                                     >
                                                         {getLocalizedName(orphan)}
                                                     </button>
