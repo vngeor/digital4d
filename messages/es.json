@@ -1063,6 +1063,10 @@
     "specifications": "Especificaciones",
     "relatedProducts": "Productos Relacionados",
     "backToProducts": "Volver a Productos",
+    "categoryPage": {
+      "subcategories": "Subcategorías",
+      "productsCount": "{count} productos"
+    },
     "checkoutFailed": "Error al crear la sesión de pago",
     "checkoutError": "Error al iniciar el pago",
     "haveACoupon": "¿Tienes un código de cupón?",

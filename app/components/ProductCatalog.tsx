@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
@@ -50,6 +50,7 @@ interface ProductCatalogProps {
     locale: string
     wishlistedProductIds?: string[]
     couponMap?: Record<string, CouponBadge>
+    subcategories?: ProductCategory[]
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -71,9 +72,10 @@ const COLOR_CLASSES: Record<string, string> = {
     yellow: "bg-yellow-500/20 text-yellow-400",
 }
 
-export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap }: ProductCatalogProps) {
+export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap, subcategories }: ProductCatalogProps) {
     const t = useTranslations("products")
     const searchParams = useSearchParams()
+    const router = useRouter()
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [saleFilter, setSaleFilter] = useState(false)
@@ -211,8 +213,16 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     {/* Category Filter */}
                     <div>
                         <div className="flex flex-col sm:flex-row gap-2">
+                            {/* All Products / All in Category button */}
                             <button
-                                onClick={() => { setSelectedCategory(null); setSaleFilter(false); setShowCategoryDropdown(false); setExpandedCategories(new Set()) }}
+                                onClick={() => {
+                                    if (subcategories) {
+                                        setSelectedCategory(null)
+                                        setSaleFilter(false)
+                                    } else {
+                                        router.push('/products')
+                                    }
+                                }}
                                 className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === null && !saleFilter
                                         ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                         : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
@@ -220,6 +230,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             >
                                 {t("allProducts")}
                             </button>
+                            {/* Sale filter */}
                             <button
                                 onClick={() => { setSaleFilter(!saleFilter); setSelectedCategory(null) }}
                                 className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${saleFilter
@@ -230,7 +241,23 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 <Tag className="w-3.5 h-3.5" />
                                 {t("onSale")}
                             </button>
-                            {/* Category Dropdown */}
+                            {/* Subcategory tabs (on category pages) or Category Dropdown (on /products) */}
+                            {subcategories && subcategories.length > 0 ? (
+                                <>
+                                    {subcategories.map(sub => (
+                                        <button
+                                            key={sub.id}
+                                            onClick={() => { setSelectedCategory(selectedCategory === sub.slug ? null : sub.slug); setSaleFilter(false) }}
+                                            className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === sub.slug
+                                                    ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+                                                    : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
+                                                }`}
+                                        >
+                                            {getLocalizedName(sub)}
+                                        </button>
+                                    ))}
+                                </>
+                            ) : (
                             <div ref={categoryDropdownRef} className="relative">
                                 <button
                                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
@@ -250,7 +277,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                     <div className="absolute top-full mt-2 left-0 right-0 sm:right-auto sm:w-64 max-h-80 overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 py-1">
                                         {/* All Categories */}
                                         <button
-                                            onClick={() => { setSelectedCategory(null); setSaleFilter(false); setShowCategoryDropdown(false); setExpandedCategories(new Set()) }}
+                                            onClick={() => { setShowCategoryDropdown(false); router.push('/products') }}
                                             className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${!selectedCategory
                                                     ? "text-emerald-400 bg-emerald-500/10"
                                                     : "text-gray-300 hover:bg-white/5 hover:text-white"
@@ -269,29 +296,36 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 const isSelected = selectedCategory === parent.slug
 
                                                 if (childCount > 0) {
-                                                    // Parent with children — accordion
+                                                    // Parent with children — name navigates, chevron expands
                                                     items.push(
-                                                        <button
+                                                        <div
                                                             key={parent.id}
-                                                            onClick={() => {
-                                                                setExpandedCategories(prev => {
-                                                                    const next = new Set(prev)
-                                                                    if (next.has(parent.id)) next.delete(parent.id)
-                                                                    else next.add(parent.id)
-                                                                    return next
-                                                                })
-                                                                setSelectedCategory(parent.slug)
-                                                                setSaleFilter(false)
-                                                            }}
-                                                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 ${isSelected
+                                                            className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium ${isSelected
                                                                     ? "text-emerald-400 bg-emerald-500/10"
-                                                                    : "text-gray-200 hover:bg-white/5 hover:text-white"
+                                                                    : "text-gray-200"
                                                                 }`}
                                                         >
-                                                            <span className="flex-1">{getLocalizedName(parent)}</span>
+                                                            <button
+                                                                className="flex-1 text-left hover:text-emerald-400 transition-colors"
+                                                                onClick={() => { setShowCategoryDropdown(false); router.push(`/products/category/${parent.slug}`) }}
+                                                            >
+                                                                {getLocalizedName(parent)}
+                                                            </button>
                                                             <span className="text-xs text-gray-500">({childCount})</span>
-                                                            <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                                                        </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setExpandedCategories(prev => {
+                                                                        const next = new Set(prev)
+                                                                        if (next.has(parent.id)) next.delete(parent.id)
+                                                                        else next.add(parent.id)
+                                                                        return next
+                                                                    })
+                                                                }}
+                                                                className="p-1 hover:bg-white/10 rounded transition-colors"
+                                                            >
+                                                                <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                                            </button>
+                                                        </div>
                                                     )
                                                     // Children — only when expanded
                                                     if (isExpanded) {
@@ -299,7 +333,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                             items.push(
                                                                 <button
                                                                     key={child.id}
-                                                                    onClick={() => { setSelectedCategory(child.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                                    onClick={() => { setShowCategoryDropdown(false); router.push(`/products/category/${parent.slug}/${child.slug}`) }}
                                                                     className={`w-full text-left pl-8 pr-4 py-2 text-sm transition-colors ${selectedCategory === child.slug
                                                                             ? "text-emerald-400 bg-emerald-500/10"
                                                                             : "text-gray-400 hover:bg-white/5 hover:text-white"
@@ -312,11 +346,11 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                         }
                                                     }
                                                 } else {
-                                                    // Parent without children — simple button, closes dropdown
+                                                    // Parent without children — navigates to category page
                                                     items.push(
                                                         <button
                                                             key={parent.id}
-                                                            onClick={() => { setSelectedCategory(parent.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                            onClick={() => { setShowCategoryDropdown(false); router.push(`/products/category/${parent.slug}`) }}
                                                             className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${isSelected
                                                                     ? "text-emerald-400 bg-emerald-500/10"
                                                                     : "text-gray-200 hover:bg-white/5 hover:text-white"
@@ -334,7 +368,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 items.push(
                                                     <button
                                                         key={orphan.id}
-                                                        onClick={() => { setSelectedCategory(orphan.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                        onClick={() => { setShowCategoryDropdown(false); router.push(`/products/category/${orphan.slug}`) }}
                                                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory === orphan.slug
                                                                 ? "text-emerald-400 bg-emerald-500/10"
                                                                 : "text-gray-300 hover:bg-white/5 hover:text-white"
@@ -349,6 +383,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                     </div>
                                 )}
                             </div>
+                            )}
                         </div>
                     </div>
                 </div>

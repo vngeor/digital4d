@@ -336,7 +336,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                 {parentCategoryName && (
                                     <>
                                         <Link
-                                            href={`/products?category=${category?.parent?.slug || ""}`}
+                                            href={`/products/category/${category?.parent?.slug || ""}`}
                                             className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[category?.parent?.color || "gray"] || "bg-gray-500/20 text-gray-400"}`}
                                         >
                                             {parentCategoryName}
@@ -345,7 +345,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                     </>
                                 )}
                                 <Link
-                                    href={`/products?category=${product.category}`}
+                                    href={`/products/category/${product.category}`}
                                     className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"}`}
                                 >
                                     {categoryName}

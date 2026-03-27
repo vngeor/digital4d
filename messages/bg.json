@@ -1063,6 +1063,10 @@
     "specifications": "Спецификации",
     "relatedProducts": "Свързани продукти",
     "backToProducts": "Обратно към продукти",
+    "categoryPage": {
+      "subcategories": "Подкатегории",
+      "productsCount": "{count} продукта"
+    },
     "checkoutFailed": "Неуспешно създаване на платежна сесия",
     "checkoutError": "Неуспешно стартиране на плащане",
     "haveACoupon": "Имате код за отстъпка?",
