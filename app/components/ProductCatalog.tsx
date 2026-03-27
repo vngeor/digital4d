@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X, Ticket } from "lucide-react"
+import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 
 interface Product {
@@ -76,6 +76,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [saleFilter, setSaleFilter] = useState(false)
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+    const categoryDropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (searchParams.get("sale") === "true") {
@@ -86,6 +88,17 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             setSelectedCategory(categoryParam)
         }
     }, [searchParams])
+
+    // Close category dropdown on click outside
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+                setShowCategoryDropdown(false)
+            }
+        }
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
+    }, [])
 
     const getLocalizedName = (item: { nameBg: string; nameEn: string; nameEs: string }) => {
         switch (locale) {
@@ -181,7 +194,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
                         <div className="flex gap-2 sm:flex-wrap min-w-max sm:min-w-0">
                             <button
-                                onClick={() => { setSelectedCategory(null); setSaleFilter(false) }}
+                                onClick={() => { setSelectedCategory(null); setSaleFilter(false); setShowCategoryDropdown(false) }}
                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === null && !saleFilter
                                         ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                         : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
@@ -199,18 +212,47 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 <Tag className="w-3.5 h-3.5" />
                                 {t("onSale")}
                             </button>
-                            {categories.map((category) => (
+                            {/* Category Dropdown */}
+                            <div ref={categoryDropdownRef} className="relative">
                                 <button
-                                    key={category.id}
-                                    onClick={() => { setSelectedCategory(category.slug); setSaleFilter(false) }}
-                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === category.slug
+                                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center gap-1.5 ${selectedCategory
                                             ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                             : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                         }`}
                                 >
-                                    {getLocalizedName(category)}
+                                    {selectedCategory
+                                        ? getLocalizedName(categories.find(c => c.slug === selectedCategory) || categories[0])
+                                        : t("allCategories")}
+                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
                                 </button>
-                            ))}
+
+                                {showCategoryDropdown && (
+                                    <div className="absolute top-full mt-2 left-0 sm:left-auto sm:right-0 w-56 max-h-64 overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 py-1">
+                                        <button
+                                            onClick={() => { setSelectedCategory(null); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${!selectedCategory
+                                                    ? "text-emerald-400 bg-emerald-500/10"
+                                                    : "text-gray-300 hover:bg-white/5 hover:text-white"
+                                                }`}
+                                        >
+                                            {t("allCategories")}
+                                        </button>
+                                        {categories.map((category) => (
+                                            <button
+                                                key={category.id}
+                                                onClick={() => { setSelectedCategory(category.slug); setSaleFilter(false); setShowCategoryDropdown(false) }}
+                                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory === category.slug
+                                                        ? "text-emerald-400 bg-emerald-500/10"
+                                                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                                                    }`}
+                                            >
+                                                {getLocalizedName(category)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
