@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, BadgeCheck, Package } from "lucide-react"
+import { Plus, Edit2, Trash2, BadgeCheck, Package, ExternalLink } from "lucide-react"
+import Link from "next/link"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { BrandForm } from "@/app/components/admin/BrandForm"
@@ -111,7 +112,15 @@ export default function BrandsPage() {
           )}
           <div className="min-w-0">
             <p className="font-medium text-white text-sm truncate">{item.nameEn}</p>
-            <p className="text-xs text-gray-500 truncate">{item.nameBg}</p>
+            <Link
+              href={`/brands/${item.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline truncate block"
+            >
+              /brands/{item.slug}
+            </Link>
           </div>
         </div>
       ),

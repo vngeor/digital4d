@@ -42,7 +42,7 @@ interface Product {
   category: string
   tags: string[]
   brandId: string | null
-  brand: { id: string; nameBg: string; nameEn: string; nameEs: string } | null
+  brand: { id: string; slug: string; nameBg: string; nameEn: string; nameEs: string } | null
   image: string | null
   gallery: string[]
   fileUrl: string | null
@@ -394,6 +394,25 @@ export default function ProductsPage() {
       },
     },
     {
+      key: "brand",
+      header: t("brand"),
+      className: "whitespace-nowrap hidden lg:table-cell",
+      render: (item: Product) => {
+        if (!item.brand) return <span className="text-gray-500 text-xs">—</span>
+        return (
+          <Link
+            href={`/brands/${item.brand.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="px-2 py-0.5 rounded-full text-xs font-medium bg-lime-500/20 text-lime-400 hover:bg-lime-500/30 transition-colors"
+          >
+            {item.brand.nameEn}
+          </Link>
+        )
+      },
+    },
+    {
       key: "sku",
       header: t("sku"),
       className: "whitespace-nowrap hidden xl:table-cell",
@@ -631,6 +650,17 @@ export default function ProductsPage() {
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${fileTypeBadge.color}`}>
                     {t(fileTypeBadge.labelKey)}
                   </span>
+                  {item.brand && (
+                    <Link
+                      href={`/brands/${item.brand.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="px-2 py-0.5 rounded-full text-xs font-medium bg-lime-500/20 text-lime-400"
+                    >
+                      {item.brand.nameEn}
+                    </Link>
+                  )}
                   {homepagePos && (
                     <span className="flex items-center gap-1 text-xs text-emerald-400">
                       <Home className="w-3 h-3" />#{homepagePos}
