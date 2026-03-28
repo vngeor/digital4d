@@ -14,6 +14,16 @@ import { BulkActionBar } from "@/app/components/admin/BulkActionBar"
 import { COLOR_CLASSES } from "@/app/components/admin/TypeForm"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 
+interface ProductVariant {
+  id: string
+  colorNameBg: string
+  colorNameEn: string
+  colorNameEs: string
+  colorHex: string
+  image: string | null
+  order: number
+}
+
 interface Product {
   id: string
   slug: string
@@ -31,6 +41,7 @@ interface Product {
   priceType: string
   category: string
   tags: string[]
+  brand: string | null
   image: string | null
   gallery: string[]
   fileUrl: string | null
@@ -39,6 +50,7 @@ interface Product {
   published: boolean
   inStock: boolean
   order: number
+  variants: ProductVariant[]
   createdAt: string
   updatedAt: string
 }
@@ -172,6 +184,7 @@ export default function ProductsPage() {
     priceType: string
     category: string
     tags: string[]
+    brand: string
     image: string
     gallery: string[]
     fileUrl: string
@@ -180,6 +193,15 @@ export default function ProductsPage() {
     published: boolean
     inStock: boolean
     order: number
+    variants: Array<{
+      id?: string
+      colorNameBg: string
+      colorNameEn: string
+      colorNameEs: string
+      colorHex: string
+      image: string
+      order: number
+    }>
   }) => {
     const method = data.id ? "PUT" : "POST"
     const res = await fetch("/api/admin/products", {

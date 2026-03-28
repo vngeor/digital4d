@@ -3,8 +3,18 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
-import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search } from "lucide-react"
+import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search, Plus, Trash2, Palette } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
+
+interface ProductVariantData {
+  id?: string
+  colorNameBg: string
+  colorNameEn: string
+  colorNameEs: string
+  colorHex: string
+  image: string
+  order: number
+}
 
 interface ProductFormData {
   id?: string
@@ -23,6 +33,7 @@ interface ProductFormData {
   priceType: string
   category: string
   tags: string[]
+  brand: string
   image: string
   gallery: string[]
   fileUrl: string
@@ -31,6 +42,7 @@ interface ProductFormData {
   published: boolean
   inStock: boolean
   order: number
+  variants: ProductVariantData[]
 }
 
 interface ProductCategory {
@@ -64,10 +76,20 @@ interface ProductFormProps {
     gallery?: string[]
     fileUrl?: string | null
     fileType?: string | null
+    brand?: string | null
     featured?: boolean
     published?: boolean
     inStock?: boolean
     order?: number
+    variants?: Array<{
+      id?: string
+      colorNameBg: string
+      colorNameEn: string
+      colorNameEs: string
+      colorHex: string
+      image?: string | null
+      order: number
+    }>
   }
   categories: ProductCategory[]
   onSubmit: (data: ProductFormData) => Promise<void>
@@ -131,7 +153,10 @@ export function ProductForm({
   useKeyboardSave(formRef)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [variantUploading, setVariantUploading] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const variantFileInputRef = useRef<HTMLInputElement>(null)
+  const variantUploadIndex = useRef<number>(-1)
   const [categorySearch, setCategorySearch] = useState("")
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const categoryDropdownRef = useRef<HTMLDivElement>(null)
@@ -155,6 +180,7 @@ export function ProductForm({
     priceType: initialData?.priceType ?? "fixed",
     category: initialData?.category ?? (categories[0]?.slug || ""),
     tags: initialData?.tags ?? [],
+    brand: initialData?.brand || "",
     image: initialData?.image || "",
     gallery: initialData?.gallery ?? [],
     fileUrl: initialData?.fileUrl || "",
@@ -163,6 +189,15 @@ export function ProductForm({
     published: initialData?.published ?? false,
     inStock: initialData?.inStock !== false,
     order: initialData?.order ?? 0,
+    variants: initialData?.variants?.map((v, i) => ({
+      id: v.id,
+      colorNameBg: v.colorNameBg,
+      colorNameEn: v.colorNameEn,
+      colorNameEs: v.colorNameEs,
+      colorHex: v.colorHex,
+      image: v.image || "",
+      order: v.order ?? i,
+    })) || [],
   })
 
   useEffect(() => {
@@ -288,6 +323,60 @@ export function ProductForm({
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
+    }
+  }
+
+  const addVariant = () => {
+    setFormData(prev => ({
+      ...prev,
+      variants: [...prev.variants, {
+        colorNameBg: "",
+        colorNameEn: "",
+        colorNameEs: "",
+        colorHex: "#10b981",
+        image: "",
+        order: prev.variants.length,
+      }],
+    }))
+  }
+
+  const removeVariant = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index),
+    }))
+  }
+
+  const updateVariant = (index: number, field: keyof ProductVariantData, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map((v, i) => i === index ? { ...v, [field]: value } : v),
+    }))
+  }
+
+  const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    const index = variantUploadIndex.current
+    if (!file || index < 0) return
+
+    setVariantUploading(index)
+    try {
+      const uploadData = new FormData()
+      uploadData.append("file", file)
+      const res = await fetch("/api/upload", { method: "POST", body: uploadData })
+      if (!res.ok) {
+        const error = await res.json()
+        toast.error(error.error || tc("uploadFailed"))
+        return
+      }
+      const data = await res.json()
+      updateVariant(index, "image", data.url)
+    } catch (error) {
+      console.error("Upload error:", error)
+      toast.error(tc("uploadImageFailed"))
+    } finally {
+      setVariantUploading(null)
+      if (variantFileInputRef.current) variantFileInputRef.current.value = ""
     }
   }
 
@@ -445,6 +534,20 @@ export function ProductForm({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Brand */}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              {t("brand")}
+            </label>
+            <input
+              type="text"
+              value={formData.brand}
+              onChange={(e) => updateField("brand", e.target.value)}
+              placeholder={t("brandPlaceholder")}
+              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+            />
           </div>
 
           {/* Language Tabs for Name and Description */}
@@ -671,6 +774,147 @@ export function ProductForm({
               />
             </div>
           )}
+          {/* Color Variants */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                <Palette className="w-4 h-4" />
+                {t("colorVariants")}
+              </h3>
+              <button
+                type="button"
+                onClick={addVariant}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                {t("addColor")}
+              </button>
+            </div>
+
+            {formData.variants.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-2">{t("noVariants")}</p>
+            ) : (
+              <div className="space-y-3">
+                <input
+                  ref={variantFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleVariantImageUpload}
+                  className="hidden"
+                />
+                {formData.variants.map((variant, index) => (
+                  <div key={index} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-6 h-6 rounded-full border border-white/20 shrink-0"
+                          style={{ backgroundColor: variant.colorHex }}
+                        />
+                        <span className="text-sm text-white font-medium">
+                          {variant.colorNameEn || `Color ${index + 1}`}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(index)}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                    </div>
+
+                    {/* Color names - 3 inline inputs */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-gray-500 mb-1">BG</label>
+                        <input
+                          type="text"
+                          value={variant.colorNameBg}
+                          onChange={(e) => updateVariant(index, "colorNameBg", e.target.value)}
+                          placeholder="Червен"
+                          className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-500 mb-1">EN</label>
+                        <input
+                          type="text"
+                          value={variant.colorNameEn}
+                          onChange={(e) => updateVariant(index, "colorNameEn", e.target.value)}
+                          placeholder="Red"
+                          className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-500 mb-1">ES</label>
+                        <input
+                          type="text"
+                          value={variant.colorNameEs}
+                          onChange={(e) => updateVariant(index, "colorNameEs", e.target.value)}
+                          placeholder="Rojo"
+                          className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Hex color + Image */}
+                    <div className="flex items-end gap-3">
+                      <div className="flex items-end gap-2">
+                        <div>
+                          <label className="block text-[10px] text-gray-500 mb-1">{t("colorHex")}</label>
+                          <input
+                            type="text"
+                            value={variant.colorHex}
+                            onChange={(e) => updateVariant(index, "colorHex", e.target.value)}
+                            placeholder="#FF0000"
+                            className="w-24 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm font-mono placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                          />
+                        </div>
+                        <input
+                          type="color"
+                          value={variant.colorHex}
+                          onChange={(e) => updateVariant(index, "colorHex", e.target.value)}
+                          className="w-9 h-9 rounded-lg border border-white/10 bg-transparent cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="flex-1 flex items-end gap-2">
+                        {variant.image ? (
+                          <div className="relative w-9 h-9 rounded-lg overflow-hidden border border-white/10 shrink-0">
+                            <img src={variant.image} alt="" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => updateVariant(index, "image", "")}
+                              className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            variantUploadIndex.current = index
+                            variantFileInputRef.current?.click()
+                          }}
+                          disabled={variantUploading === index}
+                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+                        >
+                          {variantUploading === index ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Upload className="w-3 h-3" />
+                          )}
+                          {t("variantImage")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Settings */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>

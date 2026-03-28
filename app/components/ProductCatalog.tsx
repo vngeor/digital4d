@@ -26,6 +26,7 @@ interface Product {
     fileType: string | null
     featured: boolean
     inStock: boolean
+    brand: string | null
 }
 
 interface ProductCategory {
@@ -77,6 +78,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const searchParams = useSearchParams()
     const router = useRouter()
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+    const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [saleFilter, setSaleFilter] = useState(false)
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
@@ -131,6 +133,11 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         }
     }
 
+    const uniqueBrands = useMemo(() =>
+        [...new Set(products.map(p => p.brand).filter((b): b is string => !!b))].sort(),
+        [products]
+    )
+
     const filteredProducts = useMemo(() => {
         return products.filter((product) => {
             const matchesCategory = !selectedCategory || (() => {
@@ -149,9 +156,10 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase())
             const matchesSale = !saleFilter || product.onSale
-            return matchesCategory && matchesSearch && matchesSale
+            const matchesBrand = !selectedBrand || product.brand === selectedBrand
+            return matchesCategory && matchesSearch && matchesSale && matchesBrand
         })
-    }, [products, selectedCategory, searchQuery, saleFilter, categories])
+    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, categories])
 
     const getCategoryColor = (categorySlug: string) => {
         const category = categories.find((c) => c.slug === categorySlug)
@@ -209,6 +217,20 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                         />
                     </div>
+
+                    {/* Brand Filter */}
+                    {uniqueBrands.length > 0 && (
+                        <select
+                            value={selectedBrand || ""}
+                            onChange={(e) => setSelectedBrand(e.target.value || null)}
+                            className="px-4 py-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
+                        >
+                            <option value="">{t("allBrands")}</option>
+                            {uniqueBrands.map(brand => (
+                                <option key={brand} value={brand}>{brand}</option>
+                            ))}
+                        </select>
+                    )}
 
                     {/* Category Filter */}
                     <div>
@@ -485,13 +507,20 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
                                     {/* Content */}
                                     <div className="p-3 sm:p-5">
-                                        {/* Category Badge */}
-                                        <span
-                                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"
-                                                }`}
-                                        >
-                                            {categoryName}
-                                        </span>
+                                        {/* Category Badge + Brand */}
+                                        <div className="flex items-center gap-2 flex-wrap mb-3">
+                                            <span
+                                                className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"
+                                                    }`}
+                                            >
+                                                {categoryName}
+                                            </span>
+                                            {product.brand && (
+                                                <span className="text-xs text-slate-500 font-medium">
+                                                    {product.brand}
+                                                </span>
+                                            )}
+                                        </div>
 
                                         {/* Name */}
                                         <h3 className="text-sm sm:text-lg font-bold text-white group-hover:text-emerald-400 transition-colors mb-2">

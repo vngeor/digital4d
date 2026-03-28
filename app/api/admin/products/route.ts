@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
       const idList = ids.split(",").filter(Boolean)
       const products = await prisma.product.findMany({
         where: { id: { in: idList } },
+        include: { variants: { orderBy: { order: "asc" } } },
       })
       return NextResponse.json(products)
     }
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      include: { variants: { orderBy: { order: "asc" } } },
     })
 
     return NextResponse.json(products)
@@ -108,6 +110,7 @@ export async function POST(request: NextRequest) {
         priceType: data.priceType || "fixed",
         category: data.category,
         tags: data.tags || [],
+        brand: data.brand || null,
         image: data.image || null,
         gallery: data.gallery || [],
         fileUrl: data.fileUrl || null,
@@ -119,9 +122,32 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Create color variants
+    if (Array.isArray(data.variants) && data.variants.length > 0) {
+      for (const variant of data.variants) {
+        await prisma.productVariant.create({
+          data: {
+            productId: product.id,
+            colorNameBg: variant.colorNameBg,
+            colorNameEn: variant.colorNameEn,
+            colorNameEs: variant.colorNameEs,
+            colorHex: variant.colorHex,
+            image: variant.image || null,
+            order: variant.order ?? 0,
+          },
+        })
+      }
+    }
+
+    // Re-fetch with variants
+    const productWithVariants = await prisma.product.findUnique({
+      where: { id: product.id },
+      include: { variants: { orderBy: { order: "asc" } } },
+    })
+
     logAuditAction({ userId: session.user.id, action: "create", resource: "products", recordId: product.id, recordTitle: product.nameEn }).catch(() => {})
 
-    return NextResponse.json(product, { status: 201 })
+    return NextResponse.json(productWithVariants, { status: 201 })
   } catch (error) {
     console.error("Error creating product:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
@@ -198,6 +224,7 @@ export async function PUT(request: NextRequest) {
         priceType: data.priceType || "fixed",
         category: data.category,
         tags: data.tags || [],
+        brand: data.brand || null,
         image: data.image || null,
         gallery: data.gallery || [],
         fileUrl: data.fileUrl || null,
@@ -209,7 +236,43 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "image", "gallery", "fileUrl", "fileType", "featured", "published", "inStock", "order"]
+    // Sync color variants: delete old, create new
+    if (Array.isArray(data.variants)) {
+      // Fetch old variants for blob cleanup
+      const oldVariants = await prisma.productVariant.findMany({
+        where: { productId: data.id },
+        select: { image: true },
+      })
+
+      await prisma.productVariant.deleteMany({ where: { productId: data.id } })
+
+      for (const variant of data.variants) {
+        await prisma.productVariant.create({
+          data: {
+            productId: data.id,
+            colorNameBg: variant.colorNameBg,
+            colorNameEn: variant.colorNameEn,
+            colorNameEs: variant.colorNameEs,
+            colorHex: variant.colorHex,
+            image: variant.image || null,
+            order: variant.order ?? 0,
+          },
+        })
+      }
+
+      // Cleanup old variant images that are no longer used
+      const newVariantImages = new Set(data.variants.map((v: { image?: string }) => v.image).filter(Boolean))
+      const oldVariantImageUrls = oldVariants
+        .map(v => v.image)
+        .filter((url): url is string => !!url && !newVariantImages.has(url))
+      if (oldVariantImageUrls.length > 0) {
+        deleteBlobsBatch(oldVariantImageUrls).catch((err) => {
+          console.error("Failed to delete old variant images:", err instanceof Error ? err.message : "Unknown")
+        })
+      }
+    }
+
+    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brand", "image", "gallery", "fileUrl", "fileType", "featured", "published", "inStock", "order"]
     const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
 
@@ -236,7 +299,13 @@ export async function PUT(request: NextRequest) {
       ).catch((err) => console.error("Failed to send wishlist price drop notifications:", err instanceof Error ? err.message : "Unknown"))
     }
 
-    return NextResponse.json(product)
+    // Re-fetch with variants
+    const productWithVariants = await prisma.product.findUnique({
+      where: { id: product.id },
+      include: { variants: { orderBy: { order: "asc" } } },
+    })
+
+    return NextResponse.json(productWithVariants)
   } catch (error) {
     console.error("Error updating product:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(
@@ -282,15 +351,15 @@ export async function PATCH(request: NextRequest) {
 
       const products = await prisma.product.findMany({
         where: { id: { in: ids } },
-        select: { id: true, image: true, gallery: true, fileUrl: true },
+        select: { id: true, image: true, gallery: true, fileUrl: true, variants: { select: { image: true } } },
       })
 
       for (const product of products) {
         await prisma.product.delete({ where: { id: product.id } })
       }
 
-      // Clean up blob files (non-blocking)
-      const urlsToDelete = products.flatMap((p) => [p.image, p.fileUrl, ...(p.gallery || [])])
+      // Clean up blob files (non-blocking) — includes variant images
+      const urlsToDelete = products.flatMap((p) => [p.image, p.fileUrl, ...(p.gallery || []), ...p.variants.map(v => v.image)])
       deleteBlobsBatch(urlsToDelete).catch((err) => {
         console.error("Failed to delete product file blobs:", err instanceof Error ? err.message : "Unknown")
       })
@@ -351,20 +420,21 @@ export async function DELETE(request: NextRequest) {
     // Fetch the product to get all associated file URLs before deletion
     const product = await prisma.product.findUnique({
       where: { id },
-      select: { image: true, gallery: true, fileUrl: true }
+      select: { image: true, gallery: true, fileUrl: true, variants: { select: { image: true } } }
     })
 
-    // Delete the database record
+    // Delete the database record (variants cascade-deleted automatically)
     await prisma.product.delete({
       where: { id },
     })
 
-    // Delete all associated blob files (non-blocking)
+    // Delete all associated blob files (non-blocking) — includes variant images
     if (product) {
       const urlsToDelete = [
         product.image,
         product.fileUrl,
-        ...(product.gallery || [])
+        ...(product.gallery || []),
+        ...product.variants.map(v => v.image),
       ]
 
       deleteBlobsBatch(urlsToDelete).catch(err => {

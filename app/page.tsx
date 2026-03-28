@@ -146,6 +146,7 @@ export default async function Home() {
             categoryName,
             image: product.image,
             featured: product.featured,
+            brand: product.brand,
         }
     })
 

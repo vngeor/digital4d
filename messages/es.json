@@ -924,7 +924,16 @@
       "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
       "homepage": "Inicio",
       "deleteFailed": "Error al eliminar el producto",
-      "updateFailed": "Error al actualizar producto"
+      "updateFailed": "Error al actualizar producto",
+      "brand": "Marca",
+      "brandPlaceholder": "ej., Bambu Lab",
+      "colorVariants": "Variantes de color",
+      "addColor": "Agregar color",
+      "removeColor": "Eliminar",
+      "colorName": "Nombre del color",
+      "colorHex": "Código Hex",
+      "variantImage": "Imagen",
+      "noVariants": "No se han añadido variantes de color"
     },
     "productCategories": {
       "title": "Categorías de Productos",
@@ -1067,6 +1076,9 @@
       "subcategories": "Subcategorías",
       "productsCount": "{count} productos"
     },
+    "allBrands": "Todas las marcas",
+    "brand": "Marca",
+    "selectColor": "Seleccionar color",
     "checkoutFailed": "Error al crear la sesión de pago",
     "checkoutError": "Error al iniciar el pago",
     "haveACoupon": "¿Tienes un código de cupón?",

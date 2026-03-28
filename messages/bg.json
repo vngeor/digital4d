@@ -924,7 +924,16 @@
       "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
       "homepage": "Начало",
       "deleteFailed": "Грешка при изтриване на продукт",
-      "updateFailed": "Грешка при обновяване на продукт"
+      "updateFailed": "Грешка при обновяване на продукт",
+      "brand": "Марка",
+      "brandPlaceholder": "напр., Bambu Lab",
+      "colorVariants": "Цветови варианти",
+      "addColor": "Добави цвят",
+      "removeColor": "Премахни",
+      "colorName": "Име на цвят",
+      "colorHex": "Hex код",
+      "variantImage": "Изображение",
+      "noVariants": "Няма добавени цветови варианти"
     },
     "productCategories": {
       "title": "Категории продукти",
@@ -1067,6 +1076,9 @@
       "subcategories": "Подкатегории",
       "productsCount": "{count} продукта"
     },
+    "allBrands": "Всички марки",
+    "brand": "Марка",
+    "selectColor": "Избери цвят",
     "checkoutFailed": "Неуспешно създаване на платежна сесия",
     "checkoutError": "Неуспешно стартиране на плащане",
     "haveACoupon": "Имате код за отстъпка?",
