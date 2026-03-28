@@ -41,7 +41,7 @@ interface Product {
     categoryName: string
     image: string | null
     featured: boolean
-    brand: string | null
+    brand: { name: string; slug: string } | null
 }
 
 interface CouponBadge {
@@ -156,7 +156,13 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                                         {product.name}
                                     </h3>
                                     {product.brand && (
-                                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium mb-1">{product.brand}</p>
+                                        <Link
+                                            href={`/brands/${product.brand.slug}`}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="block text-[10px] sm:text-xs text-slate-500 font-medium mb-1 hover:text-emerald-400 transition-colors"
+                                        >
+                                            {product.brand.name}
+                                        </Link>
                                     )}
                                     {product.description && (
                                         <p className="text-xs text-slate-400 mb-2 line-clamp-2">

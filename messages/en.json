@@ -1077,6 +1077,14 @@
       "uploadImageFailed": "Failed to upload image"
     }
   },
+  "brandsPage": {
+    "title": "Brands",
+    "subtitle": "Explore our partner brands",
+    "noBrands": "No brands found",
+    "noProducts": "No products from this brand yet",
+    "productCount": "{count} products",
+    "backToBrands": "Back to Brands"
+  },
   "products": {
     "title": "Products",
     "subtitle": "Explore our 3D printing products and services",
