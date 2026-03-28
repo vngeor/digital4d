@@ -347,7 +347,12 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
 
                             {/* Brand */}
                             {product.brand && (
-                                <p className="text-sm text-slate-400 font-medium">{getLocalizedName(product.brand)}</p>
+                                <Link
+                                    href={`/brands/${product.brand.slug}`}
+                                    className="text-sm text-slate-400 font-medium hover:text-emerald-400 transition-colors"
+                                >
+                                    {getLocalizedName(product.brand)}
+                                </Link>
                             )}
 
                             {/* Name + Wishlist */}

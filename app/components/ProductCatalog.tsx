@@ -26,7 +26,7 @@ interface Product {
     fileType: string | null
     featured: boolean
     inStock: boolean
-    brand: { nameBg: string; nameEn: string; nameEs: string } | null
+    brand: { slug: string; nameBg: string; nameEn: string; nameEs: string } | null
 }
 
 interface ProductCategory {
@@ -518,9 +518,13 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 {categoryName}
                                             </span>
                                             {product.brand && (
-                                                <span className="text-xs text-slate-500 font-medium">
+                                                <Link
+                                                    href={`/brands/${product.brand.slug}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-xs text-slate-500 font-medium hover:text-emerald-400 transition-colors"
+                                                >
                                                     {getLocalizedName(product.brand)}
-                                                </span>
+                                                </Link>
                                             )}
                                         </div>
 

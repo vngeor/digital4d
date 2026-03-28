@@ -147,7 +147,10 @@ export default async function Home() {
             categoryName,
             image: product.image,
             featured: product.featured,
-            brand: product.brand ? ((product.brand as Record<string, unknown>)[`name${locale.charAt(0).toUpperCase() + locale.slice(1)}`] as string || product.brand.nameEn) : null,
+            brand: product.brand ? {
+                name: ((product.brand as Record<string, unknown>)[`name${locale.charAt(0).toUpperCase() + locale.slice(1)}`] as string || product.brand.nameEn),
+                slug: product.brand.slug,
+            } : null,
         }
     })
 

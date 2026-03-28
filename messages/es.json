@@ -1077,6 +1077,14 @@
       "uploadImageFailed": "Error al subir la imagen"
     }
   },
+  "brandsPage": {
+    "title": "Marcas",
+    "subtitle": "Explora nuestras marcas asociadas",
+    "noBrands": "No se encontraron marcas",
+    "noProducts": "Aún no hay productos de esta marca",
+    "productCount": "{count} productos",
+    "backToBrands": "Volver a Marcas"
+  },
   "products": {
     "title": "Productos",
     "subtitle": "Explora nuestros productos y servicios de impresión 3D",
