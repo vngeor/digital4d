@@ -111,6 +111,7 @@ export default async function CategoryPage({ params }: PageProps) {
     const products = await prisma.product.findMany({
         where: { category: { in: categorySlugs }, published: true },
         orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
+        include: { brand: true },
     })
 
     // Fetch all categories for ProductCatalog

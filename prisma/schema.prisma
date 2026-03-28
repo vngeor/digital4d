@@ -193,7 +193,8 @@ model Product {
   priceType   String    @default("fixed")  // "fixed", "from", "quote"
   category    String
   tags        String[]
-  brand       String?
+  brandId     String?
+  brand       Brand?    @relation(fields: [brandId], references: [id], onDelete: SetNull)
   image       String?
   gallery     String[]
   fileUrl     String?   // For digital products
@@ -214,7 +215,23 @@ model Product {
   @@index([published])
   @@index([featured])
   @@index([order])
+  @@index([brandId])
   @@index([createdById])
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  nameBg    String
+  nameEn    String
+  nameEs    String
+  image     String?
+  order     Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([order])
 }
 
 model ProductVariant {

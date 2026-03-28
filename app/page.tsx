@@ -38,6 +38,7 @@ export default async function Home() {
             { order: "asc" },
         ],
         take: 8,
+        include: { brand: true },
     })
 
     // Fetch product categories for badge colors
@@ -146,7 +147,7 @@ export default async function Home() {
             categoryName,
             image: product.image,
             featured: product.featured,
-            brand: product.brand,
+            brand: product.brand ? ((product.brand as Record<string, unknown>)[`name${locale.charAt(0).toUpperCase() + locale.slice(1)}`] as string || product.brand.nameEn) : null,
         }
     })
 

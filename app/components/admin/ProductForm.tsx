@@ -33,7 +33,7 @@ interface ProductFormData {
   priceType: string
   category: string
   tags: string[]
-  brand: string
+  brandId: string
   image: string
   gallery: string[]
   fileUrl: string
@@ -76,7 +76,7 @@ interface ProductFormProps {
     gallery?: string[]
     fileUrl?: string | null
     fileType?: string | null
-    brand?: string | null
+    brandId?: string | null
     featured?: boolean
     published?: boolean
     inStock?: boolean
@@ -92,6 +92,7 @@ interface ProductFormProps {
     }>
   }
   categories: ProductCategory[]
+  brands: Array<{ id: string; slug: string; nameBg: string; nameEn: string; nameEs: string }>
   onSubmit: (data: ProductFormData) => Promise<void>
   onCancel: () => void
 }
@@ -143,6 +144,7 @@ const CURRENCIES = ["EUR"]
 export function ProductForm({
   initialData,
   categories,
+  brands,
   onSubmit,
   onCancel,
 }: ProductFormProps) {
@@ -180,7 +182,7 @@ export function ProductForm({
     priceType: initialData?.priceType ?? "fixed",
     category: initialData?.category ?? (categories[0]?.slug || ""),
     tags: initialData?.tags ?? [],
-    brand: initialData?.brand || "",
+    brandId: initialData?.brandId || "",
     image: initialData?.image || "",
     gallery: initialData?.gallery ?? [],
     fileUrl: initialData?.fileUrl || "",
@@ -541,13 +543,19 @@ export function ProductForm({
             <label className="block text-sm font-medium text-gray-400 mb-2">
               {t("brand")}
             </label>
-            <input
-              type="text"
-              value={formData.brand}
-              onChange={(e) => updateField("brand", e.target.value)}
-              placeholder={t("brandPlaceholder")}
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
+            <select
+              value={formData.brandId}
+              onChange={(e) => updateField("brandId", e.target.value)}
+              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+            >
+              <option value="">{t("noBrand")}</option>
+              {brands.map((b) => {
+                const brandName = locale === "bg" ? b.nameBg : locale === "es" ? b.nameEs : b.nameEn
+                return (
+                  <option key={b.id} value={b.id}>{brandName}</option>
+                )
+              })}
+            </select>
           </div>
 
           {/* Language Tabs for Name and Description */}

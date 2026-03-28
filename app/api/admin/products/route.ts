@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       const idList = ids.split(",").filter(Boolean)
       const products = await prisma.product.findMany({
         where: { id: { in: idList } },
-        include: { variants: { orderBy: { order: "asc" } } },
+        include: { variants: { orderBy: { order: "asc" } }, brand: true },
       })
       return NextResponse.json(products)
     }
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      include: { variants: { orderBy: { order: "asc" } } },
+      include: { variants: { orderBy: { order: "asc" } }, brand: true },
     })
 
     return NextResponse.json(products)
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         priceType: data.priceType || "fixed",
         category: data.category,
         tags: data.tags || [],
-        brand: data.brand || null,
+        brandId: data.brandId || null,
         image: data.image || null,
         gallery: data.gallery || [],
         fileUrl: data.fileUrl || null,
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
     // Re-fetch with variants
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
-      include: { variants: { orderBy: { order: "asc" } } },
+      include: { variants: { orderBy: { order: "asc" } }, brand: true },
     })
 
     logAuditAction({ userId: session.user.id, action: "create", resource: "products", recordId: product.id, recordTitle: product.nameEn }).catch(() => {})
@@ -224,7 +224,7 @@ export async function PUT(request: NextRequest) {
         priceType: data.priceType || "fixed",
         category: data.category,
         tags: data.tags || [],
-        brand: data.brand || null,
+        brandId: data.brandId || null,
         image: data.image || null,
         gallery: data.gallery || [],
         fileUrl: data.fileUrl || null,
@@ -272,7 +272,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brand", "image", "gallery", "fileUrl", "fileType", "featured", "published", "inStock", "order"]
+    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "fileUrl", "fileType", "featured", "published", "inStock", "order"]
     const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
 
@@ -302,7 +302,7 @@ export async function PUT(request: NextRequest) {
     // Re-fetch with variants
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
-      include: { variants: { orderBy: { order: "asc" } } },
+      include: { variants: { orderBy: { order: "asc" } }, brand: true },
     })
 
     return NextResponse.json(productWithVariants)
