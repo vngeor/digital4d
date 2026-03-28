@@ -26,7 +26,7 @@ interface Product {
     fileType: string | null
     featured: boolean
     inStock: boolean
-    brand: string | null
+    brand: { nameBg: string; nameEn: string; nameEs: string } | null
 }
 
 interface ProductCategory {
@@ -133,10 +133,12 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         }
     }
 
-    const uniqueBrands = useMemo(() =>
-        [...new Set(products.map(p => p.brand).filter((b): b is string => !!b))].sort(),
-        [products]
-    )
+    const uniqueBrands = useMemo(() => {
+        const brandNames = products
+            .map(p => p.brand ? getLocalizedName(p.brand) : null)
+            .filter((b): b is string => !!b)
+        return [...new Set(brandNames)].sort()
+    }, [products])
 
     const filteredProducts = useMemo(() => {
         return products.filter((product) => {
@@ -156,7 +158,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase())
             const matchesSale = !saleFilter || product.onSale
-            const matchesBrand = !selectedBrand || product.brand === selectedBrand
+            const matchesBrand = !selectedBrand || (product.brand && getLocalizedName(product.brand) === selectedBrand)
             return matchesCategory && matchesSearch && matchesSale && matchesBrand
         })
     }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, categories])
@@ -517,7 +519,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                             </span>
                                             {product.brand && (
                                                 <span className="text-xs text-slate-500 font-medium">
-                                                    {product.brand}
+                                                    {getLocalizedName(product.brand)}
                                                 </span>
                                             )}
                                         </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home } from "lucide-react"
+import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck } from "lucide-react"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
@@ -41,7 +41,8 @@ interface Product {
   priceType: string
   category: string
   tags: string[]
-  brand: string | null
+  brandId: string | null
+  brand: { id: string; nameBg: string; nameEn: string; nameEs: string } | null
   image: string | null
   gallery: string[]
   fileUrl: string | null
@@ -77,6 +78,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([]) // For computing homepage positions
   const [categories, setCategories] = useState<ProductCategory[]>([])
+  const [brands, setBrands] = useState<Array<{ id: string; slug: string; nameBg: string; nameEn: string; nameEs: string }>>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -117,6 +119,12 @@ export default function ProductsPage() {
     setCategories(Array.isArray(data) ? data : [])
   }
 
+  const fetchBrands = async () => {
+    const res = await fetch("/api/admin/brands")
+    const data = await res.json()
+    setBrands(Array.isArray(data) ? data : [])
+  }
+
   const fetchAllProducts = async () => {
     const res = await fetch("/api/admin/products")
     const data = await res.json()
@@ -139,6 +147,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchCategories()
+    fetchBrands()
     fetchProducts()
     fetchAllProducts()
   }, [])
@@ -184,7 +193,7 @@ export default function ProductsPage() {
     priceType: string
     category: string
     tags: string[]
-    brand: string
+    brandId: string
     image: string
     gallery: string[]
     fileUrl: string
@@ -519,6 +528,13 @@ export default function ProductsPage() {
             <FolderOpen className="w-4 h-4" />
             {t("manageCategories")}
           </Link>
+          <Link
+            href="/admin/brands"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <BadgeCheck className="w-4 h-4" />
+            {t("manageBrands")}
+          </Link>
           {can("products", "create") && (
             <button
               onClick={() => {
@@ -679,6 +695,7 @@ export default function ProductsPage() {
         <ProductForm
           initialData={editingProduct || undefined}
           categories={categories}
+          brands={brands}
           onSubmit={handleSubmit}
           onCancel={() => {
             setShowForm(false)

@@ -15,6 +15,7 @@ export type Resource =
   | "roles"
   | "media"
   | "coupons"
+  | "brands"
   | "notifications"
   | "audit"
 
@@ -38,6 +39,7 @@ export const RESOURCE_NAV_MAP: Record<string, Resource> = {
   "/admin/roles": "roles",
   "/admin/media": "media",
   "/admin/coupons": "coupons",
+  "/admin/brands": "brands",
   "/admin/notifications": "notifications",
   "/admin/notification-templates": "notifications",
   "/admin/audit-logs": "audit",
@@ -50,6 +52,7 @@ const EDITOR_DEFAULTS: PermissionMap = {
   dashboard: { view: true, create: false, edit: false, delete: false },
   products: { view: true, create: true, edit: true, delete: true },
   categories: { view: true, create: true, edit: true, delete: true },
+  brands: { view: true, create: true, edit: true, delete: true },
   content: { view: true, create: true, edit: true, delete: true },
   types: { view: true, create: true, edit: true, delete: true },
   banners: { view: true, create: true, edit: true, delete: true },
@@ -68,6 +71,7 @@ const AUTHOR_DEFAULTS: PermissionMap = {
   dashboard: { view: true, create: false, edit: false, delete: false },
   products: { view: true, create: true, edit: true, delete: false },
   categories: { view: true, create: false, edit: false, delete: false },
+  brands: { view: true, create: false, edit: false, delete: false },
   content: { view: true, create: true, edit: true, delete: false },
   types: { view: true, create: false, edit: false, delete: false },
   banners: { view: false, create: false, edit: false, delete: false },

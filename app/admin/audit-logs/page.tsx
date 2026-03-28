@@ -30,6 +30,7 @@ import {
   ImageIcon,
   Ticket,
   BellRing,
+  BadgeCheck,
 } from "lucide-react"
 import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsContext"
 import { ConfirmModal } from "@/app/components/admin/ConfirmModal"
@@ -82,12 +83,13 @@ const RESOURCE_STYLES: Record<string, { icon: typeof Plus; color: string }> = {
   media:         { icon: ImageIcon,      color: "bg-violet-500/20 text-violet-400" },
   coupons:       { icon: Ticket,         color: "bg-amber-500/20 text-amber-400" },
   notifications: { icon: BellRing,       color: "bg-sky-500/20 text-sky-400" },
+  brands:        { icon: BadgeCheck,    color: "bg-lime-500/20 text-lime-400" },
 }
 
 const RESOURCES = [
   "products", "content", "orders", "quotes", "banners",
   "media", "menu", "types", "users", "roles", "categories",
-  "coupons", "notifications",
+  "brands", "coupons", "notifications",
 ]
 
 const ACTIONS = ["create", "edit", "delete"]

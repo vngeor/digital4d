@@ -93,7 +93,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             slug: slug,
             published: true,
         },
-        include: { variants: { orderBy: { order: "asc" } } },
+        include: { variants: { orderBy: { order: "asc" } }, brand: true },
     })
 
     if (!product) {
@@ -243,7 +243,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         description: productDesc ? stripHtml(productDesc).slice(0, 200) : productName,
         image: product.image || undefined,
         sku: product.sku,
-        brand: { "@type": "Brand", name: product.brand || "digital4d" },
+        brand: { "@type": "Brand", name: product.brand?.nameEn || "digital4d" },
         category: categoryName,
         url: `${siteUrl}/products/${product.slug}`,
     }
@@ -347,7 +347,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
 
                             {/* Brand */}
                             {product.brand && (
-                                <p className="text-sm text-slate-400 font-medium">{product.brand}</p>
+                                <p className="text-sm text-slate-400 font-medium">{getLocalizedName(product.brand)}</p>
                             )}
 
                             {/* Name + Wishlist */}
