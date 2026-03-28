@@ -16,9 +16,6 @@ interface Brand {
   nameBg: string
   nameEn: string
   nameEs: string
-  titleBg: string | null
-  titleEn: string | null
-  titleEs: string | null
   titleAlign: string
   descBg: string | null
   descEn: string | null
@@ -55,9 +52,6 @@ export default function BrandsPage() {
     nameBg: string
     nameEn: string
     nameEs: string
-    titleBg: string
-    titleEn: string
-    titleEs: string
     titleAlign: string
     descBg: string
     descEn: string
