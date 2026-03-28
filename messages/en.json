@@ -946,6 +946,7 @@
       "slug": "Slug",
       "slugHelp": "URL-friendly identifier",
       "name": "Name",
+      "titleField": "Title",
       "description": "Description",
       "image": "Logo",
       "logoRecommendation": "Recommended: 200 x 200px (1:1 square, transparent PNG)",

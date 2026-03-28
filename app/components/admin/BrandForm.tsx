@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { X, Save, Loader2, Upload } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
+import { RichTextEditor } from "./RichTextEditor"
 
 interface BrandFormData {
   id?: string
@@ -12,6 +13,9 @@ interface BrandFormData {
   nameBg: string
   nameEn: string
   nameEs: string
+  titleBg: string
+  titleEn: string
+  titleEs: string
   descBg: string
   descEn: string
   descEs: string
@@ -26,6 +30,9 @@ interface BrandFormProps {
     nameBg?: string
     nameEn?: string
     nameEs?: string
+    titleBg?: string | null
+    titleEn?: string | null
+    titleEs?: string | null
     descBg?: string | null
     descEn?: string | null
     descEs?: string | null
@@ -61,6 +68,9 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
     nameBg: initialData?.nameBg ?? "",
     nameEn: initialData?.nameEn ?? "",
     nameEs: initialData?.nameEs ?? "",
+    titleBg: initialData?.titleBg || "",
+    titleEn: initialData?.titleEn || "",
+    titleEs: initialData?.titleEs || "",
     descBg: initialData?.descBg || "",
     descEn: initialData?.descEn || "",
     descEs: initialData?.descEs || "",
@@ -277,15 +287,27 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
+                  {t("titleField")} ({activeTab.toUpperCase()})
+                </label>
+                <input
+                  type="text"
+                  value={formData[`title${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
+                  onChange={(e) =>
+                    updateField(`title${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, e.target.value)
+                  }
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("description")} ({activeTab.toUpperCase()})
                 </label>
-                <textarea
+                <RichTextEditor
                   value={formData[`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
-                  onChange={(e) =>
-                    updateField(`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, e.target.value)
+                  onChange={(html) =>
+                    updateField(`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, html)
                   }
-                  rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
                 />
               </div>
             </div>

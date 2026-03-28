@@ -225,6 +225,9 @@ model Brand {
   nameBg    String
   nameEn    String
   nameEs    String
+  titleBg   String?
+  titleEn   String?
+  titleEs   String?
   descBg    String?   @db.Text
   descEn    String?   @db.Text
   descEs    String?   @db.Text
