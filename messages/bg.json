@@ -946,6 +946,7 @@
       "slug": "Slug",
       "slugHelp": "URL идентификатор",
       "name": "Име",
+      "titleField": "Заглавие",
       "description": "Описание",
       "image": "Лого",
       "logoRecommendation": "Препоръчително: 200 x 200px (1:1 квадрат, прозрачен PNG)",
