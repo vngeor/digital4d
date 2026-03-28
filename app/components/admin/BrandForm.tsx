@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { X, Save, Loader2, Upload } from "lucide-react"
+import { X, Save, Loader2, Upload, AlignLeft, AlignCenter, AlignRight } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
 import { RichTextEditor } from "./RichTextEditor"
 
@@ -16,6 +16,7 @@ interface BrandFormData {
   titleBg: string
   titleEn: string
   titleEs: string
+  titleAlign: string
   descBg: string
   descEn: string
   descEs: string
@@ -33,6 +34,7 @@ interface BrandFormProps {
     titleBg?: string | null
     titleEn?: string | null
     titleEs?: string | null
+    titleAlign?: string
     descBg?: string | null
     descEn?: string | null
     descEs?: string | null
@@ -71,6 +73,7 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
     titleBg: initialData?.titleBg || "",
     titleEn: initialData?.titleEn || "",
     titleEs: initialData?.titleEs || "",
+    titleAlign: initialData?.titleAlign ?? "left",
     descBg: initialData?.descBg || "",
     descEn: initialData?.descEn || "",
     descEs: initialData?.descEs || "",
@@ -286,9 +289,31 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("titleField")} ({activeTab.toUpperCase()})
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-400">
+                    {t("titleField")} ({activeTab.toUpperCase()})
+                  </label>
+                  <div className="flex items-center gap-1">
+                    {(["left", "center", "right"] as const).map((align) => {
+                      const Icon = align === "left" ? AlignLeft : align === "center" ? AlignCenter : AlignRight
+                      return (
+                        <button
+                          key={align}
+                          type="button"
+                          onClick={() => updateField("titleAlign", align)}
+                          className={`p-1.5 rounded-lg transition-all ${
+                            formData.titleAlign === align
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                              : "text-gray-500 hover:text-white hover:bg-white/5"
+                          }`}
+                          title={align.charAt(0).toUpperCase() + align.slice(1)}
+                        >
+                          <Icon className="w-4 h-4" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
                 <input
                   type="text"
                   value={formData[`title${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
