@@ -13,9 +13,6 @@ interface BrandFormData {
   nameBg: string
   nameEn: string
   nameEs: string
-  titleBg: string
-  titleEn: string
-  titleEs: string
   titleAlign: string
   descBg: string
   descEn: string
@@ -31,9 +28,6 @@ interface BrandFormProps {
     nameBg?: string
     nameEn?: string
     nameEs?: string
-    titleBg?: string | null
-    titleEn?: string | null
-    titleEs?: string | null
     titleAlign?: string
     descBg?: string | null
     descEn?: string | null
@@ -70,9 +64,6 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
     nameBg: initialData?.nameBg ?? "",
     nameEn: initialData?.nameEn ?? "",
     nameEs: initialData?.nameEs ?? "",
-    titleBg: initialData?.titleBg || "",
-    titleEn: initialData?.titleEn || "",
-    titleEs: initialData?.titleEs || "",
     titleAlign: initialData?.titleAlign ?? "left",
     descBg: initialData?.descBg || "",
     descEn: initialData?.descEn || "",
@@ -270,28 +261,9 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  {t("name")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
-                  onChange={(e) =>
-                    updateField(`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, e.target.value)
-                  }
-                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors ${
-                    errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
-                  }`}
-                />
-                {errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] && (
-                  <p className="text-xs text-red-400 mt-1">{errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}</p>
-                )}
-              </div>
-
-              <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-gray-400">
-                    {t("titleField")} ({activeTab.toUpperCase()})
+                    {t("titleField")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
                   </label>
                   <div className="flex items-center gap-1">
                     {(["left", "center", "right"] as const).map((align) => {
@@ -316,12 +288,17 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
                 </div>
                 <input
                   type="text"
-                  value={formData[`title${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
+                  value={formData[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
                   onChange={(e) =>
-                    updateField(`title${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, e.target.value)
+                    updateField(`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, e.target.value)
                   }
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors ${
+                    errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+                  }`}
                 />
+                {errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] && (
+                  <p className="text-xs text-red-400 mt-1">{errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}</p>
+                )}
               </div>
 
               <div>

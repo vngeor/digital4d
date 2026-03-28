@@ -45,9 +45,6 @@ export async function POST(request: NextRequest) {
         nameBg: data.nameBg,
         nameEn: data.nameEn,
         nameEs: data.nameEs,
-        titleBg: data.titleBg || null,
-        titleEn: data.titleEn || null,
-        titleEs: data.titleEs || null,
         titleAlign: data.titleAlign || "left",
         descBg: data.descBg || null,
         descEn: data.descEn || null,
@@ -104,9 +101,6 @@ export async function PUT(request: NextRequest) {
         nameBg: data.nameBg,
         nameEn: data.nameEn,
         nameEs: data.nameEs,
-        titleBg: data.titleBg || null,
-        titleEn: data.titleEn || null,
-        titleEs: data.titleEs || null,
         titleAlign: data.titleAlign || "left",
         descBg: data.descBg || null,
         descEn: data.descEn || null,
@@ -116,7 +110,7 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    const brandFields = ["slug", "nameBg", "nameEn", "nameEs", "titleBg", "titleEn", "titleEs", "titleAlign", "descBg", "descEn", "descEs", "image", "order"]
+    const brandFields = ["slug", "nameBg", "nameEn", "nameEs", "titleAlign", "descBg", "descEn", "descEs", "image", "order"]
     const details = getChangeDetails(oldBrand as Record<string, unknown>, brand as Record<string, unknown>, brandFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "brands", recordId: brand.id, recordTitle: brand.nameEn, details }).catch(() => {})
 

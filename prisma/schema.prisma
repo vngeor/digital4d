@@ -225,9 +225,6 @@ model Brand {
   nameBg    String
   nameEn    String
   nameEs    String
-  titleBg   String?
-  titleEn   String?
-  titleEs   String?
   titleAlign String  @default("left")
   descBg    String?   @db.Text
   descEn    String?   @db.Text
