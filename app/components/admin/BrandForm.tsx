@@ -12,6 +12,9 @@ interface BrandFormData {
   nameBg: string
   nameEn: string
   nameEs: string
+  descBg: string
+  descEn: string
+  descEs: string
   image: string
   order: number
 }
@@ -23,6 +26,9 @@ interface BrandFormProps {
     nameBg?: string
     nameEn?: string
     nameEs?: string
+    descBg?: string | null
+    descEn?: string | null
+    descEs?: string | null
     image?: string | null
     order?: number
   }
@@ -55,6 +61,9 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
     nameBg: initialData?.nameBg ?? "",
     nameEn: initialData?.nameEn ?? "",
     nameEs: initialData?.nameEs ?? "",
+    descBg: initialData?.descBg || "",
+    descEn: initialData?.descEn || "",
+    descEs: initialData?.descEs || "",
     image: initialData?.image || "",
     order: initialData?.order ?? 0,
   })
@@ -215,6 +224,7 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
                 />
               </div>
               <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
+              <p className="text-xs text-emerald-400/70">{t("logoRecommendation")}</p>
             </div>
           </div>
 
@@ -245,23 +255,39 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
                 )
               })}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("name")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
-                onChange={(e) =>
-                  updateField(`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, e.target.value)
-                }
-                className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors ${
-                  errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
-                }`}
-              />
-              {errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] && (
-                <p className="text-xs text-red-400 mt-1">{errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}</p>
-              )}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  {t("name")} ({activeTab.toUpperCase()}) <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
+                  onChange={(e) =>
+                    updateField(`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, e.target.value)
+                  }
+                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors ${
+                    errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+                  }`}
+                />
+                {errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] && (
+                  <p className="text-xs text-red-400 mt-1">{errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`]}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  {t("description")} ({activeTab.toUpperCase()})
+                </label>
+                <textarea
+                  value={formData[`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData] as string}
+                  onChange={(e) =>
+                    updateField(`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof BrandFormData, e.target.value)
+                  }
+                  rows={3}
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                />
+              </div>
             </div>
           </div>
 

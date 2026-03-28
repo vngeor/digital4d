@@ -16,6 +16,9 @@ interface Brand {
   nameBg: string
   nameEn: string
   nameEs: string
+  descBg: string | null
+  descEn: string | null
+  descEs: string | null
   image: string | null
   order: number
   _count: { products: number }
@@ -48,6 +51,9 @@ export default function BrandsPage() {
     nameBg: string
     nameEn: string
     nameEs: string
+    descBg: string
+    descEn: string
+    descEs: string
     image: string
     order: number
   }) => {
