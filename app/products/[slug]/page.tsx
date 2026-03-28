@@ -7,6 +7,7 @@ import { WishlistButton } from "../../components/WishlistButton"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 import { headers } from "next/headers"
+import { ProductImageGallery } from "../../components/ProductImageGallery"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 import type { Product } from "@prisma/client"
@@ -91,7 +92,8 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         where: {
             slug: slug,
             published: true,
-        }
+        },
+        include: { variants: { orderBy: { order: "asc" } } },
     })
 
     if (!product) {
@@ -241,7 +243,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         description: productDesc ? stripHtml(productDesc).slice(0, 200) : productName,
         image: product.image || undefined,
         sku: product.sku,
-        brand: { "@type": "Brand", name: "digital4d" },
+        brand: { "@type": "Brand", name: product.brand || "digital4d" },
         category: categoryName,
         url: `${siteUrl}/products/${product.slug}`,
     }
@@ -312,22 +314,13 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             <section className="relative py-8 px-4">
                 <div className="mx-auto max-w-6xl">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
-                        {/* Image */}
-                        <div className="glass rounded-xl md:rounded-2xl border border-white/10 overflow-hidden">
-                            {product.image ? (
-                                <img
-                                    src={product.image}
-                                    alt={productName}
-                                    className="w-full h-full object-cover min-h-[220px] sm:min-h-[300px] md:min-h-[400px]"
-                                />
-                            ) : (
-                                <div className="w-full h-full min-h-[220px] sm:min-h-[300px] md:min-h-[400px] flex items-center justify-center bg-white/5">
-                                    <svg className="w-12 h-12 md:w-24 md:h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                </div>
-                            )}
-                        </div>
+                        {/* Image + Color Variants */}
+                        <ProductImageGallery
+                            mainImage={product.image}
+                            productName={productName}
+                            variants={JSON.parse(JSON.stringify(product.variants))}
+                            locale={locale}
+                        />
 
                         {/* Details */}
                         <div className="space-y-3 md:space-y-6">
@@ -351,6 +344,11 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                     {categoryName}
                                 </Link>
                             </div>
+
+                            {/* Brand */}
+                            {product.brand && (
+                                <p className="text-sm text-slate-400 font-medium">{product.brand}</p>
+                            )}
 
                             {/* Name + Wishlist */}
                             <div className="flex items-start gap-3">

@@ -193,6 +193,7 @@ model Product {
   priceType   String    @default("fixed")  // "fixed", "from", "quote"
   category    String
   tags        String[]
+  brand       String?
   image       String?
   gallery     String[]
   fileUrl     String?   // For digital products
@@ -207,12 +208,30 @@ model Product {
   updatedAt     DateTime  @updatedAt
   quotes        QuoteRequest[]
   wishlistItems WishlistItem[]
+  variants      ProductVariant[]
 
   @@index([category])
   @@index([published])
   @@index([featured])
   @@index([order])
   @@index([createdById])
+}
+
+model ProductVariant {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  colorNameBg String
+  colorNameEn String
+  colorNameEs String
+  colorHex    String
+  image       String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([productId])
+  @@index([order])
 }
 
 // Product category model (supports parent/child hierarchy for subcategories)
