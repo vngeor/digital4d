@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
         { nameEs: { contains: search, mode: "insensitive" } },
         { sku: { contains: search, mode: "insensitive" } },
         { slug: { contains: search, mode: "insensitive" } },
+        { brand: { nameEn: { contains: search, mode: "insensitive" } } },
+        { brand: { nameBg: { contains: search, mode: "insensitive" } } },
       ]
     }
 
