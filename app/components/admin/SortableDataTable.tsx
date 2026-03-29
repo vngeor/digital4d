@@ -154,11 +154,17 @@ export function SortableDataTable<T extends { id: string; order: number }>({
     })
   )
 
+  const matchesSearch = (value: unknown, term: string): boolean => {
+    if (value === null || value === undefined) return false
+    if (typeof value === "object" && !Array.isArray(value)) {
+      return Object.values(value).some(v => matchesSearch(v, term))
+    }
+    return String(value).toLowerCase().includes(term)
+  }
+
   const filteredData = searchable
     ? items.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(search.toLowerCase())
-        )
+        Object.values(item).some((value) => matchesSearch(value, search.toLowerCase()))
       )
     : items
 

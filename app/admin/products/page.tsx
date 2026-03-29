@@ -83,6 +83,7 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedBrandFilter, setSelectedBrandFilter] = useState<string | null>(null)
   const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
@@ -574,38 +575,52 @@ export default function ProductsPage() {
         </Link>
       </div>
 
-      {/* Category Filter Tabs */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setSelectedCategory(null)}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-            selectedCategory === null
-              ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-              : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
-          }`}
-        >
-          {t("all")}
-        </button>
-        {categories.map((category) => (
+      {/* Filters: Category tabs + Brand dropdown */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex flex-wrap gap-2 flex-1">
           <button
-            key={category.id}
-            onClick={() => setSelectedCategory(category.slug)}
+            onClick={() => setSelectedCategory(null)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              selectedCategory === category.slug
+              selectedCategory === null
                 ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                 : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
             }`}
           >
-            {category.nameEn}
+            {t("all")}
           </button>
-        ))}
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.slug)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                selectedCategory === category.slug
+                  ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              {category.nameEn}
+            </button>
+          ))}
+        </div>
+        {brands.length > 0 && (
+          <select
+            value={selectedBrandFilter || ""}
+            onChange={(e) => setSelectedBrandFilter(e.target.value || null)}
+            className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+          >
+            <option value="">{t("allBrandsFilter")}</option>
+            {brands.map(b => (
+              <option key={b.id} value={b.id}>{b.nameEn}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {loading ? (
         <SkeletonDataTable columns={6} />
       ) : (
         <SortableDataTable
-          data={products}
+          data={selectedBrandFilter ? products.filter(p => p.brandId === selectedBrandFilter) : products}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={t("noProducts")}
