@@ -343,6 +343,7 @@ export function Header() {
                     )
                 })}
                 <Link href="/products" className={`transition-colors whitespace-nowrap py-2 border-b-2 ${pathname.startsWith("/products") ? "text-emerald-400 border-emerald-400" : "text-slate-300 border-transparent hover:text-emerald-400"}`}>{t("products")}</Link>
+                <Link href="/brands" className={`transition-colors whitespace-nowrap py-2 border-b-2 ${pathname.startsWith("/brands") ? "text-emerald-400 border-emerald-400" : "text-slate-300 border-transparent hover:text-emerald-400"}`}>{t("brands")}</Link>
                 <Link href="/#news" className="text-slate-300 border-b-2 border-transparent hover:text-emerald-400 transition-colors whitespace-nowrap py-2">{t("news")}</Link>
                 <Link href="/#contact" className="text-slate-300 border-b-2 border-transparent hover:text-emerald-400 transition-colors whitespace-nowrap py-2">{t("contact")}</Link>
             </nav>
@@ -402,6 +403,12 @@ export function Header() {
                             className="py-3 text-slate-300 hover:text-emerald-400 transition-colors touch-manipulation"
                         >
                             {t("products")}
+                        </Link>
+                        <Link
+                            href="/brands"
+                            className="py-3 text-slate-300 hover:text-emerald-400 transition-colors touch-manipulation"
+                        >
+                            {t("brands")}
                         </Link>
                         <Link
                             href="/#news"
