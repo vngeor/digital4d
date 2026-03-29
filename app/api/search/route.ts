@@ -30,7 +30,11 @@ export async function GET(request: NextRequest) {
       prisma.product.findMany({
         where: {
           published: true,
-          OR: searchCondition(["nameEn", "nameBg", "nameEs", "sku"]),
+          OR: [
+            ...searchCondition(["nameEn", "nameBg", "nameEs", "sku"]),
+            { brand: { nameEn: { contains: q, mode: "insensitive" as const } } },
+            { brand: { nameBg: { contains: q, mode: "insensitive" as const } } },
+          ],
         },
         select: {
           id: true,
@@ -46,7 +50,7 @@ export async function GET(request: NextRequest) {
           priceType: true,
           category: true,
           fileType: true,
-          brand: { select: { slug: true } },
+          brand: { select: { slug: true, nameEn: true, nameBg: true, nameEs: true } },
         },
         orderBy: [{ featured: "desc" }, { order: "asc" }],
         take: limit,
@@ -102,6 +106,7 @@ export async function GET(request: NextRequest) {
 
     const products = rawProducts.map(({ brand, ...rest }) => ({
       ...rest,
+      brandName: brand?.nameEn || brand?.nameBg || null,
       productUrl: buildProductUrl(
         rest.slug,
         rest.category,

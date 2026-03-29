@@ -172,7 +172,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             })()
             const matchesSearch = !searchQuery ||
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product.slug.toLowerCase().includes(searchQuery.toLowerCase())
+                product.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (product.brand && getLocalizedName(product.brand).toLowerCase().includes(searchQuery.toLowerCase()))
             const matchesSale = !saleFilter || product.onSale
             const matchesBrand = !selectedBrand || (product.brand && getLocalizedName(product.brand) === selectedBrand)
             return matchesCategory && matchesSearch && matchesSale && matchesBrand
