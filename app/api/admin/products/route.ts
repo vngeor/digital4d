@@ -31,7 +31,17 @@ export async function GET(request: NextRequest) {
     const where: any = {}
 
     if (category) {
-      where.category = category
+      // Check if this is a parent category with children
+      const childCategories = await prisma.productCategory.findMany({
+        where: { parent: { slug: category } },
+        select: { slug: true },
+      })
+      if (childCategories.length > 0) {
+        // Parent category: match parent slug + all children slugs
+        where.category = { in: [category, ...childCategories.map(c => c.slug)] }
+      } else {
+        where.category = category
+      }
     }
 
     if (search) {
