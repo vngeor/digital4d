@@ -930,6 +930,7 @@
       "brand": "Marca",
       "noBrand": "— Sin marca —",
       "manageBrands": "Gestionar Marcas",
+      "allBrandsFilter": "Todas las marcas",
       "colorVariants": "Variantes de color",
       "addColor": "Agregar color",
       "removeColor": "Eliminar",

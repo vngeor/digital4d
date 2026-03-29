@@ -930,6 +930,7 @@
       "brand": "Марка",
       "noBrand": "— Без марка —",
       "manageBrands": "Управление на марки",
+      "allBrandsFilter": "Всички марки",
       "colorVariants": "Цветови варианти",
       "addColor": "Добави цвят",
       "removeColor": "Премахни",

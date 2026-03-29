@@ -42,11 +42,17 @@ export function DataTable<T extends { id: string }>({
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
 
+  const matchesSearch = (value: unknown, term: string): boolean => {
+    if (value === null || value === undefined) return false
+    if (typeof value === "object" && !Array.isArray(value)) {
+      return Object.values(value).some(v => matchesSearch(v, term))
+    }
+    return String(value).toLowerCase().includes(term)
+  }
+
   const filteredData = searchable
     ? data.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(search.toLowerCase())
-        )
+        Object.values(item).some((value) => matchesSearch(value, search.toLowerCase()))
       )
     : data
 
