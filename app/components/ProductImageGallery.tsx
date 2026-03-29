@@ -38,21 +38,23 @@ export function ProductImageGallery({ mainImage, productName, variants, locale }
     const selectedColorName = selectedIndex !== null ? getColorName(variants[selectedIndex]) : null
 
     return (
-        <div className="glass rounded-xl md:rounded-2xl border border-white/10 overflow-hidden">
+        <div className="glass rounded-xl md:rounded-2xl border border-white/10 flex flex-col">
             {/* Image */}
-            {currentImage ? (
-                <img
-                    src={currentImage}
-                    alt={selectedColorName ? `${productName} - ${selectedColorName}` : productName}
-                    className="w-full h-full object-contain min-h-[220px] sm:min-h-[300px] md:min-h-[400px] p-4"
-                />
-            ) : (
-                <div className="w-full h-full min-h-[220px] sm:min-h-[300px] md:min-h-[400px] flex items-center justify-center bg-white/5">
-                    <svg className="w-12 h-12 md:w-24 md:h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                </div>
-            )}
+            <div className="overflow-hidden">
+                {currentImage ? (
+                    <img
+                        src={currentImage}
+                        alt={selectedColorName ? `${productName} - ${selectedColorName}` : productName}
+                        className="w-full object-contain min-h-[220px] sm:min-h-[300px] md:min-h-[400px] max-h-[500px] p-4"
+                    />
+                ) : (
+                    <div className="min-h-[220px] sm:min-h-[300px] md:min-h-[400px] flex items-center justify-center bg-white/5">
+                        <svg className="w-12 h-12 md:w-24 md:h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                    </div>
+                )}
+            </div>
 
             {/* Color Selector */}
             {variants.length > 0 && (
