@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                 {
                     url: product.image,
                     width: 800,
-                    height: 600,
+                    height: 800,
                     alt: name,
                 }
             ] : undefined,
