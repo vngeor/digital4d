@@ -4,6 +4,7 @@ import { requirePermissionApi } from "@/lib/admin"
 import { deleteBlobsBatch } from "@/lib/blob"
 import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 import { notifyWishlistPriceDrop } from "@/lib/wishlistNotifications"
+import { buildProductUrlFromDb } from "@/lib/productUrl"
 
 export async function GET(request: NextRequest) {
   try {
@@ -286,24 +287,27 @@ export async function PUT(request: NextRequest) {
     const wentOnSale = !oldProduct.onSale && product.onSale
     const salePriceDropped = product.onSale && newSalePriceNum !== null && oldSalePriceNum !== null && newSalePriceNum < oldSalePriceNum
 
-    if (priceDropped || wentOnSale || salePriceDropped) {
-      notifyWishlistPriceDrop(
-        product.id,
-        product.slug,
-        { nameBg: product.nameBg, nameEn: product.nameEn, nameEs: product.nameEs },
-        oldPriceNum,
-        newPriceNum,
-        product.onSale,
-        newSalePriceNum,
-        product.currency
-      ).catch((err) => console.error("Failed to send wishlist price drop notifications:", err instanceof Error ? err.message : "Unknown"))
-    }
-
     // Re-fetch with variants
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
       include: { variants: { orderBy: { order: "asc" } }, brand: true },
     })
+
+    if (priceDropped || wentOnSale || salePriceDropped) {
+      buildProductUrlFromDb({ slug: product.slug, category: product.category, brand: productWithVariants?.brand }).then(productUrl => {
+        notifyWishlistPriceDrop(
+          product.id,
+          product.slug,
+          { nameBg: product.nameBg, nameEn: product.nameEn, nameEs: product.nameEs },
+          oldPriceNum,
+          newPriceNum,
+          product.onSale,
+          newSalePriceNum,
+          product.currency,
+          productUrl
+        )
+      }).catch((err) => console.error("Failed to send wishlist price drop notifications:", err instanceof Error ? err.message : "Unknown"))
+    }
 
     return NextResponse.json(productWithVariants)
   } catch (error) {

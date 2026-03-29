@@ -22,6 +22,7 @@ interface SearchProduct {
     priceType: string
     category: string
     fileType: string | null
+    productUrl?: string
 }
 
 interface SearchContent {
@@ -269,7 +270,7 @@ export function SearchResultsClient({ initialQuery, locale, categories, translat
                                             return (
                                             <Link
                                                 key={p.id}
-                                                href={`/products/${p.slug}`}
+                                                href={p.productUrl || `/products/${p.slug}`}
                                                 className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all hover:shadow-lg hover:shadow-emerald-500/10"
                                             >
                                                 {p.image ? (

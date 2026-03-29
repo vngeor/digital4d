@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next"
 import { prisma } from "@/lib/prisma"
+import { buildProductUrl } from "@/lib/productUrl"
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.digital4d.eu"
 
@@ -35,11 +36,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Published products
   const products = await prisma.product.findMany({
     where: { published: true },
-    select: { slug: true, updatedAt: true },
+    select: { slug: true, updatedAt: true, category: true, brand: { select: { slug: true } } },
   })
 
+  const allCategories = await prisma.productCategory.findMany({
+    select: { slug: true, parent: { select: { slug: true } } },
+  })
+  const categoryParentMap = new Map<string, string | null>()
+  for (const cat of allCategories) {
+    categoryParentMap.set(cat.slug, cat.parent?.slug || null)
+  }
+
   const productPages: MetadataRoute.Sitemap = products.map((product) => ({
-    url: `${BASE_URL}/products/${product.slug}`,
+    url: `${BASE_URL}${buildProductUrl(product.slug, product.category, product.brand?.slug, categoryParentMap.get(product.category))}`,
     lastModified: product.updatedAt,
     changeFrequency: "weekly",
     priority: 0.7,

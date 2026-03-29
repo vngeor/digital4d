@@ -21,6 +21,7 @@ interface SearchProduct {
   priceType: string
   category: string
   fileType: string | null
+  productUrl?: string
 }
 
 interface SearchContent {
@@ -149,7 +150,7 @@ export function GlobalSearch() {
           id: p.id,
           label: getName(p),
           sublabel: p.category || p.priceType,
-          href: `/products/${p.slug}`,
+          href: p.productUrl || `/products/${p.slug}`,
           icon: Package,
           section: t("products"),
           image: p.image,

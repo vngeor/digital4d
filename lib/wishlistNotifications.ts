@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import { buildProductUrl } from "@/lib/productUrl"
 
 const COOLDOWN_HOURS = 24
 
@@ -27,7 +28,8 @@ export async function notifyWishlistPriceDrop(
   newPrice: number | null,
   isNowOnSale: boolean,
   salePrice: number | null,
-  currency: string
+  currency: string,
+  productUrl?: string
 ): Promise<number> {
   const wishlistItems = await prisma.wishlistItem.findMany({
     where: { productId },
@@ -54,7 +56,7 @@ export async function notifyWishlistPriceDrop(
           currency,
           onSale: isNowOnSale,
         }),
-        link: `/products/${productSlug}`,
+        link: productUrl || `/products/${productSlug}`,
         productId,
       },
     })

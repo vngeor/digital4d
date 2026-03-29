@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getTranslations, getLocale } from "next-intl/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
+import { buildProductUrl } from "@/lib/productUrl"
 import { WishlistClient } from "./WishlistClient"
 import type { Metadata } from "next"
 
@@ -25,7 +26,7 @@ export default async function WishlistPage() {
     const wishlistItems = await prisma.wishlistItem.findMany({
         where: { userId: session.user.id },
         include: {
-            product: true,
+            product: { include: { brand: { select: { slug: true } } } },
         },
         orderBy: { createdAt: "desc" },
     })
@@ -73,8 +74,24 @@ export default async function WishlistPage() {
     const categories = categoryIds.length > 0
         ? await prisma.productCategory.findMany({
             where: { slug: { in: categoryIds } },
+            include: { parent: { select: { slug: true } } },
         })
         : []
+
+    // Build product URL map
+    const categoryParentMap = new Map<string, string | null>()
+    for (const cat of categories) {
+        categoryParentMap.set(cat.slug, cat.parent?.slug || null)
+    }
+    const productUrlMap: Record<string, string> = {}
+    for (const item of items) {
+        productUrlMap[item.product.id] = buildProductUrl(
+            item.product.slug,
+            item.product.category,
+            item.product.brand?.slug,
+            categoryParentMap.get(item.product.category)
+        )
+    }
 
     const translations = {
         title: t("title"),
@@ -96,6 +113,7 @@ export default async function WishlistPage() {
             locale={locale}
             translations={translations}
             couponMap={couponMap}
+            productUrlMap={productUrlMap}
         />
     )
 }

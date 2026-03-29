@@ -42,6 +42,7 @@ interface Product {
     image: string | null
     featured: boolean
     brand: { name: string; slug: string } | null
+    productUrl: string
 }
 
 interface CouponBadge {
@@ -80,7 +81,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                         return (
                             <Link
                                 key={product.id}
-                                href={`/products/${product.slug}`}
+                                href={product.productUrl}
                                 className="group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300"
                             >
                                 {/* Image */}
