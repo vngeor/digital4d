@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../../components/Header"
@@ -9,21 +9,23 @@ import { auth } from "@/auth"
 import { headers } from "next/headers"
 import { ProductImageGallery } from "../../components/ProductImageGallery"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
+import { buildProductUrl } from "@/lib/productUrl"
 import { ArrowLeft } from "lucide-react"
 import type { Product } from "@prisma/client"
 import type { Metadata } from "next"
 
 interface PageProps {
-    params: Promise<{ slug: string }>
+    params: Promise<{ slug: string[] }>
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    const { slug } = await params
+    const { slug: slugSegments } = await params
+    const productSlug = slugSegments[slugSegments.length - 1]
     const locale = await getLocale()
 
     const product = await prisma.product.findFirst({
-        where: { slug, published: true }
+        where: { slug: productSlug, published: true }
     })
 
     if (!product) {
@@ -80,17 +82,18 @@ const COLOR_CLASSES: Record<string, string> = {
 }
 
 export default async function ProductDetailPage({ params, searchParams }: PageProps) {
-    const { slug } = await params
+    const { slug: slugSegments } = await params
+    const productSlug = slugSegments[slugSegments.length - 1]
     const resolvedSearchParams = await searchParams
     const nonce = (await headers()).get("x-nonce") || ""
     const couponCode = typeof resolvedSearchParams.coupon === "string" ? resolvedSearchParams.coupon : undefined
     const t = await getTranslations()
     const locale = await getLocale()
 
-    // Fetch the product by slug
+    // Fetch the product by slug (last segment)
     const product = await prisma.product.findFirst({
         where: {
-            slug: slug,
+            slug: productSlug,
             published: true,
         },
         include: { variants: { orderBy: { order: "asc" } }, brand: true },
@@ -98,6 +101,23 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
 
     if (!product) {
         notFound()
+    }
+
+    // Build canonical hierarchical URL and redirect if path doesn't match
+    const productCategory = await prisma.productCategory.findFirst({
+        where: { slug: product.category },
+        select: { parent: { select: { slug: true } } },
+    })
+    const canonicalPath = buildProductUrl(
+        product.slug,
+        product.category,
+        product.brand?.slug,
+        productCategory?.parent?.slug
+    )
+    const currentPath = `/products/${slugSegments.join("/")}`
+    if (currentPath !== canonicalPath) {
+        const queryString = couponCode ? `?coupon=${couponCode}` : ""
+        redirect(canonicalPath + queryString)
     }
 
     // Fetch promoted coupons for this product
@@ -159,8 +179,21 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             NOT: { id: product.id }
         },
         take: 3,
-        orderBy: [{ featured: "desc" }, { order: "asc" }]
+        orderBy: [{ featured: "desc" }, { order: "asc" }],
+        include: { brand: { select: { slug: true } } },
     })
+
+    // Build URLs for related products
+    const parentSlug = productCategory?.parent?.slug || null
+    const relatedProductUrls: Record<string, string> = {}
+    for (const related of relatedProducts) {
+        relatedProductUrls[related.id] = buildProductUrl(
+            related.slug,
+            related.category,
+            related.brand?.slug,
+            parentSlug // same parent since same category
+        )
+    }
 
     // Build coupon map for related product card badges
     // Fetch all promoted coupons (broader query than the product-specific one above)
@@ -245,7 +278,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         sku: product.sku,
         brand: { "@type": "Brand", name: product.brand?.nameEn || "digital4d" },
         category: categoryName,
-        url: `${siteUrl}/products/${product.slug}`,
+        url: `${siteUrl}${canonicalPath}`,
     }
 
     if (product.priceType !== "quote" && product.price) {
@@ -259,7 +292,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             availability: product.inStock
                 ? "https://schema.org/InStock"
                 : "https://schema.org/OutOfStock",
-            url: `${siteUrl}/products/${product.slug}`,
+            url: `${siteUrl}${canonicalPath}`,
         }
     }
 
@@ -461,7 +494,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                     return (
                                         <Link
                                             key={related.id}
-                                            href={`/products/${related.slug}`}
+                                            href={relatedProductUrls[related.id] || `/products/${related.slug}`}
                                             className="group glass rounded-xl md:rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all"
                                         >
                                             <div className="relative h-28 md:h-40 overflow-hidden bg-white/5">
@@ -587,13 +620,25 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
 
 export async function generateStaticParams() {
     const products = await prisma.product.findMany({
-        where: {
-            published: true,
-        },
-        select: { slug: true }
+        where: { published: true },
+        select: { slug: true, category: true, brand: { select: { slug: true } } },
     })
 
-    return products.map((product: { slug: string }) => ({
-        slug: product.slug,
-    }))
+    const categories = await prisma.productCategory.findMany({
+        select: { slug: true, parent: { select: { slug: true } } },
+    })
+    const categoryParentMap = new Map<string, string | null>()
+    for (const cat of categories) {
+        categoryParentMap.set(cat.slug, cat.parent?.slug || null)
+    }
+
+    return products.map((product) => {
+        const segments: string[] = []
+        const parentSlug = categoryParentMap.get(product.category)
+        if (parentSlug) segments.push(parentSlug)
+        segments.push(product.category)
+        if (product.brand?.slug) segments.push(product.brand.slug)
+        segments.push(product.slug)
+        return { slug: segments }
+    })
 }

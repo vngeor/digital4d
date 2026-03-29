@@ -64,6 +64,7 @@ interface WishlistClientProps {
         backToHome: string
     }
     couponMap?: Record<string, CouponBadge>
+    productUrlMap?: Record<string, string>
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -85,7 +86,7 @@ const COLOR_CLASSES: Record<string, string> = {
     yellow: "bg-yellow-500/20 text-yellow-400",
 }
 
-export function WishlistClient({ items: initialItems, categories, locale, translations: t, couponMap }: WishlistClientProps) {
+export function WishlistClient({ items: initialItems, categories, locale, translations: t, couponMap, productUrlMap }: WishlistClientProps) {
     const [items, setItems] = useState(initialItems)
 
     const getLocalizedName = (item: { nameBg: string; nameEn: string; nameEs: string }) => {
@@ -196,7 +197,7 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                 return (
                                     <div key={item.id} className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all hover:shadow-lg hover:shadow-emerald-500/10">
                                         {/* Image */}
-                                        <Link href={`/products/${product.slug}`}>
+                                        <Link href={productUrlMap?.[product.id] || `/products/${product.slug}`}>
                                             <div className="relative h-32 sm:h-48 overflow-hidden bg-white/5">
                                                 {product.image ? (
                                                     <img
@@ -262,7 +263,7 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                         </Link>
 
                                         {/* Content */}
-                                        <Link href={`/products/${product.slug}`}>
+                                        <Link href={productUrlMap?.[product.id] || `/products/${product.slug}`}>
                                             <div className="p-3 sm:p-5">
                                                 {/* Category Badge */}
                                                 <span

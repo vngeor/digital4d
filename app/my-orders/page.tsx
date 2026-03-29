@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
+import { buildProductUrl } from "@/lib/productUrl"
 import { MyOrdersClient } from "./MyOrdersClient"
 import type { Metadata } from "next"
 
@@ -62,6 +63,8 @@ export default async function MyOrdersPage() {
           slug: true,
           image: true,
           fileType: true,
+          category: true,
+          brand: { select: { slug: true } },
         },
       },
       messages: {
@@ -111,9 +114,27 @@ export default async function MyOrdersPage() {
     }
   }
 
+  // Build product URLs for quotes
+  const allCategories = await prisma.productCategory.findMany({
+    select: { slug: true, parent: { select: { slug: true } } },
+  })
+  const categoryParentMap = new Map<string, string | null>()
+  for (const cat of allCategories) {
+    categoryParentMap.set(cat.slug, cat.parent?.slug || null)
+  }
+
   const quotesWithCoupons = quotes.map(q => ({
     ...q,
     coupon: quoteCouponMap[q.id] || null,
+    product: q.product ? {
+      ...q.product,
+      productUrl: buildProductUrl(
+        q.product.slug,
+        q.product.category,
+        q.product.brand?.slug,
+        categoryParentMap.get(q.product.category)
+      ),
+    } : null,
   }))
 
   const translations = {

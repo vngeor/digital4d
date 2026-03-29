@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { rateLimit, getClientIp } from "@/lib/rateLimit"
+import { buildProductUrl } from "@/lib/productUrl"
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
           priceType: true,
           category: true,
           fileType: true,
+          brand: { select: { slug: true } },
         },
         orderBy: [{ featured: "desc" }, { order: "asc" }],
         take: limit,
@@ -85,9 +87,28 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
-    const products = productsResult.status === "fulfilled" ? productsResult.value : []
+    const rawProducts = productsResult.status === "fulfilled" ? productsResult.value : []
     const rawContent = contentResult.status === "fulfilled" ? contentResult.value : []
     const menu = menuResult.status === "fulfilled" ? menuResult.value : []
+
+    // Build hierarchical product URLs
+    const categories = await prisma.productCategory.findMany({
+      select: { slug: true, parent: { select: { slug: true } } },
+    })
+    const categoryParentMap = new Map<string, string | null>()
+    for (const cat of categories) {
+      categoryParentMap.set(cat.slug, cat.parent?.slug || null)
+    }
+
+    const products = rawProducts.map(({ brand, ...rest }) => ({
+      ...rest,
+      productUrl: buildProductUrl(
+        rest.slug,
+        rest.category,
+        brand?.slug,
+        categoryParentMap.get(rest.category)
+      ),
+    }))
 
     // Flatten menuItem relation to menuItemSlug
     const content = rawContent.map(({ menuItem, ...rest }) => ({

@@ -40,6 +40,7 @@ interface QuoteData {
     slug: string
     image: string | null
     fileType: string | null
+    productUrl?: string
   } | null
   messages: QuoteMessage[]
   coupon: {
@@ -323,7 +324,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                       <div className="flex items-start gap-3 mb-2">
                         {/* Product Image */}
                         {quote.product && (
-                          <Link href={`/products/${quote.product.slug}`} className="shrink-0">
+                          <Link href={quote.product.productUrl || `/products/${quote.product.slug}`} className="shrink-0">
                             {quote.product.image ? (
                               <img
                                 src={quote.product.image}
@@ -344,7 +345,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                                 <span className="text-xs text-blue-400 font-mono shrink-0">{quote.quoteNumber}</span>
                                 {quote.product ? (
                                   <Link
-                                    href={`/products/${quote.product.slug}`}
+                                    href={quote.product.productUrl || `/products/${quote.product.slug}`}
                                     className="text-white hover:text-emerald-400 transition-colors font-medium truncate"
                                   >
                                     {quote.product.nameEn}
@@ -381,7 +382,7 @@ export function MyOrdersClient({ orders, quotes: initialQuotes, translations: t 
                             <div className="mt-1.5">
                               {quote.product?.slug ? (
                                 <Link
-                                  href={`/products/${quote.product.slug}?coupon=${quote.coupon.code}`}
+                                  href={`${quote.product.productUrl || `/products/${quote.product.slug}`}?coupon=${quote.coupon.code}`}
                                   className="block p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-colors"
                                 >
                                   <div className="flex items-center gap-2">

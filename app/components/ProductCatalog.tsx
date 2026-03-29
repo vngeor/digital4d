@@ -73,6 +73,22 @@ const COLOR_CLASSES: Record<string, string> = {
     yellow: "bg-yellow-500/20 text-yellow-400",
 }
 
+function getProductUrl(
+    product: { slug: string; category: string; brand: { slug: string } | null },
+    categories: ProductCategory[]
+): string {
+    const segments = ["/products"]
+    const cat = categories.find(c => c.slug === product.category)
+    if (cat?.parentId) {
+        const parent = categories.find(c => c.id === cat.parentId)
+        if (parent) segments.push(parent.slug)
+    }
+    segments.push(product.category)
+    if (product.brand?.slug) segments.push(product.brand.slug)
+    segments.push(product.slug)
+    return segments.join("/")
+}
+
 export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap, subcategories }: ProductCatalogProps) {
     const t = useTranslations("products")
     const searchParams = useSearchParams()
@@ -435,7 +451,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             return (
                                 <Link
                                     key={product.id}
-                                    href={`/products/${product.slug}`}
+                                    href={getProductUrl(product, categories)}
                                     className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all hover:shadow-lg hover:shadow-emerald-500/10"
                                 >
                                     {/* Image */}

@@ -6,6 +6,7 @@ import { HeroCarousel } from "./components/HeroCarousel"
 import { FeaturedCards } from "./components/FeaturedCards"
 import { BackgroundOrbs } from "./components/BackgroundOrbs"
 import prisma from "@/lib/prisma"
+import { buildProductUrl } from "@/lib/productUrl"
 
 export default async function Home() {
     const t = await getTranslations("hero")
@@ -43,7 +44,7 @@ export default async function Home() {
 
     // Fetch product categories for badge colors
     const productCategories = await prisma.productCategory.findMany({
-      include: { children: true },
+      include: { children: true, parent: true },
     })
     const categoryMap = new Map(productCategories.map(cat => [cat.slug, cat]))
 
@@ -151,6 +152,12 @@ export default async function Home() {
                 name: ((product.brand as Record<string, unknown>)[`name${locale.charAt(0).toUpperCase() + locale.slice(1)}`] as string || product.brand.nameEn),
                 slug: product.brand.slug,
             } : null,
+            productUrl: buildProductUrl(
+                product.slug,
+                product.category,
+                product.brand?.slug,
+                category?.parent?.slug
+            ),
         }
     })
 
