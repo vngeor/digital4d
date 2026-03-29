@@ -384,11 +384,12 @@ export default function ProductsPage() {
       className: "whitespace-nowrap hidden md:table-cell",
       render: (item: Product) => {
         const color = getCategoryColor(item.category)
+        const cat = categories.find(c => c.slug === item.category)
         return (
           <span
             className={`px-2 py-0.5 rounded-full text-xs font-medium ${COLOR_CLASSES[color] || "bg-gray-500/20 text-gray-400"}`}
           >
-            {item.category}
+            {cat?.nameEn || item.category}
           </span>
         )
       },
@@ -539,21 +540,7 @@ export default function ProductsPage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("title")}</h1>
           <p className="text-sm lg:text-base text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <Link
-            href="/admin/products/categories"
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-          >
-            <FolderOpen className="w-4 h-4" />
-            {t("manageCategories")}
-          </Link>
-          <Link
-            href="/admin/brands"
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-all"
-          >
-            <BadgeCheck className="w-4 h-4" />
-            {t("manageBrands")}
-          </Link>
+        <div className="flex items-center gap-3">
           {can("products", "create") && (
             <button
               onClick={() => {
@@ -567,6 +554,24 @@ export default function ProductsPage() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Quick links */}
+      <div className="flex items-center gap-2">
+        <Link
+          href="/admin/products/categories"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+        >
+          <FolderOpen className="w-3.5 h-3.5" />
+          {t("manageCategories")}
+        </Link>
+        <Link
+          href="/admin/brands"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+        >
+          <BadgeCheck className="w-3.5 h-3.5" />
+          {t("manageBrands")}
+        </Link>
       </div>
 
       {/* Category Filter Tabs */}
@@ -645,7 +650,7 @@ export default function ProductsPage() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"}`}>
-                    {item.category}
+                    {categories.find(c => c.slug === item.category)?.nameEn || item.category}
                   </span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${fileTypeBadge.color}`}>
                     {t(fileTypeBadge.labelKey)}
