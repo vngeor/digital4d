@@ -151,7 +151,7 @@ export default async function BrandDetailPage({ params }: PageProps) {
                         <span className="text-emerald-400">{brandName}</span>
                     </nav>
 
-                    {/* Brand Logo + Name */}
+                    {/* Brand Logo + Title (aligned) */}
                     <div className={alignClass}>
                         {brand.image && (
                             <div className={`mb-4 sm:mb-6 ${brand.titleAlign === "center" ? "flex justify-center" : brand.titleAlign === "right" ? "flex justify-end" : ""}`}>
@@ -168,14 +168,15 @@ export default async function BrandDetailPage({ params }: PageProps) {
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
                             {brandName}
                         </h1>
-
-                        {brandDesc && (
-                            <div
-                                className="prose prose-invert prose-emerald max-w-none mt-4 text-slate-300"
-                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(brandDesc) }}
-                            />
-                        )}
                     </div>
+
+                    {/* Description (always left-aligned) */}
+                    {brandDesc && (
+                        <div
+                            className="prose prose-invert prose-emerald max-w-none mt-6 text-slate-300"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(brandDesc) }}
+                        />
+                    )}
                 </div>
             </section>
 
