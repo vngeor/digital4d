@@ -151,32 +151,33 @@ export default async function BrandDetailPage({ params }: PageProps) {
                         <span className="text-emerald-400">{brandName}</span>
                     </nav>
 
-                    {/* Brand Logo + Title (aligned) */}
-                    <div className={alignClass}>
+                    {/* Brand Header: Logo left + Title & Description right */}
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
+                        {/* Logo */}
                         {brand.image && (
-                            <div className={`mb-4 sm:mb-6 ${brand.titleAlign === "center" ? "flex justify-center" : brand.titleAlign === "right" ? "flex justify-end" : ""}`}>
-                                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-white/5 border border-white/10">
-                                    <img
-                                        src={brand.image}
-                                        alt={brandName}
-                                        className="w-full h-full object-contain"
-                                    />
-                                </div>
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                                <img
+                                    src={brand.image}
+                                    alt={brandName}
+                                    className="w-full h-full object-contain p-2"
+                                />
                             </div>
                         )}
 
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
-                            {brandName}
-                        </h1>
-                    </div>
+                        {/* Title + Description */}
+                        <div className="flex-1 min-w-0">
+                            <h1 className={`text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words ${alignClass}`}>
+                                {brandName}
+                            </h1>
 
-                    {/* Description (always left-aligned) */}
-                    {brandDesc && (
-                        <div
-                            className="prose prose-invert prose-emerald max-w-none mt-6 text-slate-300"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(brandDesc) }}
-                        />
-                    )}
+                            {brandDesc && (
+                                <div
+                                    className="prose prose-invert prose-emerald max-w-none mt-3 sm:mt-4 text-slate-300 text-sm sm:text-base"
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(brandDesc) }}
+                                />
+                            )}
+                        </div>
+                    </div>
                 </div>
             </section>
 
