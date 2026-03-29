@@ -44,7 +44,7 @@ export function ProductImageGallery({ mainImage, productName, variants, locale }
                 <img
                     src={currentImage}
                     alt={selectedColorName ? `${productName} - ${selectedColorName}` : productName}
-                    className="w-full h-full object-cover min-h-[220px] sm:min-h-[300px] md:min-h-[400px]"
+                    className="w-full h-full object-contain min-h-[220px] sm:min-h-[300px] md:min-h-[400px] p-4"
                 />
             ) : (
                 <div className="w-full h-full min-h-[220px] sm:min-h-[300px] md:min-h-[400px] flex items-center justify-center bg-white/5">

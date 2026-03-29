@@ -764,7 +764,7 @@ export function ProductForm({
                 />
               </div>
               <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
-              <p className="text-xs text-emerald-400/70">Recommended: 800 x 600px (4:3 ratio)</p>
+              <p className="text-xs text-emerald-400/70">Recommended: 800 x 800px (1:1 square, transparent PNG)</p>
             </div>
           </div>
 
