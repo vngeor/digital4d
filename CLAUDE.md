@@ -44,7 +44,7 @@ No test framework is configured.
   - `requirePermission(resource, action)` — role+user permission check for server components
   - `requirePermissionApi(resource, action)` — role+user permission check for API routes (returns 403)
   - `requireAdminAccess()` — any admin role (ADMIN/EDITOR/AUTHOR) for layout-level access
-- **3-tier permission resolution** (`lib/permissions.ts`): User override → Role override → Code defaults. Resources: dashboard, products, categories, content, types, banners, menu, orders, quotes, media, coupons, notifications, users, roles, audit. Actions: view, create, edit, delete
+- **3-tier permission resolution** (`lib/permissions.ts`): User override → Role override → Code defaults. Resources: dashboard, products, categories, brands, content, types, banners, menu, orders, quotes, media, coupons, notifications, users, roles, audit. Actions: view, create, edit, delete
 - **Admin idle timeout**: `AdminIdleGuard` component auto-logs out after 5 minutes of inactivity with 1-minute warning countdown
 - **Neon cold start handling**: Three-layer defense: (1) `warmupDb()` in auth route handler with 3 attempts and graduated delays (1s/2s/3s); (2) `withRetry()` wrapper around PrismaAdapter with 500ms/1s delays as safety net; (3) client-side auto-retry on Configuration error in login page
 - **Rate limiting** (`lib/rateLimit.ts`): in-memory Map-based per-IP rate limiter. Applied to: login (5/15min), register (3/hr), search (20/min), coupon validate (10/min), quotes (5/hr)
@@ -55,14 +55,16 @@ No test framework is configured.
 ### Database
 
 - **Prisma 7** with Neon HTTP adapter (`lib/prisma.ts`) — **no transaction support**
-- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission, Coupon, CouponUsage, Notification, WishlistItem, WishlistNotification, NotificationTemplate, TemplateSendLog
+- Schema in `prisma/schema.prisma` — key models: User, Product, ProductCategory, Brand, ProductVariant, Content, ContentType, MenuItem, Order, QuoteRequest, QuoteMessage, DigitalPurchase, Banner, RolePermission, UserPermission, Coupon, CouponUsage, Notification, WishlistItem, WishlistNotification, NotificationTemplate, TemplateSendLog
 - **Product categories**: self-referencing hierarchy via `parentId` — supports subcategories (e.g., Филаменти → PLA, PETG, ABS). `Product.category` stores slug string (not FK). Category slug changes cascade to all linked products. Admin form has parent selector. Public products page has accordion dropdown (parent shows count, expands to show children). Clicking parent filters by parent + all children; clicking child filters by that subcategory only
+- **Brands**: `Brand` model (slug, nameBg/En/Es, titleAlign, descBg/En/Es, image, order). Product has `brandId` FK with `onDelete: SetNull`. Admin CRUD at `/admin/brands` with BrandForm (TipTap rich text description, title alignment, logo upload). Public pages at `/brands` (listing) and `/brands/[slug]` (detail with products). Permission resource: `"brands"`
+- **Product variants**: `ProductVariant` model (productId, colorNameBg/En/Es, colorHex, image?, order) with `onDelete: Cascade`. Managed in ProductForm with color picker, per-variant image upload. Displayed via `ProductImageGallery` client component with clickable color circles
 - Prisma results must be serialized for client components: `JSON.parse(JSON.stringify(data))`
 
 ### API Layer
 
 - **No server actions** — all mutations through API routes in `app/api/`
-- Admin CRUD routes in `app/api/admin/` (types, products, categories, content, banners, menu, orders, quotes, users, roles, users/permissions, coupons, notifications, notification-templates)
+- Admin CRUD routes in `app/api/admin/` (types, products, categories, brands, content, banners, menu, orders, quotes, users, roles, users/permissions, coupons, notifications, notification-templates)
 - HTTP methods per route: GET (list/filter), POST (create), PUT (update by ID), PATCH (bulk operations like reordering), DELETE (by ID in query params)
 - Error format: `{ error: "message" }` with appropriate HTTP status
 - No optimistic updates — refetch after mutations
@@ -108,7 +110,8 @@ No test framework is configured.
 ### Pages
 
 - **Homepage** (`app/page.tsx`): hero carousel, featured products, news section, featured cards
-- **Products** (`app/products/`): catalog with filtering, detail pages, digital download
+- **Products** (`app/products/`): catalog with filtering, detail pages, digital download. Hierarchical SEO URLs: `/products/[parent-category]/[subcategory]/[brand]/[product-slug]`. Catch-all route `app/products/[...slug]/page.tsx` with 301 redirect from old flat URLs. URL builder utility: `lib/productUrl.ts` (`buildProductUrl()`, `buildProductUrlFromDb()`, `buildProductUrlsBatch()`)
+- **Brands** (`app/brands/`): listing page with brand cards + detail page (`/brands/[slug]`) with logo, title (aligned), rich description, and filtered ProductCatalog
 - **News** (`app/news/`): listing and detail pages with modal view
 - **Services** (`app/services/`): listing and detail pages
 - **Dynamic CMS** (`app/[menuSlug]/`): menu-driven pages with nested content. Menu items have `showInNav` (hide from nav but keep page accessible) and `titleAlign` (left/center/right)
@@ -126,7 +129,7 @@ No test framework is configured.
 ### Admin UI Patterns
 
 - `app/components/admin/` contains reusable admin components
-- **`DataTable<T>`**: generic paginated table with search, nested field access (e.g., `"user.name"`), optional `renderMobileCard` prop for responsive mobile card views
+- **`DataTable<T>`**: generic paginated table with deep search (searches nested object values like `brand.nameEn`), nested field access (e.g., `"user.name"`), optional `renderMobileCard` prop for responsive mobile card views
 - **`SortableDataTable<T>`**: DataTable + dnd-kit drag-and-drop reordering (requires `order` field), optional `renderMobileCard` prop (no drag handles on mobile)
 - **Mobile responsive**: All admin pages use dual-view pattern — desktop table (`hidden lg:block`) + mobile cards (`lg:hidden`) at the `lg` (1024px) breakpoint. The `renderMobileCard` prop is passed to DataTable/SortableDataTable; it receives the same filtered/searched/paginated data as the desktop table. The Roles page uses a custom role-tabbed card layout (EDITOR/AUTHOR tabs) instead of a table on mobile.
 - **Modal-based CRUD forms** with multi-language tabs (BG/EN/ES)
@@ -137,18 +140,19 @@ No test framework is configured.
 - **`AdminPermissionsContext`**: React context providing `can(resource, action)` helper for client-side permission checks
 - **`AdminIdleGuard`**: wraps admin layout, auto-logout after 5 min inactivity with 1-min warning modal
 - Admin sidebar has live pending quotes badge (30s polling via `data.pendingCount`), mobile hamburger menu with drawer overlay
-- Admin pages: dashboard, products, categories, orders, quotes, content, banners, menu, types, media, coupons, notifications, users, roles, audit logs
+- Admin pages: dashboard, products, categories, brands, orders, quotes, content, banners, menu, types, media, coupons, notifications, users, roles, audit logs
 - **Admin Quotes** (`/admin/quotes`): server-side pagination (page/limit/search/sort params), extracted `QuoteDetailModal` component with 2 tabs (Details + Conversation & Reply). Features: waiting time column with color-coded badges (blue < 24h, amber 1-3d, red pulsing 3+d), urgency filter row (client-side on `updatedAt`), sort toggle (newest/oldest first via API `sort=oldest` → `orderBy: updatedAt asc`), needs-reply pulsing dot, copy-to-clipboard buttons, localized chat messages via `localizeMessage()`, coupon picker, view tracking. Mobile cards show all badges.
 - **Audit logs** (`/admin/audit-logs`): action badges with icons (Plus/Pencil/Trash2), resource badges with matching sidebar icons (Package, FileText, etc.) via `ACTION_STYLES` and `RESOURCE_STYLES` maps
 
 ### Frontend Components
 
 - **`Header`**: navigation with dynamic menu, user dropdown, language switcher, global search, mobile responsive. Includes birthday indicator: pulsing pink dot on avatar + Cake icon on "My Profile" link (desktop dropdown & mobile menu) when user hasn't set birthDate — fetches `/api/user/profile` on mount to check. Social media icons use brand-colored hover (Facebook `#1877F2`, Instagram `#C32AA3`, YouTube `#FF0000`, TikTok `#69C9D0`)
-- **`GlobalSearch`**: public site search with dual-mode rendering. Desktop (lg+): visible glass-styled input in header with dropdown results panel. Mobile (<lg): search icon button → full-screen portal modal with backdrop blur. Features: Cmd+K/Ctrl+K shortcut, 300ms debounced search with AbortController, keyboard navigation (Arrow Up/Down, Enter, Escape), results grouped by type (Products/News/Services/Pages), recent searches in localStorage, loading skeletons. "View All" button navigates to dedicated `/search?q=...` results page. X button clears query. Outside-click hides dropdown without clearing query — re-focusing input re-opens with previous results. URL resolution: products → `/products/${slug}`, news → `/news/${slug}`, content with menuItemSlug → `/${menuItemSlug}/${slug}`, menu items → `/${slug}`
+- **`GlobalSearch`**: public site search with dual-mode rendering. Desktop (lg+): visible glass-styled input in header with dropdown results panel. Mobile (<lg): search icon button → full-screen portal modal with backdrop blur. Features: Cmd+K/Ctrl+K shortcut, 300ms debounced search with AbortController, keyboard navigation (Arrow Up/Down, Enter, Escape), results grouped by type (Products/News/Services/Pages), recent searches in localStorage, loading skeletons. "View All" button navigates to dedicated `/search?q=...` results page. X button clears query. Outside-click hides dropdown without clearing query — re-focusing input re-opens with previous results. URL resolution: products → hierarchical URL from `productUrl` field, news → `/news/${slug}`, content with menuItemSlug → `/${menuItemSlug}/${slug}`, menu items → `/${slug}`
 - **`NotificationBell`**: unified notifications with i18n support; per-type icons (Cake for birthday, TreePine for Christmas, PartyPopper for New Year, Egg for Easter, CalendarDays for custom, Gift for generic holiday); HTML message rendering via `dangerouslySetInnerHTML`; locale-aware JSON title/message parsing; quote notifications show admin message preview, link to specific quote on my-orders with auto-scroll. Dropdown portaled to body with dynamic positioning (measures bell button rect on open) to align under the bell icon
 - **`WishlistButton`**: heart toggle on product cards/detail pages, adds/removes from wishlist
 - **`LanguageSwitcher`**: locale switching with `useTransition`
-- **`ProductCatalog`**: product filtering, search, category tabs
+- **`ProductCatalog`**: product filtering, search, category tabs, brand filter dropdown. Product cards link to hierarchical URLs via `getProductUrl()` helper. Brand names on cards link to `/brands/[slug]`
+- **`ProductImageGallery`**: client component for product detail — displays main image with color variant selector circles below. Clicking a color shows its variant image (falls back to main). First variant selected by default
 - **`QuoteForm`**: drag-and-drop file upload, auto-fill from profile
 - **`ProfileEditForm`**: modal form with validation, portaled to `document.body`. BirthDate is required; when empty, field gets a pulsing pink-to-rose gradient border (`animate-pulse-glow`) with `highlightBirthDate` prop. Gradient: `linear-gradient(to right, lab(56.9303 76.8162 -8.07021), lab(56.101 79.4328 31.4532))`. iOS-safe: body scroll lock (`position: fixed` pattern), `max-h-[85svh]` for stable sizing, flex-col layout (fixed header + scrollable body), date inputs wrapped in `overflow-hidden` with `min-w-0`
 - **`NewsModal`**: article display with category colors
@@ -304,8 +308,6 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 - **Product reviews/ratings**: user reviews with star ratings on product pages
 - **Testimonials section**: customer testimonials on homepage
 - **Cookie consent popup**: GDPR-compliant cookie banner with accept/reject options
-- **Product color variants**: one product with multiple color options (e.g., PLA Red, Blue, Green). Needs: ProductVariant model, admin variant management, color selector on product detail page
-- **Product brand**: brand field on products with admin management, filtering by brand on product pages, brand display on product cards/detail
 
 ### Postponed
 - **Live chat widget**: Tawk.to (free) — script tag integration, deferred
