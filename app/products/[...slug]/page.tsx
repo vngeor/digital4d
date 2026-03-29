@@ -296,14 +296,34 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         }
     }
 
+    // Build breadcrumb items for JSON-LD and visible breadcrumb
+    const breadcrumbItems: Array<{ name: string; href?: string }> = [
+        { name: "Home", href: "/" },
+        { name: t("products.title"), href: "/products" },
+    ]
+    if (parentCategoryName && category?.parent?.slug) {
+        breadcrumbItems.push({ name: parentCategoryName, href: `/products/category/${category.parent.slug}` })
+    }
+    if (categoryName) {
+        const catPath = category?.parent?.slug
+            ? `/products/category/${category.parent.slug}/${product.category}`
+            : `/products/category/${product.category}`
+        breadcrumbItems.push({ name: categoryName, href: catPath })
+    }
+    if (product.brand) {
+        breadcrumbItems.push({ name: getLocalizedName(product.brand), href: `/brands/${product.brand.slug}` })
+    }
+    breadcrumbItems.push({ name: productName })
+
     const breadcrumbJsonLd = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
-        itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
-            { "@type": "ListItem", position: 2, name: "Products", item: `${siteUrl}/products` },
-            { "@type": "ListItem", position: 3, name: productName },
-        ],
+        itemListElement: breadcrumbItems.map((item, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: item.name,
+            ...(item.href ? { item: `${siteUrl}${item.href}` } : {}),
+        })),
     }
 
     return (
@@ -328,17 +348,20 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    {/* Desktop: Full breadcrumb */}
-                    <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 mb-6">
-                        <Link href="/" className="hover:text-emerald-400 transition-colors">
-                            {t("news.backHome")}
-                        </Link>
-                        <span>/</span>
-                        <Link href="/products" className="hover:text-emerald-400 transition-colors">
-                            {t("products.title")}
-                        </Link>
-                        <span>/</span>
-                        <span className="text-slate-300">{productName}</span>
+                    {/* Desktop: Full breadcrumb matching URL hierarchy */}
+                    <div className="hidden sm:flex items-center gap-2 text-sm text-slate-400 mb-6 flex-wrap">
+                        {breadcrumbItems.map((item, i) => (
+                            <span key={i} className="flex items-center gap-2">
+                                {i > 0 && <span>/</span>}
+                                {item.href ? (
+                                    <Link href={item.href} className="hover:text-emerald-400 transition-colors">
+                                        {item.name}
+                                    </Link>
+                                ) : (
+                                    <span className="text-slate-300">{item.name}</span>
+                                )}
+                            </span>
+                        ))}
                     </div>
                 </div>
             </section>
