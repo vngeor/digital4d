@@ -92,7 +92,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                                                 src={product.image}
                                                 alt={product.name}
                                                 loading="lazy"
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-contain p-2"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
                                         </>
