@@ -18,7 +18,7 @@ interface ProductImageGalleryProps {
 }
 
 export function ProductImageGallery({ mainImage, productName, variants, locale }: ProductImageGalleryProps) {
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+    const [selectedIndex, setSelectedIndex] = useState(0)
 
     const getColorName = (variant: Variant) => {
         switch (locale) {
@@ -31,11 +31,12 @@ export function ProductImageGallery({ mainImage, productName, variants, locale }
         }
     }
 
-    const currentImage = selectedIndex !== null && variants[selectedIndex]?.image
+    // Show variant image if selected and has one, otherwise fall back to main image
+    const currentImage = variants.length > 0 && variants[selectedIndex]?.image
         ? variants[selectedIndex].image
         : mainImage
 
-    const selectedColorName = selectedIndex !== null ? getColorName(variants[selectedIndex]) : null
+    const selectedColorName = variants.length > 0 ? getColorName(variants[selectedIndex]) : null
 
     return (
         <div className="glass rounded-xl md:rounded-2xl border border-white/10 flex flex-col">
@@ -56,23 +57,10 @@ export function ProductImageGallery({ mainImage, productName, variants, locale }
                 )}
             </div>
 
-            {/* Color Selector */}
+            {/* Color Selector — only actual variants, no extra default circle */}
             {variants.length > 0 && (
                 <div className="p-3 md:p-4 border-t border-white/10">
                     <div className="flex items-center gap-2 flex-wrap">
-                        {/* Main/default circle */}
-                        <button
-                            onClick={() => setSelectedIndex(null)}
-                            className={`w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center ${
-                                selectedIndex === null
-                                    ? "border-emerald-400 ring-2 ring-emerald-400/30"
-                                    : "border-white/20 hover:border-white/40"
-                            }`}
-                            title={productName}
-                        >
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-slate-600 to-slate-800" />
-                        </button>
-
                         {variants.map((variant, index) => (
                             <button
                                 key={index}
