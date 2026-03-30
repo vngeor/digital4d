@@ -77,7 +77,7 @@ export default async function CategoryPage({ params }: PageProps) {
     // Fetch category with parent and children
     const category = await prisma.productCategory.findFirst({
         where: { slug: categorySlug },
-        include: { parent: true, children: { orderBy: { order: "asc" } } },
+        include: { parent: { include: { children: { orderBy: { order: "asc" } } } }, children: { orderBy: { order: "asc" } } },
     })
 
     if (!category) notFound()
@@ -233,8 +233,14 @@ export default async function CategoryPage({ params }: PageProps) {
                 locale={locale}
                 wishlistedProductIds={wishlistedProductIds}
                 couponMap={couponMap}
-                subcategories={isParent ? JSON.parse(JSON.stringify(category.children)) : undefined}
-                initialCategory={categorySlug}
+                subcategories={
+                    isParent
+                        ? JSON.parse(JSON.stringify(category.children))
+                        : category.parent?.children
+                            ? JSON.parse(JSON.stringify(category.parent.children))
+                            : undefined
+                }
+                initialCategory={isParent ? categorySlug : category.parent?.slug || categorySlug}
             />
 
             <Footer />
