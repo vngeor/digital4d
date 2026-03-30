@@ -39,8 +39,8 @@ export function Header() {
     const pathname = usePathname()
     const [menuItems, setMenuItems] = useState<MenuItem[]>([])
     const [productCategories, setProductCategories] = useState<Array<{
-        id: string; slug: string; nameBg: string; nameEn: string; nameEs: string;
-        children: Array<{ id: string; slug: string; nameBg: string; nameEn: string; nameEs: string }>
+        id: string; slug: string; nameBg: string; nameEn: string; nameEs: string; productCount: number;
+        children: Array<{ id: string; slug: string; nameBg: string; nameEn: string; nameEs: string; productCount: number }>
     }>>([])
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [expandedItem, setExpandedItem] = useState<string | null>(null)
@@ -382,6 +382,7 @@ export function Header() {
                                                         className="flex-1 hover:text-emerald-400 transition-colors font-medium"
                                                     >
                                                         {getLocalizedName(cat)}
+                                                        <span className="text-xs text-gray-500 ml-1">({cat.productCount})</span>
                                                     </Link>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setExpandedCategory(expandedCategory === cat.id ? null : cat.id) }}
@@ -398,6 +399,7 @@ export function Header() {
                                                     >
                                                         <span className="text-gray-600 mr-1">·</span>
                                                         {getLocalizedName(child)}
+                                                        <span className="text-xs text-gray-600 ml-1">({child.productCount})</span>
                                                     </Link>
                                                 ))}
                                             </>
@@ -407,6 +409,7 @@ export function Header() {
                                                 className={`block px-4 py-2 transition-colors font-medium ${pathname === `/products/category/${cat.slug}` ? "text-emerald-400 bg-emerald-500/10" : "text-slate-300 hover:bg-white/10 hover:text-emerald-400"}`}
                                             >
                                                 {getLocalizedName(cat)}
+                                                <span className="text-xs text-gray-500 ml-1">({cat.productCount})</span>
                                             </Link>
                                         )}
                                     </div>
@@ -491,6 +494,7 @@ export function Header() {
                                                     className="block py-3 text-sm text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation font-medium"
                                                 >
                                                     {getLocalizedName(cat)}
+                                                    <span className="text-xs text-gray-600 ml-1">({cat.productCount})</span>
                                                 </Link>
                                                 {cat.children.map(child => (
                                                     <Link
@@ -500,6 +504,7 @@ export function Header() {
                                                     >
                                                         <span className="text-gray-600 mr-1">·</span>
                                                         {getLocalizedName(child)}
+                                                        <span className="text-xs text-gray-600 ml-1">({child.productCount})</span>
                                                     </Link>
                                                 ))}
                                             </div>
