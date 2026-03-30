@@ -354,46 +354,32 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                 {/* Promoted Coupon Banners */}
                 {promotedBanners}
 
-                {/* Coupon Section */}
+                {/* Coupon Section — always visible glass banner */}
                 {!appliedCoupon ? (
-                    <div>
-                        {!showCouponInput ? (
+                    <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Ticket className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span className="text-sm text-slate-300 font-medium">{t("haveACoupon")}</span>
+                        </div>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={couponCode}
+                                onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError("") }}
+                                placeholder={t("enterCouponCode")}
+                                className="flex-1 min-w-0 px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 uppercase sm:tracking-wider font-mono"
+                                onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                            />
                             <button
-                                onClick={() => setShowCouponInput(true)}
-                                className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+                                onClick={handleApplyCoupon}
+                                disabled={couponLoading || !couponCode.trim()}
+                                className="px-4 py-2.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/30 disabled:opacity-50 transition-colors whitespace-nowrap"
                             >
-                                <Ticket className="w-4 h-4" />
-                                {t("haveACoupon")}
+                                {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("applyCoupon")}
                             </button>
-                        ) : (
-                            <div className="space-y-2">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={couponCode}
-                                        onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError("") }}
-                                        placeholder={t("enterCouponCode")}
-                                        className="flex-1 min-w-0 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 uppercase sm:tracking-wider font-mono"
-                                        onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
-                                    />
-                                    <button
-                                        onClick={handleApplyCoupon}
-                                        disabled={couponLoading || !couponCode.trim()}
-                                        className="px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/30 disabled:opacity-50 transition-colors whitespace-nowrap"
-                                    >
-                                        {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("applyCoupon")}
-                                    </button>
-                                    <button
-                                        onClick={() => { setShowCouponInput(false); setCouponCode(""); setCouponError("") }}
-                                        className="p-2 min-w-[44px] min-h-[44px] rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors touch-manipulation flex items-center justify-center"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                                {couponError && (
-                                    <p className="text-xs text-red-400">{couponError}</p>
-                                )}
-                            </div>
+                        </div>
+                        {couponError && (
+                            <p className="text-xs text-red-400">{couponError}</p>
                         )}
                     </div>
                 ) : (
