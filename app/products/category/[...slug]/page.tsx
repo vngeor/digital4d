@@ -8,7 +8,7 @@ import Footer from "@/app/components/Footer"
 import { sanitizeHtml } from "@/lib/sanitize"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
-import { ArrowLeft, FolderOpen } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
 
 interface PageProps {
@@ -120,16 +120,6 @@ export default async function CategoryPage({ params }: PageProps) {
         orderBy: [{ order: "asc" }],
     })
 
-    // Count products per child category (for subcategory cards)
-    const childProductCounts: Record<string, number> = {}
-    if (isParent) {
-        for (const child of category.children) {
-            childProductCounts[child.id] = await prisma.product.count({
-                where: { category: child.slug, published: true },
-            })
-        }
-    }
-
     // Build coupon map
     const now = new Date()
     const promotedCouponsRaw = await prisma.coupon.findMany({
@@ -235,46 +225,6 @@ export default async function CategoryPage({ params }: PageProps) {
                     )}
                 </div>
             </section>
-
-            {/* Subcategory Cards */}
-            {isParent && category.children.length > 0 && (
-                <section className="relative px-4 pb-8">
-                    <div className="mx-auto max-w-6xl">
-                        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">
-                            {t("products.categoryPage.subcategories")}
-                        </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                            {category.children.map(child => {
-                                const childName = getLocalizedName(child)
-                                const count = childProductCounts[child.id] || 0
-                                return (
-                                    <Link
-                                        key={child.id}
-                                        href={`/products/category/${category.slug}/${child.slug}`}
-                                        className="group glass rounded-xl p-4 sm:p-5 border border-white/10 hover:border-emerald-500/30 transition-all hover:shadow-lg hover:shadow-emerald-500/10"
-                                    >
-                                        {child.image ? (
-                                            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden mb-3">
-                                                <img src={child.image} alt={childName} className="w-full h-full object-cover" />
-                                            </div>
-                                        ) : (
-                                            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-white/5 flex items-center justify-center mb-3">
-                                                <FolderOpen className="w-6 h-6 text-gray-500" />
-                                            </div>
-                                        )}
-                                        <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors text-sm sm:text-base">
-                                            {childName}
-                                        </h3>
-                                        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                                            {t("products.categoryPage.productsCount", { count })}
-                                        </p>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    </div>
-                </section>
-            )}
 
             {/* Products Grid */}
             <ProductCatalog
