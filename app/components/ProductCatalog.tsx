@@ -441,7 +441,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                     {/* Mobile: dropdown */}
                                     <div className="relative sm:hidden w-full">
                                         <select
-                                            value={selectedCategory || ""}
+                                            value={subcategories?.some(s => s.slug === selectedCategory) ? selectedCategory || "" : ""}
                                             onChange={(e) => {
                                                 const slug = e.target.value
                                                 if (slug) {
