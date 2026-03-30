@@ -559,45 +559,8 @@ export function Header() {
                             {t("contact")}
                         </Link>
 
-                        {/* Mobile Profile & Login Buttons */}
-                        {session ? (
-                            <>
-                                <Link
-                                    href="/profile"
-                                    className="relative mt-4 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation flex items-center justify-center gap-2"
-                                >
-                                    {t("profile")}
-                                    {missingBirthDate && (
-                                        <span className="flex items-center gap-1.5">
-                                            <Cake className="w-3.5 h-3.5 text-pink-400" />
-                                            <span className="relative flex h-2.5 w-2.5">
-                                                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" />
-                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500" />
-                                            </span>
-                                        </span>
-                                    )}
-                                </Link>
-                                <Link
-                                    href="/my-orders"
-                                    className="mt-2 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation"
-                                >
-                                    {t("myOrders")}
-                                </Link>
-                                <Link
-                                    href="/wishlist"
-                                    className="mt-2 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-white touch-manipulation flex items-center justify-center gap-2"
-                                >
-                                    <Heart className="w-4 h-4" />
-                                    {t("myWishlist")}
-                                </Link>
-                                <button
-                                    onClick={() => signOut()}
-                                    className="mt-2 py-3 text-center rounded-xl bg-white/5 border border-white/10 font-medium text-slate-400 hover:text-white touch-manipulation"
-                                >
-                                    {t("logout")}
-                                </button>
-                            </>
-                        ) : (
+                        {/* Mobile Login Button (only for non-authenticated — profile is in avatar dropdown) */}
+                        {!session && (
                             <Link
                                 href="/login"
                                 className="mt-4 py-3 text-center rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 font-semibold text-white touch-manipulation"
