@@ -236,7 +236,13 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     // Build flat navigable items for category dropdown (for keyboard nav)
     const categoryNavItems = useMemo(() => {
         const searchTerm = categoryDropdownSearch.toLowerCase()
-        const items: Array<{ id: string; label: string; href: string; isChild: boolean; isActive: boolean; childCount?: number }> = []
+        const items: Array<{ id: string; label: string; href: string; isChild: boolean; isActive: boolean; childCount?: number; productCount?: number }> = []
+
+        // Count products per category slug
+        const countBySlug: Record<string, number> = {}
+        for (const p of products) {
+            countBySlug[p.category] = (countBySlug[p.category] || 0) + 1
+        }
 
         // "All Categories"
         items.push({ id: "_all", label: t("allCategories"), href: "/products", isChild: false, isActive: !selectedCategory && !initialCategory })
@@ -250,7 +256,10 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             if (!matchesSearch) continue
 
             const isParentActive = selectedCategory === parent.slug || initialCategory === parent.slug
-            items.push({ id: parent.id, label: parentName, href: `/products/category/${parent.slug}`, isChild: false, isActive: isParentActive, childCount: children.length > 0 ? children.length : undefined })
+            const parentProductCount = children.length > 0
+                ? children.reduce((sum, c) => sum + (countBySlug[c.slug] || 0), 0) + (countBySlug[parent.slug] || 0)
+                : countBySlug[parent.slug] || 0
+            items.push({ id: parent.id, label: parentName, href: `/products/category/${parent.slug}`, isChild: false, isActive: isParentActive, childCount: children.length > 0 ? children.length : undefined, productCount: parentProductCount })
 
             const isExpanded = expandedCategories.has(parent.id)
             if (children.length > 0 && (isExpanded || searchTerm)) {
@@ -258,7 +267,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     const childName = getLocalizedName(child)
                     if (searchTerm && !childName.toLowerCase().includes(searchTerm) && !parentName.toLowerCase().includes(searchTerm)) continue
                     const isChildActive = selectedCategory === child.slug || initialCategory === child.slug
-                    items.push({ id: child.id, label: childName, href: `/products/category/${parent.slug}/${child.slug}`, isChild: true, isActive: isChildActive })
+                    items.push({ id: child.id, label: childName, href: `/products/category/${parent.slug}/${child.slug}`, isChild: true, isActive: isChildActive, productCount: countBySlug[child.slug] || 0 })
                 }
             }
         }
@@ -269,7 +278,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         for (const orphan of orphans) {
             const orphanName = getLocalizedName(orphan)
             if (searchTerm && !orphanName.toLowerCase().includes(searchTerm)) continue
-            items.push({ id: orphan.id, label: orphanName, href: `/products/category/${orphan.slug}`, isChild: false, isActive: selectedCategory === orphan.slug })
+            items.push({ id: orphan.id, label: orphanName, href: `/products/category/${orphan.slug}`, isChild: false, isActive: selectedCategory === orphan.slug, productCount: countBySlug[orphan.slug] || 0 })
         }
 
         return items
@@ -539,6 +548,9 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                         >
                                                             {item.isChild && <span className="w-1.5 h-1.5 rounded-full bg-gray-600 shrink-0" />}
                                                             {item.label}
+                                                            {!item.childCount && item.productCount !== undefined && (
+                                                                <span className="text-[10px] text-gray-500 ml-1">({item.productCount})</span>
+                                                            )}
                                                         </button>
                                                         {item.childCount && (
                                                             <>
