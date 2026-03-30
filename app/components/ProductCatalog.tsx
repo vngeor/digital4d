@@ -407,7 +407,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
                     {/* Category Filter */}
                     <div>
-                        <div className="flex gap-2 overflow-x-auto sm:flex-wrap pb-1 sm:pb-0">
+                        <div className="flex gap-2 flex-wrap">
                             {/* All Products / All in Category button */}
                             <button
                                 onClick={() => {
