@@ -489,24 +489,44 @@ export function Header() {
                                         </Link>
                                         {productCategories.map(cat => (
                                             <div key={cat.id}>
-                                                <Link
-                                                    href={`/products/category/${cat.slug}`}
-                                                    className="block py-3 text-sm text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation font-medium"
-                                                >
-                                                    {getLocalizedName(cat)}
-                                                    <span className="text-xs text-gray-600 ml-1">({cat.productCount})</span>
-                                                </Link>
-                                                {cat.children.map(child => (
+                                                {cat.children.length > 0 ? (
+                                                    <>
+                                                        <div className="flex items-center py-3">
+                                                            <Link
+                                                                href={`/products/category/${cat.slug}`}
+                                                                className="flex-1 text-sm text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation font-medium"
+                                                            >
+                                                                {getLocalizedName(cat)}
+                                                                <span className="text-xs text-gray-600 ml-1">({cat.productCount})</span>
+                                                            </Link>
+                                                            <button
+                                                                onClick={() => setExpandedCategory(expandedCategory === cat.id ? null : cat.id)}
+                                                                className="p-1 hover:bg-white/10 rounded transition-colors touch-manipulation"
+                                                            >
+                                                                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${expandedCategory === cat.id ? "rotate-180" : ""}`} />
+                                                            </button>
+                                                        </div>
+                                                        {expandedCategory === cat.id && cat.children.map(child => (
+                                                            <Link
+                                                                key={child.id}
+                                                                href={`/products/category/${cat.slug}/${child.slug}`}
+                                                                className="block py-2 pl-4 text-sm text-slate-500 hover:text-emerald-400 transition-colors touch-manipulation"
+                                                            >
+                                                                <span className="text-gray-600 mr-1">·</span>
+                                                                {getLocalizedName(child)}
+                                                                <span className="text-xs text-gray-600 ml-1">({child.productCount})</span>
+                                                            </Link>
+                                                        ))}
+                                                    </>
+                                                ) : (
                                                     <Link
-                                                        key={child.id}
-                                                        href={`/products/category/${cat.slug}/${child.slug}`}
-                                                        className="block py-2 pl-4 text-sm text-slate-500 hover:text-emerald-400 transition-colors touch-manipulation"
+                                                        href={`/products/category/${cat.slug}`}
+                                                        className="block py-3 text-sm text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation font-medium"
                                                     >
-                                                        <span className="text-gray-600 mr-1">·</span>
-                                                        {getLocalizedName(child)}
-                                                        <span className="text-xs text-gray-600 ml-1">({child.productCount})</span>
+                                                        {getLocalizedName(cat)}
+                                                        <span className="text-xs text-gray-600 ml-1">({cat.productCount})</span>
                                                     </Link>
-                                                ))}
+                                                )}
                                             </div>
                                         ))}
                                     </div>
