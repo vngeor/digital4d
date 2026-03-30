@@ -38,6 +38,10 @@ export function Header() {
     const locale = useLocale() as Locale
     const pathname = usePathname()
     const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+    const [productCategories, setProductCategories] = useState<Array<{
+        id: string; slug: string; nameBg: string; nameEn: string; nameEs: string;
+        children: Array<{ id: string; slug: string; nameBg: string; nameEn: string; nameEs: string }>
+    }>>([])
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [expandedItem, setExpandedItem] = useState<string | null>(null)
     const [userDropdownOpen, setUserDropdownOpen] = useState(false)
@@ -57,6 +61,9 @@ export function Header() {
             }
         }
         fetchMenu()
+
+        // Fetch product categories for dropdown
+        fetch("/api/categories").then(res => res.ok ? res.json() : []).then(setProductCategories).catch(() => {})
     }, [])
 
     // Check if logged-in user has birthDate set
@@ -105,6 +112,14 @@ export function Header() {
                 return item.titleEs || item.titleEn
             default:
                 return item.titleEn
+        }
+    }
+
+    const getLocalizedName = (item: { nameBg: string; nameEn: string; nameEs: string }) => {
+        switch (locale) {
+            case "bg": return item.nameBg || item.nameEn
+            case "es": return item.nameEs || item.nameEn
+            default: return item.nameEn
         }
     }
 
@@ -342,7 +357,44 @@ export function Header() {
                     </div>
                     )
                 })}
-                <Link href="/products" className={`transition-colors whitespace-nowrap py-2 border-b-2 ${pathname.startsWith("/products") ? "text-emerald-400 border-emerald-400" : "text-slate-300 border-transparent hover:text-emerald-400"}`}>{t("products")}</Link>
+                <div className="relative group">
+                    <Link href="/products" className={`flex items-center gap-1 transition-colors whitespace-nowrap py-2 border-b-2 ${pathname.startsWith("/products") ? "text-emerald-400 border-emerald-400" : "text-slate-300 border-transparent hover:text-emerald-400"}`}>
+                        {t("products")}
+                        {productCategories.length > 0 && (
+                            <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+                        )}
+                    </Link>
+                    {productCategories.length > 0 && (
+                        <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-[opacity,visibility] z-50">
+                            <div className="bg-slate-900 rounded-xl border border-white/10 py-2 min-w-[220px] max-h-80 overflow-y-auto shadow-xl">
+                                <Link href="/products" className="block px-4 py-2 text-slate-300 hover:bg-white/10 hover:text-emerald-400 transition-colors font-medium">
+                                    {t("allProducts")}
+                                </Link>
+                                <div className="border-t border-white/10 my-1" />
+                                {productCategories.map(cat => (
+                                    <div key={cat.id}>
+                                        <Link
+                                            href={`/products/category/${cat.slug}`}
+                                            className={`block px-4 py-2 transition-colors font-medium ${pathname === `/products/category/${cat.slug}` ? "text-emerald-400 bg-emerald-500/10" : "text-slate-300 hover:bg-white/10 hover:text-emerald-400"}`}
+                                        >
+                                            {getLocalizedName(cat)}
+                                        </Link>
+                                        {cat.children.length > 0 && cat.children.map(child => (
+                                            <Link
+                                                key={child.id}
+                                                href={`/products/category/${cat.slug}/${child.slug}`}
+                                                className={`block pl-8 pr-4 py-1.5 text-sm transition-colors ${pathname === `/products/category/${cat.slug}/${child.slug}` ? "text-emerald-400 bg-emerald-500/10" : "text-slate-400 hover:bg-white/10 hover:text-emerald-400"}`}
+                                            >
+                                                <span className="text-gray-600 mr-1">·</span>
+                                                {getLocalizedName(child)}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
                 <Link href="/brands" className={`transition-colors whitespace-nowrap py-2 border-b-2 ${pathname.startsWith("/brands") ? "text-emerald-400 border-emerald-400" : "text-slate-300 border-transparent hover:text-emerald-400"}`}>{t("brands")}</Link>
                 <Link href="/#news" className="text-slate-300 border-b-2 border-transparent hover:text-emerald-400 transition-colors whitespace-nowrap py-2">{t("news")}</Link>
                 <Link href="/#contact" className="text-slate-300 border-b-2 border-transparent hover:text-emerald-400 transition-colors whitespace-nowrap py-2">{t("contact")}</Link>
@@ -398,12 +450,51 @@ export function Header() {
                                 )}
                             </div>
                         ))}
-                        <Link
-                            href="/products"
-                            className="py-3 text-slate-300 hover:text-emerald-400 transition-colors touch-manipulation"
-                        >
-                            {t("products")}
-                        </Link>
+                        {productCategories.length > 0 ? (
+                            <div>
+                                <button
+                                    onClick={() => toggleExpanded("_products")}
+                                    className="w-full flex items-center justify-between py-3 text-slate-300 hover:text-emerald-400 transition-colors touch-manipulation"
+                                >
+                                    <span>{t("products")}</span>
+                                    <ChevronDown className={`w-5 h-5 transition-transform ${expandedItem === "_products" ? "rotate-180" : ""}`} />
+                                </button>
+                                {expandedItem === "_products" && (
+                                    <div className="pl-4 pb-2 space-y-1 border-l border-white/10 ml-2">
+                                        <Link href="/products" className="block py-3 text-sm text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation font-medium">
+                                            {t("allProducts")}
+                                        </Link>
+                                        {productCategories.map(cat => (
+                                            <div key={cat.id}>
+                                                <Link
+                                                    href={`/products/category/${cat.slug}`}
+                                                    className="block py-3 text-sm text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation font-medium"
+                                                >
+                                                    {getLocalizedName(cat)}
+                                                </Link>
+                                                {cat.children.map(child => (
+                                                    <Link
+                                                        key={child.id}
+                                                        href={`/products/category/${cat.slug}/${child.slug}`}
+                                                        className="block py-2 pl-4 text-sm text-slate-500 hover:text-emerald-400 transition-colors touch-manipulation"
+                                                    >
+                                                        <span className="text-gray-600 mr-1">·</span>
+                                                        {getLocalizedName(child)}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <Link
+                                href="/products"
+                                className="py-3 text-slate-300 hover:text-emerald-400 transition-colors touch-manipulation"
+                            >
+                                {t("products")}
+                            </Link>
+                        )}
                         <Link
                             href="/brands"
                             className="py-3 text-slate-300 hover:text-emerald-400 transition-colors touch-manipulation"
