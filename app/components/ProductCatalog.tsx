@@ -435,14 +435,36 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 <Tag className="w-3.5 h-3.5" />
                                 {t("onSale")}
                             </button>
-                            {/* Subcategory tabs (on category pages) — navigate to subcategory page */}
+                            {/* Subcategory tabs (on category pages) — dropdown on mobile, tabs on desktop */}
                             {subcategories && subcategories.length > 0 ? (
                                 <>
+                                    {/* Mobile: dropdown */}
+                                    <div className="relative sm:hidden w-full">
+                                        <select
+                                            value={selectedCategory || ""}
+                                            onChange={(e) => {
+                                                const slug = e.target.value
+                                                if (slug) {
+                                                    router.push(`/products/category/${initialCategory}/${slug}`)
+                                                } else {
+                                                    router.push(`/products/category/${initialCategory}`)
+                                                }
+                                            }}
+                                            className="w-full appearance-none pl-4 pr-9 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base focus:outline-none focus:border-emerald-500/50 transition-colors cursor-pointer"
+                                        >
+                                            <option value="">{t("allProducts")}</option>
+                                            {subcategories.map(sub => (
+                                                <option key={sub.id} value={sub.slug}>{getLocalizedName(sub)}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                                    </div>
+                                    {/* Desktop: tabs */}
                                     {subcategories.map(sub => (
                                         <button
                                             key={sub.id}
                                             onClick={() => router.push(`/products/category/${initialCategory}/${sub.slug}`)}
-                                            className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === sub.slug
+                                            className={`hidden sm:block px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === sub.slug
                                                     ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                                     : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                                 }`}
@@ -700,18 +722,18 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                             </div>
                                             {product.priceType !== "quote" && (
                                                 product.fileType === "digital" ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium group-hover:bg-emerald-500/30 transition-all">
-                                                        <ShoppingCart className="w-3.5 h-3.5" />
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium group-hover:bg-emerald-500/30 transition-all whitespace-nowrap">
+                                                        <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
                                                         {t("buyNow")}
                                                     </span>
                                                 ) : product.fileType === "service" ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium group-hover:bg-amber-500/30 transition-all">
-                                                        <MessageSquare className="w-3.5 h-3.5" />
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium group-hover:bg-amber-500/30 transition-all whitespace-nowrap">
+                                                        <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                                                         {t("getQuote")}
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium group-hover:bg-purple-500/30 transition-all">
-                                                        <Package className="w-3.5 h-3.5" />
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium group-hover:bg-purple-500/30 transition-all whitespace-nowrap">
+                                                        <Package className="w-3.5 h-3.5 shrink-0" />
                                                         {t("orderNow")}
                                                     </span>
                                                 )
