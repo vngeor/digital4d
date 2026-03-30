@@ -710,8 +710,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                             </p>
                                         )}
 
-                                        {/* Price */}
-                                        <div className="flex items-center justify-between">
+                                        {/* Price + Action */}
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                             <div>
                                                 {product.priceType === "quote" ? (
                                                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-sm font-medium">
@@ -720,15 +720,15 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                     </span>
                                                 ) : product.onSale && product.salePrice ? (
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-base sm:text-xl font-bold text-red-400">
+                                                        <span className="text-sm sm:text-xl font-bold text-red-400 whitespace-nowrap">
                                                             {parseFloat(product.salePrice).toFixed(2)} {product.currency}
                                                         </span>
-                                                        <span className="text-xs sm:text-sm text-gray-500 line-through">
+                                                        <span className="text-[10px] sm:text-sm text-gray-500 line-through whitespace-nowrap">
                                                             {price}
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-base sm:text-xl font-bold text-white">
+                                                    <span className="text-sm sm:text-xl font-bold text-white whitespace-nowrap">
                                                         {price || "-"}
                                                     </span>
                                                 )}
