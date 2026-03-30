@@ -13,7 +13,7 @@ export async function GET() {
       orderBy: [{ order: "asc" }, { nameEn: "asc" }],
     })
 
-    // Count published products per category slug
+    // Count published products per category slug (single query instead of N+1)
     const allSlugs: string[] = []
     for (const cat of categories) {
       allSlugs.push(cat.slug)
@@ -23,10 +23,15 @@ export async function GET() {
     }
 
     const countMap: Record<string, number> = {}
-    for (const slug of allSlugs) {
-      countMap[slug] = await prisma.product.count({
-        where: { category: slug, published: true },
+    if (allSlugs.length > 0) {
+      const counts = await prisma.product.groupBy({
+        by: ["category"],
+        where: { category: { in: allSlugs }, published: true },
+        _count: true,
       })
+      for (const c of counts) {
+        countMap[c.category] = c._count
+      }
     }
 
     // Map counts to categories

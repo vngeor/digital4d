@@ -165,7 +165,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             .map(p => p.brand ? getLocalizedName(p.brand) : null)
             .filter((b): b is string => !!b)
         return [...new Set(brandNames)].sort()
-    }, [products])
+    }, [products, locale])
 
     const filteredProducts = useMemo(() => {
         return products.filter((product) => {
@@ -189,7 +189,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             const matchesBrand = !selectedBrand || (product.brand && getLocalizedName(product.brand) === selectedBrand)
             return matchesCategory && matchesSearch && matchesSale && matchesBrand
         })
-    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, categories])
+    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, categories, locale])
 
     const getEffectivePrice = (product: Product): number | null => {
         if (product.onSale && product.salePrice) return parseFloat(product.salePrice)
@@ -231,7 +231,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     return 0
             }
         })
-    }, [filteredProducts, sortBy])
+    }, [filteredProducts, sortBy, locale])
 
     // Build flat navigable items for category dropdown (for keyboard nav)
     const categoryNavItems = useMemo(() => {
@@ -282,7 +282,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         }
 
         return items
-    }, [categories, categoryDropdownSearch, expandedCategories, selectedCategory, initialCategory, t])
+    }, [categories, categoryDropdownSearch, expandedCategories, selectedCategory, initialCategory, t, locale, products])
 
     // Reset active index on search change
     useEffect(() => {
