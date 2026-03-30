@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { ShoppingCart, MessageSquare, Send, Loader2, Ticket, X, Check, Clock } from "lucide-react"
+import { ShoppingCart, MessageSquare, Send, Loader2, Ticket, X, Check, Clock, Minus, Plus } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
 
 interface Product {
@@ -46,6 +46,7 @@ interface ProductActionsProps {
 export function ProductActions({ product, initialCouponCode, promotedCoupons }: ProductActionsProps) {
     const t = useTranslations("products")
     const [loading, setLoading] = useState(false)
+    const [quantity, setQuantity] = useState(1)
     const [showQuoteForm, setShowQuoteForm] = useState(false)
     const [showContactForm, setShowContactForm] = useState(false)
     const [showCouponInput, setShowCouponInput] = useState(false)
@@ -289,6 +290,31 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
         }
     }, [initialCouponCode, product.id, product.fileType, t])
 
+    const quantitySelector = (
+        <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-400 whitespace-nowrap">{t("quantity")}</span>
+            <div className="flex items-center gap-0 bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                <button
+                    type="button"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
+                >
+                    <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-12 text-center text-white font-medium tabular-nums">{quantity}</span>
+                <button
+                    type="button"
+                    onClick={() => setQuantity(q => Math.min(99, q + 1))}
+                    disabled={quantity >= 99}
+                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
+                >
+                    <Plus className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    )
+
     const handleBuyNow = async () => {
         setLoading(true)
         try {
@@ -297,6 +323,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     productId: product.id,
+                    quantity,
                     ...(appliedCoupon ? { couponCode: appliedCoupon.couponCode } : {}),
                 }),
             })
@@ -400,6 +427,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                     </div>
                 )}
 
+                {quantitySelector}
+
                 {/* Buy Now Button */}
                 <button
                     onClick={handleBuyNow}
@@ -441,6 +470,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
             <div className="space-y-3">
                 {promotedBanners}
                 {couponBanner}
+                {quantitySelector}
                 <button
                     onClick={() => setShowQuoteForm(true)}
                     className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:shadow-lg hover:shadow-amber-500/30 transition-all"
@@ -453,6 +483,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                     <QuoteForm
                         productId={product.id}
                         productName={product.nameEn}
+                        quantity={quantity > 1 ? quantity : undefined}
                         onClose={() => setShowQuoteForm(false)}
                     />
                 )}
@@ -465,6 +496,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
         <div className="space-y-3">
             {promotedBanners}
             {couponBanner}
+            {quantitySelector}
             <button
                 onClick={() => setShowContactForm(true)}
                 disabled={!product.inStock}
@@ -478,6 +510,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                 <QuoteForm
                     productId={product.id}
                     productName={product.nameEn}
+                    quantity={quantity > 1 ? quantity : undefined}
                     onClose={() => setShowContactForm(false)}
                     isOrderInquiry
                 />

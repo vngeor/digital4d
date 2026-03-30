@@ -12,7 +12,8 @@ function getStripe() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { productId, email, couponCode } = await request.json()
+    const { productId, email, couponCode, quantity: rawQuantity } = await request.json()
+    const quantity = Math.max(1, Math.min(99, Math.floor(Number(rawQuantity) || 1)))
 
     if (!productId) {
       return NextResponse.json({ error: "Product ID required" }, { status: 400 })
@@ -29,6 +30,10 @@ export async function POST(request: NextRequest) {
 
     if (!product.published) {
       return NextResponse.json({ error: "Product is not available" }, { status: 400 })
+    }
+
+    if (!product.inStock) {
+      return NextResponse.json({ error: "Product is out of stock" }, { status: 400 })
     }
 
     if (product.fileType !== "digital") {
@@ -156,7 +161,7 @@ export async function POST(request: NextRequest) {
             },
             unit_amount: priceInCents,
           },
-          quantity: 1,
+          quantity,
         },
       ],
       mode: "payment",

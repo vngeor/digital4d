@@ -1115,6 +1115,12 @@
     "allBrands": "All Brands",
     "brand": "Brand",
     "selectColor": "Select Color",
+    "sortDefault": "Sort: Default",
+    "sortPriceLow": "Price: Low → High",
+    "sortPriceHigh": "Price: High → Low",
+    "sortDiscount": "Biggest Discount",
+    "sortNameAZ": "Name: A-Z",
+    "quantity": "Quantity",
     "categoryPage": {
       "subcategories": "Subcategories",
       "productsCount": "{count} products"
