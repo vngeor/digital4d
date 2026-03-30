@@ -77,7 +77,8 @@ No test framework is configured.
 - `POST /api/checkout` — create Stripe checkout session (supports coupon codes)
 - `GET /api/products/download/[token]` — token-based digital download
 - `POST /api/coupons/validate` — validate coupon code for a product
-- `GET /api/search?q=<query>&limit=5` — global site search across products, content, menu items (locale-aware, debounced)
+- `GET /api/search?q=<query>&limit=5` — global site search across products, content, menu items (locale-aware, debounced, searches brand names)
+- `GET /api/categories` — public product categories with hierarchy and product counts (used by header dropdown)
 
 **Authenticated user routes:**
 - `GET/PUT /api/user/profile` — user profile management
@@ -146,12 +147,12 @@ No test framework is configured.
 
 ### Frontend Components
 
-- **`Header`**: navigation with dynamic menu, user dropdown, language switcher, global search, mobile responsive. Includes birthday indicator: pulsing pink dot on avatar + Cake icon on "My Profile" link (desktop dropdown & mobile menu) when user hasn't set birthDate — fetches `/api/user/profile` on mount to check. Social media icons use brand-colored hover (Facebook `#1877F2`, Instagram `#C32AA3`, YouTube `#FF0000`, TikTok `#69C9D0`)
+- **`Header`**: navigation with dynamic menu, user dropdown, language switcher, global search, mobile responsive. Products nav has category dropdown with hierarchy, product counts, keyboard navigation, and search. Brands nav link. Includes birthday indicator: pulsing pink dot on avatar + Cake icon on "My Profile" link (desktop dropdown & mobile menu) when user hasn't set birthDate — fetches `/api/user/profile` on mount to check. Social media icons use brand-colored hover (Facebook `#1877F2`, Instagram `#C32AA3`, YouTube `#FF0000`, TikTok `#69C9D0`)
 - **`GlobalSearch`**: public site search with dual-mode rendering. Desktop (lg+): visible glass-styled input in header with dropdown results panel. Mobile (<lg): search icon button → full-screen portal modal with backdrop blur. Features: Cmd+K/Ctrl+K shortcut, 300ms debounced search with AbortController, keyboard navigation (Arrow Up/Down, Enter, Escape), results grouped by type (Products/News/Services/Pages), recent searches in localStorage, loading skeletons. "View All" button navigates to dedicated `/search?q=...` results page. X button clears query. Outside-click hides dropdown without clearing query — re-focusing input re-opens with previous results. URL resolution: products → hierarchical URL from `productUrl` field, news → `/news/${slug}`, content with menuItemSlug → `/${menuItemSlug}/${slug}`, menu items → `/${slug}`
 - **`NotificationBell`**: unified notifications with i18n support; per-type icons (Cake for birthday, TreePine for Christmas, PartyPopper for New Year, Egg for Easter, CalendarDays for custom, Gift for generic holiday); HTML message rendering via `dangerouslySetInnerHTML`; locale-aware JSON title/message parsing; quote notifications show admin message preview, link to specific quote on my-orders with auto-scroll. Dropdown portaled to body with dynamic positioning (measures bell button rect on open) to align under the bell icon
 - **`WishlistButton`**: heart toggle on product cards/detail pages, adds/removes from wishlist
 - **`LanguageSwitcher`**: locale switching with `useTransition`
-- **`ProductCatalog`**: product filtering, search, category tabs, brand filter dropdown. Product cards link to hierarchical URLs via `getProductUrl()` helper. Brand names on cards link to `/brands/[slug]`
+- **`ProductCatalog`**: product filtering, search, category dropdown with keyboard navigation (Arrow Up/Down, Enter, Escape) and search, brand filter dropdown, sort by (Default, Price Low/High, Biggest Discount, Name A-Z). Product cards link to hierarchical URLs via `getProductUrl()` helper. Brand names on cards link to `/brands/[slug]`. Subcategory dropdown on mobile, tabs on desktop. Product counts in category dropdown
 - **`ProductImageGallery`**: client component for product detail — displays main image with color variant selector circles below. Clicking a color shows its variant image (falls back to main). First variant selected by default
 - **`QuoteForm`**: drag-and-drop file upload, auto-fill from profile
 - **`ProfileEditForm`**: modal form with validation, portaled to `document.body`. BirthDate is required; when empty, field gets a pulsing pink-to-rose gradient border (`animate-pulse-glow`) with `highlightBirthDate` prop. Gradient: `linear-gradient(to right, lab(56.9303 76.8162 -8.07021), lab(56.101 79.4328 31.4532))`. iOS-safe: body scroll lock (`position: fixed` pattern), `max-h-[85svh]` for stable sizing, flex-col layout (fixed header + scrollable body), date inputs wrapped in `overflow-hidden` with `min-w-0`
@@ -238,8 +239,9 @@ No test framework is configured.
 
 ### Payments
 
-- **Stripe** checkout for digital products, webhook at `/api/checkout/webhook` creates `DigitalPurchase` records
+- **Stripe** checkout for digital products, webhook at `/api/checkout/webhook` creates `DigitalPurchase` records. Supports quantity (1-99, validated server-side). Server validates `inStock` before creating session
 - **Coupon support**: checkout accepts `couponCode`, validates server-side, applies discount, records `CouponUsage` after payment
+- **Quantity selector**: [-] [qty] [+] buttons on product detail page for all product types (digital/service/physical). Passed to Stripe checkout and QuoteForm
 - Downloads: token-based (32 hex bytes), max 3 downloads, 7-day expiring links
 - Currency mapping: BGN→bgn, EUR→eur, USD→usd
 
