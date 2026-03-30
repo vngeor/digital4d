@@ -1,29 +1,17 @@
 export function BackgroundOrbs() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10" aria-hidden="true">
-      {/* Easter Egg 1 — Pink */}
       <div
         className="absolute top-20 left-10 w-[36rem] h-[36rem] rounded-full opacity-[0.07]"
-        style={{
-          background: 'radial-gradient(circle, rgb(244 114 182) 0%, transparent 70%)',
-          transform: 'scaleY(1.3) rotate(15deg)',
-        }}
+        style={{ background: 'radial-gradient(circle, rgb(244 114 182) 0%, transparent 70%)' }}
       />
-      {/* Easter Egg 2 — Yellow */}
       <div
         className="absolute top-40 right-20 w-[48rem] h-[48rem] rounded-full opacity-[0.05]"
-        style={{
-          background: 'radial-gradient(circle, rgb(250 204 21) 0%, transparent 70%)',
-          transform: 'scaleY(1.3) rotate(-10deg)',
-        }}
+        style={{ background: 'radial-gradient(circle, rgb(250 204 21) 0%, transparent 70%)' }}
       />
-      {/* Easter Egg 3 — Lavender */}
       <div
         className="absolute bottom-20 left-1/3 w-[40rem] h-[40rem] rounded-full opacity-[0.04]"
-        style={{
-          background: 'radial-gradient(circle, rgb(192 132 252) 0%, transparent 70%)',
-          transform: 'scaleY(1.3) rotate(8deg)',
-        }}
+        style={{ background: 'radial-gradient(circle, rgb(192 132 252) 0%, transparent 70%)' }}
       />
     </div>
   )
