@@ -44,6 +44,7 @@ export function Header() {
     }>>([])
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [expandedItem, setExpandedItem] = useState<string | null>(null)
+    const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
     const [userDropdownOpen, setUserDropdownOpen] = useState(false)
     const [missingBirthDate, setMissingBirthDate] = useState(false)
     const userDropdownRef = useRef<HTMLDivElement>(null)
@@ -373,22 +374,41 @@ export function Header() {
                                 <div className="border-t border-white/10 my-1" />
                                 {productCategories.map(cat => (
                                     <div key={cat.id}>
-                                        <Link
-                                            href={`/products/category/${cat.slug}`}
-                                            className={`block px-4 py-2 transition-colors font-medium ${pathname === `/products/category/${cat.slug}` ? "text-emerald-400 bg-emerald-500/10" : "text-slate-300 hover:bg-white/10 hover:text-emerald-400"}`}
-                                        >
-                                            {getLocalizedName(cat)}
-                                        </Link>
-                                        {cat.children.length > 0 && cat.children.map(child => (
+                                        {cat.children.length > 0 ? (
+                                            <>
+                                                <div className={`flex items-center px-4 py-2 ${pathname.startsWith(`/products/category/${cat.slug}`) ? "text-emerald-400 bg-emerald-500/10" : "text-slate-300"}`}>
+                                                    <Link
+                                                        href={`/products/category/${cat.slug}`}
+                                                        className="flex-1 hover:text-emerald-400 transition-colors font-medium"
+                                                    >
+                                                        {getLocalizedName(cat)}
+                                                    </Link>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setExpandedCategory(expandedCategory === cat.id ? null : cat.id) }}
+                                                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                                                    >
+                                                        <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${expandedCategory === cat.id ? "rotate-180" : ""}`} />
+                                                    </button>
+                                                </div>
+                                                {expandedCategory === cat.id && cat.children.map(child => (
+                                                    <Link
+                                                        key={child.id}
+                                                        href={`/products/category/${cat.slug}/${child.slug}`}
+                                                        className={`block pl-8 pr-4 py-1.5 text-sm transition-colors ${pathname === `/products/category/${cat.slug}/${child.slug}` ? "text-emerald-400 bg-emerald-500/10" : "text-slate-400 hover:bg-white/10 hover:text-emerald-400"}`}
+                                                    >
+                                                        <span className="text-gray-600 mr-1">·</span>
+                                                        {getLocalizedName(child)}
+                                                    </Link>
+                                                ))}
+                                            </>
+                                        ) : (
                                             <Link
-                                                key={child.id}
-                                                href={`/products/category/${cat.slug}/${child.slug}`}
-                                                className={`block pl-8 pr-4 py-1.5 text-sm transition-colors ${pathname === `/products/category/${cat.slug}/${child.slug}` ? "text-emerald-400 bg-emerald-500/10" : "text-slate-400 hover:bg-white/10 hover:text-emerald-400"}`}
+                                                href={`/products/category/${cat.slug}`}
+                                                className={`block px-4 py-2 transition-colors font-medium ${pathname === `/products/category/${cat.slug}` ? "text-emerald-400 bg-emerald-500/10" : "text-slate-300 hover:bg-white/10 hover:text-emerald-400"}`}
                                             >
-                                                <span className="text-gray-600 mr-1">·</span>
-                                                {getLocalizedName(child)}
+                                                {getLocalizedName(cat)}
                                             </Link>
-                                        ))}
+                                        )}
                                     </div>
                                 ))}
                             </div>
