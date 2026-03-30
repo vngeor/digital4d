@@ -1115,6 +1115,8 @@
     "allBrands": "All Brands",
     "brand": "Brand",
     "selectColor": "Select Color",
+    "searchCategory": "Search categories...",
+    "noCategoriesFound": "No categories found",
     "sortDefault": "Sort: Default",
     "sortPriceLow": "Price: Low → High",
     "sortPriceHigh": "Price: High → Low",
