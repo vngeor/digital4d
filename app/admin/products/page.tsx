@@ -469,7 +469,7 @@ export default function ProductsPage() {
                     -{discountPercent}%
                   </span>
                 </div>
-                <p className="text-emerald-400 text-sm font-medium">
+                <p className="text-red-400 text-sm font-medium">
                   {prefix}{salePrice!.toFixed(2)} {item.currency}
                 </p>
               </>
@@ -707,7 +707,7 @@ export default function ProductsPage() {
                       item.onSale && item.salePrice ? (
                         <div>
                           <span className="text-gray-500 text-xs line-through">{parseFloat(item.price).toFixed(2)}</span>
-                          <p className="text-emerald-400 text-sm font-medium">{parseFloat(item.salePrice).toFixed(2)} {item.currency}</p>
+                          <p className="text-red-400 text-sm font-medium">{parseFloat(item.salePrice).toFixed(2)} {item.currency}</p>
                         </div>
                       ) : (
                         <span className="text-white text-sm">{parseFloat(item.price).toFixed(2)} {item.currency}</span>
