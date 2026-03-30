@@ -185,22 +185,22 @@ export default async function Home() {
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             <BackgroundOrbs />
 
-            {/* Floating 3D Shapes */}
+            {/* Floating Easter Eggs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-32 right-[15%] w-16 h-16 animate-float will-change-transform">
-                    <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl rotate-45" />
+                <div className="absolute top-32 right-[15%] w-10 h-14 animate-float will-change-transform">
+                    <div className="w-full h-full bg-gradient-to-br from-pink-300 to-pink-500" style={{ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', transform: 'rotate(15deg)' }} />
                 </div>
-                <div className="absolute top-[60%] left-[10%] w-12 h-12 animate-float-slow animation-delay-400 will-change-transform">
-                    <div className="w-full h-full bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full" />
+                <div className="absolute top-[60%] left-[10%] w-8 h-12 animate-float-slow animation-delay-400 will-change-transform">
+                    <div className="w-full h-full bg-gradient-to-br from-yellow-200 to-yellow-400" style={{ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', transform: 'rotate(-10deg)' }} />
                 </div>
-                <div className="absolute top-[20%] left-[20%] w-8 h-8 animate-float-reverse animation-delay-600 will-change-transform">
-                    <div className="w-full h-full bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg rotate-12" />
+                <div className="absolute top-[20%] left-[20%] w-6 h-9 animate-float-reverse animation-delay-600 will-change-transform">
+                    <div className="w-full h-full bg-gradient-to-br from-purple-300 to-purple-500" style={{ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', transform: 'rotate(20deg)' }} />
                 </div>
-                <div className="absolute bottom-[30%] right-[10%] w-10 h-10 animate-float animation-delay-200 will-change-transform">
-                    <div className="w-full h-full bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl rotate-[-20deg]" />
+                <div className="absolute bottom-[30%] right-[10%] w-8 h-11 animate-float animation-delay-200 will-change-transform">
+                    <div className="w-full h-full bg-gradient-to-br from-emerald-200 to-emerald-400" style={{ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', transform: 'rotate(-15deg)' }} />
                 </div>
-                <div className="absolute top-[45%] right-[25%] w-6 h-6 animate-float-slow will-change-transform">
-                    <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 rounded-full" />
+                <div className="absolute top-[45%] right-[25%] w-5 h-7 animate-float-slow will-change-transform">
+                    <div className="w-full h-full bg-gradient-to-br from-orange-200 to-orange-400" style={{ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%', transform: 'rotate(8deg)' }} />
                 </div>
             </div>
 
