@@ -289,30 +289,36 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
                     {/* Brand Filter */}
                     {uniqueBrands.length > 0 && (
-                        <select
-                            value={selectedBrand || ""}
-                            onChange={(e) => setSelectedBrand(e.target.value || null)}
-                            className="px-4 py-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
-                        >
-                            <option value="">{t("allBrands")}</option>
-                            {uniqueBrands.map(brand => (
-                                <option key={brand} value={brand}>{brand}</option>
-                            ))}
-                        </select>
+                        <div className="relative">
+                            <select
+                                value={selectedBrand || ""}
+                                onChange={(e) => setSelectedBrand(e.target.value || null)}
+                                className="appearance-none pl-4 pr-9 py-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50 transition-colors cursor-pointer"
+                            >
+                                <option value="">{t("allBrands")}</option>
+                                {uniqueBrands.map(brand => (
+                                    <option key={brand} value={brand}>{brand}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                        </div>
                     )}
 
                     {/* Sort By */}
-                    <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as SortOption)}
-                        className="px-4 py-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
-                    >
-                        <option value="default">{t("sortDefault")}</option>
-                        <option value="price-asc">{t("sortPriceLow")}</option>
-                        <option value="price-desc">{t("sortPriceHigh")}</option>
-                        <option value="discount">{t("sortDiscount")}</option>
-                        <option value="name-az">{t("sortNameAZ")}</option>
-                    </select>
+                    <div className="relative">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as SortOption)}
+                            className="appearance-none pl-4 pr-9 py-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50 transition-colors cursor-pointer"
+                        >
+                            <option value="default">{t("sortDefault")}</option>
+                            <option value="price-asc">{t("sortPriceLow")}</option>
+                            <option value="price-desc">{t("sortPriceHigh")}</option>
+                            <option value="discount">{t("sortDiscount")}</option>
+                            <option value="name-az">{t("sortNameAZ")}</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                    </div>
 
                     {/* Category Filter */}
                     <div>
@@ -377,7 +383,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 </button>
 
                                 {showCategoryDropdown && (
-                                    <div className="absolute top-full mt-2 left-0 right-0 sm:right-auto sm:w-72 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                    <div className="absolute top-full mt-2 left-0 right-0 sm:left-auto sm:right-0 sm:w-72 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
                                         {/* Search */}
                                         <div className="p-2 border-b border-white/10">
                                             <div className="relative">
