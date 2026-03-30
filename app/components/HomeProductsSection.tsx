@@ -157,13 +157,12 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                                         {product.name}
                                     </h3>
                                     {product.brand && (
-                                        <Link
-                                            href={`/brands/${product.brand.slug}`}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="block text-[10px] sm:text-xs text-slate-500 font-medium mb-1 hover:text-emerald-400 transition-colors"
+                                        <span
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/brands/${product.brand!.slug}` }}
+                                            className="block text-[10px] sm:text-xs text-slate-500 font-medium mb-1 hover:text-emerald-400 transition-colors cursor-pointer"
                                         >
                                             {product.brand.name}
-                                        </Link>
+                                        </span>
                                     )}
                                     {product.description && (
                                         <p className="text-xs text-slate-400 mb-2 line-clamp-2">

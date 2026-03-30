@@ -654,13 +654,12 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 {categoryName}
                                             </span>
                                             {product.brand && (
-                                                <Link
-                                                    href={`/brands/${product.brand.slug}`}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="text-xs text-slate-500 font-medium hover:text-emerald-400 transition-colors"
+                                                <span
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/brands/${product.brand!.slug}` }}
+                                                    className="text-xs text-slate-500 font-medium hover:text-emerald-400 transition-colors cursor-pointer"
                                                 >
                                                     {getLocalizedName(product.brand)}
-                                                </Link>
+                                                </span>
                                             )}
                                         </div>
 
