@@ -418,7 +418,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         router.push('/products')
                                     }
                                 }}
-                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === null && !saleFilter
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${!activeSubcategory && !saleFilter
                                         ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                         : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                     }`}
