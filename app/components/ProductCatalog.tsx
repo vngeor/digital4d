@@ -316,9 +316,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             {/* All Products / All in Category button */}
                             <button
                                 onClick={() => {
-                                    if (subcategories) {
-                                        setSelectedCategory(null)
-                                        setSaleFilter(false)
+                                    if (subcategories && initialCategory) {
+                                        router.push(`/products/category/${initialCategory}`)
                                     } else {
                                         router.push('/products')
                                     }
@@ -341,13 +340,13 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 <Tag className="w-3.5 h-3.5" />
                                 {t("onSale")}
                             </button>
-                            {/* Subcategory tabs (on category pages) or Category Dropdown (on /products) */}
+                            {/* Subcategory tabs (on category pages) — navigate to subcategory page */}
                             {subcategories && subcategories.length > 0 ? (
                                 <>
                                     {subcategories.map(sub => (
                                         <button
                                             key={sub.id}
-                                            onClick={() => { setSelectedCategory(selectedCategory === sub.slug ? null : sub.slug); setSaleFilter(false) }}
+                                            onClick={() => router.push(`/products/category/${initialCategory}/${sub.slug}`)}
                                             className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === sub.slug
                                                     ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                                     : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
