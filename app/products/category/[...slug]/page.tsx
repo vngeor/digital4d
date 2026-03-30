@@ -284,6 +284,7 @@ export default async function CategoryPage({ params }: PageProps) {
                 wishlistedProductIds={wishlistedProductIds}
                 couponMap={couponMap}
                 subcategories={isParent ? JSON.parse(JSON.stringify(category.children)) : undefined}
+                initialCategory={categorySlug}
             />
 
             <Footer />

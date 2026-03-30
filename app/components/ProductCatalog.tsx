@@ -45,6 +45,8 @@ interface CouponBadge {
     currency: string | null
 }
 
+type SortOption = "default" | "price-asc" | "price-desc" | "discount" | "name-az"
+
 interface ProductCatalogProps {
     products: Product[]
     categories: ProductCategory[]
@@ -52,6 +54,7 @@ interface ProductCatalogProps {
     wishlistedProductIds?: string[]
     couponMap?: Record<string, CouponBadge>
     subcategories?: ProductCategory[]
+    initialCategory?: string
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -89,14 +92,15 @@ function getProductUrl(
     return segments.join("/")
 }
 
-export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap, subcategories }: ProductCatalogProps) {
+export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap, subcategories, initialCategory }: ProductCatalogProps) {
     const t = useTranslations("products")
     const searchParams = useSearchParams()
     const router = useRouter()
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory || null)
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [saleFilter, setSaleFilter] = useState(false)
+    const [sortBy, setSortBy] = useState<SortOption>("default")
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
     const categoryDropdownRef = useRef<HTMLDivElement>(null)
@@ -180,6 +184,48 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         })
     }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, categories])
 
+    const getEffectivePrice = (product: Product): number | null => {
+        if (product.onSale && product.salePrice) return parseFloat(product.salePrice)
+        if (product.price) return parseFloat(product.price)
+        return null
+    }
+
+    const getDiscountPercent = (product: Product): number => {
+        if (!product.onSale || !product.price || !product.salePrice) return 0
+        return Math.round((1 - parseFloat(product.salePrice) / parseFloat(product.price)) * 100)
+    }
+
+    const sortedProducts = useMemo(() => {
+        if (sortBy === "default") return filteredProducts
+        return [...filteredProducts].sort((a, b) => {
+            switch (sortBy) {
+                case "price-asc": {
+                    const pa = getEffectivePrice(a)
+                    const pb = getEffectivePrice(b)
+                    if (pa === null && pb === null) return 0
+                    if (pa === null) return 1
+                    if (pb === null) return -1
+                    return pa - pb
+                }
+                case "price-desc": {
+                    const pa = getEffectivePrice(a)
+                    const pb = getEffectivePrice(b)
+                    if (pa === null && pb === null) return 0
+                    if (pa === null) return 1
+                    if (pb === null) return -1
+                    return pb - pa
+                }
+                case "discount": {
+                    return getDiscountPercent(b) - getDiscountPercent(a)
+                }
+                case "name-az":
+                    return getLocalizedName(a).localeCompare(getLocalizedName(b))
+                default:
+                    return 0
+            }
+        })
+    }, [filteredProducts, sortBy])
+
     const getCategoryColor = (categorySlug: string) => {
         const category = categories.find((c) => c.slug === categorySlug)
         return category?.color || "gray"
@@ -250,6 +296,19 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             ))}
                         </select>
                     )}
+
+                    {/* Sort By */}
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as SortOption)}
+                        className="px-4 py-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    >
+                        <option value="default">{t("sortDefault")}</option>
+                        <option value="price-asc">{t("sortPriceLow")}</option>
+                        <option value="price-desc">{t("sortPriceHigh")}</option>
+                        <option value="discount">{t("sortDiscount")}</option>
+                        <option value="name-az">{t("sortNameAZ")}</option>
+                    </select>
 
                     {/* Category Filter */}
                     <div>
@@ -430,14 +489,14 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 </div>
 
                 {/* Products Grid */}
-                {filteredProducts.length === 0 ? (
+                {sortedProducts.length === 0 ? (
                     <div className="text-center py-12 text-slate-400">
                         <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>{t("noProducts")}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {filteredProducts.map((product) => {
+                        {sortedProducts.map((product) => {
                             const name = getLocalizedName(product)
                             const desc = getLocalizedDesc(product)
                             const categoryColor = getCategoryColor(product.category)

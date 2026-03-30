@@ -8,11 +8,12 @@ import { X, Upload, File, Loader2, CheckCircle } from "lucide-react"
 interface QuoteFormProps {
     productId?: string
     productName?: string
+    quantity?: number
     onClose: () => void
     isOrderInquiry?: boolean
 }
 
-export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: QuoteFormProps) {
+export function QuoteForm({ productId, productName, quantity, onClose, isOrderInquiry }: QuoteFormProps) {
     const t = useTranslations("quotes")
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [loading, setLoading] = useState(false)
@@ -98,6 +99,7 @@ export function QuoteForm({ productId, productName, onClose, isOrderInquiry }: Q
             if (formData.phone) submitData.append("phone", formData.phone)
             if (formData.message) submitData.append("message", formData.message)
             if (productId) submitData.append("productId", productId)
+            if (quantity && quantity > 1) submitData.append("quantity", String(quantity))
             if (selectedFile) submitData.append("file", selectedFile)
 
             const res = await fetch("/api/quotes", {
