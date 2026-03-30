@@ -241,6 +241,7 @@ export default async function CategoryPage({ params }: PageProps) {
                             : undefined
                 }
                 initialCategory={isParent ? categorySlug : category.parent?.slug || categorySlug}
+                activeSubcategory={!isParent ? categorySlug : undefined}
             />
 
             <Footer />

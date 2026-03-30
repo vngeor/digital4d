@@ -55,6 +55,7 @@ interface ProductCatalogProps {
     couponMap?: Record<string, CouponBadge>
     subcategories?: ProductCategory[]
     initialCategory?: string
+    activeSubcategory?: string
 }
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -92,7 +93,7 @@ function getProductUrl(
     return segments.join("/")
 }
 
-export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap, subcategories, initialCategory }: ProductCatalogProps) {
+export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap, subcategories, initialCategory, activeSubcategory }: ProductCatalogProps) {
     const t = useTranslations("products")
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -441,7 +442,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                     {/* Mobile: dropdown */}
                                     <div className="relative sm:hidden w-full">
                                         <select
-                                            value={subcategories?.some(s => s.slug === selectedCategory) ? selectedCategory || "" : ""}
+                                            value={activeSubcategory || ""}
                                             onChange={(e) => {
                                                 const slug = e.target.value
                                                 if (slug) {
@@ -464,7 +465,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         <button
                                             key={sub.id}
                                             onClick={() => router.push(`/products/category/${initialCategory}/${sub.slug}`)}
-                                            className={`hidden sm:block px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${selectedCategory === sub.slug
+                                            className={`hidden sm:block px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeSubcategory === sub.slug
                                                     ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                                     : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                                 }`}
