@@ -407,7 +407,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                         <span className="text-slate-400 line-through">
                             {appliedCoupon.original} {appliedCoupon.productCurrency}
                         </span>
-                        <span className="text-emerald-400 font-bold text-lg">
+                        <span className="text-red-400 font-bold text-lg">
                             {appliedCoupon.final} {appliedCoupon.productCurrency}
                         </span>
                     </div>

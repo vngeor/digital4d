@@ -204,7 +204,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                                             <div className="text-right">
                                                 {product.onSale && product.salePrice ? (
                                                     <div className="flex flex-col items-end">
-                                                        <span className="text-sm sm:text-base font-bold text-emerald-400">
+                                                        <span className="text-sm sm:text-base font-bold text-red-400">
                                                             {product.salePrice} {product.currency}
                                                         </span>
                                                         <span className="text-[10px] sm:text-xs text-slate-500 line-through">

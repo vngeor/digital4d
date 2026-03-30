@@ -460,7 +460,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             <div className="p-3 sm:p-4 md:p-6 rounded-lg md:rounded-xl bg-white/5 border border-white/10">
                                 {product.onSale && product.salePrice ? (
                                     <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                                        <span className="text-xl sm:text-2xl md:text-4xl font-bold text-emerald-400">
+                                        <span className="text-xl sm:text-2xl md:text-4xl font-bold text-red-400">
                                             {parseFloat(product.salePrice.toString()).toFixed(2)} {product.currency}
                                         </span>
                                         <span className="text-sm sm:text-base md:text-xl text-gray-500 line-through">
@@ -573,7 +573,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                         </span>
                                                     ) : related.onSale && related.salePrice ? (
                                                         <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2">
-                                                            <span className="text-xs md:text-base font-bold text-emerald-400">
+                                                            <span className="text-xs md:text-base font-bold text-red-400">
                                                                 {parseFloat(related.salePrice.toString()).toFixed(2)} {related.currency}
                                                             </span>
                                                             <span className="text-[10px] md:text-xs text-gray-500 line-through">

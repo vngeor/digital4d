@@ -286,7 +286,7 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                                             </span>
                                                         ) : product.onSale && product.salePrice ? (
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-base sm:text-xl font-bold text-emerald-400">
+                                                                <span className="text-base sm:text-xl font-bold text-red-400">
                                                                     {parseFloat(product.salePrice).toFixed(2)} {product.currency}
                                                                 </span>
                                                                 <span className="text-xs sm:text-sm text-gray-500 line-through">
