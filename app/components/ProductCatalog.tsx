@@ -102,6 +102,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const [saleFilter, setSaleFilter] = useState(false)
     const [sortBy, setSortBy] = useState<SortOption>("default")
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+    const [categoryDropdownSearch, setCategoryDropdownSearch] = useState("")
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
     const categoryDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -112,13 +113,16 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         const categoryParam = searchParams.get("category")
         if (categoryParam) {
             setSelectedCategory(categoryParam)
-            // Auto-expand parent if this is a child category
-            const cat = categories.find(c => c.slug === categoryParam)
+        }
+        // Auto-expand parent for current category (from URL param or initialCategory)
+        const activeCat = categoryParam || initialCategory
+        if (activeCat) {
+            const cat = categories.find(c => c.slug === activeCat)
             if (cat?.parentId) {
                 setExpandedCategories(new Set([cat.parentId]))
             }
         }
-    }, [searchParams, categories])
+    }, [searchParams, categories, initialCategory])
 
     // Close category dropdown on click outside
     useEffect(() => {
@@ -373,112 +377,144 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 </button>
 
                                 {showCategoryDropdown && (
-                                    <div className="absolute top-full mt-2 left-0 right-0 sm:right-auto sm:w-64 max-h-80 overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 py-1">
-                                        {/* All Categories */}
-                                        <button
-                                            onClick={() => { setShowCategoryDropdown(false); router.push('/products') }}
-                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${!selectedCategory
-                                                    ? "text-emerald-400 bg-emerald-500/10"
-                                                    : "text-gray-300 hover:bg-white/5 hover:text-white"
-                                                }`}
-                                        >
-                                            {t("allCategories")}
-                                        </button>
-                                        {/* Hierarchical categories with accordion */}
-                                        {(() => {
-                                            const parents = categories.filter(c => !c.parentId)
-                                            const items: React.ReactNode[] = []
-                                            for (const parent of parents) {
-                                                const children = categories.filter(c => c.parentId === parent.id)
-                                                const childCount = children.length
-                                                const isExpanded = expandedCategories.has(parent.id)
-                                                const isSelected = selectedCategory === parent.slug
+                                    <div className="absolute top-full mt-2 left-0 right-0 sm:right-auto sm:w-72 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                        {/* Search */}
+                                        <div className="p-2 border-b border-white/10">
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                                                <input
+                                                    type="text"
+                                                    value={categoryDropdownSearch}
+                                                    onChange={(e) => setCategoryDropdownSearch(e.target.value)}
+                                                    placeholder={t("searchCategory")}
+                                                    className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        </div>
 
-                                                if (childCount > 0) {
-                                                    // Parent with children — name navigates, chevron expands
-                                                    items.push(
-                                                        <div
-                                                            key={parent.id}
-                                                            className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium ${isSelected
-                                                                    ? "text-emerald-400 bg-emerald-500/10"
-                                                                    : "text-gray-200"
-                                                                }`}
-                                                        >
-                                                            <button
-                                                                className="flex-1 text-left hover:text-emerald-400 transition-colors"
-                                                                onClick={() => { setShowCategoryDropdown(false); router.push(`/products/category/${parent.slug}`) }}
+                                        <div className="max-h-72 overflow-y-auto py-1">
+                                            {/* All Categories */}
+                                            <button
+                                                onClick={() => { setShowCategoryDropdown(false); setCategoryDropdownSearch(""); router.push('/products') }}
+                                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${!selectedCategory
+                                                        ? "text-emerald-400 bg-emerald-500/10"
+                                                        : "text-gray-300 hover:bg-white/5 hover:text-white"
+                                                    }`}
+                                            >
+                                                {t("allCategories")}
+                                            </button>
+
+                                            {/* Hierarchical categories */}
+                                            {(() => {
+                                                const searchTerm = categoryDropdownSearch.toLowerCase()
+                                                const parents = categories.filter(c => !c.parentId)
+                                                const items: React.ReactNode[] = []
+                                                for (const parent of parents) {
+                                                    const children = categories.filter(c => c.parentId === parent.id)
+                                                    const childCount = children.length
+                                                    const isExpanded = expandedCategories.has(parent.id)
+                                                    const isSelected = selectedCategory === parent.slug || initialCategory === parent.slug
+                                                    const parentName = getLocalizedName(parent)
+
+                                                    // Search filter
+                                                    const matchesSearch = !searchTerm || parentName.toLowerCase().includes(searchTerm) ||
+                                                        children.some(c => getLocalizedName(c).toLowerCase().includes(searchTerm))
+                                                    if (!matchesSearch) continue
+
+                                                    if (childCount > 0) {
+                                                        items.push(
+                                                            <div
+                                                                key={parent.id}
+                                                                className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium ${isSelected
+                                                                        ? "text-emerald-400 bg-emerald-500/10"
+                                                                        : "text-gray-200"
+                                                                    }`}
                                                             >
-                                                                {getLocalizedName(parent)}
-                                                            </button>
-                                                            <span className="text-xs text-gray-500">({childCount})</span>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setExpandedCategories(prev => {
-                                                                        const next = new Set(prev)
-                                                                        if (next.has(parent.id)) next.delete(parent.id)
-                                                                        else next.add(parent.id)
-                                                                        return next
-                                                                    })
-                                                                }}
-                                                                className="p-1 hover:bg-white/10 rounded transition-colors"
-                                                            >
-                                                                <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                                                            </button>
-                                                        </div>
-                                                    )
-                                                    // Children — only when expanded
-                                                    if (isExpanded) {
-                                                        for (const child of children) {
-                                                            items.push(
                                                                 <button
-                                                                    key={child.id}
-                                                                    onClick={() => { setShowCategoryDropdown(false); router.push(`/products/category/${parent.slug}/${child.slug}`) }}
-                                                                    className={`w-full text-left pl-8 pr-4 py-2 text-sm transition-colors ${selectedCategory === child.slug
-                                                                            ? "text-emerald-400 bg-emerald-500/10"
-                                                                            : "text-gray-400 hover:bg-white/5 hover:text-white"
-                                                                        }`}
+                                                                    className="flex-1 text-left hover:text-emerald-400 transition-colors"
+                                                                    onClick={() => { setShowCategoryDropdown(false); setCategoryDropdownSearch(""); router.push(`/products/category/${parent.slug}`) }}
                                                                 >
-                                                                    <span className="text-gray-600 mr-1">—</span>
-                                                                    {getLocalizedName(child)}
+                                                                    {parentName}
                                                                 </button>
-                                                            )
+                                                                <span className="text-[10px] text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">
+                                                                    {childCount}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setExpandedCategories(prev => {
+                                                                            const next = new Set(prev)
+                                                                            if (next.has(parent.id)) next.delete(parent.id)
+                                                                            else next.add(parent.id)
+                                                                            return next
+                                                                        })
+                                                                    }}
+                                                                    className="p-1 hover:bg-white/10 rounded transition-colors"
+                                                                >
+                                                                    <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                        if (isExpanded || searchTerm) {
+                                                            for (const child of children) {
+                                                                const childName = getLocalizedName(child)
+                                                                if (searchTerm && !childName.toLowerCase().includes(searchTerm) && !parentName.toLowerCase().includes(searchTerm)) continue
+                                                                const isChildSelected = selectedCategory === child.slug || initialCategory === child.slug
+                                                                items.push(
+                                                                    <button
+                                                                        key={child.id}
+                                                                        onClick={() => { setShowCategoryDropdown(false); setCategoryDropdownSearch(""); router.push(`/products/category/${parent.slug}/${child.slug}`) }}
+                                                                        className={`w-full text-left pl-8 pr-4 py-2 text-sm transition-colors flex items-center gap-2 ${isChildSelected
+                                                                                ? "text-emerald-400 bg-emerald-500/10"
+                                                                                : "text-gray-400 hover:bg-white/5 hover:text-white"
+                                                                            }`}
+                                                                    >
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-600 shrink-0" />
+                                                                        {childName}
+                                                                    </button>
+                                                                )
+                                                            }
                                                         }
+                                                    } else {
+                                                        items.push(
+                                                            <button
+                                                                key={parent.id}
+                                                                onClick={() => { setShowCategoryDropdown(false); setCategoryDropdownSearch(""); router.push(`/products/category/${parent.slug}`) }}
+                                                                className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${isSelected
+                                                                        ? "text-emerald-400 bg-emerald-500/10"
+                                                                        : "text-gray-200 hover:bg-white/5 hover:text-white"
+                                                                    }`}
+                                                            >
+                                                                {parentName}
+                                                            </button>
+                                                        )
                                                     }
-                                                } else {
-                                                    // Parent without children — navigates to category page
+                                                }
+                                                // Orphan categories
+                                                const parentIds = new Set(parents.map(p => p.id))
+                                                const orphans = categories.filter(c => c.parentId && !parentIds.has(c.parentId))
+                                                for (const orphan of orphans) {
+                                                    const orphanName = getLocalizedName(orphan)
+                                                    if (searchTerm && !orphanName.toLowerCase().includes(searchTerm)) continue
                                                     items.push(
                                                         <button
-                                                            key={parent.id}
-                                                            onClick={() => { setShowCategoryDropdown(false); router.push(`/products/category/${parent.slug}`) }}
-                                                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${isSelected
+                                                            key={orphan.id}
+                                                            onClick={() => { setShowCategoryDropdown(false); setCategoryDropdownSearch(""); router.push(`/products/category/${orphan.slug}`) }}
+                                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory === orphan.slug
                                                                     ? "text-emerald-400 bg-emerald-500/10"
-                                                                    : "text-gray-200 hover:bg-white/5 hover:text-white"
+                                                                    : "text-gray-300 hover:bg-white/5 hover:text-white"
                                                                 }`}
                                                         >
-                                                            {getLocalizedName(parent)}
+                                                            {orphanName}
                                                         </button>
                                                     )
                                                 }
-                                            }
-                                            // Orphan categories
-                                            const parentIds = new Set(parents.map(p => p.id))
-                                            const orphans = categories.filter(c => c.parentId && !parentIds.has(c.parentId))
-                                            for (const orphan of orphans) {
-                                                items.push(
-                                                    <button
-                                                        key={orphan.id}
-                                                        onClick={() => { setShowCategoryDropdown(false); router.push(`/products/category/${orphan.slug}`) }}
-                                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory === orphan.slug
-                                                                ? "text-emerald-400 bg-emerald-500/10"
-                                                                : "text-gray-300 hover:bg-white/5 hover:text-white"
-                                                            }`}
-                                                    >
-                                                        {getLocalizedName(orphan)}
-                                                    </button>
-                                                )
-                                            }
-                                            return items
-                                        })()}
+                                                if (items.length === 0) {
+                                                    items.push(<div key="empty" className="px-4 py-3 text-sm text-gray-500">{t("noCategoriesFound")}</div>)
+                                                }
+                                                return items
+                                            })()}
+                                        </div>
                                     </div>
                                 )}
                             </div>

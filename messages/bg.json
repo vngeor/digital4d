@@ -1119,6 +1119,8 @@
     "allBrands": "Всички марки",
     "brand": "Марка",
     "selectColor": "Избери цвят",
+    "searchCategory": "Търси категории...",
+    "noCategoriesFound": "Няма намерени категории",
     "sortDefault": "Сортирай: По подразбиране",
     "sortPriceLow": "Цена: Ниска → Висока",
     "sortPriceHigh": "Цена: Висока → Ниска",
