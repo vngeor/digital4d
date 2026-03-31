@@ -155,8 +155,10 @@ export function ProductForm({
   useKeyboardSave(formRef)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [galleryUploading, setGalleryUploading] = useState(false)
   const [variantUploading, setVariantUploading] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const galleryFileInputRef = useRef<HTMLInputElement>(null)
   const variantFileInputRef = useRef<HTMLInputElement>(null)
   const variantUploadIndex = useRef<number>(-1)
   const [categorySearch, setCategorySearch] = useState("")
@@ -326,6 +328,41 @@ export function ProductForm({
         fileInputRef.current.value = ""
       }
     }
+  }
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setGalleryUploading(true)
+    try {
+      const uploadData = new FormData()
+      uploadData.append("file", file)
+
+      const res = await fetch("/api/upload", { method: "POST", body: uploadData })
+
+      if (!res.ok) {
+        const error = await res.json()
+        toast.error(error.error || tc("uploadFailed"))
+        return
+      }
+
+      const data = await res.json()
+      setFormData(prev => ({ ...prev, gallery: [...prev.gallery, data.url] }))
+    } catch (error) {
+      console.error("Upload error:", error)
+      toast.error(tc("uploadImageFailed"))
+    } finally {
+      setGalleryUploading(false)
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = ""
+    }
+  }
+
+  const removeGalleryImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      gallery: prev.gallery.filter((_, i) => i !== index),
+    }))
   }
 
   const addVariant = () => {
@@ -766,6 +803,53 @@ export function ProductForm({
               <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
               <p className="text-xs text-emerald-400/70">Recommended: 800 x 800px (1:1 square, transparent PNG)</p>
             </div>
+          </div>
+
+          {/* Gallery Images */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              Gallery Images
+            </h3>
+
+            {formData.gallery.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {formData.gallery.map((url, index) => (
+                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group">
+                    <img src={url} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(index)}
+                      className="absolute top-1 right-1 p-1 rounded-md bg-black/60 hover:bg-red-500/70 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="w-3.5 h-3.5 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input
+              ref={galleryFileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={handleGalleryUpload}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => galleryFileInputRef.current?.click()}
+              disabled={galleryUploading}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50 text-sm"
+            >
+              {galleryUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
+              {galleryUploading ? "Uploading..." : "Add Image"}
+            </button>
+            <p className="text-xs text-gray-500">Add additional product images. Max 5MB each.</p>
           </div>
 
           {formData.fileType === "digital" && (

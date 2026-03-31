@@ -376,6 +376,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             productName={productName}
                             variants={JSON.parse(JSON.stringify(product.variants))}
                             locale={locale}
+                            gallery={product.gallery || []}
                         />
 
                         {/* Details */}
