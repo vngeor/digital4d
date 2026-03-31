@@ -42,9 +42,7 @@ export async function notifyWishlistPriceDrop(
   const effectiveNewPrice = isNowOnSale && salePrice ? salePrice : newPrice
 
   for (const item of wishlistItems) {
-    const onCooldown = await isOnCooldown(item.userId, productId, "price_drop")
-    if (onCooldown) continue
-
+    // No cooldown — admin price changes are intentional and should always notify
     await prisma.notification.create({
       data: {
         userId: item.userId,
@@ -58,14 +56,6 @@ export async function notifyWishlistPriceDrop(
         }),
         link: productUrl || `/products/${productSlug}`,
         productId,
-      },
-    })
-
-    await prisma.wishlistNotificationLog.create({
-      data: {
-        userId: item.userId,
-        productId,
-        type: "price_drop",
       },
     })
 
