@@ -269,8 +269,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     if (notification.type === "stock_available") {
       const names = tryParseJson(notification.title)
       if (names) {
-        const productName = names[locale] || names.en || notification.title
-        return t.stockAvailable ? t.stockAvailable.replace("{product}", productName) : `${productName} is now available!`
+        return names[locale] || names.en || notification.title
       }
     }
     // Quote offer notifications
@@ -585,7 +584,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
           <p className={`text-sm font-medium truncate ${!notification.read ? "text-white" : "text-slate-300"}`}>
             {getLocalizedTitle(notification)}
           </p>
-          <p className="text-xs text-slate-400 truncate">
+          <p className="text-xs text-slate-400 line-clamp-2">
             {stripHtml(getLocalizedMessage(notification))}
           </p>
 
