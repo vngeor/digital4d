@@ -285,6 +285,16 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Cleanup old gallery images that are no longer used
+    const newGallerySet = new Set(data.gallery || [])
+    const oldGalleryUrls = (oldProduct.gallery as string[] || [])
+      .filter((url: string) => !newGallerySet.has(url))
+    if (oldGalleryUrls.length > 0) {
+      deleteBlobsBatch(oldGalleryUrls).catch((err) => {
+        console.error("Failed to delete old gallery images:", err instanceof Error ? err.message : "Unknown")
+      })
+    }
+
     const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "fileUrl", "fileType", "featured", "published", "inStock", "order"]
     const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
