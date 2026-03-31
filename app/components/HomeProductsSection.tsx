@@ -83,7 +83,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                             <Link
                                 key={product.id}
                                 href={product.productUrl}
-                                className="group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300"
+                                className="group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 flex flex-col h-full"
                             >
                                 {/* Image */}
                                 <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
@@ -170,7 +170,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-3 sm:p-4 pt-1">
+                                <div className="p-3 sm:p-4 pt-1 flex flex-col flex-1">
                                     <h3 className="text-sm sm:text-base md:text-lg font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2">
                                         {product.name}
                                     </h3>
@@ -182,68 +182,64 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                                             {product.brand.name}
                                         </span>
                                     )}
+                                    {/* Description */}
                                     {product.description && (
-                                        <p className="text-xs text-slate-400 mb-2 line-clamp-2">
-                                            {(() => {
-                                                const text = product.description.replace(/<[^>]*>/g, "")
-                                                return text.length > 100 ? text.substring(0, 100) + '...' : text
-                                            })()}
+                                        <p className="text-[10px] sm:text-xs text-slate-400 line-clamp-2 mb-1">
+                                            {(() => { const t = product.description.replace(/<[^>]*>/g, "").trim(); return t.length > 100 ? t.substring(0, 100) + "..." : t })()}
                                         </p>
                                     )}
 
-                                    {/* Price + Action */}
-                                    <div className="flex flex-col gap-2 mt-2">
-                                        {/* Price */}
-                                        {product.priceType !== "quote" && (
-                                            <div>
+                                    {/* Price */}
+                                    <div className="mt-auto pt-2">
+                                        {product.priceType !== "quote" ? (
+                                            <div className="mb-2">
                                                 {product.onSale && product.salePrice ? (
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-sm sm:text-base font-bold text-red-400">
-                                                            {product.salePrice} {product.currency}
+                                                            {parseFloat(product.salePrice || "0").toFixed(2)} {product.currency}
                                                         </span>
                                                         <span className="text-[10px] sm:text-xs text-slate-500 line-through">
-                                                            {product.price} {product.currency}
+                                                            {parseFloat(product.price || "0").toFixed(2)} {product.currency}
                                                         </span>
                                                     </div>
                                                 ) : (
                                                     <span className="text-sm sm:text-base font-bold text-white">
-                                                        {product.priceType === "from" ? `${tProducts("from")} ` : ""}{product.price} {product.currency}
+                                                        {product.priceType === "from" ? `${tProducts("from")} ` : ""}{parseFloat(product.price || "0").toFixed(2)} {product.currency}
                                                     </span>
                                                 )}
                                             </div>
+                                        ) : null}
+
+                                        {/* Action Button — full width */}
+                                        {!["in_stock", "pre_order"].includes(product.status) ? (
+                                            <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-400 text-[10px] sm:text-xs font-medium">
+                                                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                </svg>
+                                                {tProducts("notifyMeShort")}
+                                            </span>
+                                        ) : product.fileType === "digital" ? (
+                                            <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-medium">
+                                                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                                {tProducts("buyNow")}
+                                            </span>
+                                        ) : product.fileType === "service" || product.priceType === "quote" ? (
+                                            <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 text-[10px] sm:text-xs font-medium">
+                                                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                </svg>
+                                                {tProducts("getQuote")}
+                                            </span>
+                                        ) : (
+                                            <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 text-[10px] sm:text-xs font-medium">
+                                                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                </svg>
+                                                {tProducts("orderNow")}
+                                            </span>
                                         )}
-                                        {/* Action Button */}
-                                        <div>
-                                            {!["in_stock", "pre_order"].includes(product.status) ? (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-400 text-[10px] sm:text-xs font-medium whitespace-nowrap">
-                                                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                                    </svg>
-                                                    {tProducts("notifyMeShort")}
-                                                </span>
-                                            ) : product.fileType === "digital" ? (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-medium whitespace-nowrap">
-                                                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                    </svg>
-                                                    {tProducts("buyNow")}
-                                                </span>
-                                            ) : product.fileType === "service" || product.priceType === "quote" ? (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 text-[10px] sm:text-xs font-medium whitespace-nowrap">
-                                                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                                    </svg>
-                                                    {tProducts("getQuote")}
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 text-[10px] sm:text-xs font-medium whitespace-nowrap">
-                                                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                                    </svg>
-                                                    {tProducts("orderNow")}
-                                                </span>
-                                            )}
-                                        </div>
                                     </div>
                                 </div>
                             </Link>

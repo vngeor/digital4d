@@ -94,6 +94,13 @@ button, a, [role="button"] {
   }
 }
 
+/* Fallback for browsers without svh (stable viewport height) support */
+@supports not (height: 1svh) {
+  .max-h-\[85svh\] {
+    max-height: 80vh;
+  }
+}
+
 /* Floating animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
