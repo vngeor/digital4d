@@ -324,6 +324,13 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
           .replace("{currency}", data.currency || "")
       }
     }
+    if (notification.type === "stock_available") {
+      const names = tryParseJson(notification.title)
+      if (names) {
+        const productName = names[locale] || names.en || ""
+        return t.stockAvailable.replace("{product}", productName)
+      }
+    }
     // Quote offer notifications
     if (notification.type === "quote_offer" || notification.type === "coupon") {
       const msgData = tryParseJson(notification.message)
