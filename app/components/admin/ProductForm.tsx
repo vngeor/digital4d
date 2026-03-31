@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
-import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search, Plus, Trash2, Palette } from "lucide-react"
+import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search, Plus, Trash2, Palette, Link2, Check } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
 
 interface ProductVariantData {
@@ -36,11 +36,12 @@ interface ProductFormData {
   brandId: string
   image: string
   gallery: string[]
+  relatedProductIds: string[]
   fileUrl: string
   fileType: string
   featured: boolean
   published: boolean
-  inStock: boolean
+  status: string
   order: number
   variants: ProductVariantData[]
 }
@@ -74,12 +75,13 @@ interface ProductFormProps {
     tags?: string[]
     image?: string | null
     gallery?: string[]
+    relatedProductIds?: string[]
     fileUrl?: string | null
     fileType?: string | null
     brandId?: string | null
     featured?: boolean
     published?: boolean
-    inStock?: boolean
+    status?: string
     order?: number
     variants?: Array<{
       id?: string
@@ -165,6 +167,16 @@ export function ProductForm({
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const categoryDropdownRef = useRef<HTMLDivElement>(null)
   const categorySearchInputRef = useRef<HTMLInputElement>(null)
+  // Related products picker state
+  const [relatedSearch, setRelatedSearch] = useState("")
+  const [relatedResults, setRelatedResults] = useState<Array<{ id: string; nameEn: string; nameBg: string; image: string | null }>>([])
+  const [selectedRelated, setSelectedRelated] = useState<Array<{ id: string; nameEn: string; nameBg: string; image: string | null }>>([])
+  const [searchingRelated, setSearchingRelated] = useState(false)
+  const [showRelatedDropdown, setShowRelatedDropdown] = useState(false)
+  const relatedDropdownRef = useRef<HTMLDivElement>(null)
+  const relatedSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const allRelatedProductsRef = useRef<Array<{ id: string; nameEn: string; nameBg: string; image: string | null }>>([])
+  const allRelatedLoadedRef = useRef(false)
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const [autoSlug, setAutoSlug] = useState(!initialData?.id)
   const [formData, setFormData] = useState<ProductFormData>({
@@ -187,11 +199,12 @@ export function ProductForm({
     brandId: initialData?.brandId || "",
     image: initialData?.image || "",
     gallery: initialData?.gallery ?? [],
+    relatedProductIds: initialData?.relatedProductIds ?? [],
     fileUrl: initialData?.fileUrl || "",
     fileType: initialData?.fileType || "physical",
     featured: initialData?.featured ?? false,
     published: initialData?.published ?? false,
-    inStock: initialData?.inStock !== false,
+    status: initialData?.status || "in_stock",
     order: initialData?.order ?? 0,
     variants: initialData?.variants?.map((v, i) => ({
       id: v.id,
@@ -220,6 +233,94 @@ export function ProductForm({
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
   }, [])
+
+  // Click-outside handler for related products dropdown
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (relatedDropdownRef.current && !relatedDropdownRef.current.contains(e.target as Node)) {
+        setShowRelatedDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  // Load selected related products on mount (for edit mode)
+  useEffect(() => {
+    if (formData.relatedProductIds.length > 0 && selectedRelated.length === 0) {
+      fetch(`/api/admin/products?ids=${formData.relatedProductIds.join(",")}`)
+        .then(res => res.ok ? res.json() : [])
+        .then((data: Array<{ id: string; nameEn: string; nameBg: string; image: string | null }>) => {
+          const products = Array.isArray(data) ? data : []
+          setSelectedRelated(products.map(p => ({ id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image })))
+        })
+        .catch(() => {})
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const loadAllRelatedProducts = async () => {
+    if (allRelatedLoadedRef.current) return
+    setSearchingRelated(true)
+    try {
+      const res = await fetch("/api/admin/products")
+      if (res.ok) {
+        const data = await res.json()
+        const products = (Array.isArray(data) ? data : []).map((p: { id: string; nameEn: string; nameBg: string; image: string | null }) => ({
+          id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image,
+        }))
+        allRelatedProductsRef.current = products
+        setRelatedResults(products)
+        allRelatedLoadedRef.current = true
+      }
+    } catch {
+      setRelatedResults([])
+    } finally {
+      setSearchingRelated(false)
+    }
+  }
+
+  const searchRelatedProducts = (query: string) => {
+    if (relatedSearchTimeoutRef.current) clearTimeout(relatedSearchTimeoutRef.current)
+    if (!query.trim()) {
+      if (allRelatedLoadedRef.current) setRelatedResults(allRelatedProductsRef.current)
+      return
+    }
+    relatedSearchTimeoutRef.current = setTimeout(async () => {
+      setSearchingRelated(true)
+      try {
+        const res = await fetch(`/api/admin/products?search=${encodeURIComponent(query)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setRelatedResults(
+            (Array.isArray(data) ? data : []).slice(0, 20).map((p: { id: string; nameEn: string; nameBg: string; image: string | null }) => ({
+              id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image,
+            }))
+          )
+        }
+      } catch {
+        setRelatedResults([])
+      } finally {
+        setSearchingRelated(false)
+      }
+    }, 300)
+  }
+
+  const toggleRelatedProduct = (product: { id: string; nameEn: string; nameBg: string; image: string | null }) => {
+    const isSelected = formData.relatedProductIds.includes(product.id)
+    if (isSelected) {
+      setFormData(prev => ({ ...prev, relatedProductIds: prev.relatedProductIds.filter(id => id !== product.id) }))
+      setSelectedRelated(prev => prev.filter(p => p.id !== product.id))
+    } else {
+      setFormData(prev => ({ ...prev, relatedProductIds: [...prev.relatedProductIds, product.id] }))
+      setSelectedRelated(prev => [...prev, product])
+    }
+  }
+
+  const removeRelatedProduct = (productId: string) => {
+    setFormData(prev => ({ ...prev, relatedProductIds: prev.relatedProductIds.filter(id => id !== productId) }))
+    setSelectedRelated(prev => prev.filter(p => p.id !== productId))
+  }
 
   const getCategoryName = (cat: ProductCategory) => {
     const nameKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof ProductCategory
@@ -866,6 +967,93 @@ export function ProductForm({
               />
             </div>
           )}
+          {/* Related Products */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+              <Link2 className="w-4 h-4" />
+              Related Products
+            </h3>
+
+            {/* Selected related products tags */}
+            {selectedRelated.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedRelated.map(product => (
+                  <span
+                    key={product.id}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-sm"
+                  >
+                    {product.image && (
+                      <img src={product.image} alt="" className="w-5 h-5 rounded object-cover" />
+                    )}
+                    <span className="max-w-[150px] truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeRelatedProduct(product.id)}
+                      className="ml-0.5 hover:text-red-400 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Search dropdown */}
+            <div ref={relatedDropdownRef} className="relative">
+              <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
+                <Search className="w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  value={relatedSearch}
+                  onChange={(e) => {
+                    setRelatedSearch(e.target.value)
+                    searchRelatedProducts(e.target.value)
+                  }}
+                  onFocus={() => {
+                    setShowRelatedDropdown(true)
+                    loadAllRelatedProducts()
+                  }}
+                  placeholder="Search products to add..."
+                  className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
+                />
+                {searchingRelated && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+              </div>
+
+              {showRelatedDropdown && (
+                <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-[#1e1e36] border border-white/10 shadow-xl">
+                  {relatedResults
+                    .filter(p => p.id !== formData.id) // Exclude current product
+                    .map(product => {
+                      const isSelected = formData.relatedProductIds.includes(product.id)
+                      return (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => toggleRelatedProduct(product)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
+                            isSelected ? "bg-emerald-500/10 text-emerald-300" : "text-gray-300 hover:bg-white/5"
+                          }`}
+                        >
+                          {product.image ? (
+                            <img src={product.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-white/10 flex-shrink-0" />
+                          )}
+                          <span className="flex-1 truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
+                          {isSelected && <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  {relatedResults.length === 0 && !searchingRelated && (
+                    <p className="px-3 py-3 text-sm text-gray-500 text-center">No products found</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-500">Select products to show as related. If empty, same-category products are shown automatically.</p>
+          </div>
+
           {/* Color Variants */}
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
@@ -1042,16 +1230,21 @@ export function ProductForm({
                 <span className="text-sm text-gray-300">{t("featured")}</span>
               </label>
             </div>
-            <div className="flex items-center pt-6">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.inStock}
-                  onChange={(e) => updateField("inStock", e.target.checked)}
-                  className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30"
-                />
-                <span className="text-sm text-gray-300">{t("inStock")}</span>
+            <div className="pt-1">
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Status
               </label>
+              <select
+                value={formData.status}
+                onChange={(e) => updateField("status", e.target.value)}
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none text-base sm:text-sm"
+              >
+                <option value="in_stock">✅ In Stock</option>
+                <option value="out_of_stock">⏸️ Out of Stock</option>
+                <option value="coming_soon">🔜 Coming Soon</option>
+                <option value="pre_order">📦 Pre-Order</option>
+                <option value="sold_out">🚫 Sold Out</option>
+              </select>
             </div>
           </div>
 

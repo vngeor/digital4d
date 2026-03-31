@@ -909,6 +909,9 @@
       "draft": "Draft",
       "inStock": "In Stock",
       "outOfStock": "Out of Stock",
+      "comingSoon": "Coming Soon",
+      "preOrder": "Pre-Order",
+      "soldOut": "Sold Out",
       "order": "Order",
       "actions": "Actions",
       "edit": "Edit",
@@ -1106,6 +1109,9 @@
     "addToCart": "Add to Cart",
     "inStock": "In Stock",
     "outOfStock": "Out of Stock",
+    "comingSoon": "Coming Soon",
+    "preOrder": "Pre-Order",
+    "soldOut": "Sold Out",
     "onSale": "Sale",
     "saleTitle": "Sale Products",
     "saleSubtitle": "Browse our best deals and discounted products",
@@ -1300,7 +1306,11 @@
     "removeFromWishlist": "Removed from wishlist",
     "loginToWishlist": "Sign in to add items to your wishlist",
     "priceDropAlert": "We'll notify you when prices drop or new deals are available on your wishlisted items!",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "outOfStock": "Out of Stock",
+    "comingSoon": "Coming Soon",
+    "preOrder": "Pre-Order",
+    "soldOut": "Sold Out"
   },
   "search": {
     "placeholder": "Search products, news, pages...",

@@ -909,6 +909,9 @@
       "draft": "Borrador",
       "inStock": "En Stock",
       "outOfStock": "Agotado",
+      "comingSoon": "Próximamente",
+      "preOrder": "Pre-Pedido",
+      "soldOut": "Agotado",
       "order": "Orden",
       "actions": "Acciones",
       "edit": "Editar",
@@ -1106,6 +1109,9 @@
     "addToCart": "Añadir al Carrito",
     "inStock": "En Stock",
     "outOfStock": "Agotado",
+    "comingSoon": "Próximamente",
+    "preOrder": "Pre-Pedido",
+    "soldOut": "Agotado",
     "onSale": "Oferta",
     "saleTitle": "Productos en Oferta",
     "saleSubtitle": "Descubre nuestras mejores ofertas y productos con descuento",
@@ -1300,7 +1306,11 @@
     "removeFromWishlist": "Eliminado de favoritos",
     "loginToWishlist": "Inicia sesión para añadir a favoritos",
     "priceDropAlert": "¡Te notificaremos cuando bajen los precios o haya nuevas ofertas en tus productos favoritos!",
-    "backToHome": "Volver al inicio"
+    "backToHome": "Volver al inicio",
+    "outOfStock": "Agotado",
+    "comingSoon": "Próximamente",
+    "preOrder": "Pre-Pedido",
+    "soldOut": "Agotado"
   },
   "search": {
     "placeholder": "Buscar productos, noticias, páginas...",

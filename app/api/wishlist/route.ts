@@ -28,7 +28,7 @@ export async function GET() {
             image: true,
             fileType: true,
             featured: true,
-            inStock: true,
+            status: true,
             published: true,
           },
         },

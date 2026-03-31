@@ -45,11 +45,12 @@ interface Product {
   brand: { id: string; slug: string; nameBg: string; nameEn: string; nameEs: string } | null
   image: string | null
   gallery: string[]
+  relatedProductIds: string[]
   fileUrl: string | null
   fileType: string | null
   featured: boolean
   published: boolean
-  inStock: boolean
+  status: string
   order: number
   variants: ProductVariant[]
   createdAt: string
@@ -197,11 +198,12 @@ export default function ProductsPage() {
     brandId: string
     image: string
     gallery: string[]
+    relatedProductIds: string[]
     fileUrl: string
     fileType: string
     featured: boolean
     published: boolean
-    inStock: boolean
+    status: string
     order: number
     variants: Array<{
       id?: string
