@@ -73,7 +73,7 @@ export async function GET() {
     // Build unified notifications list
     const unified: Array<{
       id: string
-      type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "coupon_reminder"
+      type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "stock_available" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "coupon_reminder"
       title: string
       message: string
       link: string | null
@@ -125,6 +125,21 @@ export async function GET() {
       }
     }
 
+    // Batch fetch product images for notifications with productId
+    const productIds = dbNotifications
+      .map(n => n.productId)
+      .filter((id): id is string => !!id)
+    const productImageMap: Record<string, string> = {}
+    if (productIds.length > 0) {
+      const products = await prisma.product.findMany({
+        where: { id: { in: [...new Set(productIds)] } },
+        select: { id: true, image: true },
+      })
+      for (const p of products) {
+        if (p.image) productImageMap[p.id] = p.image
+      }
+    }
+
     // Add Notification model records
     for (const n of dbNotifications) {
       // Extract quotedPrice from JSON message for quote notifications
@@ -150,7 +165,7 @@ export async function GET() {
         viewedAt: n.readAt?.toISOString() || null,
         productName: null,
         productSlug: null,
-        productImage: null,
+        productImage: n.productId ? productImageMap[n.productId] || null : null,
         couponCode: n.coupon?.code || null,
         couponType: n.coupon?.type || null,
         couponValue: n.coupon?.value?.toString() || null,
