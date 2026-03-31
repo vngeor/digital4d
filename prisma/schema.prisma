@@ -196,12 +196,13 @@ model Product {
   brandId     String?
   brand       Brand?    @relation(fields: [brandId], references: [id], onDelete: SetNull)
   image       String?
-  gallery     String[]
+  gallery           String[]
+  relatedProductIds String[]  @default([])
   fileUrl     String?   // For digital products
   fileType    String?   // "digital", "physical", "service"
   featured    Boolean   @default(false)
   published     Boolean   @default(false)
-  inStock       Boolean   @default(true)
+  status        String    @default("in_stock") // in_stock, out_of_stock, coming_soon, pre_order, sold_out
   order         Int       @default(0)
   createdById   String?
   createdBy     User?     @relation("ProductCreator", fields: [createdById], references: [id], onDelete: SetNull)

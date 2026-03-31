@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product is not available" }, { status: 400 })
     }
 
-    if (!product.inStock) {
-      return NextResponse.json({ error: "Product is out of stock" }, { status: 400 })
+    if (!["in_stock", "pre_order"].includes(product.status)) {
+      return NextResponse.json({ error: "Product is not available for purchase" }, { status: 400 })
     }
 
     if (product.fileType !== "digital") {

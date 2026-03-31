@@ -171,27 +171,57 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         isWishlisted = !!wishlistItem
     }
 
-    // Fetch related products (same category, excluding current)
-    const relatedProducts = await prisma.product.findMany({
-        where: {
-            category: product.category,
-            published: true,
-            NOT: { id: product.id }
-        },
-        take: 3,
-        orderBy: [{ featured: "desc" }, { order: "asc" }],
-        include: { brand: { select: { slug: true } } },
-    })
+    // Fetch related products: manual selection or auto fallback (same category)
+    let relatedProducts
+    if (product.relatedProductIds && product.relatedProductIds.length > 0) {
+        relatedProducts = await prisma.product.findMany({
+            where: { id: { in: product.relatedProductIds }, published: true },
+            include: { brand: { select: { slug: true } } },
+            take: 6,
+        })
+    } else {
+        // Auto fallback: same category first, then sibling subcategories under same parent
+        const siblingCategories: string[] = [product.category]
+        if (productCategory?.parent) {
+            const siblings = await prisma.productCategory.findMany({
+                where: { parent: { slug: productCategory.parent.slug } },
+                select: { slug: true },
+            })
+            for (const s of siblings) {
+                if (!siblingCategories.includes(s.slug)) siblingCategories.push(s.slug)
+            }
+        }
+        relatedProducts = await prisma.product.findMany({
+            where: {
+                category: { in: siblingCategories },
+                published: true,
+                NOT: { id: product.id }
+            },
+            take: 4,
+            orderBy: [{ featured: "desc" }, { order: "asc" }],
+            include: { brand: { select: { slug: true } } },
+        })
+    }
 
-    // Build URLs for related products
-    const parentSlug = productCategory?.parent?.slug || null
+    // Build URLs for related products (handle cross-category products)
     const relatedProductUrls: Record<string, string> = {}
+    const relatedCategorySlugs = [...new Set(relatedProducts.map(p => p.category))]
+    const relatedCategories = relatedCategorySlugs.length > 0
+        ? await prisma.productCategory.findMany({
+            where: { slug: { in: relatedCategorySlugs } },
+            select: { slug: true, parent: { select: { slug: true } } },
+        })
+        : []
+    const categoryParentMap: Record<string, string | null> = {}
+    for (const cat of relatedCategories) {
+        categoryParentMap[cat.slug] = cat.parent?.slug || null
+    }
     for (const related of relatedProducts) {
         relatedProductUrls[related.id] = buildProductUrl(
             related.slug,
             related.category,
             related.brand?.slug,
-            parentSlug // same parent since same category
+            categoryParentMap[related.category] ?? null
         )
     }
 
@@ -289,8 +319,9 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             "@type": "Offer",
             price: offerPrice.toFixed(2),
             priceCurrency: product.currency,
-            availability: product.inStock
-                ? "https://schema.org/InStock"
+            availability: product.status === "in_stock" ? "https://schema.org/InStock"
+                : product.status === "pre_order" ? "https://schema.org/PreOrder"
+                : product.status === "sold_out" ? "https://schema.org/SoldOut"
                 : "https://schema.org/OutOfStock",
             url: `${siteUrl}${canonicalPath}`,
         }
@@ -446,15 +477,19 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                         )}
                                     </>
                                 )}
-                                {product.inStock ? (
-                                    <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-emerald-500/20 text-emerald-400">
-                                        {t("products.inStock")}
-                                    </span>
-                                ) : (
-                                    <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-gray-500/20 text-gray-400">
-                                        {t("products.outOfStock")}
-                                    </span>
-                                )}
+                                <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium ${
+                                    product.status === "in_stock" ? "bg-emerald-500/20 text-emerald-400"
+                                    : product.status === "pre_order" ? "bg-purple-500/20 text-purple-400"
+                                    : product.status === "coming_soon" ? "bg-blue-500/20 text-blue-400"
+                                    : product.status === "sold_out" ? "bg-red-500/20 text-red-400"
+                                    : "bg-gray-500/20 text-gray-400"
+                                }`}>
+                                    {product.status === "in_stock" ? t("products.inStock")
+                                    : product.status === "pre_order" ? t("products.preOrder")
+                                    : product.status === "coming_soon" ? t("products.comingSoon")
+                                    : product.status === "sold_out" ? t("products.soldOut")
+                                    : t("products.outOfStock")}
+                                </span>
                             </div>
 
                             {/* Price */}

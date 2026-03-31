@@ -15,7 +15,7 @@ interface Product {
     onSale?: boolean
     currency?: string
     fileType: string | null
-    inStock: boolean
+    status: string
 }
 
 interface CouponDiscount {
@@ -418,7 +418,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                 {/* Buy Now Button */}
                 <button
                     onClick={handleBuyNow}
-                    disabled={loading || !product.inStock}
+                    disabled={loading || !["in_stock", "pre_order"].includes(product.status)}
                     className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? (
@@ -485,7 +485,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
             {quantitySelector}
             <button
                 onClick={() => setShowContactForm(true)}
-                disabled={!product.inStock}
+                disabled={!["in_stock", "pre_order"].includes(product.status)}
                 className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <Send className="w-5 h-5" />

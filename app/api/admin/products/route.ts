@@ -126,11 +126,12 @@ export async function POST(request: NextRequest) {
         brandId: data.brandId || null,
         image: data.image || null,
         gallery: data.gallery || [],
+        relatedProductIds: data.relatedProductIds || [],
         fileUrl: data.fileUrl || null,
         fileType: data.fileType || "physical",
         featured: data.featured || false,
         published: data.published || false,
-        inStock: data.inStock !== false,
+        status: data.status || "in_stock",
         order: data.order || 0,
       },
     })
@@ -240,11 +241,12 @@ export async function PUT(request: NextRequest) {
         brandId: data.brandId || null,
         image: data.image || null,
         gallery: data.gallery || [],
+        relatedProductIds: data.relatedProductIds || [],
         fileUrl: data.fileUrl || null,
         fileType: data.fileType || "physical",
         featured: data.featured || false,
         published: data.published || false,
-        inStock: data.inStock !== false,
+        status: data.status || "in_stock",
         order: data.order || 0,
       },
     })
@@ -295,7 +297,7 @@ export async function PUT(request: NextRequest) {
       })
     }
 
-    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "fileUrl", "fileType", "featured", "published", "inStock", "order"]
+    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "relatedProductIds", "fileUrl", "fileType", "featured", "published", "status", "order"]
     const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
 
@@ -390,6 +392,20 @@ export async function PATCH(request: NextRequest) {
         console.error("Failed to delete product file blobs:", err instanceof Error ? err.message : "Unknown")
       })
 
+      // Clean up stale relatedProductIds references in other products
+      for (const deletedId of ids) {
+        const referencing = await prisma.product.findMany({
+          where: { relatedProductIds: { has: deletedId } },
+          select: { id: true, relatedProductIds: true },
+        })
+        for (const ref of referencing) {
+          await prisma.product.update({
+            where: { id: ref.id },
+            data: { relatedProductIds: ref.relatedProductIds.filter(rid => rid !== deletedId) },
+          })
+        }
+      }
+
       for (const p of products) {
         logAuditAction({ userId: session.user.id, action: "delete", resource: "products", recordId: p.id }).catch(() => {})
       }
@@ -465,6 +481,18 @@ export async function DELETE(request: NextRequest) {
 
       deleteBlobsBatch(urlsToDelete).catch(err => {
         console.error("Failed to delete product file blobs:", err instanceof Error ? err.message : "Unknown")
+      })
+    }
+
+    // Clean up stale relatedProductIds references in other products
+    const referencing = await prisma.product.findMany({
+      where: { relatedProductIds: { has: id } },
+      select: { id: true, relatedProductIds: true },
+    })
+    for (const ref of referencing) {
+      await prisma.product.update({
+        where: { id: ref.id },
+        data: { relatedProductIds: ref.relatedProductIds.filter(rid => rid !== id) },
       })
     }
 

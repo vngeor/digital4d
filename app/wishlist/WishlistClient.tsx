@@ -22,7 +22,7 @@ interface WishlistProduct {
     image: string | null
     fileType: string | null
     featured: boolean
-    inStock: boolean
+    status: string
 }
 
 interface WishlistItem {
@@ -62,6 +62,10 @@ interface WishlistClientProps {
         loginToWishlist: string
         priceDropAlert: string
         backToHome: string
+        outOfStock: string
+        comingSoon: string
+        preOrder: string
+        soldOut: string
     }
     couponMap?: Record<string, CouponBadge>
     productUrlMap?: Record<string, string>
@@ -317,9 +321,18 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                                 </div>
 
                                                 {/* Stock Status */}
-                                                {!product.inStock && (
-                                                    <span className="inline-block mt-2 px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400">
-                                                        Out of Stock
+                                                {product.status !== "in_stock" && (
+                                                    <span className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-medium ${
+                                                        product.status === "sold_out" ? "bg-red-500/20 text-red-400"
+                                                        : product.status === "coming_soon" ? "bg-blue-500/20 text-blue-400"
+                                                        : product.status === "pre_order" ? "bg-purple-500/20 text-purple-400"
+                                                        : "bg-gray-500/20 text-gray-400"
+                                                    }`}>
+                                                        {product.status === "out_of_stock" ? t.outOfStock
+                                                        : product.status === "sold_out" ? t.soldOut
+                                                        : product.status === "coming_soon" ? t.comingSoon
+                                                        : product.status === "pre_order" ? t.preOrder
+                                                        : t.outOfStock}
                                                     </span>
                                                 )}
                                             </div>

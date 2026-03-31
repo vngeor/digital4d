@@ -104,6 +104,10 @@ export default async function WishlistPage() {
         loginToWishlist: t("loginToWishlist"),
         priceDropAlert: t("priceDropAlert"),
         backToHome: t("backToHome"),
+        outOfStock: t("outOfStock"),
+        comingSoon: t("comingSoon"),
+        preOrder: t("preOrder"),
+        soldOut: t("soldOut"),
     }
 
     return (
