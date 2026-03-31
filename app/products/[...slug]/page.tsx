@@ -2,12 +2,11 @@ import { notFound, redirect } from "next/navigation"
 import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
 import { Header } from "../../components/Header"
-import { ProductActions } from "../../components/ProductActions"
 import { WishlistButton } from "../../components/WishlistButton"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 import { headers } from "next/headers"
-import { ProductImageGallery } from "../../components/ProductImageGallery"
+import { ProductDetailClient } from "../../components/ProductDetailClient"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { buildProductUrl } from "@/lib/productUrl"
 import { ArrowLeft } from "lucide-react"
@@ -400,125 +399,115 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             {/* Product Content */}
             <section className="relative py-8 px-4">
                 <div className="mx-auto max-w-6xl">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
-                        {/* Image + Color Variants */}
-                        <ProductImageGallery
-                            mainImage={product.image}
-                            productName={productName}
-                            variants={JSON.parse(JSON.stringify(product.variants))}
-                            locale={locale}
-                            gallery={product.gallery || []}
-                        />
-
-                        {/* Details */}
-                        <div className="space-y-3 md:space-y-6">
-                            {/* Category Badge with breadcrumb */}
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                {parentCategoryName && (
-                                    <>
-                                        <Link
-                                            href={`/products/category/${category?.parent?.slug || ""}`}
-                                            className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[category?.parent?.color || "gray"] || "bg-gray-500/20 text-gray-400"}`}
-                                        >
-                                            {parentCategoryName}
-                                        </Link>
-                                        <span className="text-gray-500 text-xs">→</span>
-                                    </>
-                                )}
-                                <Link
-                                    href={`/products/category/${product.category}`}
-                                    className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"}`}
-                                >
-                                    {categoryName}
-                                </Link>
-                            </div>
-
-                            {/* Brand */}
-                            {product.brand && (
-                                <Link
-                                    href={`/brands/${product.brand.slug}`}
-                                    className="text-sm text-slate-400 font-medium hover:text-emerald-400 transition-colors"
-                                >
-                                    {getLocalizedName(product.brand)}
-                                </Link>
+                    <ProductDetailClient
+                        product={JSON.parse(JSON.stringify(product))}
+                        productName={productName}
+                        variants={JSON.parse(JSON.stringify(product.variants))}
+                        locale={locale}
+                        mainImage={product.image}
+                        gallery={product.gallery || []}
+                        initialCouponCode={couponCode}
+                        promotedCoupons={promotedCoupons}
+                        isWishlisted={isWishlisted}
+                    >
+                        {/* Category Badge with breadcrumb */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {parentCategoryName && (
+                                <>
+                                    <Link
+                                        href={`/products/category/${category?.parent?.slug || ""}`}
+                                        className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[category?.parent?.color || "gray"] || "bg-gray-500/20 text-gray-400"}`}
+                                    >
+                                        {parentCategoryName}
+                                    </Link>
+                                    <span className="text-gray-500 text-xs">→</span>
+                                </>
                             )}
-
-                            {/* Name + Wishlist */}
-                            <div className="flex items-start gap-3">
-                                <h1 className="flex-1 text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent leading-tight">
-                                    {productName}
-                                </h1>
-                                <WishlistButton
-                                    productId={product.id}
-                                    initialWishlisted={isWishlisted}
-                                    size="lg"
-                                    translations={{
-                                        addToWishlist: t("products.addToWishlist"),
-                                        removeFromWishlist: t("products.removeFromWishlist"),
-                                        loginToWishlist: t("products.loginToWishlist"),
-                                    }}
-                                />
-                            </div>
-
-                            {/* Badges */}
-                            <div className="flex flex-wrap gap-1 md:gap-2">
-                                {product.onSale && (
-                                    <>
-                                        <Link
-                                            href="/products?sale=true"
-                                            className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer"
-                                        >
-                                            {t("products.onSale")}
-                                        </Link>
-                                        {product.price && product.salePrice && (
-                                            <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500 text-white">
-                                                -{Math.round((1 - parseFloat(product.salePrice.toString()) / parseFloat(product.price.toString())) * 100)}%
-                                            </span>
-                                        )}
-                                    </>
-                                )}
-                                <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium ${
-                                    product.status === "in_stock" ? "bg-emerald-500/20 text-emerald-400"
-                                    : product.status === "pre_order" ? "bg-purple-500/20 text-purple-400"
-                                    : product.status === "coming_soon" ? "bg-blue-500/20 text-blue-400"
-                                    : product.status === "sold_out" ? "bg-red-500/20 text-red-400"
-                                    : "bg-gray-500/20 text-gray-400"
-                                }`}>
-                                    {product.status === "in_stock" ? t("products.inStock")
-                                    : product.status === "pre_order" ? t("products.preOrder")
-                                    : product.status === "coming_soon" ? t("products.comingSoon")
-                                    : product.status === "sold_out" ? t("products.soldOut")
-                                    : t("products.outOfStock")}
-                                </span>
-                            </div>
-
-                            {/* Price */}
-                            <div className="p-3 sm:p-4 md:p-6 rounded-lg md:rounded-xl bg-white/5 border border-white/10">
-                                {product.onSale && product.salePrice ? (
-                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                                        <span className="text-xl sm:text-2xl md:text-4xl font-bold text-red-400">
-                                            {parseFloat(product.salePrice.toString()).toFixed(2)} {product.currency}
-                                        </span>
-                                        <span className="text-sm sm:text-base md:text-xl text-gray-500 line-through">
-                                            {price}
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <span className="text-xl sm:text-2xl md:text-4xl font-bold text-white">
-                                        {price || "-"}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Action Buttons */}
-                            <ProductActions
-                                product={JSON.parse(JSON.stringify(product))}
-                                initialCouponCode={couponCode}
-                                promotedCoupons={promotedCoupons}
-                            />
-
+                            <Link
+                                href={`/products/category/${product.category}`}
+                                className={`inline-block px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium hover:opacity-80 transition-opacity ${COLOR_CLASSES[categoryColor] || "bg-gray-500/20 text-gray-400"}`}
+                            >
+                                {categoryName}
+                            </Link>
                         </div>
-                    </div>
+
+                        {/* Brand */}
+                        {product.brand && (
+                            <Link
+                                href={`/brands/${product.brand.slug}`}
+                                className="text-sm text-slate-400 font-medium hover:text-emerald-400 transition-colors"
+                            >
+                                {getLocalizedName(product.brand)}
+                            </Link>
+                        )}
+
+                        {/* Name + Wishlist */}
+                        <div className="flex items-start gap-3">
+                            <h1 className="flex-1 text-xl sm:text-2xl md:text-4xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent leading-tight">
+                                {productName}
+                            </h1>
+                            <WishlistButton
+                                productId={product.id}
+                                initialWishlisted={isWishlisted}
+                                size="lg"
+                                translations={{
+                                    addToWishlist: t("products.addToWishlist"),
+                                    removeFromWishlist: t("products.removeFromWishlist"),
+                                    loginToWishlist: t("products.loginToWishlist"),
+                                }}
+                            />
+                        </div>
+
+                        {/* Badges */}
+                        <div className="flex flex-wrap gap-1 md:gap-2">
+                            {product.onSale && (
+                                <>
+                                    <Link
+                                        href="/products?sale=true"
+                                        className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer"
+                                    >
+                                        {t("products.onSale")}
+                                    </Link>
+                                    {product.price && product.salePrice && (
+                                        <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500 text-white">
+                                            -{Math.round((1 - parseFloat(product.salePrice.toString()) / parseFloat(product.price.toString())) * 100)}%
+                                        </span>
+                                    )}
+                                </>
+                            )}
+                            <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium ${
+                                product.status === "in_stock" ? "bg-emerald-500/20 text-emerald-400"
+                                : product.status === "pre_order" ? "bg-purple-500/20 text-purple-400"
+                                : product.status === "coming_soon" ? "bg-blue-500/20 text-blue-400"
+                                : product.status === "sold_out" ? "bg-red-500/20 text-red-400"
+                                : "bg-gray-500/20 text-gray-400"
+                            }`}>
+                                {product.status === "in_stock" ? t("products.inStock")
+                                : product.status === "pre_order" ? t("products.preOrder")
+                                : product.status === "coming_soon" ? t("products.comingSoon")
+                                : product.status === "sold_out" ? t("products.soldOut")
+                                : t("products.outOfStock")}
+                            </span>
+                        </div>
+
+                        {/* Price */}
+                        <div className="p-3 sm:p-4 md:p-6 rounded-lg md:rounded-xl bg-white/5 border border-white/10">
+                            {product.onSale && product.salePrice ? (
+                                <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
+                                    <span className="text-xl sm:text-2xl md:text-4xl font-bold text-red-400">
+                                        {parseFloat(product.salePrice.toString()).toFixed(2)} {product.currency}
+                                    </span>
+                                    <span className="text-sm sm:text-base md:text-xl text-gray-500 line-through">
+                                        {price}
+                                    </span>
+                                </div>
+                            ) : (
+                                <span className="text-xl sm:text-2xl md:text-4xl font-bold text-white">
+                                    {price || "-"}
+                                </span>
+                            )}
+                        </div>
+                    </ProductDetailClient>
 
                     {/* Description - full width below the grid */}
                     {productDesc && (
@@ -568,6 +557,22 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                         <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                                         </svg>
+                                                    </div>
+                                                )}
+                                                {/* Status overlay for related products */}
+                                                {(related.status === "sold_out" || related.status === "out_of_stock" || related.status === "coming_soon") && (
+                                                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                                        <div className={`px-3 py-1 -rotate-12 shadow-lg ${
+                                                            related.status === "sold_out" ? "bg-red-600/80"
+                                                            : related.status === "coming_soon" ? "bg-blue-600/80"
+                                                            : "bg-gray-600/80"
+                                                        }`}>
+                                                            <span className="text-white font-bold text-[10px] tracking-wider uppercase">
+                                                                {related.status === "sold_out" ? t("products.soldOut")
+                                                                : related.status === "coming_soon" ? t("products.comingSoon")
+                                                                : t("products.outOfStock")}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 )}
                                                 {/* Sale badges for related products */}

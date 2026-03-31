@@ -25,6 +25,7 @@
     "wishlistPriceDropMessage": "Now {newPrice} {currency} (was {oldPrice} {currency})",
     "wishlistOnSale": "{product} is now on sale!",
     "wishlistCoupon": "New discount: {code}",
+    "stockAvailable": "{product} is now available!",
     "wishlistCouponPercentage": "Use code {code} for {value}% off on your favorites!",
     "wishlistCouponFixed": "Use code {code} for {value} {currency} off on your favorites!",
     "quoteOfferTitle": "New Quote Offer",
@@ -1158,7 +1159,12 @@
     "couponExpiresInDays": "Expires in {days} days",
     "addToWishlist": "Added to wishlist",
     "removeFromWishlist": "Removed from wishlist",
-    "loginToWishlist": "Sign in to add items to your wishlist"
+    "loginToWishlist": "Sign in to add items to your wishlist",
+    "notifyMe": "Notify Me When Available",
+    "notifyMeShort": "Notify Me",
+    "notifyMeSubscribed": "You'll Be Notified",
+    "notifyMeSuccess": "You'll be notified when this product is available!",
+    "notifyMeError": "Failed to subscribe for notifications"
   },
   "quotes": {
     "title": "Request a Quote",

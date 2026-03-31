@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
-import { Bell, X, MessageSquare, Ticket, Copy, Check, Heart, TrendingDown, Cake, Gift, ExternalLink, Percent, Clock, TreePine, PartyPopper, Egg, CalendarDays } from "lucide-react"
+import { Bell, X, MessageSquare, Ticket, Copy, Check, Heart, TrendingDown, Cake, Gift, ExternalLink, Percent, Clock, TreePine, PartyPopper, Egg, CalendarDays, Package } from "lucide-react"
 
 interface Notification {
   id: string
-  type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "coupon_reminder"
+  type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "stock_available" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "coupon_reminder"
   title: string
   message: string
   link: string | null
@@ -60,6 +60,7 @@ interface NotificationBellProps {
     couponTimeLeft: string
     couponExpired: string
     couponReminder: string
+    stockAvailable: string
     closeModal: string
   }
   locale?: string
@@ -265,6 +266,13 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
         return t.wishlistCoupon.replace("{code}", data.code)
       }
     }
+    if (notification.type === "stock_available") {
+      const names = tryParseJson(notification.title)
+      if (names) {
+        const productName = names[locale] || names.en || notification.title
+        return t.stockAvailable ? t.stockAvailable.replace("{product}", productName) : `${productName} is now available!`
+      }
+    }
     // Quote offer notifications
     if (notification.type === "quote_offer") {
       return t.quoteOfferTitle
@@ -367,6 +375,13 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       return (
         <div className="shrink-0 w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
           <TrendingDown className="w-5 h-5 text-red-400" />
+        </div>
+      )
+    }
+    if (notification.type === "stock_available") {
+      return (
+        <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+          <Package className="w-5 h-5 text-emerald-400" />
         </div>
       )
     }

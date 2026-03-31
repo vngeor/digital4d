@@ -203,6 +203,7 @@ export function Header() {
                                 couponTimeLeft: t("couponTimeLeft"),
                                 couponExpired: t("couponExpired"),
                                 couponReminder: t("couponReminder"),
+                                stockAvailable: t.raw("stockAvailable"),
                                 closeModal: t("closeModal"),
                             }}
                         />

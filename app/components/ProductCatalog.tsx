@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown } from "lucide-react"
+import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 
 interface Product {
@@ -624,6 +624,23 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         )}
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
 
+                                        {/* Status overlay */}
+                                        {(product.status === "sold_out" || product.status === "out_of_stock" || product.status === "coming_soon") && (
+                                            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                                <div className={`px-3 py-1 sm:px-4 sm:py-1.5 -rotate-12 shadow-lg ${
+                                                    product.status === "sold_out" ? "bg-red-600/80"
+                                                    : product.status === "coming_soon" ? "bg-blue-600/80"
+                                                    : "bg-gray-600/80"
+                                                }`}>
+                                                    <span className="text-white font-bold text-[10px] sm:text-xs tracking-wider uppercase">
+                                                        {product.status === "sold_out" ? t("soldOut")
+                                                        : product.status === "coming_soon" ? t("comingSoon")
+                                                        : t("outOfStock")}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Badges */}
                                         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
                                             {product.featured && (
@@ -658,18 +675,9 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                     loginToWishlist: t("loginToWishlist"),
                                                 }}
                                             />
-                                            {product.status !== "in_stock" && (
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    product.status === "sold_out" ? "bg-red-500/20 text-red-400"
-                                                    : product.status === "coming_soon" ? "bg-blue-500/20 text-blue-400"
-                                                    : product.status === "pre_order" ? "bg-purple-500/20 text-purple-400"
-                                                    : "bg-gray-500/20 text-gray-400"
-                                                }`}>
-                                                    {product.status === "out_of_stock" ? t("outOfStock")
-                                                    : product.status === "sold_out" ? t("soldOut")
-                                                    : product.status === "coming_soon" ? t("comingSoon")
-                                                    : product.status === "pre_order" ? t("preOrder")
-                                                    : t("outOfStock")}
+                                            {product.status === "pre_order" && (
+                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
+                                                    {t("preOrder")}
                                                 </span>
                                             )}
                                         </div>
@@ -743,7 +751,12 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 )}
                                             </div>
                                             {product.priceType !== "quote" && (
-                                                product.fileType === "digital" ? (
+                                                !["in_stock", "pre_order"].includes(product.status) ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-400 text-xs font-medium group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-all whitespace-nowrap">
+                                                        <Bell className="w-3.5 h-3.5 shrink-0" />
+                                                        {t("notifyMeShort")}
+                                                    </span>
+                                                ) : product.fileType === "digital" ? (
                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium group-hover:bg-emerald-500/30 transition-all whitespace-nowrap">
                                                         <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
                                                         {t("buyNow")}

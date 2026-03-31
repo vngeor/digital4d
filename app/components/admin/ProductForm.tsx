@@ -13,6 +13,7 @@ interface ProductVariantData {
   colorNameEs: string
   colorHex: string
   image: string
+  status: string
   order: number
 }
 
@@ -90,6 +91,7 @@ interface ProductFormProps {
       colorNameEs: string
       colorHex: string
       image?: string | null
+      status?: string
       order: number
     }>
   }
@@ -213,6 +215,7 @@ export function ProductForm({
       colorNameEs: v.colorNameEs,
       colorHex: v.colorHex,
       image: v.image || "",
+      status: v.status || "in_stock",
       order: v.order ?? i,
     })) || [],
   })
@@ -475,6 +478,7 @@ export function ProductForm({
         colorNameEs: "",
         colorHex: "#10b981",
         image: "",
+        status: "in_stock",
         order: prev.variants.length,
       }],
     }))
@@ -1187,6 +1191,20 @@ export function ProductForm({
                           )}
                           {t("variantImage")}
                         </button>
+                      </div>
+
+                      {/* Variant Status */}
+                      <div>
+                        <label className="block text-[10px] text-gray-500 mb-1">Status</label>
+                        <select
+                          value={variant.status}
+                          onChange={(e) => updateVariant(index, "status", e.target.value)}
+                          className="px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none"
+                        >
+                          <option value="in_stock">✅ In Stock</option>
+                          <option value="out_of_stock">⏸️ Out of Stock</option>
+                          <option value="sold_out">🚫 Sold Out</option>
+                        </select>
                       </div>
                     </div>
                   </div>

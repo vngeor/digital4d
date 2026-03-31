@@ -25,6 +25,7 @@
     "wishlistPriceDropMessage": "Сега {newPrice} {currency} (беше {oldPrice} {currency})",
     "wishlistOnSale": "{product} е на промоция!",
     "wishlistCoupon": "Нов купон: {code}",
+    "stockAvailable": "{product} вече е наличен!",
     "wishlistCouponPercentage": "Използвай код {code} за {value}% отстъпка на любимите ти!",
     "wishlistCouponFixed": "Използвай код {code} за {value} {currency} отстъпка на любимите ти!",
     "quoteOfferTitle": "Нова ценова оферта",
@@ -911,7 +912,7 @@
       "outOfStock": "Изчерпан",
       "comingSoon": "Очаквайте скоро",
       "preOrder": "Предварителна поръчка",
-      "soldOut": "Изчерпан",
+      "soldOut": "Разпродадено",
       "order": "Ред",
       "actions": "Действия",
       "edit": "Редактирай",
@@ -1111,7 +1112,7 @@
     "outOfStock": "Изчерпан",
     "comingSoon": "Очаквайте скоро",
     "preOrder": "Предварителна поръчка",
-    "soldOut": "Изчерпан",
+    "soldOut": "Разпродадено",
     "onSale": "Промоция",
     "saleTitle": "Продукти в промоция",
     "saleSubtitle": "Разгледайте нашите най-добри оферти и намалени продукти",
@@ -1158,7 +1159,12 @@
     "couponExpiresInDays": "Изтича след {days} дни",
     "addToWishlist": "Добавено в любими",
     "removeFromWishlist": "Премахнато от любими",
-    "loginToWishlist": "Влезте, за да добавите в любими"
+    "loginToWishlist": "Влезте, за да добавите в любими",
+    "notifyMe": "Уведомете ме при наличност",
+    "notifyMeShort": "Уведоми ме",
+    "notifyMeSubscribed": "Ще бъдете уведомени",
+    "notifyMeSuccess": "Ще бъдете уведомени, когато продуктът е наличен!",
+    "notifyMeError": "Грешка при записване за уведомление"
   },
   "quotes": {
     "title": "Заявка за оферта",
@@ -1310,7 +1316,7 @@
     "outOfStock": "Изчерпан",
     "comingSoon": "Очаквайте скоро",
     "preOrder": "Предварителна поръчка",
-    "soldOut": "Изчерпан"
+    "soldOut": "Разпродадено"
   },
   "search": {
     "placeholder": "Търси продукти, новини, страници...",

@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
-import { ShoppingCart, MessageSquare, Send, Loader2, Ticket, X, Check, Clock, Minus, Plus } from "lucide-react"
+import { ShoppingCart, MessageSquare, Send, Loader2, Ticket, X, Check, Clock, Minus, Plus, Bell } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
 
 interface Product {
@@ -41,12 +42,16 @@ interface ProductActionsProps {
     product: Product
     initialCouponCode?: string
     promotedCoupons?: PromotedCoupon[]
+    selectedVariantStatus?: string
+    isWishlisted?: boolean
 }
 
-export function ProductActions({ product, initialCouponCode, promotedCoupons }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, isWishlisted = false }: ProductActionsProps) {
     const t = useTranslations("products")
+    const { data: session } = useSession()
     const [loading, setLoading] = useState(false)
     const [quantity, setQuantity] = useState(1)
+    const [notifySubscribed, setNotifySubscribed] = useState(isWishlisted)
     const [showQuoteForm, setShowQuoteForm] = useState(false)
     const [showContactForm, setShowContactForm] = useState(false)
     const [showCouponInput, setShowCouponInput] = useState(false)
@@ -347,6 +352,53 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
         }
     }
 
+    const canPurchase = ["in_stock", "pre_order"].includes(product.status)
+        && (selectedVariantStatus === undefined || ["in_stock", "pre_order"].includes(selectedVariantStatus))
+
+    const handleNotifyMe = async () => {
+        if (!session) {
+            toast.info(t("loginToWishlist"))
+            return
+        }
+        try {
+            setLoading(true)
+            const res = await fetch("/api/wishlist", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId: product.id }),
+            })
+            if (res.ok) {
+                setNotifySubscribed(true)
+                toast.success(t("notifyMeSuccess"))
+            }
+        } catch {
+            toast.error(t("notifyMeError"))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const notifyMeButton = (
+        <button
+            onClick={handleNotifyMe}
+            disabled={loading || notifySubscribed}
+            className={`w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-medium transition-all ${
+                notifySubscribed
+                    ? "bg-emerald-500/20 text-emerald-400 cursor-default"
+                    : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:shadow-lg hover:shadow-blue-500/30 disabled:opacity-50"
+            }`}
+        >
+            {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+            ) : notifySubscribed ? (
+                <Check className="w-5 h-5" />
+            ) : (
+                <Bell className="w-5 h-5" />
+            )}
+            {notifySubscribed ? t("notifyMeSubscribed") : t("notifyMe")}
+        </button>
+    )
+
     // Digital product - Buy Now button with coupon support
     if (product.fileType === "digital") {
         return (
@@ -413,21 +465,22 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
                     </div>
                 )}
 
-                {quantitySelector}
+                {canPurchase && quantitySelector}
 
-                {/* Buy Now Button */}
-                <button
-                    onClick={handleBuyNow}
-                    disabled={loading || !["in_stock", "pre_order"].includes(product.status)}
-                    className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {loading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                        <ShoppingCart className="w-5 h-5" />
-                    )}
-                    {t("buyNow")}
-                </button>
+                {canPurchase ? (
+                    <button
+                        onClick={handleBuyNow}
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {loading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <ShoppingCart className="w-5 h-5" />
+                        )}
+                        {t("buyNow")}
+                    </button>
+                ) : notifyMeButton}
             </div>
         )
     }
@@ -482,15 +535,16 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons }: 
         <div className="space-y-3">
             {promotedBanners}
             {couponBanner}
-            {quantitySelector}
-            <button
-                onClick={() => setShowContactForm(true)}
-                disabled={!["in_stock", "pre_order"].includes(product.status)}
-                className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                <Send className="w-5 h-5" />
-                {t("orderNow")}
-            </button>
+            {canPurchase && quantitySelector}
+            {canPurchase ? (
+                <button
+                    onClick={() => setShowContactForm(true)}
+                    className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+                >
+                    <Send className="w-5 h-5" />
+                    {t("orderNow")}
+                </button>
+            ) : notifyMeButton}
 
             {showContactForm && (
                 <QuoteForm
