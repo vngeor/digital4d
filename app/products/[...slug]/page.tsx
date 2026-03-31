@@ -10,6 +10,7 @@ import { ProductDetailClient } from "../../components/ProductDetailClient"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { buildProductUrl } from "@/lib/productUrl"
 import { ArrowLeft } from "lucide-react"
+import { sanitizeHtml } from "@/lib/sanitize"
 import type { Product } from "@prisma/client"
 import type { Metadata } from "next"
 
@@ -515,9 +516,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             <h2 className="text-base md:text-lg font-semibold text-white mb-2 md:mb-3">
                                 {t("products.description")}
                             </h2>
-                            <div className="prose prose-invert prose-slate max-w-none text-sm md:text-base text-slate-300 leading-relaxed whitespace-pre-line break-words overflow-hidden">
-                                {productDesc}
-                            </div>
+                            <div
+                                className="prose prose-invert prose-slate max-w-none text-sm md:text-base text-slate-300 leading-relaxed break-words overflow-hidden"
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(productDesc) }}
+                            />
                         </div>
                     )}
 

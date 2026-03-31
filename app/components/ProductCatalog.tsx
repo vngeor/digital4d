@@ -511,8 +511,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                     onChange={(e) => setCategoryDropdownSearch(e.target.value)}
                                                     onKeyDown={handleCategoryKeyDown}
                                                     placeholder={t("searchCategory")}
-                                                    className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
-                                                    autoFocus
+                                                    className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
                                                 />
                                             </div>
                                         </div>
@@ -722,8 +721,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
                                         {/* Description */}
                                         {desc && (
-                                            <p className="text-slate-400 text-sm line-clamp-2 mb-4 hidden sm:block">
-                                                {desc}
+                                            <p className="text-slate-400 text-sm line-clamp-1 mb-4 hidden sm:block">
+                                                {(() => { const t = desc.replace(/<[^>]*>/g, "").trim(); return t.length > 50 ? t.substring(0, 50) + "..." : t })()}
                                             </p>
                                         )}
 

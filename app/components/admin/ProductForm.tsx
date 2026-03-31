@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
 import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search, Plus, Trash2, Palette, Link2, Check } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
+import { RichTextEditor } from "./RichTextEditor"
 
 interface ProductVariantData {
   id?: string
@@ -761,20 +762,9 @@ export function ProductForm({
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("description")} ({activeTab.toUpperCase()})
                 </label>
-                <textarea
-                  value={
-                    formData[
-                      `desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof ProductFormData
-                    ] as string
-                  }
-                  onChange={(e) =>
-                    updateField(
-                      `desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof ProductFormData,
-                      e.target.value
-                    )
-                  }
-                  rows={4}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                <RichTextEditor
+                  value={formData[`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof ProductFormData] as string}
+                  onChange={(html) => updateField(`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof ProductFormData, html)}
                 />
               </div>
             </div>

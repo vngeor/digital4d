@@ -111,10 +111,16 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
             if (e.key === "ArrowLeft") lightboxPrev()
             if (e.key === "ArrowRight") lightboxNext()
         }
-        document.body.style.overflow = "hidden"
+        const scrollY = window.scrollY
+        document.body.style.position = "fixed"
+        document.body.style.top = `-${scrollY}px`
+        document.body.style.width = "100%"
         window.addEventListener("keydown", handleKey)
         return () => {
-            document.body.style.overflow = ""
+            document.body.style.position = ""
+            document.body.style.top = ""
+            document.body.style.width = ""
+            window.scrollTo(0, scrollY)
             window.removeEventListener("keydown", handleKey)
         }
     }, [lightboxOpen, lightboxPrev, lightboxNext])
@@ -231,7 +237,7 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
             {/* Lightbox */}
             {lightboxOpen && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden touch-none"
+                    className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden"
                     onClick={() => { if (!swiped.current) setLightboxOpen(false) }}
                     onTouchStart={(e) => {
                         touchStartX.current = e.touches[0].clientX
@@ -272,7 +278,7 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                     <img
                         src={allLightboxImages[lightboxIndex]}
                         alt={productName}
-                        className="max-w-full max-h-[85vh] object-contain"
+                        className="max-w-full max-h-[85svh] object-contain"
                         onClick={(e) => e.stopPropagation()}
                     />
 
