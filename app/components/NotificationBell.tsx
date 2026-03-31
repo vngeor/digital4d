@@ -390,9 +390,12 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       )
     }
     if (notification.type === "stock_available") {
-      return notification.productImage ? (
+      // Use variant image from message JSON if available, otherwise product image
+      const msgData = tryParseJson(notification.message)
+      const displayImage = msgData?.variantImage || notification.productImage
+      return displayImage ? (
         <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-emerald-500/30 bg-white/5">
-          <img src={notification.productImage} alt="" className="w-full h-full object-cover" />
+          <img src={displayImage} alt="" className="w-full h-full object-cover" />
         </div>
       ) : (
         <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">

@@ -297,7 +297,7 @@ export async function PUT(request: NextRequest) {
           // Variant became available — notify (fire and forget, productWithVariants fetched later)
           const variantNames = { nameBg: nv.colorNameBg, nameEn: nv.colorNameEn, nameEs: nv.colorNameEs }
           const prodNames = { nameBg: product.nameBg, nameEn: product.nameEn, nameEs: product.nameEs }
-          notifyStockAvailable(product.id, product.slug, prodNames, `/products/${product.slug}`, variantNames)
+          notifyStockAvailable(product.id, product.slug, prodNames, `/products/${product.slug}`, variantNames, nv.image || null)
             .catch((err) => console.error("Failed to send variant stock notifications:", err instanceof Error ? err.message : "Unknown"))
         }
       }
