@@ -325,6 +325,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       }
     }
     if (notification.type === "stock_available") {
+      const msgData = tryParseJson(notification.message)
+      if (msgData && (msgData[locale] || msgData.en)) {
+        return msgData[locale] || msgData.en
+      }
+      // Fallback for old format
       const names = tryParseJson(notification.title)
       if (names) {
         const productName = names[locale] || names.en || ""

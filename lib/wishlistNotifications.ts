@@ -169,25 +169,19 @@ export async function notifyStockAvailable(
   let createdCount = 0
 
   for (const item of wishlistItems) {
-    const onCooldown = await isOnCooldown(item.userId, productId, "stock_available")
-    if (onCooldown) continue
-
+    // No cooldown for stock notifications — admin explicitly changing status should always notify
     await prisma.notification.create({
       data: {
         userId: item.userId,
         type: "stock_available",
         title: JSON.stringify({ bg: productNames.nameBg, en: productNames.nameEn, es: productNames.nameEs }),
-        message: JSON.stringify({ status: "in_stock" }),
+        message: JSON.stringify({
+          bg: `Страхотна новина! ${productNames.nameBg} вече е наличен и готов за поръчка.`,
+          en: `Great news! ${productNames.nameEn} is now available and ready to order.`,
+          es: `¡Buenas noticias! ${productNames.nameEs} ya está disponible y listo para pedir.`,
+        }),
         link: productUrl || `/products/${productSlug}`,
         productId,
-      },
-    })
-
-    await prisma.wishlistNotificationLog.create({
-      data: {
-        userId: item.userId,
-        productId,
-        type: "stock_available",
       },
     })
 
