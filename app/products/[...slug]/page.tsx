@@ -176,7 +176,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     if (product.relatedProductIds && product.relatedProductIds.length > 0) {
         relatedProducts = await prisma.product.findMany({
             where: { id: { in: product.relatedProductIds }, published: true },
-            include: { brand: { select: { slug: true } } },
+            include: { brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } } },
             take: 6,
         })
     } else {
@@ -199,7 +199,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             },
             take: 4,
             orderBy: [{ featured: "desc" }, { order: "asc" }],
-            include: { brand: { select: { slug: true } } },
+            include: { brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } } },
         })
     }
 
@@ -530,7 +530,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                 {t("products.relatedProducts")}
                             </h2>
                             <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 md:gap-6 relative z-10">
-                                {relatedProducts.map((related: Product) => {
+                                {relatedProducts.map((related) => {
                                     const relatedName = getLocalizedName(related)
                                     const relatedPrice = related.price
                                         ? `${parseFloat(related.price.toString()).toFixed(2)} ${related.currency}`
@@ -577,6 +577,27 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                         </div>
                                                     </div>
                                                 )}
+                                                {/* Top-left badges: Featured + New + Best Seller */}
+                                                {(related.featured || related.bestSeller || (Date.now() - new Date(related.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && (
+                                                    <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+                                                        {(Date.now() - new Date(related.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
+                                                            <span className="px-1.5 py-0.5 bg-cyan-500 rounded-md text-[10px] font-bold text-white shadow-lg">NEW</span>
+                                                        )}
+                                                        {related.featured && (
+                                                            <div className="w-5 h-5 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {/* Best Seller badge */}
+                                                {related.bestSeller && (
+                                                    <div className="absolute bottom-2 right-2">
+                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg">🏆 Best Seller</span>
+                                                    </div>
+                                                )}
                                                 {/* Sale badges for related products */}
                                                 {related.onSale && (
                                                     <div className="absolute top-2 right-2 flex gap-1">
@@ -608,6 +629,11 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                 <h3 className="font-semibold text-xs md:text-base text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
                                                     {relatedName}
                                                 </h3>
+                                                {related.brand && (
+                                                    <p className="text-[10px] md:text-xs text-slate-500 font-medium">
+                                                        {getLocalizedName(related.brand)}
+                                                    </p>
+                                                )}
                                                 {(() => {
                                                     const desc = getLocalizedDesc(related)
                                                     if (!desc) return null
