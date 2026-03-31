@@ -608,6 +608,17 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                 <h3 className="font-semibold text-xs md:text-base text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
                                                     {relatedName}
                                                 </h3>
+                                                {(() => {
+                                                    const desc = getLocalizedDesc(related)
+                                                    if (!desc) return null
+                                                    const text = desc.replace(/<[^>]*>/g, "").trim()
+                                                    if (!text) return null
+                                                    return (
+                                                        <p className="text-[10px] md:text-xs text-slate-400 mt-0.5 line-clamp-2">
+                                                            {text.length > 100 ? text.substring(0, 100) + "..." : text}
+                                                        </p>
+                                                    )
+                                                })()}
                                                 {/* Price */}
                                                 <div className="mt-1 md:mt-2">
                                                     {related.priceType === "quote" ? (

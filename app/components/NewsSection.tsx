@@ -69,11 +69,11 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
             </div>
 
             {/* Content */}
-            <div className={`${compact ? 'p-3 sm:p-4 pt-1' : 'p-3 sm:p-4 pt-2 sm:pt-3'}`}>
+            <div className={`${compact ? 'p-3 sm:p-4 pt-1' : 'p-3 sm:p-4 pt-2 sm:pt-3'} flex flex-col flex-1`}>
                 <h3 className={`${compact ? 'text-base sm:text-lg' : 'text-base sm:text-xl'} font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2`}>
                     {item.title}
                 </h3>
-                {/* Description - strip HTML tags and truncate to 200 chars */}
+                {/* Description - strip HTML tags and truncate */}
                 {item.description && (() => {
                     const plainText = item.description.replace(/<[^>]*>/g, "")
                     return plainText ? (
@@ -84,15 +84,28 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                         </p>
                     ) : null
                 })()}
-                <div className="flex items-center justify-between mt-2">
-                    <span className={`${compact ? 'text-[10px] sm:text-xs' : 'text-[10px] sm:text-xs'} text-slate-500`}>{item.date}</span>
-                    <span className={`text-emerald-400 ${compact ? 'text-xs sm:text-sm' : 'text-xs sm:text-sm'} font-semibold flex items-center gap-1 group-hover:gap-2 transition-[gap] duration-200`}>
-                        {t("readMore")}
-                        <svg className={`${compact ? 'w-3 h-3 sm:w-4 sm:h-4' : 'w-3 h-3 sm:w-4 sm:h-4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </span>
-                </div>
+                {compact ? (
+                    /* Homepage: full-width button at bottom, no date */
+                    <div className="mt-auto pt-2">
+                        <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-medium group-hover:bg-emerald-500/30 transition-colors">
+                            {t("readMore")}
+                            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </span>
+                    </div>
+                ) : (
+                    /* News page: date left, button right, both at bottom */
+                    <div className="flex items-center justify-between mt-auto pt-2">
+                        <span className="text-[10px] sm:text-xs text-slate-500">{item.date}</span>
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-medium group-hover:bg-emerald-500/30 transition-colors">
+                            {t("readMore")}
+                            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </span>
+                    </div>
+                )}
             </div>
         </>
     )
@@ -117,7 +130,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                                     <Link
                                         key={index}
                                         href={`/news/${item.slug}`}
-                                        className={`group glass ${compact ? 'rounded-xl' : 'rounded-2xl'} overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300`}
+                                        className={`group glass ${compact ? 'rounded-xl' : 'rounded-2xl'} overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 flex flex-col h-full`}
                                     >
                                         {renderNewsCard(item, index, compact)}
                                     </Link>
@@ -127,7 +140,7 @@ export function NewsSection({ newsItems, showAllLink = false, compact = false, i
                             return (
                                 <article
                                     key={index}
-                                    className={`group glass ${compact ? 'rounded-xl' : 'rounded-2xl'} overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 cursor-pointer`}
+                                    className={`group glass ${compact ? 'rounded-xl' : 'rounded-2xl'} overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 cursor-pointer flex flex-col h-full`}
                                     onClick={() => setSelectedNews({ item, index })}
                                 >
                                     {renderNewsCard(item, index, compact)}

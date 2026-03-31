@@ -115,11 +115,13 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
         document.body.style.position = "fixed"
         document.body.style.top = `-${scrollY}px`
         document.body.style.width = "100%"
+        document.documentElement.style.overflow = "hidden"
         window.addEventListener("keydown", handleKey)
         return () => {
             document.body.style.position = ""
             document.body.style.top = ""
             document.body.style.width = ""
+            document.documentElement.style.overflow = ""
             window.scrollTo(0, scrollY)
             window.removeEventListener("keydown", handleKey)
         }
@@ -247,7 +249,7 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                     onTouchEnd={(e) => {
                         const dx = e.changedTouches[0].clientX - touchStartX.current
                         const dy = e.changedTouches[0].clientY - touchStartY.current
-                        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                        if (Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 1.5) {
                             swiped.current = true
                             if (dx < 0) lightboxNext()
                             else lightboxPrev()
