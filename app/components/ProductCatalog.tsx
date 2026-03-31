@@ -500,7 +500,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 </button>
 
                                 {showCategoryDropdown && (
-                                    <div className="absolute top-full mt-2 left-0 right-0 sm:left-auto sm:right-0 sm:w-72 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                    <div className="absolute top-full mt-2 right-0 w-64 sm:w-72 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
                                         {/* Search */}
                                         <div className="p-2 border-b border-white/10">
                                             <div className="relative">
