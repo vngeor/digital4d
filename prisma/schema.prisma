@@ -248,6 +248,7 @@ model ProductVariant {
   colorNameEs String
   colorHex    String
   image       String?
+  status      String   @default("in_stock")
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

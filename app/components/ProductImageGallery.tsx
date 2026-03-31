@@ -9,6 +9,7 @@ interface Variant {
     colorNameEs: string
     colorHex: string
     image: string | null
+    status: string
 }
 
 interface ProductImageGalleryProps {
@@ -17,9 +18,23 @@ interface ProductImageGalleryProps {
     variants: Variant[]
     locale: string
     gallery?: string[]
+    productStatus?: string
+    onVariantChange?: (index: number) => void
 }
 
-export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [] }: ProductImageGalleryProps) {
+const STATUS_OVERLAY_STYLE: Record<string, string> = {
+    sold_out: "bg-red-600/80",
+    out_of_stock: "bg-gray-600/80",
+    coming_soon: "bg-blue-600/80",
+}
+
+const STATUS_OVERLAY_TEXT: Record<string, Record<string, string>> = {
+    sold_out: { bg: "РАЗПРОДАДЕНО", en: "SOLD OUT", es: "AGOTADO" },
+    out_of_stock: { bg: "ИЗЧЕРПАН", en: "OUT OF STOCK", es: "AGOTADO" },
+    coming_soon: { bg: "ОЧАКВАЙТЕ СКОРО", en: "COMING SOON", es: "PRÓXIMAMENTE" },
+}
+
+export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange }: ProductImageGalleryProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const [selectedVariantIndex, setSelectedVariantIndex] = useState(variants.length > 0 ? 0 : -1)
     const [showingVariant, setShowingVariant] = useState(false)
@@ -39,6 +54,14 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
         }
     }
 
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case "sold_out": return locale === "bg" ? "Разпродадено" : locale === "es" ? "Agotado" : "Sold Out"
+            case "out_of_stock": return locale === "bg" ? "Изчерпан" : locale === "es" ? "Agotado" : "Out of Stock"
+            default: return ""
+        }
+    }
+
     // Build array of all browsable images: main + gallery + variant images
     const allImages = [mainImage, ...gallery].filter(Boolean) as string[]
     const variantImages = variants.map(v => v.image).filter(Boolean) as string[]
@@ -51,6 +74,13 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
     } else {
         currentImage = allImages[selectedImageIndex] || mainImage
     }
+
+    // Determine overlay status: variant status takes priority when showing variant
+    const overlayStatus = showingVariant && selectedVariantIndex >= 0
+        ? variants[selectedVariantIndex]?.status
+        : productStatus
+    const overlayBg = overlayStatus ? STATUS_OVERLAY_STYLE[overlayStatus] : null
+    const overlayText = overlayStatus ? STATUS_OVERLAY_TEXT[overlayStatus]?.[locale] || STATUS_OVERLAY_TEXT[overlayStatus]?.en : null
 
     const selectedColorName = selectedVariantIndex >= 0 ? getColorName(variants[selectedVariantIndex]) : null
     const showThumbnails = allImages.length > 1
@@ -97,13 +127,14 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
     const handleVariantClick = (index: number) => {
         setSelectedVariantIndex(index)
         setShowingVariant(true)
+        onVariantChange?.(index)
     }
 
     return (
         <>
             <div className="glass rounded-xl md:rounded-2xl border border-white/10 flex flex-col">
-                {/* Image */}
-                <div className="overflow-hidden">
+                {/* Image with status overlay */}
+                <div className="overflow-hidden relative">
                     {currentImage ? (
                         <img
                             src={currentImage}
@@ -116,6 +147,14 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                             <svg className="w-12 h-12 md:w-24 md:h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                             </svg>
+                        </div>
+                    )}
+                    {/* Status overlay banner */}
+                    {overlayBg && overlayText && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                            <div className={`${overlayBg} px-6 py-2 sm:px-8 sm:py-3 -rotate-12 shadow-lg`}>
+                                <span className="text-white font-bold text-sm sm:text-lg tracking-wider">{overlayText}</span>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -145,26 +184,45 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                 {variants.length > 0 && (
                     <div className={`p-3 md:p-4 ${showThumbnails ? "" : "border-t border-white/10"}`}>
                         <div className="flex items-center gap-2 flex-wrap">
-                            {variants.map((variant, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => handleVariantClick(index)}
-                                    className={`w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center ${
-                                        selectedVariantIndex === index
-                                            ? "border-emerald-400 ring-2 ring-emerald-400/30"
-                                            : "border-white/20 hover:border-white/40"
-                                    }`}
-                                    title={getColorName(variant)}
-                                >
-                                    <div
-                                        className="w-6 h-6 rounded-full"
-                                        style={{ backgroundColor: variant.colorHex }}
-                                    />
-                                </button>
-                            ))}
+                            {variants.map((variant, index) => {
+                                const isUnavailable = variant.status === "sold_out" || variant.status === "out_of_stock"
+                                return (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleVariantClick(index)}
+                                        className={`w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center relative ${
+                                            selectedVariantIndex === index
+                                                ? "border-emerald-400 ring-2 ring-emerald-400/30"
+                                                : "border-white/20 hover:border-white/40"
+                                        } ${isUnavailable ? "opacity-50" : ""}`}
+                                        title={getColorName(variant)}
+                                    >
+                                        <div
+                                            className="w-6 h-6 rounded-full"
+                                            style={{ backgroundColor: variant.colorHex }}
+                                        />
+                                        {isUnavailable && (
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="w-8 h-0.5 bg-white/80 rotate-45 rounded-full" />
+                                            </div>
+                                        )}
+                                    </button>
+                                )
+                            })}
                         </div>
                         {showingVariant && selectedColorName && (
-                            <p className="text-xs text-slate-400 mt-2">{selectedColorName}</p>
+                            <p className="text-xs text-slate-400 mt-2">
+                                {selectedColorName}
+                                {variants[selectedVariantIndex] && variants[selectedVariantIndex].status !== "in_stock" && (
+                                    <span className={`ml-2 ${
+                                        variants[selectedVariantIndex].status === "sold_out" ? "text-red-400"
+                                        : variants[selectedVariantIndex].status === "out_of_stock" ? "text-gray-400"
+                                        : "text-slate-400"
+                                    }`}>
+                                        — {getStatusLabel(variants[selectedVariantIndex].status)}
+                                    </span>
+                                )}
+                            </p>
                         )}
                     </div>
                 )}
@@ -187,6 +245,8 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                             swiped.current = true
                             if (dx < 0) lightboxNext()
                             else lightboxPrev()
+                        } else {
+                            swiped.current = false
                         }
                     }}
                 >

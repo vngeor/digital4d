@@ -147,6 +147,7 @@ export default async function Home() {
             categoryColor: category?.color || "emerald",
             categoryName,
             image: product.image,
+            status: product.status,
             featured: product.featured,
             brand: product.brand ? {
                 name: ((product.brand as Record<string, unknown>)[`name${locale.charAt(0).toUpperCase() + locale.slice(1)}`] as string || product.brand.nameEn),

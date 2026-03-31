@@ -25,6 +25,7 @@
     "wishlistPriceDropMessage": "Ahora {newPrice} {currency} (era {oldPrice} {currency})",
     "wishlistOnSale": "¡{product} está en oferta!",
     "wishlistCoupon": "Nuevo descuento: {code}",
+    "stockAvailable": "¡{product} ya está disponible!",
     "wishlistCouponPercentage": "¡Usa el código {code} para {value}% de descuento en tus favoritos!",
     "wishlistCouponFixed": "¡Usa el código {code} para {value} {currency} de descuento en tus favoritos!",
     "quoteOfferTitle": "Nueva oferta de cotización",
@@ -1158,7 +1159,12 @@
     "couponExpiresInDays": "Expira en {days} días",
     "addToWishlist": "Añadido a favoritos",
     "removeFromWishlist": "Eliminado de favoritos",
-    "loginToWishlist": "Inicia sesión para añadir a favoritos"
+    "loginToWishlist": "Inicia sesión para añadir a favoritos",
+    "notifyMe": "Notifícame cuando esté disponible",
+    "notifyMeShort": "Notifícame",
+    "notifyMeSubscribed": "Serás notificado",
+    "notifyMeSuccess": "¡Serás notificado cuando este producto esté disponible!",
+    "notifyMeError": "Error al suscribirse a las notificaciones"
   },
   "quotes": {
     "title": "Solicitar Cotización",

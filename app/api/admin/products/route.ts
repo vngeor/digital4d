@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
 import { deleteBlobsBatch } from "@/lib/blob"
 import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
-import { notifyWishlistPriceDrop } from "@/lib/wishlistNotifications"
+import { notifyWishlistPriceDrop, notifyStockAvailable } from "@/lib/wishlistNotifications"
 import { buildProductUrlFromDb } from "@/lib/productUrl"
 
 export async function GET(request: NextRequest) {
@@ -147,6 +147,7 @@ export async function POST(request: NextRequest) {
             colorNameEs: variant.colorNameEs,
             colorHex: variant.colorHex,
             image: variant.image || null,
+            status: variant.status || "in_stock",
             order: variant.order ?? 0,
           },
         })
@@ -270,6 +271,7 @@ export async function PUT(request: NextRequest) {
             colorNameEs: variant.colorNameEs,
             colorHex: variant.colorHex,
             image: variant.image || null,
+            status: variant.status || "in_stock",
             order: variant.order ?? 0,
           },
         })
@@ -331,6 +333,19 @@ export async function PUT(request: NextRequest) {
           productUrl
         )
       }).catch((err) => console.error("Failed to send wishlist price drop notifications:", err instanceof Error ? err.message : "Unknown"))
+    }
+
+    // Detect status change to in_stock → notify wishlist users
+    const becameAvailable = oldProduct.status !== "in_stock" && product.status === "in_stock"
+    if (becameAvailable) {
+      buildProductUrlFromDb({ slug: product.slug, category: product.category, brand: productWithVariants?.brand }).then(productUrl => {
+        notifyStockAvailable(
+          product.id,
+          product.slug,
+          { nameBg: product.nameBg, nameEn: product.nameEn, nameEs: product.nameEs },
+          productUrl
+        )
+      }).catch((err) => console.error("Failed to send stock available notifications:", err instanceof Error ? err.message : "Unknown"))
     }
 
     return NextResponse.json(productWithVariants)

@@ -148,3 +148,51 @@ export async function notifyWishlistCoupon(
 
   return createdCount
 }
+
+/**
+ * Notify wishlist users when a product becomes available (status changes to in_stock).
+ * Called from PUT /api/admin/products when status transitions to in_stock.
+ */
+export async function notifyStockAvailable(
+  productId: string,
+  productSlug: string,
+  productNames: { nameBg: string; nameEn: string; nameEs: string },
+  productUrl?: string
+): Promise<number> {
+  const wishlistItems = await prisma.wishlistItem.findMany({
+    where: { productId },
+    select: { userId: true },
+  })
+
+  if (wishlistItems.length === 0) return 0
+
+  let createdCount = 0
+
+  for (const item of wishlistItems) {
+    const onCooldown = await isOnCooldown(item.userId, productId, "stock_available")
+    if (onCooldown) continue
+
+    await prisma.notification.create({
+      data: {
+        userId: item.userId,
+        type: "stock_available",
+        title: JSON.stringify({ bg: productNames.nameBg, en: productNames.nameEn, es: productNames.nameEs }),
+        message: JSON.stringify({ status: "in_stock" }),
+        link: productUrl || `/products/${productSlug}`,
+        productId,
+      },
+    })
+
+    await prisma.wishlistNotificationLog.create({
+      data: {
+        userId: item.userId,
+        productId,
+        type: "stock_available",
+      },
+    })
+
+    createdCount++
+  }
+
+  return createdCount
+}
