@@ -49,6 +49,7 @@ interface Product {
   fileUrl: string | null
   fileType: string | null
   featured: boolean
+  bestSeller: boolean
   published: boolean
   status: string
   order: number
@@ -202,6 +203,7 @@ export default function ProductsPage() {
     fileUrl: string
     fileType: string
     featured: boolean
+  bestSeller: boolean
     published: boolean
     status: string
     order: number

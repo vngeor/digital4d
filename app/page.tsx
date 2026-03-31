@@ -120,6 +120,12 @@ export default async function Home() {
         }
     })
 
+    // Best sellers: manually flagged by admin
+    const bestSellerIds = dbProducts.filter(p => p.bestSeller).map(p => p.id)
+
+    const NEW_DAYS = 30
+    const newCutoff = new Date(Date.now() - NEW_DAYS * 24 * 60 * 60 * 1000)
+
     // Map products to locale-specific fields
     const products = dbProducts.map((product) => {
         const nameKey = `name${locale.charAt(0).toUpperCase() + locale.slice(1)}` as keyof typeof product
@@ -149,6 +155,7 @@ export default async function Home() {
             image: product.image,
             status: product.status,
             featured: product.featured,
+            isNew: product.createdAt >= newCutoff,
             brand: product.brand ? {
                 name: ((product.brand as Record<string, unknown>)[`name${locale.charAt(0).toUpperCase() + locale.slice(1)}`] as string || product.brand.nameEn),
                 slug: product.brand.slug,
@@ -271,7 +278,7 @@ export default async function Home() {
             {cardBanners.length > 0 && <FeaturedCards cards={cardBanners} />}
 
             {/* Products Section */}
-            <HomeProductsSection products={products} couponMap={couponMap} />
+            <HomeProductsSection products={products} couponMap={couponMap} bestSellerIds={bestSellerIds} />
 
             {/* News Section */}
             <NewsSection newsItems={newsItems} showAllLink={true} compact={true} />

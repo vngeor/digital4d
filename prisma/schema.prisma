@@ -201,6 +201,7 @@ model Product {
   fileUrl     String?   // For digital products
   fileType    String?   // "digital", "physical", "service"
   featured    Boolean   @default(false)
+  bestSeller  Boolean   @default(false)
   published     Boolean   @default(false)
   status        String    @default("in_stock") // in_stock, out_of_stock, coming_soon, pre_order, sold_out
   order         Int       @default(0)
@@ -218,6 +219,7 @@ model Product {
   @@index([order])
   @@index([brandId])
   @@index([createdById])
+  @@index([createdAt])
 }
 
 model Brand {
@@ -334,6 +336,7 @@ model DigitalPurchase {
 
   @@index([downloadToken])
   @@index([email])
+  @@index([productId])
 }
 
 // Banner model for homepage hero carousel, promo strip, and featured cards

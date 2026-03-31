@@ -114,7 +114,7 @@ No test framework is configured.
 
 ### Pages
 
-- **Homepage** (`app/page.tsx`): hero carousel, featured products, news section, featured cards
+- **Homepage** (`app/page.tsx`): hero carousel, featured products with badges (NEW/Best Seller/Featured), news section, featured cards. Product carousel (CSS scroll-snap) auto-scrolls when >4 products. Best seller badge controlled by admin `bestSeller` toggle on Product model
 - **Products** (`app/products/`): catalog with filtering, detail pages, digital download. Hierarchical SEO URLs: `/products/[parent-category]/[subcategory]/[brand]/[product-slug]`. Catch-all route `app/products/[...slug]/page.tsx` with 301 redirect from old flat URLs. URL builder utility: `lib/productUrl.ts` (`buildProductUrl()`, `buildProductUrlFromDb()`, `buildProductUrlsBatch()`)
 - **Brands** (`app/brands/`): listing page with brand cards + detail page (`/brands/[slug]`) with logo, title (aligned), rich description, and filtered ProductCatalog
 - **News** (`app/news/`): listing and detail pages with modal view

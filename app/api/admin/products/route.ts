@@ -130,6 +130,7 @@ export async function POST(request: NextRequest) {
         fileUrl: data.fileUrl || null,
         fileType: data.fileType || "physical",
         featured: data.featured || false,
+        bestSeller: data.bestSeller || false,
         published: data.published || false,
         status: data.status || "in_stock",
         order: data.order || 0,
@@ -246,6 +247,7 @@ export async function PUT(request: NextRequest) {
         fileUrl: data.fileUrl || null,
         fileType: data.fileType || "physical",
         featured: data.featured || false,
+        bestSeller: data.bestSeller || false,
         published: data.published || false,
         status: data.status || "in_stock",
         order: data.order || 0,
@@ -313,7 +315,7 @@ export async function PUT(request: NextRequest) {
       })
     }
 
-    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "relatedProductIds", "fileUrl", "fileType", "featured", "published", "status", "order"]
+    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "relatedProductIds", "fileUrl", "fileType", "featured", "bestSeller", "published", "status", "order"]
     const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
 

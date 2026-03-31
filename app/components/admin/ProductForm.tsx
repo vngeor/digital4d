@@ -42,6 +42,7 @@ interface ProductFormData {
   fileUrl: string
   fileType: string
   featured: boolean
+  bestSeller: boolean
   published: boolean
   status: string
   order: number
@@ -82,6 +83,7 @@ interface ProductFormProps {
     fileType?: string | null
     brandId?: string | null
     featured?: boolean
+    bestSeller?: boolean
     published?: boolean
     status?: string
     order?: number
@@ -206,6 +208,7 @@ export function ProductForm({
     fileUrl: initialData?.fileUrl || "",
     fileType: initialData?.fileType || "physical",
     featured: initialData?.featured ?? false,
+    bestSeller: initialData?.bestSeller ?? false,
     published: initialData?.published ?? false,
     status: initialData?.status || "in_stock",
     order: initialData?.order ?? 0,
@@ -1227,26 +1230,38 @@ export function ProductForm({
                 <span className="text-sm text-gray-300">{t("published")}</span>
               </label>
             </div>
-            <div className="flex items-center pt-6">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.featured}
-                  onChange={(e) => updateField("featured", e.target.checked)}
-                  className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30"
-                />
-                <span className="text-sm text-gray-300">{t("featured")}</span>
-              </label>
-            </div>
-            <div className="pt-1">
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => updateField("status", e.target.value)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none text-base sm:text-sm"
-              >
+          </div>
+
+          {/* Product Settings */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
+              <h3 className="text-sm font-medium text-gray-300">Settings</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <label className="flex items-center gap-2.5 cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.featured}
+                    onChange={(e) => updateField("featured", e.target.checked)}
+                    className="w-4.5 h-4.5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30"
+                  />
+                  <span className="text-sm text-gray-300">⭐ {t("featured")}</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.bestSeller}
+                    onChange={(e) => updateField("bestSeller", e.target.checked)}
+                    className="w-4.5 h-4.5 rounded border-white/20 bg-white/5 text-amber-500 focus:ring-amber-500/30"
+                  />
+                  <span className="text-sm text-gray-300">🏆 Best Seller</span>
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => updateField("status", e.target.value)}
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none text-base sm:text-sm"
+                >
                 <option value="in_stock">✅ In Stock</option>
                 <option value="out_of_stock">⏸️ Out of Stock</option>
                 <option value="coming_soon">🔜 Coming Soon</option>

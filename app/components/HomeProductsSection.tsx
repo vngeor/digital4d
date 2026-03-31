@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { Ticket } from "lucide-react"
@@ -42,6 +43,7 @@ interface Product {
     image: string | null
     status: string
     featured: boolean
+    isNew?: boolean
     brand: { name: string; slug: string } | null
     productUrl: string
 }
@@ -55,11 +57,52 @@ interface CouponBadge {
 interface HomeProductsSectionProps {
     products: Product[]
     couponMap?: Record<string, CouponBadge>
+    bestSellerIds?: string[]
 }
 
-export function HomeProductsSection({ products, couponMap }: HomeProductsSectionProps) {
+export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }: HomeProductsSectionProps) {
     const t = useTranslations("homeProducts")
     const tProducts = useTranslations("products")
+
+    const useCarousel = products.length > 4
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const [activeSlide, setActiveSlide] = useState(0)
+    const totalPages = useCarousel ? Math.ceil(products.length / 2) : 0 // 2 per page on mobile, 4 on desktop
+
+    const scrollToPage = useCallback((page: number) => {
+        if (!scrollRef.current) return
+        const container = scrollRef.current
+        const cardWidth = container.scrollWidth / products.length
+        const itemsPerView = window.innerWidth >= 1024 ? 4 : 2
+        container.scrollTo({ left: page * cardWidth * itemsPerView, behavior: "smooth" })
+    }, [products.length])
+
+    // Auto-scroll every 5 seconds
+    useEffect(() => {
+        if (!useCarousel) return
+        const interval = setInterval(() => {
+            setActiveSlide(prev => {
+                const next = (prev + 1) % totalPages
+                scrollToPage(next)
+                return next
+            })
+        }, 5000)
+        return () => clearInterval(interval)
+    }, [useCarousel, totalPages, scrollToPage])
+
+    // Track scroll position for dot indicators
+    useEffect(() => {
+        if (!useCarousel || !scrollRef.current) return
+        const container = scrollRef.current
+        const handleScroll = () => {
+            const cardWidth = container.scrollWidth / products.length
+            const itemsPerView = window.innerWidth >= 1024 ? 4 : 2
+            const page = Math.round(container.scrollLeft / (cardWidth * itemsPerView))
+            setActiveSlide(page)
+        }
+        container.addEventListener("scroll", handleScroll, { passive: true })
+        return () => container.removeEventListener("scroll", handleScroll)
+    }, [useCarousel, products.length])
 
     if (products.length === 0) return null
 
@@ -73,7 +116,13 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                     <p className="text-slate-400 text-sm sm:text-base">{t("subtitle")}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4 contain-content">
+                <div
+                    ref={scrollRef}
+                    className={useCarousel
+                        ? "flex gap-2 sm:gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2"
+                        : "grid grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4 contain-content"
+                    }
+                >
                     {products.map((product) => {
                         const discountPercent = product.onSale && product.price && product.salePrice
                             ? Math.round((1 - parseFloat(product.salePrice) / parseFloat(product.price)) * 100)
@@ -83,7 +132,7 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                             <Link
                                 key={product.id}
                                 href={product.productUrl}
-                                className="group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 flex flex-col h-full"
+                                className={`group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 flex flex-col h-full ${useCarousel ? "snap-start shrink-0 w-[calc(50%-4px)] sm:w-[calc(50%-6px)] lg:w-[calc(25%-15px)]" : ""}`}
                             >
                                 {/* Image */}
                                 <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
@@ -138,12 +187,33 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                                         </div>
                                     )}
 
-                                    {/* Featured Star */}
-                                    {product.featured && (
-                                        <div className="absolute top-2 left-2 w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
-                                            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                            </svg>
+                                    {/* Top-left badges: Featured + New */}
+                                    {(product.featured || product.isNew) && (
+                                        <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+                                            {product.featured && (
+                                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                            {product.isNew && (
+                                                <span className="px-1.5 py-0.5 bg-cyan-500 rounded-md text-[10px] font-bold text-white shadow-lg">
+                                                    NEW
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Bottom-right: Best Seller */}
+                                    {bestSellerIds.includes(product.id) && (
+                                        <div className="absolute bottom-2 right-2">
+                                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg">
+                                                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                                </svg>
+                                                Best Seller
+                                            </span>
                                         </div>
                                     )}
 
@@ -246,6 +316,21 @@ export function HomeProductsSection({ products, couponMap }: HomeProductsSection
                         )
                     })}
                 </div>
+
+                {/* Carousel Dots */}
+                {useCarousel && totalPages > 1 && (
+                    <div className="flex justify-center gap-2 mt-4">
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => { setActiveSlide(i); scrollToPage(i) }}
+                                className={`w-2 h-2 rounded-full transition-all ${
+                                    activeSlide === i ? "bg-emerald-400 w-6" : "bg-white/20 hover:bg-white/40"
+                                }`}
+                            />
+                        ))}
+                    </div>
+                )}
 
                 {/* View All Button */}
                 <div className="mt-4 sm:mt-6 text-center">
