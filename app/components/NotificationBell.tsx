@@ -386,7 +386,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       )
     }
     if (notification.type === "stock_available") {
-      return (
+      return notification.productImage ? (
+        <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-emerald-500/30 bg-white/5">
+          <img src={notification.productImage} alt="" className="w-full h-full object-cover" />
+        </div>
+      ) : (
         <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
           <Package className="w-5 h-5 text-emerald-400" />
         </div>
