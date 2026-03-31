@@ -253,11 +253,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       const names = tryParseJson(notification.title)
       const msgData = tryParseJson(notification.message)
       if (names) {
-        const productName = names[locale] || names.en || notification.title
-        if (msgData && !msgData.newPrice && msgData.onSale) {
-          return t.wishlistOnSale.replace("{product}", productName)
-        }
-        return t.wishlistPriceDrop.replace("{product}", productName)
+        return names[locale] || names.en || notification.title
       }
     }
     if (notification.type === "wishlist_coupon") {
@@ -383,7 +379,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       )
     }
     if (notification.type === "wishlist_price_drop") {
-      return (
+      return notification.productImage ? (
+        <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-red-500/30 bg-white/5">
+          <img src={notification.productImage} alt="" className="w-full h-full object-cover" />
+        </div>
+      ) : (
         <div className="shrink-0 w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
           <TrendingDown className="w-5 h-5 text-red-400" />
         </div>
