@@ -157,7 +157,8 @@ export async function notifyStockAvailable(
   productId: string,
   productSlug: string,
   productNames: { nameBg: string; nameEn: string; nameEs: string },
-  productUrl?: string
+  productUrl?: string,
+  variantNames?: { nameBg: string; nameEn: string; nameEs: string }
 ): Promise<number> {
   const wishlistItems = await prisma.wishlistItem.findMany({
     where: { productId },
@@ -175,7 +176,11 @@ export async function notifyStockAvailable(
         userId: item.userId,
         type: "stock_available",
         title: JSON.stringify({ bg: productNames.nameBg, en: productNames.nameEn, es: productNames.nameEs }),
-        message: JSON.stringify({
+        message: JSON.stringify(variantNames ? {
+          bg: `Страхотна новина! ${productNames.nameBg} (${variantNames.nameBg}) вече е наличен и готов за поръчка.`,
+          en: `Great news! ${productNames.nameEn} (${variantNames.nameEn}) is now available and ready to order.`,
+          es: `¡Buenas noticias! ${productNames.nameEs} (${variantNames.nameEs}) ya está disponible y listo para pedir.`,
+        } : {
           bg: `Страхотна новина! ${productNames.nameBg} вече е наличен и готов за поръчка.`,
           en: `Great news! ${productNames.nameEn} is now available and ready to order.`,
           es: `¡Buenas noticias! ${productNames.nameEs} ya está disponible y listo para pedir.`,

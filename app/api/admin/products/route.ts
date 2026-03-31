@@ -257,7 +257,7 @@ export async function PUT(request: NextRequest) {
       // Fetch old variants for blob cleanup
       const oldVariants = await prisma.productVariant.findMany({
         where: { productId: data.id },
-        select: { image: true },
+        select: { image: true, status: true, colorHex: true, colorNameBg: true, colorNameEn: true, colorNameEs: true },
       })
 
       await prisma.productVariant.deleteMany({ where: { productId: data.id } })
@@ -286,6 +286,20 @@ export async function PUT(request: NextRequest) {
         deleteBlobsBatch(oldVariantImageUrls).catch((err) => {
           console.error("Failed to delete old variant images:", err instanceof Error ? err.message : "Unknown")
         })
+      }
+
+      // Detect variant status changes → notify wishlist users
+      const oldVarStatusMap = new Map(oldVariants.map(v => [v.colorHex, v.status]))
+      for (const nv of data.variants) {
+        const oldStatus = oldVarStatusMap.get(nv.colorHex)
+        const newStatus = nv.status || "in_stock"
+        if (oldStatus && oldStatus !== "in_stock" && newStatus === "in_stock") {
+          // Variant became available — notify (fire and forget, productWithVariants fetched later)
+          const variantNames = { nameBg: nv.colorNameBg, nameEn: nv.colorNameEn, nameEs: nv.colorNameEs }
+          const prodNames = { nameBg: product.nameBg, nameEn: product.nameEn, nameEs: product.nameEs }
+          notifyStockAvailable(product.id, product.slug, prodNames, `/products/${product.slug}`, variantNames)
+            .catch((err) => console.error("Failed to send variant stock notifications:", err instanceof Error ? err.message : "Unknown"))
+        }
       }
     }
 
