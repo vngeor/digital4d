@@ -581,7 +581,10 @@
       "newContent": "Nuevo contenido",
       "viewQuotes": "Ver cotizaciones",
       "viewUsers": "Ver usuarios",
-      "viewAll": "Ver todo"
+      "viewAll": "Ver todo",
+      "recentActivity": "Actividad Reciente",
+      "viewActivityLog": "Ver Todo",
+      "noActivity": "Sin actividad aún"
     },
     "content": {
       "title": "Título",

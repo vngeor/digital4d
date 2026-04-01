@@ -581,7 +581,10 @@
       "newContent": "Ново съдържание",
       "viewQuotes": "Виж оферти",
       "viewUsers": "Виж потребители",
-      "viewAll": "Виж всички"
+      "viewAll": "Виж всички",
+      "recentActivity": "Последна активност",
+      "viewActivityLog": "Виж всички",
+      "noActivity": "Няма активност"
     },
     "content": {
       "title": "Заглавие",
