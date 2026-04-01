@@ -642,20 +642,26 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                             </div>
                                         )}
 
-                                        {/* Badges */}
-                                        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-                                            {product.featured && (
-                                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
-                                                    <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white fill-white" />
-                                                </div>
-                                            )}
-                                            {(Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
-                                                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-cyan-500 text-white shadow-lg">
-                                                    NEW
-                                                </span>
-                                            )}
+                                        {/* Top-left: Featured + NEW */}
+                                        {(product.featured || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && (
+                                            <div className="absolute top-3 left-3 flex flex-wrap gap-1">
+                                                {product.featured && (
+                                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white fill-white" />
+                                                    </div>
+                                                )}
+                                                {(Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
+                                                    <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-cyan-500 text-white shadow-lg">
+                                                        NEW
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Top-right: Sale + Wishlist */}
+                                        <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
                                             {product.onSale && (
-                                                <>
+                                                <div className="flex gap-1">
                                                     <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
                                                         {t("onSale")}
                                                     </span>
@@ -664,12 +670,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                             -{discountPercent}%
                                                         </span>
                                                     )}
-                                                </>
+                                                </div>
                                             )}
-                                        </div>
-
-                                        {/* Wishlist + Stock Status */}
-                                        <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
                                             <WishlistButton
                                                 productId={product.id}
                                                 initialWishlisted={wishlistedProductIds.includes(product.id)}
