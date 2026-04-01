@@ -13,7 +13,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Quote System** - File uploads (STL/OBJ/3MF), quote requests, admin-customer messaging
 - **Notifications** - Unified notification system with scheduling, smart recipient selection, coupon & wishlist alerts
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content, show/hide from nav, title alignment
-- **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs
+- **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs; quick field toggles (published/featured/bestSeller) with optimistic UI directly in the table
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
 - **Security** - Nonce-based CSP (per-request, strict-dynamic), rate limiting (login, register, search, coupons, quotes), security headers (HSTS, X-Frame-Options, nosniff), XSS sanitization (sanitize-html), input validation, checkout origin whitelist, sanitized error logging, auto-logout after 5 min inactivity, permission-gated admin pages and API routes
 - **Birthday Prompts** - Registration birthDate field, profile banner for missing birthDate, header indicator with pulsing dot
@@ -323,9 +323,15 @@ Manage your product catalog with full e-commerce features.
 | Gallery | Multiple additional images |
 | File URL | Digital download file (for digital products) |
 | File Type | `Digital`, `Physical`, or `Service` |
-| Featured | Star badge, prioritized on homepage |
+| Status | `in_stock`, `out_of_stock`, `coming_soon`, `pre_order`, `sold_out` — controls availability and image overlay banners |
+| Featured | ⭐ Circle badge on card, prioritized on homepage |
+| Best Seller | ✓ Amber badge on card and product detail page |
 | Published | Visible on frontend |
-| In Stock | Availability status |
+
+**Quick Toggles** (click directly in the products table without opening the form):
+- 👁 Published — show/hide on frontend
+- ⭐ Featured — star badge + homepage priority
+- 🏆 Best Seller — amber badge on product cards and detail page
 
 **Categories** (`/admin/products/categories`):
 - Create/edit product categories
