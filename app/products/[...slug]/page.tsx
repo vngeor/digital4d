@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 import { headers } from "next/headers"
 import { ProductDetailClient } from "../../components/ProductDetailClient"
+import { RecentlyViewedTracker } from "../../components/RecentlyViewedTracker"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { buildProductUrl } from "@/lib/productUrl"
 import { ArrowLeft } from "lucide-react"
@@ -357,6 +358,35 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         })),
     }
 
+    const NEW_CUTOFF = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const trackerProduct = {
+        id: product.id,
+        productUrl: canonicalPath,
+        nameEn: product.nameEn,
+        nameBg: product.nameBg,
+        nameEs: product.nameEs,
+        image: product.image,
+        price: product.price?.toString() || "0",
+        salePrice: product.salePrice?.toString() || null,
+        onSale: product.onSale,
+        currency: product.currency,
+        priceType: product.priceType,
+        fileType: product.fileType,
+        category: product.category,
+        categoryColor: category?.color || "emerald",
+        categoryNameEn: category?.nameEn || product.category,
+        categoryNameBg: category?.nameBg || product.category,
+        categoryNameEs: category?.nameEs || product.category,
+        status: product.status,
+        featured: product.featured,
+        bestSeller: product.bestSeller,
+        isNew: product.createdAt >= NEW_CUTOFF,
+        brandNameEn: product.brand?.nameEn || null,
+        brandNameBg: product.brand?.nameBg || null,
+        brandNameEs: product.brand?.nameEs || null,
+        brandSlug: product.brand?.slug || null,
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* JSON-LD: Product + Breadcrumb */}
@@ -368,6 +398,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             <BackgroundOrbs />
 
             <Header />
+            <RecentlyViewedTracker product={trackerProduct} />
 
             {/* Page Header */}
             <section className="relative pt-16 sm:pt-24 md:pt-32 pb-8 px-4">

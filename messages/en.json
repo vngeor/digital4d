@@ -1197,7 +1197,9 @@
   "homeProducts": {
     "title": "Our Products",
     "subtitle": "Explore our range of 3D printing products",
-    "viewAll": "View All Products"
+    "viewAll": "View All Products",
+    "recentlyViewedTitle": "Recently Viewed",
+    "recentlyViewedSubtitle": "Products you've been looking at"
   },
   "checkout": {
     "title": "Checkout",

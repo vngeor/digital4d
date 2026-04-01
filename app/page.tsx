@@ -2,6 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import { Header } from "./components/Header"
 import { NewsSection } from "./components/NewsSection"
 import { HomeProductsSection } from "./components/HomeProductsSection"
+import { RecentlyViewedSection } from "./components/RecentlyViewedSection"
 import { HeroCarousel } from "./components/HeroCarousel"
 import { FeaturedCards } from "./components/FeaturedCards"
 import { BackgroundOrbs } from "./components/BackgroundOrbs"
@@ -279,6 +280,9 @@ export default async function Home() {
 
             {/* Products Section */}
             <HomeProductsSection products={products} couponMap={couponMap} bestSellerIds={bestSellerIds} />
+
+            {/* Recently Viewed */}
+            <RecentlyViewedSection />
 
             {/* News Section */}
             <NewsSection newsItems={newsItems} showAllLink={true} compact={true} />

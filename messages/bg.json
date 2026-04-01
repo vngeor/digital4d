@@ -1197,7 +1197,9 @@
   "homeProducts": {
     "title": "Нашите продукти",
     "subtitle": "Разгледайте нашата гама от продукти за 3D печат",
-    "viewAll": "Виж всички продукти"
+    "viewAll": "Виж всички продукти",
+    "recentlyViewedTitle": "Наскоро разгледани",
+    "recentlyViewedSubtitle": "Продукти, които разгледахте"
   },
   "checkout": {
     "title": "Плащане",
