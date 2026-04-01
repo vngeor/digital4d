@@ -179,6 +179,7 @@ CRON_SECRET="generate-random-32-byte-hex"  # For scheduled notification template
 | `npm run db:seed` | Seed database |
 | `npm run blob:cleanup` | Delete orphaned blob files |
 | `npm run blob:cleanup:dry` | Preview orphaned blobs (dry run) |
+| `npm run deploy:clean` | Deploy to Vercel without build cache |
 
 ## Database Schema
 

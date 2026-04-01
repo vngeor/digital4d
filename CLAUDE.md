@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm run dev          # Start dev server (http://localhost:3000)
-npm run build        # Prisma generate + DB push + Next.js build
+npm run build        # Prisma generate + Next.js build
 npm run lint         # ESLint (flat config, Next.js core-web-vitals + typescript)
 npm run start        # Start production server
 npm run postinstall  # Prisma generate (runs automatically after npm install)
@@ -15,6 +15,8 @@ npm run db:generate  # Regenerate Prisma client
 npm run db:push      # Push schema changes to DB
 npm run db:studio    # Open Prisma Studio GUI
 npm run db:seed      # Seed database (npx tsx prisma/seed.ts)
+
+npm run deploy:clean     # Deploy to Vercel without build cache (vercel --force)
 
 npm run blob:cleanup     # Delete orphaned Vercel Blob files
 npm run blob:cleanup:dry # Dry run of blob cleanup
@@ -150,6 +152,7 @@ No test framework is configured.
 - Admin sidebar has live pending quotes badge (30s polling via `data.pendingCount`), mobile hamburger menu with drawer overlay
 - Admin pages: dashboard, products, categories, brands, orders, quotes, content, banners, menu, types, media, coupons, notifications, users, roles, audit logs
 - **Admin Quotes** (`/admin/quotes`): server-side pagination (page/limit/search/sort params), extracted `QuoteDetailModal` component with 2 tabs (Details + Conversation & Reply). Features: waiting time column with color-coded badges (blue < 24h, amber 1-3d, red pulsing 3+d), urgency filter row (client-side on `updatedAt`), sort toggle (newest/oldest first via API `sort=oldest` → `orderBy: updatedAt asc`), needs-reply pulsing dot, copy-to-clipboard buttons, localized chat messages via `localizeMessage()`, coupon picker, view tracking. Mobile cards show all badges.
+- **Admin dashboard** (`/admin`): stats cards, orders chart, recent orders, recent users, recent activity log (last 7 `AuditLog` entries — colored action badge + resource + record title + user + relative time, "View All" links to audit logs)
 - **Audit logs** (`/admin/audit-logs`): action badges with icons (Plus/Pencil/Trash2), resource badges with matching sidebar icons (Package, FileText, etc.) via `ACTION_STYLES` and `RESOURCE_STYLES` maps
 
 ### Frontend Components
