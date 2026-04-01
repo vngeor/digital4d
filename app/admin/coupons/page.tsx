@@ -513,7 +513,7 @@ export default function CouponsPage() {
           data={coupons}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noCoupons")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noCoupons")}</p><p className="text-xs text-gray-600">Create discount codes to boost sales</p></div>}
           renderMobileCard={(item: Coupon) => {
             const status = getCouponStatus(item)
             return (

@@ -474,7 +474,7 @@ export default function ContentPage() {
           data={content}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noContent")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noContent")}</p><p className="text-xs text-gray-600">Create news articles and service pages</p></div>}
           onReorder={handleReorder}
           selectable
           selectedIds={selectedIds}

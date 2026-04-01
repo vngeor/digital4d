@@ -468,6 +468,46 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: true, count: ids.length })
     }
 
+    if (action === "toggleField") {
+      const { session, error } = await requirePermissionApi("products", "edit")
+      if (error) return error
+
+      const { id, field, value } = body
+      if (!id || !field) {
+        return NextResponse.json({ error: "Product ID and field required" }, { status: 400 })
+      }
+
+      const allowedFields = ["published", "featured", "bestSeller"]
+      if (!allowedFields.includes(field)) {
+        return NextResponse.json({ error: `Field "${field}" is not toggleable` }, { status: 400 })
+      }
+
+      if (typeof value !== "boolean") {
+        return NextResponse.json({ error: "Value must be a boolean" }, { status: 400 })
+      }
+
+      const oldProduct = await prisma.product.findUnique({ where: { id } })
+      if (!oldProduct) {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 })
+      }
+
+      await prisma.product.update({
+        where: { id },
+        data: { [field]: value },
+      })
+
+      logAuditAction({
+        userId: session.user.id,
+        action: "edit",
+        resource: "products",
+        recordId: id,
+        recordTitle: oldProduct.nameEn,
+        details: JSON.stringify({ [field]: { from: (oldProduct as Record<string, unknown>)[field], to: value } }),
+      }).catch(() => {})
+
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: "Unknown action" }, { status: 400 })
   } catch (error) {
     console.error("Error in bulk product operation:", error instanceof Error ? error.message : "Unknown")

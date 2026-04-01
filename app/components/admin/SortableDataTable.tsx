@@ -33,7 +33,7 @@ interface SortableDataTableProps<T> {
   searchable?: boolean
   searchPlaceholder?: string
   pageSize?: number
-  emptyMessage?: string
+  emptyMessage?: React.ReactNode
   onRowClick?: (item: T) => void
   onReorder?: (items: T[]) => void
   selectable?: boolean

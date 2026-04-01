@@ -16,7 +16,7 @@ interface DataTableProps<T> {
   searchable?: boolean
   searchPlaceholder?: string
   pageSize?: number
-  emptyMessage?: string
+  emptyMessage?: React.ReactNode
   onRowClick?: (item: T) => void
   paginationText?: (from: number, to: number, total: number) => string
   selectable?: boolean

@@ -202,7 +202,7 @@ export default function BrandsPage() {
           data={brands}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noBrands")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noBrands")}</p><p className="text-xs text-gray-600">Add your first brand to organize products</p></div>}
           onRowClick={(item) => { setEditingBrand(item); setShowForm(true) }}
           renderMobileCard={(item: Brand) => (
             <>

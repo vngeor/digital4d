@@ -345,7 +345,7 @@ export default function BannersPage() {
           data={banners}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noBanners")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noBanners")}</p><p className="text-xs text-gray-600">Add banners for the homepage hero carousel</p></div>}
           onReorder={handleReorder}
           renderMobileCard={(item: Banner) => (
             <>

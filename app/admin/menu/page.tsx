@@ -272,7 +272,7 @@ export default function MenuPage() {
           data={menuItems}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noMenuItems")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noMenuItems")}</p><p className="text-xs text-gray-600">Add menu items for site navigation</p></div>}
           renderMobileCard={(item: MenuItem) => (
             <>
               <div className="flex items-center justify-between gap-2">

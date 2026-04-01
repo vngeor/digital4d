@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -84,8 +84,10 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [selectedBrandFilter, setSelectedBrandFilter] = useState<string | null>(null)
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set())
+  const [showBrandDropdown, setShowBrandDropdown] = useState(false)
+  const brandDropdownRef = useRef<HTMLDivElement>(null)
   const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
@@ -128,23 +130,13 @@ export default function ProductsPage() {
     setBrands(Array.isArray(data) ? data : [])
   }
 
-  const fetchAllProducts = async () => {
+  const fetchProducts = async () => {
+    setLoading(true)
     const res = await fetch("/api/admin/products")
     const data = await res.json()
-    setAllProducts(Array.isArray(data) ? data : [])
-  }
-
-  const fetchProducts = async (category?: string | null) => {
-    setLoading(true)
-    const url = category
-      ? `/api/admin/products?category=${encodeURIComponent(category)}`
-      : "/api/admin/products"
-    const res = await fetch(url)
-    const data = await res.json()
-    setProducts(Array.isArray(data) ? data : [])
-    if (!category) {
-      setAllProducts(Array.isArray(data) ? data : [])
-    }
+    const items = Array.isArray(data) ? data : []
+    setProducts(items)
+    setAllProducts(items)
     setLoading(false)
   }
 
@@ -152,12 +144,18 @@ export default function ProductsPage() {
     fetchCategories()
     fetchBrands()
     fetchProducts()
-    fetchAllProducts()
   }, [])
 
+  // Click-outside to close brand dropdown
   useEffect(() => {
-    fetchProducts(selectedCategory)
-  }, [selectedCategory])
+    const handler = (e: MouseEvent) => {
+      if (brandDropdownRef.current && !brandDropdownRef.current.contains(e.target as Node)) {
+        setShowBrandDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
 
   // Deep link: open edit form when ?edit=<id> or create form when ?action=create
   useEffect(() => {
@@ -233,8 +231,7 @@ export default function ProductsPage() {
     setShowForm(false)
     setEditingProduct(null)
     toast.success(t("savedSuccess"))
-    fetchProducts(selectedCategory)
-    fetchAllProducts() // Refresh homepage positions
+    fetchProducts()
   }
 
   const handleDelete = (id: string, name: string) => {
@@ -252,8 +249,24 @@ export default function ProductsPage() {
     }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
-    fetchProducts(selectedCategory)
-    fetchAllProducts() // Refresh homepage positions
+    fetchProducts()
+  }
+
+  const handleToggleField = async (id: string, field: "published" | "featured" | "bestSeller", value: boolean) => {
+    // Optimistic update
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+    setAllProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "toggleField", id, field, value }),
+    })
+    if (!res.ok) {
+      // Revert on failure
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: !value } : p))
+      setAllProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: !value } : p))
+      toast.error(t("saveFailed"))
+    }
   }
 
   const handleReorder = async (items: Product[]) => {
@@ -291,7 +304,6 @@ export default function ProductsPage() {
       setSelectedIds(new Set())
       setBulkDeleteConfirm(false)
       fetchProducts()
-      fetchAllProducts()
     } else {
       toast.error(t("deleteFailed"))
     }
@@ -311,7 +323,6 @@ export default function ProductsPage() {
       )
       setSelectedIds(new Set())
       fetchProducts()
-      fetchAllProducts()
     } else {
       toast.error(t("updateFailed"))
     }
@@ -509,10 +520,25 @@ export default function ProductsPage() {
           sold_out: "Sold Out",
         }
         return (
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[item.status] || "bg-gray-500/20 text-gray-400"}`}>
-            {item.bestSeller && <span>🏆</span>}
-            {statusLabels[item.status] || item.status}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "featured", !item.featured) }}
+              className={`p-1 rounded transition-colors ${item.featured ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+              title={item.featured ? "Remove featured" : "Set as featured"}
+            >
+              <Star className={`w-3.5 h-3.5 ${item.featured ? "fill-amber-400" : ""}`} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "bestSeller", !item.bestSeller) }}
+              className={`p-1 rounded transition-colors text-[10px] ${item.bestSeller ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+              title={item.bestSeller ? "Remove best seller" : "Set as best seller"}
+            >
+              🏆
+            </button>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[item.status] || "bg-gray-500/20 text-gray-400"}`}>
+              {statusLabels[item.status] || item.status}
+            </span>
+          </div>
         )
       },
     },
@@ -521,15 +547,13 @@ export default function ProductsPage() {
       header: t("published"),
       className: "whitespace-nowrap hidden sm:table-cell",
       render: (item: Product) => (
-        item.published ? (
-          <span className="flex items-center gap-1 text-emerald-400">
-            <Eye className="w-3.5 h-3.5" />
-          </span>
-        ) : (
-          <span className="flex items-center gap-1 text-gray-500">
-            <EyeOff className="w-3.5 h-3.5" />
-          </span>
-        )
+        <button
+          onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "published", !item.published) }}
+          className={`p-1.5 rounded-lg transition-colors ${item.published ? "text-emerald-400 hover:bg-emerald-500/10" : "text-gray-500 hover:bg-white/5"}`}
+          title={item.published ? "Unpublish" : "Publish"}
+        >
+          {item.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+        </button>
       ),
     },
     {
@@ -611,42 +635,99 @@ export default function ProductsPage() {
 
       {/* Filters: Category tabs + Brand dropdown */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex flex-wrap gap-2 flex-1">
+        <div className="flex flex-wrap gap-2 flex-1 items-center">
           <button
-            onClick={() => setSelectedCategory(null)}
+            onClick={() => setSelectedCategories(new Set())}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              selectedCategory === null
+              selectedCategories.size === 0
                 ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                 : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
             }`}
           >
             {t("all")}
           </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.slug)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                selectedCategory === category.slug
-                  ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                  : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
-              }`}
-            >
-              {category.nameEn}
-            </button>
-          ))}
+          {categories.map((category) => {
+            const isActive = selectedCategories.has(category.slug)
+            return (
+              <button
+                key={category.id}
+                onClick={() => {
+                  setSelectedCategories(prev => {
+                    const next = new Set(prev)
+                    if (next.has(category.slug)) next.delete(category.slug)
+                    else next.add(category.slug)
+                    return next
+                  })
+                }}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  isActive
+                    ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+                    : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                {isActive && <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                {category.nameEn}
+              </button>
+            )
+          })}
         </div>
         {brands.length > 0 && (
-          <select
-            value={selectedBrandFilter || ""}
-            onChange={(e) => setSelectedBrandFilter(e.target.value || null)}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+          <div ref={brandDropdownRef} className="relative">
+            <button
+              onClick={() => setShowBrandDropdown(!showBrandDropdown)}
+              className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                selectedBrands.size > 0
+                  ? "bg-lime-500/20 text-lime-400 border border-lime-500/30"
+                  : "text-gray-400 hover:text-white bg-white/5 border border-white/10"
+              }`}
+            >
+              {selectedBrands.size > 0
+                ? `${selectedBrands.size} brand${selectedBrands.size > 1 ? "s" : ""}`
+                : t("allBrandsFilter")}
+              <svg className={`w-3.5 h-3.5 transition-transform ${showBrandDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {showBrandDropdown && (
+              <div className="absolute top-full mt-1 right-0 w-48 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
+                {brands.map(b => {
+                  const isActive = selectedBrands.has(b.id)
+                  return (
+                    <button
+                      key={b.id}
+                      onClick={() => {
+                        setSelectedBrands(prev => {
+                          const next = new Set(prev)
+                          if (next.has(b.id)) next.delete(b.id)
+                          else next.add(b.id)
+                          return next
+                        })
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                        isActive ? "text-lime-400 bg-lime-500/10" : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${isActive ? "border-lime-400 bg-lime-500/20" : "border-white/20"}`}>
+                        {isActive && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                      </span>
+                      {b.nameEn}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        {(selectedCategories.size > 0 || selectedBrands.size > 0) && (
+          <button
+            onClick={() => { setSelectedCategories(new Set()); setSelectedBrands(new Set()) }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
           >
-            <option value="">{t("allBrandsFilter")}</option>
-            {brands.map(b => (
-              <option key={b.id} value={b.id}>{b.nameEn}</option>
-            ))}
-          </select>
+            <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[10px] flex items-center justify-center font-bold">
+              {selectedCategories.size + selectedBrands.size}
+            </span>
+            Clear filters
+          </button>
         )}
       </div>
 
@@ -654,10 +735,13 @@ export default function ProductsPage() {
         <SkeletonDataTable columns={6} />
       ) : (
         <SortableDataTable
-          data={selectedBrandFilter ? products.filter(p => p.brandId === selectedBrandFilter) : products}
+          data={products.filter(p =>
+            (selectedCategories.size === 0 || selectedCategories.has(p.category)) &&
+            (selectedBrands.size === 0 || (p.brandId !== null && selectedBrands.has(p.brandId)))
+          )}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noProducts")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><Package className="w-10 h-10 text-gray-600" /><p className="text-gray-400">{t("noProducts")}</p><p className="text-xs text-gray-600">Create your first product to get started</p></div>}
           onReorder={handleReorder}
           onRowClick={(item) => {
             setEditingProduct(item)
@@ -689,12 +773,19 @@ export default function ProductsPage() {
                       <p className="text-xs text-gray-500 truncate">{item.nameBg}</p>
                     </div>
                   </div>
-                  <div className="shrink-0">
-                    {item.published ? (
-                      <Eye className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <EyeOff className="w-4 h-4 text-gray-500" />
-                    )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "featured", !item.featured) }}
+                      className={`p-1 rounded ${item.featured ? "text-amber-400" : "text-gray-600"}`}>
+                      <Star className={`w-3.5 h-3.5 ${item.featured ? "fill-amber-400" : ""}`} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "bestSeller", !item.bestSeller) }}
+                      className={`p-1 rounded text-[10px] ${item.bestSeller ? "text-amber-400" : "text-gray-600"}`}>
+                      🏆
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "published", !item.published) }}
+                      className={`p-1 rounded ${item.published ? "text-emerald-400" : "text-gray-500"}`}>
+                      {item.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">

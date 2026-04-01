@@ -769,7 +769,7 @@ export default function NotificationsPage() {
           data={notifications}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noNotifications")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noNotifications")}</p><p className="text-xs text-gray-600">Send notifications to your users</p></div>}
           renderMobileCard={(item: Notification) => {
             const badge = TYPE_BADGES[item.type] || TYPE_BADGES.admin_message
             return (

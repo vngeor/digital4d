@@ -531,7 +531,7 @@ export default function UsersPage() {
           data={filteredUsers}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noUsers")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noUsers")}</p><p className="text-xs text-gray-600">Users will appear here when they register</p></div>}
           renderMobileCard={(item: User) => (
             <>
               <div className="flex items-center justify-between gap-2">

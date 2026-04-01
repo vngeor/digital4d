@@ -293,7 +293,7 @@ export default function OrdersPage() {
           data={orders}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noOrders")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noOrders")}</p><p className="text-xs text-gray-600">Orders will appear here when customers make purchases</p></div>}
           renderMobileCard={(item: Order) => {
             const config = statusConfig[item.status]
             return (
