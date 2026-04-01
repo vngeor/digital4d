@@ -490,7 +490,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                 : t("products.outOfStock")}
                             </span>
                             {product.bestSeller && (
-                                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-amber-500/20 text-amber-400">
+                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-amber-500 text-white shadow-lg">
                                     🏆 {t("products.bestSeller")}
                                 </span>
                             )}
@@ -600,7 +600,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                 {/* Best Seller badge */}
                                                 {related.bestSeller && (
                                                     <div className="absolute bottom-2 right-2">
-                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg">🏆 Best Seller</span>
+                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg">🏆 {t("products.bestSeller")}</span>
                                                     </div>
                                                 )}
                                                 {/* Sale badges for related products */}

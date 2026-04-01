@@ -702,7 +702,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         {product.bestSeller && (
                                             <div className="absolute bottom-3 right-3">
                                                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                                    🏆 Best Seller
+                                                    🏆 {t("bestSeller")}
                                                 </span>
                                             </div>
                                         )}
