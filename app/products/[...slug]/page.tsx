@@ -491,7 +491,8 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             </span>
                             {product.bestSeller && (
                                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                    🏆 {t("products.bestSeller")}
+                                    <svg className="w-2.5 h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+                                    {t("products.bestSeller")}
                                 </span>
                             )}
                         </div>
@@ -600,7 +601,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                 {/* Best Seller badge */}
                                                 {related.bestSeller && (
                                                     <div className="absolute bottom-2 right-2">
-                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg">🏆 {t("products.bestSeller")}</span>
+                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg"><svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>{t("products.bestSeller")}</span>
                                                     </div>
                                                 )}
                                                 {/* Sale badges for related products */}

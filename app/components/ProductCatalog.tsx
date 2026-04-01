@@ -702,7 +702,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         {product.bestSeller && (
                                             <div className="absolute bottom-3 right-3">
                                                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                                    🏆 {t("bestSeller")}
+                                                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+                                                    {t("bestSeller")}
                                                 </span>
                                             </div>
                                         )}
