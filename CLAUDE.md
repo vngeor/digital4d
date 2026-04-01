@@ -69,9 +69,10 @@ No test framework is configured.
 
 - **No server actions** — all mutations through API routes in `app/api/`
 - Admin CRUD routes in `app/api/admin/` (types, products, categories, brands, content, banners, menu, orders, quotes, users, roles, users/permissions, coupons, notifications, notification-templates)
-- HTTP methods per route: GET (list/filter), POST (create), PUT (update by ID), PATCH (bulk operations like reordering), DELETE (by ID in query params)
+- HTTP methods per route: GET (list/filter), POST (create), PUT (update by ID), PATCH (bulk operations like reordering, or `toggleField` for single-field boolean updates), DELETE (by ID in query params)
+- **`PATCH /api/admin/products`** with `action: "toggleField"` — updates a single boolean field (`published`, `featured`, `bestSeller`) by ID with permission check and audit log. Validates `value` is boolean. Used for optimistic UI toggles in the admin products table (⭐/🏆/👁 buttons with `stopPropagation`)
 - Error format: `{ error: "message" }` with appropriate HTTP status
-- No optimistic updates — refetch after mutations
+- No optimistic updates — refetch after mutations (exception: products toggleField uses optimistic UI with revert on failure)
 
 **Public API routes:**
 - `GET /api/banners` — homepage banners
@@ -134,8 +135,8 @@ No test framework is configured.
 ### Admin UI Patterns
 
 - `app/components/admin/` contains reusable admin components
-- **`DataTable<T>`**: generic paginated table with deep search (searches nested object values like `brand.nameEn`), nested field access (e.g., `"user.name"`), optional `renderMobileCard` prop for responsive mobile card views
-- **`SortableDataTable<T>`**: DataTable + dnd-kit drag-and-drop reordering (requires `order` field), optional `renderMobileCard` prop (no drag handles on mobile)
+- **`DataTable<T>`**: generic paginated table with deep search (searches nested object values like `brand.nameEn`), nested field access (e.g., `"user.name"`), optional `renderMobileCard` prop for responsive mobile card views, `emptyMessage?: React.ReactNode` for descriptive empty states with sub-labels
+- **`SortableDataTable<T>`**: DataTable + dnd-kit drag-and-drop reordering (requires `order` field), optional `renderMobileCard` prop (no drag handles on mobile), same `emptyMessage?: React.ReactNode`
 - **Mobile responsive**: All admin pages use dual-view pattern — desktop table (`hidden lg:block`) + mobile cards (`lg:hidden`) at the `lg` (1024px) breakpoint. The `renderMobileCard` prop is passed to DataTable/SortableDataTable; it receives the same filtered/searched/paginated data as the desktop table. The Roles page uses a custom role-tabbed card layout (EDITOR/AUTHOR tabs) instead of a table on mobile.
 - **Modal-based CRUD forms** with multi-language tabs (BG/EN/ES)
 - **`ConfirmModal`**: reusable confirmation dialog with customizable title/message, keyboard support (Escape), glassmorphic styling

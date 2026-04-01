@@ -218,7 +218,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                                 </div>
                                             )}
                                             {product.isNew && (
-                                                <span className="px-1.5 py-0.5 bg-cyan-500 rounded-md text-[10px] font-bold text-white shadow-lg">
+                                                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-cyan-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
                                                     NEW
                                                 </span>
                                             )}
@@ -232,7 +232,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 24 24">
                                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                                                 </svg>
-                                                Best Seller
+                                                {tProducts("bestSeller")}
                                             </span>
                                         </div>
                                     )}

@@ -489,6 +489,12 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                 : product.status === "sold_out" ? t("products.soldOut")
                                 : t("products.outOfStock")}
                             </span>
+                            {product.bestSeller && (
+                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-amber-500 text-white shadow-lg">
+                                    <svg className="w-2.5 h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+                                    {t("products.bestSeller")}
+                                </span>
+                            )}
                         </div>
 
                         {/* Price */}
@@ -577,25 +583,25 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                                         </div>
                                                     </div>
                                                 )}
-                                                {/* Top-left badges: Featured + New + Best Seller */}
-                                                {(related.featured || related.bestSeller || (Date.now() - new Date(related.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && (
+                                                {/* Top-left: Featured + NEW badges */}
+                                                {(related.featured || (Date.now() - new Date(related.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && (
                                                     <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-                                                        {(Date.now() - new Date(related.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
-                                                            <span className="px-1.5 py-0.5 bg-cyan-500 rounded-md text-[10px] font-bold text-white shadow-lg">NEW</span>
-                                                        )}
                                                         {related.featured && (
-                                                            <div className="w-5 h-5 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
-                                                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                                                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                                                 </svg>
                                                             </div>
+                                                        )}
+                                                        {(Date.now() - new Date(related.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
+                                                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-cyan-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">NEW</span>
                                                         )}
                                                     </div>
                                                 )}
                                                 {/* Best Seller badge */}
                                                 {related.bestSeller && (
                                                     <div className="absolute bottom-2 right-2">
-                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg">🏆 Best Seller</span>
+                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg"><svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>{t("products.bestSeller")}</span>
                                                     </div>
                                                 )}
                                                 {/* Sale badges for related products */}
