@@ -489,6 +489,11 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                 : product.status === "sold_out" ? t("products.soldOut")
                                 : t("products.outOfStock")}
                             </span>
+                            {product.bestSeller && (
+                                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-amber-500/20 text-amber-400">
+                                    🏆 {t("products.bestSeller")}
+                                </span>
+                            )}
                         </div>
 
                         {/* Price */}
