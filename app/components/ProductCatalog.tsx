@@ -650,7 +650,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 </div>
                                             )}
                                             {(Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
-                                                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500 text-white shadow-lg">
+                                                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-cyan-500 text-white shadow-lg">
                                                     NEW
                                                 </span>
                                             )}

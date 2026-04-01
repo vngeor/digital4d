@@ -218,7 +218,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                                 </div>
                                             )}
                                             {product.isNew && (
-                                                <span className="px-1.5 py-0.5 bg-cyan-500 rounded-md text-[10px] font-bold text-white shadow-lg">
+                                                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-cyan-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
                                                     NEW
                                                 </span>
                                             )}

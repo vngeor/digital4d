@@ -219,9 +219,9 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                                 {/* Badges */}
                                                 <div className="absolute top-3 left-3 flex flex-wrap gap-2">
                                                     {product.featured && (
-                                                        <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">
-                                                            <Star className="w-3 h-3 fill-amber-400" />
-                                                        </span>
+                                                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                            <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white fill-white" />
+                                                        </div>
                                                     )}
                                                     {product.onSale && (
                                                         <>
