@@ -93,11 +93,16 @@ export default function OrdersPage() {
     }
 
     const method = editingOrder ? "PUT" : "POST"
-    await fetch("/api/admin/orders", {
+    const res = await fetch("/api/admin/orders", {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      toast.error(err.error || t("saveFailed"))
+      return
+    }
     setShowForm(false)
     setEditingOrder(null)
     toast.success(t("savedSuccess"))
@@ -123,11 +128,15 @@ export default function OrdersPage() {
   }
 
   const handleStatusChange = async (order: Order, newStatus: string) => {
-    await fetch("/api/admin/orders", {
+    const res = await fetch("/api/admin/orders", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...order, status: newStatus }),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      toast.error(err.error || t("updateFailed"))
+    }
     fetchOrders()
   }
 

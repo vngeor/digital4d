@@ -664,7 +664,9 @@
       "statusCancelled": "Cancelado",
       "copied": "¡Copiado!",
       "clickToCopy": "Clic para copiar",
-      "deleteFailed": "Error al eliminar el pedido"
+      "deleteFailed": "Error al eliminar el pedido",
+      "saveFailed": "Error al guardar el pedido",
+      "updateFailed": "Error al actualizar el pedido"
     },
     "users": {
       "title": "Gestión de Usuarios",
@@ -933,6 +935,7 @@
       "homepage": "Inicio",
       "deleteFailed": "Error al eliminar el producto",
       "updateFailed": "Error al actualizar producto",
+      "reorderFailed": "Error al reordenar productos",
       "brand": "Marca",
       "noBrand": "— Sin marca —",
       "manageBrands": "Gestionar Marcas",

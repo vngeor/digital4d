@@ -664,7 +664,9 @@
       "statusCancelled": "Cancelled",
       "copied": "Copied!",
       "clickToCopy": "Click to copy",
-      "deleteFailed": "Failed to delete order"
+      "deleteFailed": "Failed to delete order",
+      "saveFailed": "Failed to save order",
+      "updateFailed": "Failed to update order"
     },
     "users": {
       "title": "User Management",
@@ -933,6 +935,7 @@
       "homepage": "Home",
       "deleteFailed": "Failed to delete product",
       "updateFailed": "Failed to update product",
+      "reorderFailed": "Failed to reorder products",
       "brand": "Brand",
       "noBrand": "— No Brand —",
       "manageBrands": "Manage Brands",

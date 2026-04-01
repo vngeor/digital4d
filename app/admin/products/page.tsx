@@ -262,7 +262,7 @@ export default function ProductsPage() {
     if (!selectedCategory) {
       setAllProducts(items)
     }
-    await fetch("/api/admin/products", {
+    const res = await fetch("/api/admin/products", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -270,10 +270,13 @@ export default function ProductsPage() {
         items: items.map((item, index) => ({ id: item.id, order: index })),
       }),
     })
-    // Refresh allProducts to update homepage positions
-    if (selectedCategory) {
-      fetchAllProducts()
+    if (!res.ok) {
+      toast.error(t("reorderFailed"))
+      fetchProducts(selectedCategory)
+      return
     }
+    // Refresh allProducts to update homepage positions
+    fetchAllProducts()
   }
 
   const handleBulkDelete = async () => {

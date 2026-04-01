@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { requirePermissionApi } from "@/lib/admin"
+import { logAuditAction } from "@/lib/auditLog"
+
+async function wouldCreateCircle(startId: string, targetId: string): Promise<boolean> {
+  if (startId === targetId) return true
+  const cat = await prisma.productCategory.findUnique({ where: { id: startId }, select: { parentId: true } })
+  if (!cat?.parentId) return false
+  return wouldCreateCircle(cat.parentId, targetId)
+}
 
 export async function GET() {
   try {
@@ -54,6 +62,8 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    logAuditAction({ userId: session.user.id, action: "create", resource: "categories", recordId: category.id, recordTitle: category.nameEn }).catch(() => {})
+
     return NextResponse.json(category, { status: 201 })
   } catch (error) {
     console.error("Error creating category:", error instanceof Error ? error.message : "Unknown")
@@ -81,18 +91,9 @@ export async function PUT(request: NextRequest) {
       select: { slug: true },
     })
 
-    // Prevent circular parent references
-    if (data.parentId) {
-      if (data.parentId === data.id) {
-        return NextResponse.json({ error: "Category cannot be its own parent" }, { status: 400 })
-      }
-      const children = await prisma.productCategory.findMany({
-        where: { parentId: data.id },
-        select: { id: true },
-      })
-      if (children.some(c => c.id === data.parentId)) {
-        return NextResponse.json({ error: "Cannot set a subcategory as parent" }, { status: 400 })
-      }
+    // Prevent circular parent references (handles deep chains A→B→C→A)
+    if (data.parentId && await wouldCreateCircle(data.parentId, data.id)) {
+      return NextResponse.json({ error: "Circular reference detected" }, { status: 400 })
     }
 
     // Check for duplicate slug

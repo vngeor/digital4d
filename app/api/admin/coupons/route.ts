@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
         currency: type === "fixed" ? currency : null,
         minPurchase: minPurchase ? parseFloat(minPurchase) : null,
         maxUses: maxUses ? parseInt(maxUses) : null,
-        perUserLimit: perUserLimit ? parseInt(perUserLimit) : 1,
+        perUserLimit: (perUserLimit !== undefined && perUserLimit !== null && perUserLimit !== "") ? parseInt(perUserLimit) : 1,
         productIds: productIds || [],
         allowOnSale: allowOnSale ?? false,
         showOnProduct: showOnProduct ?? false,

@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { session, error } = await requirePermissionApi("orders", "edit")
+    const { session, error } = await requirePermissionApi("orders", "create")
     if (error) return error
 
     const data = await request.json()
@@ -73,6 +73,11 @@ export async function PUT(request: NextRequest) {
 
     if (!data.id) {
       return NextResponse.json({ error: "Order ID required" }, { status: 400 })
+    }
+
+    const VALID_ORDER_STATUSES = ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
+    if (data.status && !VALID_ORDER_STATUSES.includes(data.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 })
     }
 
     // Fetch old record for change tracking
