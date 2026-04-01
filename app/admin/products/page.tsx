@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck } from "lucide-react"
+import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck, Download } from "lucide-react"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
@@ -252,6 +252,22 @@ export default function ProductsPage() {
     fetchProducts()
   }
 
+  const handleExportCsv = async () => {
+    try {
+      const res = await fetch("/api/admin/products/export")
+      if (!res.ok) { toast.error(t("exportFailed")); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `products-${new Date().toISOString().slice(0, 10)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error(t("exportFailed"))
+    }
+  }
+
   const handleToggleField = async (id: string, field: "published" | "featured" | "bestSeller", value: boolean) => {
     // Optimistic update
     setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
@@ -272,7 +288,7 @@ export default function ProductsPage() {
   const handleReorder = async (items: Product[]) => {
     setProducts(items)
     // Also update allProducts if not filtering
-    if (!selectedCategory) {
+    if (selectedCategories.size === 0) {
       setAllProducts(items)
     }
     const res = await fetch("/api/admin/products", {
@@ -285,11 +301,11 @@ export default function ProductsPage() {
     })
     if (!res.ok) {
       toast.error(t("reorderFailed"))
-      fetchProducts(selectedCategory)
+      fetchProducts()
       return
     }
-    // Refresh allProducts to update homepage positions
-    fetchAllProducts()
+    // Refresh to update homepage positions
+    fetchProducts()
   }
 
   const handleBulkDelete = async () => {
@@ -600,6 +616,15 @@ export default function ProductsPage() {
           <p className="text-sm lg:text-base text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
+          {can("products", "view") && (
+            <button
+              onClick={handleExportCsv}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:text-white hover:bg-white/5 transition-all"
+            >
+              <Download className="w-4 h-4" />
+              {t("exportCSV")}
+            </button>
+          )}
           {can("products", "create") && (
             <button
               onClick={() => {

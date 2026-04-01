@@ -946,7 +946,9 @@
       "colorName": "Color Name",
       "colorHex": "Hex Code",
       "variantImage": "Image",
-      "noVariants": "No color variants added"
+      "noVariants": "No color variants added",
+      "exportCSV": "Export CSV",
+      "exportFailed": "Export failed. Please try again."
     },
     "brands": {
       "title": "Brand Management",

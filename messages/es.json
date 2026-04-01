@@ -946,7 +946,9 @@
       "colorName": "Nombre del color",
       "colorHex": "Código Hex",
       "variantImage": "Imagen",
-      "noVariants": "No se han añadido variantes de color"
+      "noVariants": "No se han añadido variantes de color",
+      "exportCSV": "Exportar CSV",
+      "exportFailed": "Error al exportar. Inténtalo de nuevo."
     },
     "brands": {
       "title": "Gestión de Marcas",
