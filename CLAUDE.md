@@ -71,6 +71,7 @@ No test framework is configured.
 - Admin CRUD routes in `app/api/admin/` (types, products, categories, brands, content, banners, menu, orders, quotes, users, roles, users/permissions, coupons, notifications, notification-templates)
 - HTTP methods per route: GET (list/filter), POST (create), PUT (update by ID), PATCH (bulk operations like reordering, or `toggleField` for single-field boolean updates), DELETE (by ID in query params)
 - **`PATCH /api/admin/products`** with `action: "toggleField"` — updates a single boolean field (`published`, `featured`, `bestSeller`) by ID with permission check and audit log. Validates `value` is boolean. Used for optimistic UI toggles in the admin products table (⭐/🏆/👁 buttons with `stopPropagation`)
+- **`GET /api/admin/products/export`** — downloads all products as CSV with UTF-8 BOM (for Excel Cyrillic support). Columns: SKU, Name (EN/BG/ES), Category, Brand, Type, Status, Price, Sale Price, On Sale, Price Type, Currency, Featured, Best Seller, Published, Tags (pipe-separated), Created At, Slug. Requires `products.view` permission
 - Error format: `{ error: "message" }` with appropriate HTTP status
 - No optimistic updates — refetch after mutations (exception: products toggleField uses optimistic UI with revert on failure)
 
@@ -115,7 +116,8 @@ No test framework is configured.
 
 ### Pages
 
-- **Homepage** (`app/page.tsx`): hero carousel, featured products with badges (NEW/Best Seller/Featured), news section, featured cards. Product carousel (CSS scroll-snap) auto-scrolls when >4 products. Best seller badge controlled by admin `bestSeller` toggle on Product model
+- **Homepage** (`app/page.tsx`): hero carousel, featured products with badges (NEW/Best Seller/Featured), news section, featured cards. Product carousel (CSS scroll-snap) auto-scrolls when >4 products. Best seller badge controlled by admin `bestSeller` toggle on Product model. `RecentlyViewedSection` client component rendered between products and news — reads `d4d-recently-viewed` localStorage key, shows nothing until user visits a product page
+- **Recently Viewed** (`lib/recentlyViewed.ts`, `app/components/RecentlyViewedTracker.tsx`, `app/components/RecentlyViewedSection.tsx`): `RecentlyViewedTracker` (invisible client component) on product detail page saves product data to localStorage on mount (all 3 locale names, category color/names, brand, status, prices, URL). `RecentlyViewedSection` reads localStorage client-side only (null init prevents hydration mismatch), renders carousel (mobile >4 items) or 4-column grid (desktop), max 8 items displayed, max 10 stored
 - **Products** (`app/products/`): catalog with filtering, detail pages, digital download. Hierarchical SEO URLs: `/products/[parent-category]/[subcategory]/[brand]/[product-slug]`. Catch-all route `app/products/[...slug]/page.tsx` with 301 redirect from old flat URLs. URL builder utility: `lib/productUrl.ts` (`buildProductUrl()`, `buildProductUrlFromDb()`, `buildProductUrlsBatch()`)
 - **Brands** (`app/brands/`): listing page with brand cards + detail page (`/brands/[slug]`) with logo, title (aligned), rich description, and filtered ProductCatalog
 - **News** (`app/news/`): listing and detail pages with modal view
