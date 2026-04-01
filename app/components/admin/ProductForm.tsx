@@ -536,7 +536,7 @@ export function ProductForm({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
+      <div className="rounded-2xl border border-white/10 w-full max-w-[92vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? t("editProduct") : t("addProduct")}
@@ -1207,7 +1207,7 @@ export function ProductForm({
           </div>
 
           {/* Settings */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
                 {t("order")}
@@ -1241,7 +1241,7 @@ export function ProductForm({
                     type="checkbox"
                     checked={formData.featured}
                     onChange={(e) => updateField("featured", e.target.checked)}
-                    className="w-4.5 h-4.5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30"
+                    className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30"
                   />
                   <span className="text-sm text-gray-300">⭐ {t("featured")}</span>
                 </label>
@@ -1250,7 +1250,7 @@ export function ProductForm({
                     type="checkbox"
                     checked={formData.bestSeller}
                     onChange={(e) => updateField("bestSeller", e.target.checked)}
-                    className="w-4.5 h-4.5 rounded border-white/20 bg-white/5 text-amber-500 focus:ring-amber-500/30"
+                    className="w-5 h-5 rounded border-white/20 bg-white/5 text-amber-500 focus:ring-amber-500/30"
                   />
                   <span className="text-sm text-gray-300">🏆 Best Seller</span>
                 </label>

@@ -487,7 +487,34 @@ export default function ProductsPage() {
       },
     },
     {
-      key: "status",
+      key: "productStatus",
+      header: "Status",
+      className: "whitespace-nowrap hidden md:table-cell",
+      render: (item: Product) => {
+        const statusStyles: Record<string, string> = {
+          in_stock: "bg-emerald-500/20 text-emerald-400",
+          out_of_stock: "bg-gray-500/20 text-gray-400",
+          coming_soon: "bg-blue-500/20 text-blue-400",
+          pre_order: "bg-purple-500/20 text-purple-400",
+          sold_out: "bg-red-500/20 text-red-400",
+        }
+        const statusLabels: Record<string, string> = {
+          in_stock: "In Stock",
+          out_of_stock: "Out of Stock",
+          coming_soon: "Coming Soon",
+          pre_order: "Pre-Order",
+          sold_out: "Sold Out",
+        }
+        return (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[item.status] || "bg-gray-500/20 text-gray-400"}`}>
+            {item.bestSeller && <span>🏆</span>}
+            {statusLabels[item.status] || item.status}
+          </span>
+        )
+      },
+    },
+    {
+      key: "published",
       header: t("published"),
       className: "whitespace-nowrap hidden sm:table-cell",
       render: (item: Product) => (
@@ -690,6 +717,18 @@ export default function ProductsPage() {
                       <Home className="w-3 h-3" />#{homepagePos}
                     </span>
                   )}
+                  {item.bestSeller && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">🏆</span>
+                  )}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    item.status === "in_stock" ? "bg-emerald-500/20 text-emerald-400"
+                    : item.status === "sold_out" ? "bg-red-500/20 text-red-400"
+                    : item.status === "coming_soon" ? "bg-blue-500/20 text-blue-400"
+                    : item.status === "pre_order" ? "bg-purple-500/20 text-purple-400"
+                    : "bg-gray-500/20 text-gray-400"
+                  }`}>
+                    {item.status === "in_stock" ? "✓" : item.status === "sold_out" ? "✗" : item.status === "coming_soon" ? "⏳" : item.status === "pre_order" ? "📦" : "⏸"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-3">

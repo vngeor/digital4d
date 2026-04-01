@@ -64,22 +64,40 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
     const t = useTranslations("homeProducts")
     const tProducts = useTranslations("products")
 
-    const useCarousel = products.length > 4
+    const [isMobile, setIsMobile] = useState(false)
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 1024)
+        check()
+        window.addEventListener("resize", check)
+        return () => window.removeEventListener("resize", check)
+    }, [])
+    const useCarousel = products.length > 4 && isMobile
     const scrollRef = useRef<HTMLDivElement>(null)
     const [activeSlide, setActiveSlide] = useState(0)
-    const totalPages = useCarousel ? Math.ceil(products.length / 2) : 0 // 2 per page on mobile, 4 on desktop
+    const [itemsPerView, setItemsPerView] = useState(2)
+
+    // Calculate items per view based on screen width
+    useEffect(() => {
+        const updateItemsPerView = () => setItemsPerView(window.innerWidth >= 1024 ? 4 : 2)
+        updateItemsPerView()
+        window.addEventListener("resize", updateItemsPerView)
+        return () => window.removeEventListener("resize", updateItemsPerView)
+    }, [])
+
+    const totalPages = useCarousel ? Math.ceil(products.length / itemsPerView) : 0
 
     const scrollToPage = useCallback((page: number) => {
         if (!scrollRef.current) return
-        const container = scrollRef.current
-        const cardWidth = container.scrollWidth / products.length
-        const itemsPerView = window.innerWidth >= 1024 ? 4 : 2
-        container.scrollTo({ left: page * cardWidth * itemsPerView, behavior: "smooth" })
-    }, [products.length])
+        const firstCard = scrollRef.current.children[0] as HTMLElement
+        if (!firstCard) return
+        const gap = window.innerWidth >= 768 ? 20 : window.innerWidth >= 640 ? 12 : 8
+        const cardWidth = firstCard.offsetWidth + gap
+        scrollRef.current.scrollTo({ left: page * cardWidth * itemsPerView, behavior: "smooth" })
+    }, [itemsPerView])
 
     // Auto-scroll every 5 seconds
     useEffect(() => {
-        if (!useCarousel) return
+        if (!useCarousel || totalPages <= 1) return
         const interval = setInterval(() => {
             setActiveSlide(prev => {
                 const next = (prev + 1) % totalPages
@@ -95,14 +113,16 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
         if (!useCarousel || !scrollRef.current) return
         const container = scrollRef.current
         const handleScroll = () => {
-            const cardWidth = container.scrollWidth / products.length
-            const itemsPerView = window.innerWidth >= 1024 ? 4 : 2
+            const firstCard = container.children[0] as HTMLElement
+            if (!firstCard) return
+            const gap = window.innerWidth >= 768 ? 20 : window.innerWidth >= 640 ? 12 : 8
+            const cardWidth = firstCard.offsetWidth + gap
             const page = Math.round(container.scrollLeft / (cardWidth * itemsPerView))
-            setActiveSlide(page)
+            setActiveSlide(Math.min(page, totalPages - 1))
         }
         container.addEventListener("scroll", handleScroll, { passive: true })
         return () => container.removeEventListener("scroll", handleScroll)
-    }, [useCarousel, products.length])
+    }, [useCarousel, itemsPerView, totalPages])
 
     if (products.length === 0) return null
 
@@ -254,8 +274,8 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                     )}
                                     {/* Description */}
                                     {product.description && (
-                                        <p className="text-[10px] sm:text-xs text-slate-400 line-clamp-2 mb-1">
-                                            {(() => { const t = product.description.replace(/<[^>]*>/g, "").trim(); return t.length > 100 ? t.substring(0, 100) + "..." : t })()}
+                                        <p className="text-xs text-slate-400 line-clamp-2 mb-1">
+                                            {(() => { const t = product.description.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim(); return t.length > 100 ? t.substring(0, 100) + "..." : t })()}
                                         </p>
                                     )}
 
