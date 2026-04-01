@@ -237,6 +237,13 @@ export function RecentlyViewedSection() {
                                             {brandName}
                                         </span>
                                     )}
+                                    {(() => {
+                                        const desc = product[`desc${localeKey}` as "descEn" | "descBg" | "descEs"] || product.descEn
+                                        if (!desc) return null
+                                        const text = desc.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim()
+                                        if (!text) return null
+                                        return <p className="text-xs text-slate-400 line-clamp-2 mb-1">{text.length > 100 ? text.substring(0, 100) + "..." : text}</p>
+                                    })()}
 
                                     {/* Price */}
                                     <div className="mt-auto pt-2">

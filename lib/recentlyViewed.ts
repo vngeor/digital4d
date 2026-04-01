@@ -7,6 +7,9 @@ export interface RecentlyViewedProduct {
   nameEn: string
   nameBg: string
   nameEs: string
+  descEn: string | null
+  descBg: string | null
+  descEs: string | null
   image: string | null
   price: string
   salePrice: string | null
