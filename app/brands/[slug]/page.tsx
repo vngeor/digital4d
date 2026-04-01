@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     const name = locale === "bg" ? brand.nameBg : locale === "es" ? brand.nameEs : brand.nameEn
     const desc = locale === "bg" ? brand.descBg : locale === "es" ? brand.descEs : brand.descEn
-    const description = desc ? desc.slice(0, 160).replace(/<[^>]*>/g, "") : `${name} - digital4d`
+    const description = desc ? desc.slice(0, 160).replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ") : `${name} - digital4d`
 
     return {
         title: `${name} | digital4d`,
