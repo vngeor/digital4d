@@ -13,6 +13,31 @@ type RecentOrder = Pick<Order, "id" | "customerName" | "customerEmail" | "status
 
 type RecentUser = Pick<User, "id" | "name" | "email" | "image" | "createdAt">
 
+type RecentActivityEntry = {
+  id: string
+  action: string
+  resource: string
+  recordTitle: string | null
+  createdAt: Date
+  user: { name: string | null; email: string | null }
+}
+
+const ACTION_STYLES: Record<string, { color: string }> = {
+  create: { color: "bg-emerald-500/20 text-emerald-400" },
+  edit:   { color: "bg-amber-500/20 text-amber-400" },
+  delete: { color: "bg-red-500/20 text-red-400" },
+}
+
+function relativeTime(date: Date): string {
+  const diff = Date.now() - new Date(date).getTime()
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return "just now"
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}h ago`
+  return `${Math.floor(hr / 24)}d ago`
+}
+
 async function getStats() {
   const [userCount, orderCount, contentCount, pendingOrders, pendingQuotes] = await Promise.all([
     prisma.user.count(),
@@ -32,6 +57,12 @@ async function getStats() {
     take: 5,
     orderBy: { createdAt: "desc" },
     select: { id: true, name: true, email: true, image: true, createdAt: true },
+  })
+
+  const recentActivity = await prisma.auditLog.findMany({
+    take: 7,
+    orderBy: { createdAt: "desc" },
+    include: { user: { select: { name: true, email: true } } },
   })
 
   // Monthly order counts for the last 6 months
@@ -54,11 +85,13 @@ async function getStats() {
     recentOrders,
     recentUsers,
     monthlyOrders,
+    recentActivity,
   }
 }
 
 export default async function AdminDashboard() {
   const t = await getTranslations("admin")
+  const tAudit = await getTranslations("admin.auditLogs")
   const locale = await getLocale()
   const stats = await getStats()
 
@@ -215,6 +248,38 @@ export default async function AdminDashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="glass rounded-2xl border border-white/10 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-white">{t("dashboard.recentActivity")}</h2>
+          <Link href="/admin/audit-logs" className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors">
+            {t("dashboard.viewActivityLog")} <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        {stats.recentActivity.length === 0 ? (
+          <p className="text-gray-500">{t("dashboard.noActivity")}</p>
+        ) : (
+          <div className="space-y-2">
+            {stats.recentActivity.map((entry: RecentActivityEntry) => (
+              <div key={entry.id} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5">
+                <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${ACTION_STYLES[entry.action]?.color || "bg-white/10 text-gray-400"}`}>
+                  {tAudit(`action_${entry.action}` as Parameters<typeof tAudit>[0])}
+                </span>
+                <span className="shrink-0 text-xs text-gray-400 hidden sm:block">
+                  {tAudit(`resource_${entry.resource}` as Parameters<typeof tAudit>[0])}
+                </span>
+                <span className="flex-1 text-sm text-white truncate min-w-0">
+                  {entry.recordTitle || "—"}
+                </span>
+                <span className="shrink-0 text-xs text-gray-500 hidden md:block truncate max-w-[120px]">
+                  {entry.user.name || entry.user.email || "—"}
+                </span>
+                <span className="shrink-0 text-xs text-gray-600">{relativeTime(entry.createdAt)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

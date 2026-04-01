@@ -581,7 +581,10 @@
       "newContent": "New Content",
       "viewQuotes": "View Quotes",
       "viewUsers": "View Users",
-      "viewAll": "View All"
+      "viewAll": "View All",
+      "recentActivity": "Recent Activity",
+      "viewActivityLog": "View All",
+      "noActivity": "No activity yet"
     },
     "content": {
       "title": "Title",
