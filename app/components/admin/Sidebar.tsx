@@ -205,7 +205,7 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
   return (
     <>
       {/* Mobile header bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 glass-strong border-b border-white/10 flex items-center px-4 gap-3">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#070a14] border-b border-white/8 flex items-center px-4 gap-3">
         <button
           onClick={() => setMobileOpen(true)}
           className="p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -230,7 +230,7 @@ export function Sidebar({ user, role, visibleNavHrefs }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 glass-strong border-r border-white/10 flex flex-col z-50 transition-transform duration-300 ${
+        className={`fixed left-0 top-0 h-screen w-64 bg-[#070a14] border-r border-white/8 flex flex-col z-50 transition-transform duration-300 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >

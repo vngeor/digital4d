@@ -65,6 +65,8 @@ interface ProductCategory {
   nameEn: string
   nameEs: string
   color: string
+  parentId: string | null
+  children: ProductCategory[]
 }
 
 const FILE_TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
@@ -694,28 +696,53 @@ export default function ProductsPage() {
                 </span>
                 {t("all")}
               </button>
-              {categories.map(category => {
-                const isActive = selectedCategories.has(category.slug)
+              {categories.filter(c => !c.parentId).map(parent => {
+                const isParentActive = selectedCategories.has(parent.slug)
                 return (
-                  <button
-                    key={category.id}
-                    onClick={() => {
-                      setSelectedCategories(prev => {
-                        const next = new Set(prev)
-                        if (next.has(category.slug)) next.delete(category.slug)
-                        else next.add(category.slug)
-                        return next
-                      })
-                    }}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                      isActive ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300 hover:bg-white/5"
-                    }`}
-                  >
-                    <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isActive ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
-                      {isActive && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-                    </span>
-                    {category.nameEn}
-                  </button>
+                  <div key={parent.id}>
+                    <button
+                      onClick={() => {
+                        setSelectedCategories(prev => {
+                          const next = new Set(prev)
+                          if (next.has(parent.slug)) next.delete(parent.slug)
+                          else next.add(parent.slug)
+                          return next
+                        })
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                        isParentActive ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isParentActive ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
+                        {isParentActive && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                      </span>
+                      {parent.nameEn}
+                    </button>
+                    {parent.children?.map(child => {
+                      const isChildActive = selectedCategories.has(child.slug)
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => {
+                            setSelectedCategories(prev => {
+                              const next = new Set(prev)
+                              if (next.has(child.slug)) next.delete(child.slug)
+                              else next.add(child.slug)
+                              return next
+                            })
+                          }}
+                          className={`w-full flex items-center gap-2 pl-7 pr-3 py-1.5 text-left text-xs transition-colors ${
+                            isChildActive ? "text-emerald-400 bg-emerald-500/10" : "text-gray-400 hover:bg-white/5"
+                          }`}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${isChildActive ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
+                            {isChildActive && <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                          </span>
+                          {child.nameEn}
+                        </button>
+                      )
+                    })}
+                  </div>
                 )
               })}
             </div>
