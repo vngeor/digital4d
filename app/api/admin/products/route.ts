@@ -468,6 +468,57 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: true, count: ids.length })
     }
 
+    if (action === "setStatus") {
+      const { session, error } = await requirePermissionApi("products", "edit")
+      if (error) return error
+
+      const { ids, status } = body
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return NextResponse.json({ error: "IDs array required" }, { status: 400 })
+      }
+
+      const VALID_STATUSES = ["in_stock", "out_of_stock", "coming_soon", "pre_order", "sold_out"]
+      if (!VALID_STATUSES.includes(status)) {
+        return NextResponse.json({ error: "Invalid status value" }, { status: 400 })
+      }
+
+      // Fetch before update — needed to detect in_stock transitions for wishlist notifications
+      const oldProducts = await prisma.product.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, slug: true, status: true, nameBg: true, nameEn: true, nameEs: true },
+      })
+
+      for (const id of ids) {
+        await prisma.product.update({ where: { id }, data: { status } })
+      }
+
+      // Notify wishlist users for products that just became in_stock
+      if (status === "in_stock") {
+        for (const p of oldProducts) {
+          if (p.status !== "in_stock") {
+            notifyStockAvailable(
+              p.id,
+              p.slug,
+              { nameBg: p.nameBg, nameEn: p.nameEn, nameEs: p.nameEs }
+            ).catch((err) => console.error("Failed to send stock available notifications:", err instanceof Error ? err.message : "Unknown"))
+          }
+        }
+      }
+
+      for (const p of oldProducts) {
+        logAuditAction({
+          userId: session.user.id,
+          action: "edit",
+          resource: "products",
+          recordId: p.id,
+          recordTitle: p.nameEn,
+          details: JSON.stringify({ status: { from: p.status, to: status } }),
+        }).catch(() => {})
+      }
+
+      return NextResponse.json({ success: true, count: oldProducts.length })
+    }
+
     if (action === "toggleField") {
       const { session, error } = await requirePermissionApi("products", "edit")
       if (error) return error

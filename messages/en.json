@@ -186,7 +186,8 @@
       "confirmBulkDelete": "Are you sure you want to delete {count} items? This cannot be undone.",
       "bulkDeleteSuccess": "{count} items deleted",
       "bulkPublishSuccess": "{count} items published",
-      "bulkUnpublishSuccess": "{count} items unpublished"
+      "bulkUnpublishSuccess": "{count} items unpublished",
+      "bulkSetStatusSuccess": "{count} products updated"
     },
     "search": {
       "placeholder": "Search pages, products, orders...",

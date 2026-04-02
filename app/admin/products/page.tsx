@@ -351,6 +351,22 @@ export default function ProductsPage() {
     }
   }
 
+  const handleBulkSetStatus = async (status: string) => {
+    const ids = Array.from(selectedIds)
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "setStatus", ids, status }),
+    })
+    if (res.ok) {
+      toast.success(tb("bulkSetStatusSuccess", { count: ids.length }))
+      setSelectedIds(new Set())
+      fetchProducts()
+    } else {
+      toast.error(t("updateFailed"))
+    }
+  }
+
   const getCategoryColor = (categorySlug: string) => {
     const category = categories.find((c) => c.slug === categorySlug)
     return category?.color || "gray"
@@ -1013,6 +1029,7 @@ export default function ProductsPage() {
         onDelete={can("products", "delete") ? () => setBulkDeleteConfirm(true) : undefined}
         onPublish={can("products", "edit") ? () => handleBulkPublish(true) : undefined}
         onUnpublish={can("products", "edit") ? () => handleBulkPublish(false) : undefined}
+        onSetStatus={can("products", "edit") ? handleBulkSetStatus : undefined}
         onClear={() => setSelectedIds(new Set())}
         deleteLabel={tb("bulkDelete")}
         publishLabel={tb("bulkPublish")}

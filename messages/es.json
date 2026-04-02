@@ -186,7 +186,8 @@
       "confirmBulkDelete": "¿Estás seguro de que quieres eliminar {count} elementos? Esta acción no se puede deshacer.",
       "bulkDeleteSuccess": "{count} elementos eliminados",
       "bulkPublishSuccess": "{count} elementos publicados",
-      "bulkUnpublishSuccess": "{count} elementos despublicados"
+      "bulkUnpublishSuccess": "{count} elementos despublicados",
+      "bulkSetStatusSuccess": "{count} productos actualizados"
     },
     "search": {
       "placeholder": "Buscar páginas, productos, pedidos...",

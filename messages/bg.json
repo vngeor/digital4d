@@ -186,7 +186,8 @@
       "confirmBulkDelete": "Сигурни ли сте, че искате да изтриете {count} елемента? Това не може да бъде отменено.",
       "bulkDeleteSuccess": "{count} елемента изтрити",
       "bulkPublishSuccess": "{count} елемента публикувани",
-      "bulkUnpublishSuccess": "{count} елемента скрити"
+      "bulkUnpublishSuccess": "{count} елемента скрити",
+      "bulkSetStatusSuccess": "{count} продукта обновени"
     },
     "search": {
       "placeholder": "Търсене на страници, продукти, поръчки...",
