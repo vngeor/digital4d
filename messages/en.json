@@ -1,4 +1,21 @@
 {
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "emptySubtitle": "Add products to get started",
+    "browseProducts": "Browse Products",
+    "addToCart": "Add to Cart",
+    "addedToCart": "Added to cart!",
+    "buyNow": "Buy Now",
+    "checkout": "Checkout",
+    "continueShopping": "Continue shopping",
+    "remove": "Remove",
+    "subtotal": "Subtotal",
+    "items": "{count} items",
+    "item": "1 item",
+    "orderConfirmed": "Order confirmed!",
+    "orderConfirmedDesc": "We'll contact you to arrange delivery."
+  },
   "nav": {
     "services": "Services",
     "products": "Products",

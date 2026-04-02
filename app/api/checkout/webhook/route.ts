@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import prisma from "@/lib/prisma"
 import { randomBytes } from "crypto"
+import { generateOrderNumber } from "@/lib/generateCode"
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -17,6 +18,37 @@ function getWebhookSecret() {
     throw new Error("STRIPE_WEBHOOK_SECRET is not configured")
   }
   return secret
+}
+
+async function createDigitalPurchase(productId: string, email: string, stripeSession: string, couponId?: string | null) {
+  const downloadToken = randomBytes(32).toString("hex")
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + 7)
+  await prisma.digitalPurchase.create({
+    data: {
+      productId,
+      email,
+      downloadToken,
+      downloadCount: 0,
+      maxDownloads: 3,
+      expiresAt,
+      stripeSession,
+      couponId: couponId || null,
+    },
+  })
+}
+
+async function createPhysicalOrder(nameEn: string, quantity: number, price: string, currency: string, email: string, stripeSession: string) {
+  await prisma.order.create({
+    data: {
+      orderNumber: generateOrderNumber(),
+      customerName: email,
+      customerEmail: email,
+      description: `${nameEn} × ${quantity} — ${price} ${currency}`,
+      notes: `Stripe session: ${stripeSession}`,
+      status: "PENDING",
+    },
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -41,67 +73,92 @@ export async function POST(request: NextRequest) {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session
-
-      const productId = session.metadata?.productId
       const customerEmail = session.customer_email || session.customer_details?.email
+      const isCartCheckout = session.metadata?.type === "cart"
 
-      if (!productId || !customerEmail) {
-        console.error("Missing productId or email in session metadata")
-        return NextResponse.json({ error: "Missing metadata" }, { status: 400 })
-      }
+      if (isCartCheckout) {
+        // ── Cart multi-item flow ──────────────────────────────────────────────
+        if (!customerEmail) {
+          console.error("Missing email in cart session")
+          return NextResponse.json({ error: "Missing email" }, { status: 400 })
+        }
 
-      // Generate unique download token
-      const downloadToken = randomBytes(32).toString("hex")
+        let cartItems: Array<{
+          productId: string
+          fileType: string
+          quantity: number
+          nameEn: string
+          price: string
+          currency: string
+        }> = []
 
-      // Set expiry to 7 days from now
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 7)
-
-      // Create digital purchase record
-      await prisma.digitalPurchase.create({
-        data: {
-          productId,
-          email: customerEmail,
-          downloadToken,
-          downloadCount: 0,
-          maxDownloads: 3,
-          expiresAt,
-          stripeSession: session.id,
-          couponId: session.metadata?.couponId || null,
-        },
-      })
-
-      console.log(`Digital purchase created, product ${productId}`)
-
-      // Record coupon usage if a coupon was used
-      const couponId = session.metadata?.couponId
-      if (couponId) {
         try {
-          const originalPrice = parseFloat(session.metadata?.originalPrice || "0")
-          const discountAmount = parseFloat(session.metadata?.discountAmount || "0")
-          const finalPrice = originalPrice - discountAmount
+          cartItems = JSON.parse(session.metadata!.items)
+        } catch {
+          console.error("Failed to parse cart items from metadata")
+          return NextResponse.json({ error: "Invalid cart metadata" }, { status: 400 })
+        }
 
-          await prisma.couponUsage.create({
-            data: {
-              couponId,
-              email: customerEmail,
-              originalPrice,
-              discountAmount,
-              finalPrice: Math.max(finalPrice, 0.50),
-              stripeSession: session.id,
-            },
-          })
+        for (const item of cartItems) {
+          if (item.fileType === "digital") {
+            await createDigitalPurchase(item.productId, customerEmail, session.id)
+            console.log(`Digital purchase created for product ${item.productId}`)
+          } else {
+            await createPhysicalOrder(item.nameEn, item.quantity, item.price, item.currency, customerEmail, session.id)
+            console.log(`Physical order created for product ${item.productId}`)
+          }
+        }
+      } else {
+        // ── Single-product flow ───────────────────────────────────────────────
+        const productId = session.metadata?.productId
 
-          // Increment coupon usage count
-          await prisma.coupon.update({
-            where: { id: couponId },
-            data: { usedCount: { increment: 1 } },
-          })
+        if (!productId || !customerEmail) {
+          console.error("Missing productId or email in session metadata")
+          return NextResponse.json({ error: "Missing metadata" }, { status: 400 })
+        }
 
-          console.log(`Coupon usage recorded, coupon ${couponId}`)
-        } catch (couponError) {
-          console.error("Error recording coupon usage:", couponError instanceof Error ? couponError.message : "Unknown")
-          // Non-critical — purchase still valid
+        // Default "digital" for backward compat with existing sessions (no fileType in metadata)
+        const fileType = session.metadata?.fileType || "digital"
+
+        if (fileType === "digital") {
+          await createDigitalPurchase(productId, customerEmail, session.id, session.metadata?.couponId)
+          console.log(`Digital purchase created, product ${productId}`)
+
+          // Record coupon usage if a coupon was used
+          const couponId = session.metadata?.couponId
+          if (couponId) {
+            try {
+              const originalPrice = parseFloat(session.metadata?.originalPrice || "0")
+              const discountAmount = parseFloat(session.metadata?.discountAmount || "0")
+              const finalPrice = originalPrice - discountAmount
+
+              await prisma.couponUsage.create({
+                data: {
+                  couponId,
+                  email: customerEmail,
+                  originalPrice,
+                  discountAmount,
+                  finalPrice: Math.max(finalPrice, 0.50),
+                  stripeSession: session.id,
+                },
+              })
+
+              await prisma.coupon.update({
+                where: { id: couponId },
+                data: { usedCount: { increment: 1 } },
+              })
+
+              console.log(`Coupon usage recorded, coupon ${couponId}`)
+            } catch (couponError) {
+              console.error("Error recording coupon usage:", couponError instanceof Error ? couponError.message : "Unknown")
+              // Non-critical — purchase still valid
+            }
+          }
+        } else {
+          // Physical single-item "Buy Now" → create Order
+          const nameEn = session.metadata?.nameEn || `Product ${productId}`
+          await createPhysicalOrder(nameEn, 1, "0", "EUR", customerEmail, session.id)
+          console.log(`Physical order created, product ${productId}`)
         }
       }
     }

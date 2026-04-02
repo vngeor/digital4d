@@ -10,7 +10,9 @@ import { LanguageSwitcher } from "./LanguageSwitcher"
 import { GlobalSearch } from "./GlobalSearch"
 import { locales, localeFlags, type Locale } from "@/i18n/config"
 import { NotificationBell } from "./NotificationBell"
-import { ChevronDown, X, Heart, Cake } from "lucide-react"
+import { ChevronDown, X, Heart, Cake, ShoppingCart } from "lucide-react"
+import { getCartCount } from "@/lib/cart"
+import { CartDrawer } from "./CartDrawer"
 
 interface MenuContent {
     id: string
@@ -43,6 +45,8 @@ export function Header() {
         children: Array<{ id: string; slug: string; nameBg: string; nameEn: string; nameEs: string; productCount: number }>
     }>>([])
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [cartOpen, setCartOpen] = useState(false)
+    const [cartCount, setCartCount] = useState(0)
     const [expandedItem, setExpandedItem] = useState<string | null>(null)
     const [expandedCategoryDesktop, setExpandedCategoryDesktop] = useState<string | null>(null)
     const [expandedCategoryMobile, setExpandedCategoryMobile] = useState<string | null>(null)
@@ -87,6 +91,14 @@ export function Header() {
         }
         checkBirthDate()
     }, [status])
+
+    // Sync cart badge count
+    useEffect(() => {
+        const update = () => setCartCount(getCartCount())
+        update()
+        window.addEventListener("cart-updated", update)
+        return () => window.removeEventListener("cart-updated", update)
+    }, [])
 
     // Close mobile menu on route change
     useEffect(() => {
@@ -216,6 +228,20 @@ export function Header() {
                             }}
                         />
                     )}
+
+                    {/* Cart Icon */}
+                    <button
+                        onClick={() => setCartOpen(true)}
+                        className="relative p-2 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
+                        aria-label="Shopping cart"
+                    >
+                        <ShoppingCart className="w-5 h-5 text-white" />
+                        {cartCount > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-emerald-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center leading-none">
+                                {cartCount > 99 ? "99+" : cartCount}
+                            </span>
+                        )}
+                    </button>
 
                     {/* Auth Button */}
                     {status === "loading" ? (
@@ -435,6 +461,9 @@ export function Header() {
             {/* Gradient accent line */}
             <div className="h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
         </header>
+
+        {/* Cart Drawer */}
+        <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} locale={locale} />
 
         {/* ===== MOBILE MENU OVERLAY (fixed, outside header) ===== */}
 

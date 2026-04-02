@@ -1,4 +1,21 @@
 {
+  "cart": {
+    "title": "Количка",
+    "empty": "Количката ви е празна",
+    "emptySubtitle": "Добавете продукти за начало",
+    "browseProducts": "Разгледай продукти",
+    "addToCart": "Добави в количката",
+    "addedToCart": "Добавено в количката!",
+    "buyNow": "Купи сега",
+    "checkout": "Плати",
+    "continueShopping": "Продължи пазаруването",
+    "remove": "Премахни",
+    "subtotal": "Междинна сума",
+    "items": "{count} артикула",
+    "item": "1 артикул",
+    "orderConfirmed": "Поръчката е потвърдена!",
+    "orderConfirmedDesc": "Ще се свържем с вас за доставката."
+  },
   "nav": {
     "services": "Услуги",
     "products": "Продукти",

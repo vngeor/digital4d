@@ -1,4 +1,21 @@
 {
+  "cart": {
+    "title": "Carrito",
+    "empty": "Tu carrito está vacío",
+    "emptySubtitle": "Añade productos para empezar",
+    "browseProducts": "Ver productos",
+    "addToCart": "Añadir al carrito",
+    "addedToCart": "¡Añadido al carrito!",
+    "buyNow": "Comprar ahora",
+    "checkout": "Pagar",
+    "continueShopping": "Seguir comprando",
+    "remove": "Eliminar",
+    "subtotal": "Subtotal",
+    "items": "{count} artículos",
+    "item": "1 artículo",
+    "orderConfirmed": "¡Pedido confirmado!",
+    "orderConfirmedDesc": "Nos pondremos en contacto contigo para la entrega."
+  },
   "nav": {
     "services": "Servicios",
     "products": "Productos",

@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product is not available for purchase" }, { status: 400 })
     }
 
-    if (product.fileType !== "digital") {
-      return NextResponse.json({ error: "Product is not a digital product" }, { status: 400 })
+    if (product.fileType === "service" || product.priceType !== "fixed") {
+      return NextResponse.json({ error: "Product cannot be purchased directly" }, { status: 400 })
     }
 
     // Determine base price (use sale price if on sale)
@@ -171,6 +171,8 @@ export async function POST(request: NextRequest) {
       metadata: {
         productId: product.id,
         productSlug: product.slug,
+        fileType: product.fileType || "digital",
+        nameEn: product.nameEn,
         ...(couponId ? { couponId, couponCode: couponCode.toUpperCase(), originalPrice: originalPrice.toFixed(2), discountAmount: discountAmount.toFixed(2) } : {}),
       },
     })

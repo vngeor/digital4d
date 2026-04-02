@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Header } from "../../components/Header"
 import prisma from "@/lib/prisma"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
-import { CheckCircle, Download, ArrowLeft } from "lucide-react"
+import { CheckCircle, Download, ArrowLeft, Package } from "lucide-react"
 
 interface PageProps {
     searchParams: Promise<{ session_id?: string }>
@@ -14,25 +14,37 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
     const params = await searchParams
     const sessionId = params.session_id
 
-    // Try to find the purchase by session ID
-    let downloadToken: string | null = null
-    let productName: string | null = null
+    interface DigitalItem {
+        downloadToken: string
+        productName: string
+    }
+
+    let digitalItems: DigitalItem[] = []
+    let hasPhysicalOrder = false
 
     if (sessionId) {
-        const purchase = await prisma.digitalPurchase.findFirst({
-            where: { stripeSession: sessionId }
+        // Fetch all digital purchases for this session (supports both single-item and cart)
+        const purchases = await prisma.digitalPurchase.findMany({
+            where: { stripeSession: sessionId },
         })
 
-        if (purchase) {
-            downloadToken = purchase.downloadToken
-
+        for (const purchase of purchases) {
             const product = await prisma.product.findUnique({
-                where: { id: purchase.productId }
+                where: { id: purchase.productId },
+                select: { nameEn: true },
             })
-            if (product) {
-                productName = product.nameEn
-            }
+            digitalItems.push({
+                downloadToken: purchase.downloadToken,
+                productName: product?.nameEn ?? "Product",
+            })
         }
+
+        // Check for physical orders created from this session
+        const physicalOrders = await prisma.order.findMany({
+            where: { notes: { contains: sessionId } },
+            select: { id: true },
+        })
+        hasPhysicalOrder = physicalOrders.length > 0
     }
 
     return (
@@ -59,26 +71,39 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
                             {t("checkout.success.message")}
                         </p>
 
-                        {/* Product Name */}
-                        {productName && (
-                            <p className="text-white font-medium mb-8">
-                                {productName}
-                            </p>
+                        {/* Digital download links */}
+                        {digitalItems.length > 0 && (
+                            <div className="space-y-3 mb-8">
+                                {digitalItems.map((item) => (
+                                    <div key={item.downloadToken} className="glass rounded-xl border border-white/10 p-4 text-left">
+                                        <p className="text-white font-medium mb-3 text-sm">{item.productName}</p>
+                                        <a
+                                            href={`/products/download/${item.downloadToken}`}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            {t("checkout.success.downloadNow")}
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
                         )}
 
-                        {/* Download Button */}
-                        {downloadToken && (
-                            <a
-                                href={`/products/download/${downloadToken}`}
-                                className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all mb-6"
-                            >
-                                <Download className="w-5 h-5" />
-                                {t("checkout.success.downloadNow")}
-                            </a>
+                        {/* Physical order confirmation */}
+                        {hasPhysicalOrder && (
+                            <div className="glass rounded-xl border border-emerald-500/20 p-4 mb-8 text-left">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+                                        <Package className="w-4 h-4 text-emerald-400" />
+                                    </div>
+                                    <p className="text-white font-semibold text-sm">{t("cart.orderConfirmed")}</p>
+                                </div>
+                                <p className="text-slate-400 text-sm pl-11">{t("cart.orderConfirmedDesc")}</p>
+                            </div>
                         )}
 
                         {/* Back to Products */}
-                        <div className="mt-8">
+                        <div className="mt-4">
                             <Link
                                 href="/products"
                                 className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors"

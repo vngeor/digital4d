@@ -4,18 +4,22 @@ import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
-import { ShoppingCart, MessageSquare, Send, Loader2, Ticket, X, Check, Clock, Minus, Plus, Bell } from "lucide-react"
+import { ShoppingCart, MessageSquare, Loader2, Ticket, X, Check, Clock, Minus, Plus, Bell } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
+import { addToCart } from "@/lib/cart"
 
 interface Product {
     id: string
     slug: string
     nameEn: string
+    nameBg: string
+    nameEs: string
     price: string | null
     salePrice?: string | null
     onSale?: boolean
     currency?: string
     fileType: string | null
+    priceType: string
     status: string
 }
 
@@ -48,13 +52,13 @@ interface ProductActionsProps {
 
 export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, isWishlisted = false }: ProductActionsProps) {
     const t = useTranslations("products")
+    const tc = useTranslations("cart")
     const { data: session } = useSession()
     const [loading, setLoading] = useState(false)
     const [quantity, setQuantity] = useState(1)
     const [notifySubscribed, setNotifySubscribed] = useState(isWishlisted)
     const [showQuoteForm, setShowQuoteForm] = useState(false)
     const [showContactForm, setShowContactForm] = useState(false)
-    const [showCouponInput, setShowCouponInput] = useState(false)
     const [couponCode, setCouponCode] = useState("")
     const [couponLoading, setCouponLoading] = useState(false)
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
@@ -107,7 +111,6 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     // Handle clicking a promoted coupon banner
     const handlePromotedCouponClick = (code: string) => {
         setCouponCode(code)
-        setShowCouponInput(true)
         setCouponError("")
         // Auto-apply after setting state
         setTimeout(() => {
@@ -256,7 +259,6 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         if (initialCouponCode && !autoApplied.current && product.fileType === "digital") {
             autoApplied.current = true
             setCouponCode(initialCouponCode.toUpperCase())
-            setShowCouponInput(true)
             // Auto-validate the coupon
             const autoValidate = async () => {
                 setCouponLoading(true)
@@ -352,6 +354,27 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         }
     }
 
+    const handleAddToCart = () => {
+        addToCart({
+            productId: product.id,
+            productSlug: product.slug,
+            productUrl: window.location.pathname,
+            nameEn: product.nameEn,
+            nameBg: product.nameBg,
+            nameEs: product.nameEs,
+            image: (product as unknown as { image?: string }).image || "",
+            price: product.price || "0",
+            salePrice: product.salePrice || null,
+            onSale: product.onSale || false,
+            currency: product.currency || "EUR",
+            fileType: product.fileType || "physical",
+            priceType: product.priceType,
+            status: product.status,
+        }, quantity)
+        window.dispatchEvent(new Event("cart-updated"))
+        toast.success(tc("addedToCart"))
+    }
+
     const canPurchase = ["in_stock", "pre_order"].includes(product.status)
         && (selectedVariantStatus === undefined || ["in_stock", "pre_order"].includes(selectedVariantStatus))
 
@@ -399,15 +422,37 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         </button>
     )
 
-    // Digital product - Buy Now button with coupon support
-    if (product.fileType === "digital") {
+    const isService = product.fileType === "service"
+    const isDigital = product.fileType === "digital"
+    const isCartEligible = product.priceType === "fixed" && !isService
+
+    // Coupon discount banner for quote/non-digital products
+    const couponBanner = initialCouponCode ? (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                <Ticket className="w-5 h-5 text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-sm text-amber-300 font-medium">
+                    {t("couponDiscountAvailable")}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                    <span className="font-mono font-bold text-amber-300 text-sm sm:tracking-wider whitespace-nowrap truncate">{initialCouponCode.toUpperCase()}</span>
+                    <span className="text-[11px] text-amber-400/60">— {t("couponMentionInQuote")}</span>
+                </div>
+            </div>
+        </div>
+    ) : null
+
+    // Cart-eligible products (fixed price, not service) — digital and physical
+    if (isCartEligible) {
         return (
             <div className="space-y-3">
                 {/* Promoted Coupon Banners */}
                 {promotedBanners}
 
-                {/* Coupon Section — always visible glass banner */}
-                {!appliedCoupon ? (
+                {/* Coupon Section — only for digital in v1 */}
+                {isDigital && (!appliedCoupon ? (
                     <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
                         <div className="flex items-center gap-2 mb-2">
                             <Ticket className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -451,10 +496,10 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                             <X className="w-4 h-4" />
                         </button>
                     </div>
-                )}
+                ))}
 
                 {/* Discount Preview */}
-                {appliedCoupon && (
+                {isDigital && appliedCoupon && (
                     <div className="flex items-center justify-between text-sm px-1">
                         <span className="text-slate-400 line-through">
                             {appliedCoupon.original} {appliedCoupon.productCurrency}
@@ -468,43 +513,30 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 {canPurchase && quantitySelector}
 
                 {canPurchase ? (
-                    <button
-                        onClick={handleBuyNow}
-                        disabled={loading}
-                        className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                            <ShoppingCart className="w-5 h-5" />
-                        )}
-                        {t("buyNow")}
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleAddToCart}
+                            className="flex-1 py-3 rounded-xl border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors font-semibold flex items-center justify-center gap-2 touch-manipulation"
+                        >
+                            <ShoppingCart className="w-4 h-4" />
+                            {tc("addToCart")}
+                        </button>
+                        <button
+                            onClick={handleBuyNow}
+                            disabled={loading}
+                            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 touch-manipulation"
+                        >
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                            {tc("buyNow")}
+                        </button>
+                    </div>
                 ) : notifyMeButton}
             </div>
         )
     }
 
-    // Coupon discount banner for non-digital products
-    const couponBanner = initialCouponCode ? (
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                <Ticket className="w-5 h-5 text-amber-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-sm text-amber-300 font-medium">
-                    {t("couponDiscountAvailable")}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-mono font-bold text-amber-300 text-sm sm:tracking-wider whitespace-nowrap truncate">{initialCouponCode.toUpperCase()}</span>
-                    <span className="text-[11px] text-amber-400/60">— {t("couponMentionInQuote")}</span>
-                </div>
-            </div>
-        </div>
-    ) : null
-
     // Service - Get Quote button
-    if (product.fileType === "service") {
+    if (isService) {
         return (
             <div className="space-y-3">
                 {promotedBanners}
@@ -530,7 +562,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         )
     }
 
-    // Physical product - Order Now button (opens contact/inquiry form)
+    // Non-fixed price physical product (priceType="quote" or "from") - Get Quote
     return (
         <div className="space-y-3">
             {promotedBanners}
@@ -539,10 +571,10 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             {canPurchase ? (
                 <button
                     onClick={() => setShowContactForm(true)}
-                    className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+                    className="w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:shadow-lg hover:shadow-amber-500/30 transition-all"
                 >
-                    <Send className="w-5 h-5" />
-                    {t("orderNow")}
+                    <MessageSquare className="w-5 h-5" />
+                    {t("getQuote")}
                 </button>
             ) : notifyMeButton}
 
