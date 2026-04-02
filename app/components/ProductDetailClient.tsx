@@ -62,7 +62,9 @@ export function ProductDetailClient({
     isWishlisted,
     children,
 }: ProductDetailClientProps) {
-    const [selectedVariantIndex, setSelectedVariantIndex] = useState(variants.length > 0 ? 0 : -1)
+    const firstAvailableVariant = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
+    const defaultVariantIndex = variants.length > 0 ? (firstAvailableVariant >= 0 ? firstAvailableVariant : 0) : -1
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(defaultVariantIndex)
 
     const selectedVariantStatus = selectedVariantIndex >= 0
         ? variants[selectedVariantIndex]?.status || "in_stock"

@@ -36,7 +36,9 @@ const STATUS_OVERLAY_TEXT: Record<string, Record<string, string>> = {
 
 export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange }: ProductImageGalleryProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-    const [selectedVariantIndex, setSelectedVariantIndex] = useState(variants.length > 0 ? 0 : -1)
+    const firstAvailableVariant = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
+    const defaultVariantIndex = variants.length > 0 ? (firstAvailableVariant >= 0 ? firstAvailableVariant : 0) : -1
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(defaultVariantIndex)
     const [showingVariant, setShowingVariant] = useState(false)
     const [lightboxOpen, setLightboxOpen] = useState(false)
     const touchStartX = useRef(0)
