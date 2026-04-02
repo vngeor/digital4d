@@ -38,12 +38,13 @@ async function createDigitalPurchase(productId: string, email: string, stripeSes
   })
 }
 
-async function createPhysicalOrder(nameEn: string, quantity: number, price: string, currency: string, email: string, stripeSession: string) {
+async function createPhysicalOrder(nameEn: string, quantity: number, price: string, currency: string, email: string, stripeSession: string, userId?: string | null) {
   await prisma.order.create({
     data: {
       orderNumber: generateOrderNumber(),
       customerName: email,
       customerEmail: email,
+      userId: userId || null,
       description: `${nameEn} × ${quantity} — ${price} ${currency}`,
       notes: `Stripe session: ${stripeSession}`,
       status: "PENDING",
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session
       const customerEmail = session.customer_email || session.customer_details?.email
       const isCartCheckout = session.metadata?.type === "cart"
+      const userId = session.metadata?.userId || null
 
       if (isCartCheckout) {
         // ── Cart multi-item flow ──────────────────────────────────────────────
@@ -104,7 +106,7 @@ export async function POST(request: NextRequest) {
             await createDigitalPurchase(item.productId, customerEmail, session.id)
             console.log(`Digital purchase created for product ${item.productId}`)
           } else {
-            await createPhysicalOrder(item.nameEn, item.quantity, item.price, item.currency, customerEmail, session.id)
+            await createPhysicalOrder(item.nameEn, item.quantity, item.price, item.currency, customerEmail, session.id, userId)
             console.log(`Physical order created for product ${item.productId}`)
           }
         }
@@ -157,7 +159,7 @@ export async function POST(request: NextRequest) {
         } else {
           // Physical single-item "Buy Now" → create Order
           const nameEn = session.metadata?.nameEn || `Product ${productId}`
-          await createPhysicalOrder(nameEn, 1, "0", "EUR", customerEmail, session.id)
+          await createPhysicalOrder(nameEn, 1, "0", "EUR", customerEmail, session.id, userId)
           console.log(`Physical order created, product ${productId}`)
         }
       }

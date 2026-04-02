@@ -1,3 +1,4 @@
+
 import { notFound } from "next/navigation"
 import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"

@@ -13,6 +13,7 @@ import { NotificationBell } from "./NotificationBell"
 import { ChevronDown, X, Heart, Cake, ShoppingCart } from "lucide-react"
 import { getCartCount } from "@/lib/cart"
 import { CartDrawer } from "./CartDrawer"
+import { GlobalPromoStrip } from "./GlobalPromoStrip"
 
 interface MenuContent {
     id: string
@@ -152,6 +153,7 @@ export function Header() {
         <>
         {/* Main Header - sticky */}
         <header className="bg-slate-950 sticky top-0 z-50 border-b border-white/10 relative">
+            <GlobalPromoStrip />
             {/* Row 1: Logo + actions */}
             <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 lg:gap-6 px-4 py-3">
                 <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight whitespace-nowrap shrink-0">
@@ -250,7 +252,7 @@ export function Header() {
                         <div className="relative" ref={userDropdownRef}>
                             <button
                                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                                className="flex items-center gap-2 px-3 py-2 rounded-full glass hover:bg-white/10 transition-colors"
+                                className="rounded-full hover:opacity-80 transition-opacity lg:flex lg:items-center lg:gap-2 lg:px-3 lg:py-2 lg:glass lg:hover:opacity-100 lg:hover:bg-white/10 touch-manipulation"
                             >
                                 <div className="relative">
                                     {session.user?.image ? (

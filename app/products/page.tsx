@@ -36,7 +36,10 @@ export default async function ProductsPage() {
         prisma.product.findMany({
             where: { published: true },
             orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-            include: { brand: true },
+            include: {
+                brand: true,
+                variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+            },
         }),
         prisma.productCategory.findMany({
             include: { children: true, parent: true },
@@ -76,6 +79,12 @@ export default async function ProductsPage() {
         }
     }
 
+    // Compute display image: first available (in_stock/pre_order) variant image, or main product image
+    const productsForDisplay = products.map(p => ({
+        ...p,
+        image: p.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || p.image,
+    }))
+
     // Wishlist depends on session
     let wishlistedProductIds: string[] = []
     if (session?.user?.id) {
@@ -110,7 +119,7 @@ export default async function ProductsPage() {
 
             {/* Products Grid with Client-Side Filtering */}
             <ProductCatalog
-                products={JSON.parse(JSON.stringify(products))}
+                products={JSON.parse(JSON.stringify(productsForDisplay))}
                 categories={JSON.parse(JSON.stringify(categories))}
                 locale={locale}
                 wishlistedProductIds={wishlistedProductIds}

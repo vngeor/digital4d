@@ -177,7 +177,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     if (product.relatedProductIds && product.relatedProductIds.length > 0) {
         relatedProducts = await prisma.product.findMany({
             where: { id: { in: product.relatedProductIds }, published: true },
-            include: { brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } } },
+            include: {
+                brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } },
+                variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+            },
             take: 6,
         })
     } else {
@@ -200,9 +203,18 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             },
             take: 4,
             orderBy: [{ featured: "desc" }, { order: "asc" }],
-            include: { brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } } },
+            include: {
+                brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } },
+                variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+            },
         })
     }
+
+    // Compute display images for related products (first available variant image, or main product image)
+    const relatedForDisplay = relatedProducts.map(p => ({
+        ...p,
+        image: p.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || p.image,
+    }))
 
     // Build URLs for related products (handle cross-category products)
     const relatedProductUrls: Record<string, string> = {}
@@ -368,7 +380,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         descEn: product.descEn,
         descBg: product.descBg,
         descEs: product.descEs,
-        image: product.image,
+        image: product.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || product.image,
         price: product.price?.toString() || "0",
         salePrice: product.salePrice?.toString() || null,
         onSale: product.onSale,
@@ -564,13 +576,13 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                     )}
 
                     {/* Related Products */}
-                    {relatedProducts.length > 0 && (
+                    {relatedForDisplay.length > 0 && (
                         <div className="mt-8 md:mt-16">
                             <h2 className="text-lg md:text-2xl font-bold text-white mb-4 md:mb-8">
                                 {t("products.relatedProducts")}
                             </h2>
                             <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 md:gap-6 relative z-10">
-                                {relatedProducts.map((related) => {
+                                {relatedForDisplay.map((related) => {
                                     const relatedName = getLocalizedName(related)
                                     const relatedPrice = related.price
                                         ? `${parseFloat(related.price.toString()).toFixed(2)} ${related.currency}`

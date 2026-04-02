@@ -40,7 +40,10 @@ export default async function Home() {
             { order: "asc" },
         ],
         take: 8,
-        include: { brand: true },
+        include: {
+            brand: true,
+            variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+        },
     })
 
     // Fetch product categories for badge colors
@@ -153,7 +156,7 @@ export default async function Home() {
             category: product.category,
             categoryColor: category?.color || "emerald",
             categoryName,
-            image: product.image,
+            image: product.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || product.image,
             status: product.status,
             featured: product.featured,
             isNew: product.createdAt >= newCutoff,

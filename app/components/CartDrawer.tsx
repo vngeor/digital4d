@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { useSession } from "next-auth/react"
 import { X, ShoppingCart, Trash2, Minus, Plus, Loader2 } from "lucide-react"
 import { getCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, type CartItem } from "@/lib/cart"
 
@@ -14,6 +15,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
   const t = useTranslations("cart")
+  const { data: session, status } = useSession()
   const [items, setItems] = useState<CartItem[] | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -53,6 +55,13 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
   const handleCheckout = async () => {
     if (!items || items.length === 0) return
+    if (status === "loading") return  // Wait until session resolves
+    if (!session) {
+      // Cart persists in localStorage — survives redirect automatically
+      const callbackUrl = encodeURIComponent(window.location.pathname)
+      window.location.href = `/login?callbackUrl=${callbackUrl}`
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch("/api/checkout/cart", {
@@ -208,7 +217,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                         <div className="flex items-center gap-1 glass rounded-lg border border-white/10 px-1">
                           <button
                             onClick={() => handleQty(item.productId, -1)}
-                            className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white transition-colors touch-manipulation"
+                            className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white transition-colors touch-manipulation disabled:opacity-40"
                             disabled={item.quantity <= 1}
                           >
                             <Minus className="w-3 h-3" />
@@ -216,7 +225,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                           <span className="w-6 text-center text-sm text-white font-medium">{item.quantity}</span>
                           <button
                             onClick={() => handleQty(item.productId, 1)}
-                            className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white transition-colors touch-manipulation"
+                            className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white transition-colors touch-manipulation disabled:opacity-40"
                             disabled={item.quantity >= 99}
                           >
                             <Plus className="w-3 h-3" />
@@ -224,7 +233,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                         </div>
                         <button
                           onClick={() => handleRemove(item.productId)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors touch-manipulation"
+                          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors touch-manipulation"
                           aria-label={t("remove")}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -252,10 +261,10 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
             {/* Buttons */}
             <button
               onClick={handleCheckout}
-              disabled={loading}
+              disabled={loading || status === "loading"}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold hover:opacity-90 transition-opacity touch-manipulation flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              {loading ? (
+              {(loading || status === "loading") ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : null}
               {t("checkout")}

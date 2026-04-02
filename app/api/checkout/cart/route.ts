@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import prisma from "@/lib/prisma"
+import { auth } from "@/auth"
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -16,6 +17,11 @@ interface CartRequestItem {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Please log in to checkout" }, { status: 401 })
+  }
+
   try {
     const { items: rawItems } = await request.json()
 
@@ -161,19 +167,21 @@ export async function POST(request: NextRequest) {
       || (ALLOWED_ORIGINS.includes(origin) ? origin : "https://www.digital4d.eu")
 
     const stripe = getStripe()
-    const session = await stripe.checkout.sessions.create({
+    const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/checkout/cancel`,
+      customer_email: session.user.email || undefined,
       metadata: {
         type: "cart",
+        userId: session.user.id,
         items: JSON.stringify(metaItems),
       },
     })
 
-    return NextResponse.json({ sessionId: session.id, url: session.url })
+    return NextResponse.json({ sessionId: stripeSession.id, url: stripeSession.url })
   } catch (error) {
     console.error("Cart checkout error:", error instanceof Error ? error.message : "Unknown")
     return NextResponse.json(

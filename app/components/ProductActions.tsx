@@ -53,7 +53,7 @@ interface ProductActionsProps {
 export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, isWishlisted = false }: ProductActionsProps) {
     const t = useTranslations("products")
     const tc = useTranslations("cart")
-    const { data: session } = useSession()
+    const { data: session, status } = useSession()
     const [loading, setLoading] = useState(false)
     const [quantity, setQuantity] = useState(1)
     const [notifySubscribed, setNotifySubscribed] = useState(isWishlisted)
@@ -305,7 +305,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     type="button"
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
+                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 >
                     <Minus className="w-4 h-4" />
                 </button>
@@ -314,7 +314,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     type="button"
                     onClick={() => setQuantity(q => Math.min(99, q + 1))}
                     disabled={quantity >= 99}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
+                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 >
                     <Plus className="w-4 h-4" />
                 </button>
@@ -323,6 +323,12 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     )
 
     const handleBuyNow = async () => {
+        if (status === "loading") return  // Wait until session resolves
+        if (!session) {
+            const callbackUrl = encodeURIComponent(window.location.pathname)
+            window.location.href = `/login?callbackUrl=${callbackUrl}`
+            return
+        }
         setLoading(true)
         try {
             const res = await fetch("/api/checkout", {
@@ -380,7 +386,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
 
     const handleNotifyMe = async () => {
         if (!session) {
-            toast.info(t("loginToWishlist"))
+            const callbackUrl = encodeURIComponent(window.location.pathname)
+            window.location.href = `/login?callbackUrl=${callbackUrl}`
             return
         }
         try {
@@ -405,7 +412,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         <button
             onClick={handleNotifyMe}
             disabled={loading || notifySubscribed}
-            className={`w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-medium transition-all ${
+            className={`w-full flex items-center justify-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-medium transition-all touch-manipulation ${
                 notifySubscribed
                     ? "bg-emerald-500/20 text-emerald-400 cursor-default"
                     : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:shadow-lg hover:shadow-blue-500/30 disabled:opacity-50"
@@ -490,7 +497,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                         </div>
                         <button
                             onClick={handleRemoveCoupon}
-                            className="text-slate-400 hover:text-red-400 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded text-slate-400 hover:text-red-400 transition-colors touch-manipulation shrink-0"
                             title={t("removeCoupon")}
                         >
                             <X className="w-4 h-4" />

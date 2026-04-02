@@ -39,7 +39,9 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
     const firstAvailableVariant = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
     const defaultVariantIndex = variants.length > 0 ? (firstAvailableVariant >= 0 ? firstAvailableVariant : 0) : -1
     const [selectedVariantIndex, setSelectedVariantIndex] = useState(defaultVariantIndex)
-    const [showingVariant, setShowingVariant] = useState(false)
+    const [showingVariant, setShowingVariant] = useState(
+        defaultVariantIndex >= 0 && !!variants[defaultVariantIndex]?.image
+    )
     const [lightboxOpen, setLightboxOpen] = useState(false)
     const touchStartX = useRef(0)
     const touchStartY = useRef(0)
