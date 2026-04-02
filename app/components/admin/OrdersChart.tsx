@@ -28,7 +28,7 @@ function CustomTooltip({
   if (!active || !payload?.length) return null
 
   return (
-    <div className="rounded-lg border border-white/10 bg-[#1a1a2e] px-4 py-2.5 shadow-xl">
+    <div className="rounded-lg border border-white/10 bg-[#0d0d1a] px-4 py-2.5 shadow-xl">
       <p className="text-xs text-slate-400 mb-1">{label}</p>
       <p className="text-sm font-semibold text-white">{payload[0].value} orders</p>
     </div>

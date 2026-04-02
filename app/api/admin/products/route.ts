@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
         image: data.image || null,
         gallery: data.gallery || [],
         relatedProductIds: data.relatedProductIds || [],
+        upsellProductIds: data.upsellProductIds || [],
         fileUrl: data.fileUrl || null,
         fileType: data.fileType || "physical",
         featured: data.featured || false,
@@ -244,6 +245,7 @@ export async function PUT(request: NextRequest) {
         image: data.image || null,
         gallery: data.gallery || [],
         relatedProductIds: data.relatedProductIds || [],
+        upsellProductIds: data.upsellProductIds || [],
         fileUrl: data.fileUrl || null,
         fileType: data.fileType || "physical",
         featured: data.featured || false,
@@ -315,7 +317,7 @@ export async function PUT(request: NextRequest) {
       })
     }
 
-    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "relatedProductIds", "fileUrl", "fileType", "featured", "bestSeller", "published", "status", "order"]
+    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "relatedProductIds", "upsellProductIds", "fileUrl", "fileType", "featured", "bestSeller", "published", "status", "order"]
     const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
 
@@ -433,6 +435,20 @@ export async function PATCH(request: NextRequest) {
           await prisma.product.update({
             where: { id: ref.id },
             data: { relatedProductIds: ref.relatedProductIds.filter(rid => rid !== deletedId) },
+          })
+        }
+      }
+
+      // Clean up stale upsellProductIds references in other products
+      for (const deletedId of ids) {
+        const refUpsell = await prisma.product.findMany({
+          where: { upsellProductIds: { has: deletedId } },
+          select: { id: true, upsellProductIds: true },
+        })
+        for (const ref of refUpsell) {
+          await prisma.product.update({
+            where: { id: ref.id },
+            data: { upsellProductIds: ref.upsellProductIds.filter(rid => rid !== deletedId) },
           })
         }
       }
@@ -615,6 +631,18 @@ export async function DELETE(request: NextRequest) {
       await prisma.product.update({
         where: { id: ref.id },
         data: { relatedProductIds: ref.relatedProductIds.filter(rid => rid !== id) },
+      })
+    }
+
+    // Clean up stale upsellProductIds references in other products
+    const referencingUpsell = await prisma.product.findMany({
+      where: { upsellProductIds: { has: id } },
+      select: { id: true, upsellProductIds: true },
+    })
+    for (const ref of referencingUpsell) {
+      await prisma.product.update({
+        where: { id: ref.id },
+        data: { upsellProductIds: ref.upsellProductIds.filter(rid => rid !== id) },
       })
     }
 

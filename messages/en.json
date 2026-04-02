@@ -13,6 +13,15 @@
     "subtotal": "Subtotal",
     "items": "{count} items",
     "item": "1 item",
+    "upsellAdded": "Added to cart!",
+    "upsellTitle": "Customers also bought",
+    "upsellViewCart": "View Cart",
+    "upsellContinue": "Continue Shopping",
+    "youMightLike": "You might also like",
+    "tabCart": "Cart",
+    "tabUpsell": "Recommended",
+    "freeShippingUnlocked": "🎉 You've got free shipping!",
+    "freeShippingAdd": "Add {amount} {currency} more for free shipping",
     "orderConfirmed": "Order confirmed!",
     "orderConfirmedDesc": "We'll contact you to arrange delivery."
   },
@@ -186,6 +195,7 @@
       "roles": "Roles",
       "brands": "Brands",
       "auditLogs": "Audit Logs",
+      "settings": "Settings",
       "logout": "Logout",
       "idleWarningTitle": "Session Expiring",
       "idleWarningMessage": "You will be logged out in {seconds} seconds due to inactivity.",
@@ -889,6 +899,7 @@
       "slug": "Slug",
       "slugHelp": "URL-friendly identifier (e.g., news, service)",
       "name": "Name",
+      "description": "Description",
       "color": "Color",
       "order": "Order",
       "actions": "Actions",
@@ -1017,6 +1028,7 @@
       "slugHelp": "URL-friendly identifier",
       "name": "Name",
       "description": "Description",
+      "pageTitle": "Page Title",
       "image": "Image",
       "color": "Color",
       "order": "Order",
@@ -1118,6 +1130,19 @@
     "common": {
       "uploadFailed": "Upload failed",
       "uploadImageFailed": "Failed to upload image"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Site-wide configuration",
+      "freeShippingSection": "Free Shipping",
+      "freeShippingSectionDesc": "Show a progress bar in the cart to encourage larger orders",
+      "enableThreshold": "Enable free shipping threshold",
+      "threshold": "Minimum order amount",
+      "preview": "Customers who spend {threshold} {currency} or more get free shipping",
+      "save": "Save Settings",
+      "saved": "Settings saved!",
+      "saveFailed": "Failed to save settings",
+      "thresholdRequired": "Please enter a valid threshold amount"
     }
   },
   "brandsPage": {

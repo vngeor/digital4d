@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell } from "lucide-react"
+import { Search, Star, Check, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 
 interface Product {
@@ -653,8 +653,10 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         {(product.featured || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && (
                                             <div className="absolute top-3 left-3 flex flex-wrap gap-1">
                                                 {product.featured && (
-                                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
-                                                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white fill-white" />
+                                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                        <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                                        </svg>
                                                     </div>
                                                 )}
                                                 {(Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
@@ -711,7 +713,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         {product.bestSeller && (
                                             <div className="absolute bottom-3 right-3">
                                                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+                                                    <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                     {t("bestSeller")}
                                                 </span>
                                             </div>

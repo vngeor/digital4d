@@ -837,7 +837,7 @@ export default function NotificationsPage() {
       {/* Send Notification Modal */}
       {showSendModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
+          <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0d0d1a] shadow-2xl">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
               <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
@@ -978,7 +978,7 @@ export default function NotificationsPage() {
                     </button>
 
                     {showRoleDropdown && (
-                      <div className="absolute z-20 mt-1 w-40 rounded-lg border border-white/10 bg-[#1a1a2e] shadow-xl">
+                      <div className="absolute z-20 mt-1 w-40 rounded-lg border border-white/10 bg-[#0d0d1a] shadow-xl">
                         {ROLES.map((role) => (
                           <button
                             key={role}
@@ -1233,7 +1233,7 @@ export default function NotificationsPage() {
 
                       {/* Coupon Dropdown */}
                       {showCouponDropdown && couponResults.length > 0 && (
-                        <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-[#1a1a2e] shadow-xl">
+                        <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-[#0d0d1a] shadow-xl">
                           {couponResults.map((coupon) => (
                             <button
                               key={coupon.id}

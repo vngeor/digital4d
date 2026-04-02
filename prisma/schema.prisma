@@ -198,6 +198,7 @@ model Product {
   image       String?
   gallery           String[]
   relatedProductIds String[]  @default([])
+  upsellProductIds  String[]  @default([])
   fileUrl     String?   // For digital products
   fileType    String?   // "digital", "physical", "service"
   featured    Boolean   @default(false)
@@ -269,6 +270,8 @@ model ProductCategory {
   descBg      String?
   descEn      String?
   descEs      String?
+  title       String?
+  titleAlign  String   @default("left")
   image       String?
   color       String   @default("emerald")
   order       Int      @default(0)
@@ -580,4 +583,16 @@ model TemplateSendLog {
   @@unique([templateId, userId, year])
   @@index([templateId])
   @@index([userId])
+}
+
+// Site-wide configurable settings (singleton row)
+model SiteSettings {
+  id                    String   @id @default("singleton")
+  freeShippingEnabled   Boolean  @default(false)
+  freeShippingThreshold Float?
+  freeShippingCurrency  String   @default("EUR")
+  upsellTabEnabled       Boolean  @default(true)
+  upsellOpenOnAdd        String   @default("upsell")
+  globalUpsellProductIds String[]
+  updatedAt             DateTime @updatedAt
 }

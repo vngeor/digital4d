@@ -893,7 +893,7 @@ export default function MediaGalleryPage() {
       {/* Upload Modal */}
       {showUpload && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => !uploading && setShowUpload(false)}>
-          <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#0d0d1a] rounded-2xl border border-white/10 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <h3 className="text-lg font-semibold text-white">{t("upload")}</h3>
               <button onClick={() => !uploading && setShowUpload(false)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -943,7 +943,7 @@ export default function MediaGalleryPage() {
       {/* Edit / Detail Modal */}
       {editingMedia && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditingMedia(null)}>
-          <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#0d0d1a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <h3 className="text-lg font-semibold text-white">{t("viewDetails")}</h3>
               <button onClick={() => setEditingMedia(null)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -1173,7 +1173,7 @@ export default function MediaGalleryPage() {
       {/* Duplicate Warning Modal */}
       {duplicateWarnings.length > 0 && pendingFiles && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => { setDuplicateWarnings([]); setPendingFiles(null) }}>
-          <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#0d0d1a] rounded-2xl border border-white/10 w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <h3 className="text-lg font-semibold text-amber-400 flex items-center gap-2">
                 <Info className="w-5 h-5" />

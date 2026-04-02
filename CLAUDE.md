@@ -251,9 +251,13 @@ No test framework is configured.
 
 ### Payments
 
-- **Stripe** checkout for digital products, webhook at `/api/checkout/webhook` creates `DigitalPurchase` records. Supports quantity (1-99, validated server-side). Server validates `inStock` before creating session
-- **Coupon support**: checkout accepts `couponCode`, validates server-side, applies discount, records `CouponUsage` after payment
-- **Quantity selector**: [-] [qty] [+] buttons on product detail page for all product types (digital/service/physical). Passed to Stripe checkout and QuoteForm
+- **Stripe** checkout for digital and physical fixed-price products. Webhook at `/api/checkout/webhook` creates `DigitalPurchase` (digital) or `Order` (physical) records. Supports quantity (1-99, validated server-side). Server validates `in_stock`/`pre_order` before creating session
+- **Single-item "Buy Now"**: `/api/checkout` — express checkout from product detail page. Supports coupon codes for digital products. `fileType` and `nameEn` in Stripe metadata so webhook can route correctly
+- **Cart checkout**: `lib/cart.ts` localStorage helpers (`d4d-cart` key). CartDrawer slides in from right. `/api/checkout/cart` creates multi-item Stripe session (validates products, enforces single currency, `metadata.type="cart"`)
+- **Webhook routing**: detects `metadata.type === "cart"` BEFORE the `!productId` guard. Cart items loop: digital → `DigitalPurchase`, physical → `Order` (uses `generateOrderNumber()`, stores session ID in `notes`)
+- **Button logic**: `priceType === "fixed"` + `fileType !== "service"` → Add to Cart + Buy Now (emerald). Service → Get Quote (amber). Non-fixed physical → Get Quote (amber). Consistent across ProductActions (detail) and all 5 card locations
+- **Coupon support**: single-item "Buy Now" only (digital products). Cart checkout v1 has no coupon input
+- **Quantity selector**: [-] [qty] [+] on product detail for all types. Passed to Stripe checkout and QuoteForm
 - Downloads: token-based (32 hex bytes), max 3 downloads, 7-day expiring links
 - Currency mapping: BGN→bgn, EUR→eur, USD→usd
 
@@ -321,7 +325,8 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 - **GA4 / Meta Pixel tracking**: needs tracking IDs from admin
 - **Product reviews/ratings**: user reviews with star ratings on product pages
 - **Testimonials section**: customer testimonials on homepage
-- **Cookie consent popup**: GDPR-compliant cookie banner with accept/reject options
+- **Free shipping threshold**: "Add X more for free shipping" progress bar in CartDrawer. Threshold + enabled toggle configurable from admin panel (new SiteSettings/key-value model). Per-currency support
+- **Coupon code in cart**: Cart v1 skipped coupons (product-specific restrictions make multi-item application complex). Future: add coupon field to CartDrawer that validates against cart items, or enable Stripe-native promotion codes
 
 ### Postponed
 - **Live chat widget**: Tawk.to (free) — script tag integration, deferred

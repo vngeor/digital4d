@@ -13,6 +13,15 @@
     "subtotal": "Междинна сума",
     "items": "{count} артикула",
     "item": "1 артикул",
+    "upsellAdded": "Добавено в количката!",
+    "upsellTitle": "Клиентите купиха и",
+    "upsellViewCart": "Виж количката",
+    "upsellContinue": "Продължи пазаруването",
+    "youMightLike": "Може да харесаш",
+    "tabCart": "Кошница",
+    "tabUpsell": "Препоръчани",
+    "freeShippingUnlocked": "🎉 Получихте безплатна доставка!",
+    "freeShippingAdd": "Добавете още {amount} {currency} за безплатна доставка",
     "orderConfirmed": "Поръчката е потвърдена!",
     "orderConfirmedDesc": "Ще се свържем с вас за доставката."
   },
@@ -186,6 +195,7 @@
       "roles": "Роли",
       "brands": "Марки",
       "auditLogs": "Одит",
+      "settings": "Настройки",
       "logout": "Изход",
       "idleWarningTitle": "Сесията изтича",
       "idleWarningMessage": "Ще бъдете излезли след {seconds} секунди поради неактивност.",
@@ -889,6 +899,7 @@
       "slug": "Slug",
       "slugHelp": "URL-friendly идентификатор (напр. news, service)",
       "name": "Име",
+      "description": "Описание",
       "color": "Цвят",
       "order": "Ред",
       "actions": "Действия",
@@ -1017,6 +1028,7 @@
       "slugHelp": "URL-friendly идентификатор",
       "name": "Име",
       "description": "Описание",
+      "pageTitle": "Заглавие на страницата",
       "image": "Изображение",
       "color": "Цвят",
       "order": "Ред",
@@ -1118,6 +1130,19 @@
     "common": {
       "uploadFailed": "Качването не успя",
       "uploadImageFailed": "Неуспешно качване на изображение"
+    },
+    "settings": {
+      "title": "Настройки",
+      "subtitle": "Конфигурация на сайта",
+      "freeShippingSection": "Безплатна доставка",
+      "freeShippingSectionDesc": "Покажи лента за напредък в количката за по-големи поръчки",
+      "enableThreshold": "Активирай праг за безплатна доставка",
+      "threshold": "Минимална сума на поръчка",
+      "preview": "Клиенти, поръчали над {threshold} {currency}, получават безплатна доставка",
+      "save": "Запази настройките",
+      "saved": "Настройките са запазени!",
+      "saveFailed": "Грешка при запазването",
+      "thresholdRequired": "Моля въведете валидна сума"
     }
   },
   "brandsPage": {
@@ -1133,7 +1158,7 @@
     "subtitle": "Разгледайте нашите продукти и услуги за 3D печат",
     "allProducts": "Всички продукти",
     "allCategories": "Всички категории",
-    "featured": "Препоръчани",
+    "featured": "Препоръчан",
     "search": "Търси продукти...",
     "noProducts": "Няма намерени продукти",
     "category": "Категория",

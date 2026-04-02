@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { useLocale } from "next-intl"
 import Link from "next/link"
+import { ChevronLeft, ChevronRight, Check } from "lucide-react"
 import { getRecentlyViewed, type RecentlyViewedProduct } from "@/lib/recentlyViewed"
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -35,20 +36,14 @@ export function RecentlyViewedSection() {
     // null = not yet hydrated (avoids SSR mismatch), [] = hydrated but empty
     const [products, setProducts] = useState<RecentlyViewedProduct[] | null>(null)
 
-    const [isMobile, setIsMobile] = useState(false)
     const scrollRef = useRef<HTMLDivElement>(null)
     const [activeSlide, setActiveSlide] = useState(0)
     const [itemsPerView, setItemsPerView] = useState(2)
+    const [canScrollLeft, setCanScrollLeft] = useState(false)
+    const [canScrollRight, setCanScrollRight] = useState(false)
 
     useEffect(() => {
         setProducts(getRecentlyViewed().slice(0, 8))
-    }, [])
-
-    useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 1024)
-        check()
-        window.addEventListener("resize", check)
-        return () => window.removeEventListener("resize", check)
     }, [])
 
     useEffect(() => {
@@ -58,7 +53,14 @@ export function RecentlyViewedSection() {
         return () => window.removeEventListener("resize", update)
     }, [])
 
-    const useCarousel = !!products && products.length > 4 && isMobile
+    const updateArrows = useCallback(() => {
+        const el = scrollRef.current
+        if (!el) return
+        setCanScrollLeft(el.scrollLeft > 4)
+        setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
+    }, [])
+
+    const useCarousel = !!products && products.length > 0
     const totalPages = useCarousel ? Math.ceil((products?.length ?? 0) / itemsPerView) : 0
 
     const scrollToPage = useCallback((page: number) => {
@@ -69,6 +71,18 @@ export function RecentlyViewedSection() {
         const cardWidth = firstCard.offsetWidth + gap
         scrollRef.current.scrollTo({ left: page * cardWidth * itemsPerView, behavior: "smooth" })
     }, [itemsPerView])
+
+    useEffect(() => {
+        const el = scrollRef.current
+        if (!el) return
+        updateArrows()
+        el.addEventListener("scroll", updateArrows, { passive: true })
+        window.addEventListener("resize", updateArrows)
+        return () => {
+            el.removeEventListener("scroll", updateArrows)
+            window.removeEventListener("resize", updateArrows)
+        }
+    }, [updateArrows, products])
 
     useEffect(() => {
         if (!useCarousel || totalPages <= 1) return
@@ -111,12 +125,40 @@ export function RecentlyViewedSection() {
                     <p className="text-slate-400 text-sm sm:text-base">{t("recentlyViewedSubtitle")}</p>
                 </div>
 
+                <div className="relative">
+                {canScrollLeft && (
+                    <button
+                        onClick={() => {
+                            const el = scrollRef.current
+                            if (!el) return
+                            const card = el.children[0] as HTMLElement
+                            if (!card) return
+                            const gap = window.innerWidth >= 768 ? 20 : window.innerWidth >= 640 ? 12 : 8
+                            el.scrollBy({ left: -(card.offsetWidth + gap), behavior: "smooth" })
+                        }}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 w-8 h-8 rounded-full glass flex items-center justify-center shadow-lg hover:bg-white/20 transition-colors"
+                    >
+                        <ChevronLeft className="w-4 h-4 text-white" />
+                    </button>
+                )}
+                {canScrollRight && (
+                    <button
+                        onClick={() => {
+                            const el = scrollRef.current
+                            if (!el) return
+                            const card = el.children[0] as HTMLElement
+                            if (!card) return
+                            const gap = window.innerWidth >= 768 ? 20 : window.innerWidth >= 640 ? 12 : 8
+                            el.scrollBy({ left: card.offsetWidth + gap, behavior: "smooth" })
+                        }}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 w-8 h-8 rounded-full glass flex items-center justify-center shadow-lg hover:bg-white/20 transition-colors"
+                    >
+                        <ChevronRight className="w-4 h-4 text-white" />
+                    </button>
+                )}
                 <div
                     ref={scrollRef}
-                    className={useCarousel
-                        ? "flex gap-2 sm:gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2"
-                        : "grid grid-cols-2 gap-2 sm:gap-3 md:gap-5 lg:grid-cols-4 contain-content"
-                    }
+                    className="flex gap-2 sm:gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2"
                 >
                     {products.map((product) => {
                         const name = product[`name${localeKey}`] || product.nameEn
@@ -131,17 +173,17 @@ export function RecentlyViewedSection() {
                             <Link
                                 key={product.id}
                                 href={product.productUrl}
-                                className={`group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 flex flex-col h-full ${useCarousel ? "snap-start shrink-0 w-[calc(50%-4px)] sm:w-[calc(50%-6px)] lg:w-[calc(25%-15px)]" : ""}`}
+                                className="group glass rounded-2xl overflow-hidden hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col h-full snap-start shrink-0 w-[calc(50%-4px)] sm:w-[calc(50%-6px)] lg:w-[calc(25%-15px)]"
                             >
                                 {/* Image */}
-                                <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
+                                <div className="relative h-32 sm:h-40 overflow-hidden bg-white/5">
                                     {product.image ? (
                                         <>
                                             <img
                                                 src={product.image}
                                                 alt={name}
                                                 loading="lazy"
-                                                className="w-full h-full object-contain p-2"
+                                                className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
                                         </>
@@ -190,7 +232,7 @@ export function RecentlyViewedSection() {
                                     {(product.featured || product.isNew) && (
                                         <div className="absolute top-2 left-2 flex flex-wrap gap-1">
                                             {product.featured && (
-                                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg">
                                                     <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                                     </svg>
@@ -208,9 +250,7 @@ export function RecentlyViewedSection() {
                                     {product.bestSeller && (
                                         <div className="absolute bottom-2 right-2">
                                             <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                                </svg>
+                                                <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                 {tProducts("bestSeller")}
                                             </span>
                                         </div>
@@ -226,7 +266,7 @@ export function RecentlyViewedSection() {
 
                                 {/* Content */}
                                 <div className="p-3 sm:p-4 pt-1 flex flex-col flex-1">
-                                    <h3 className="text-sm sm:text-base md:text-lg font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2">
+                                    <h3 className="text-sm sm:text-base md:text-lg font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] md:min-h-[3.5rem]">
                                         {name}
                                     </h3>
                                     {brandName && product.brandSlug && (
@@ -294,6 +334,7 @@ export function RecentlyViewedSection() {
                             </Link>
                         )
                     })}
+                </div>
                 </div>
 
                 {/* Carousel dots */}

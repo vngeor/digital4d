@@ -21,6 +21,8 @@ interface ProductCategory {
   descBg: string | null
   descEn: string | null
   descEs: string | null
+  title: string | null
+  titleAlign: string
   image: string | null
   color: string
   order: number

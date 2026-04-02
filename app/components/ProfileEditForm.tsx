@@ -121,7 +121,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl border border-white/10 shadow-2xl max-h-[85svh] flex flex-col overflow-hidden bg-[#1a1a2e]">
+      <div className="relative w-full max-w-md rounded-2xl border border-white/10 shadow-2xl max-h-[85svh] flex flex-col overflow-hidden bg-[#0d0d1a]">
         {/* Fixed header */}
         <div className="flex items-center justify-between p-4 sm:p-6 pb-0">
           <h2 className="text-xl font-bold">{t.editProfileTitle}</h2>
@@ -210,7 +210,7 @@ export function ProfileEditForm({ phone, country, city, address, birthDate, high
                     value={formData.birthDate}
                     onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
                     onFocus={() => setTimeout(() => birthDateRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 300)}
-                    className="w-full min-w-0 px-4 py-3 rounded-[10px] bg-[#1a1a2e] text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none transition-colors [color-scheme:dark]"
+                    className="w-full min-w-0 px-4 py-3 rounded-[10px] bg-[#0d0d1a] text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none transition-colors [color-scheme:dark]"
                   />
                 </div>
               ) : (

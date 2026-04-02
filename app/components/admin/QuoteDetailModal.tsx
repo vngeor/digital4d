@@ -273,7 +273,7 @@ export function QuoteDetailModal({ quote, onClose, onSaved, canDelete, onDelete 
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-2xl max-h-[90vh] flex flex-col bg-[#1a1a2e] shadow-2xl">
+      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-2xl max-h-[90vh] flex flex-col bg-[#0d0d1a] shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -642,7 +642,7 @@ export function QuoteDetailModal({ quote, onClose, onSaved, canDelete, onDelete 
                         </div>
 
                         {showCouponDropdown && couponResults.length > 0 && (
-                          <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a2e] shadow-xl">
+                          <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-xl border border-white/10 bg-[#0d0d1a] shadow-xl">
                             {couponResults.map((coupon) => (
                               <button
                                 key={coupon.id}

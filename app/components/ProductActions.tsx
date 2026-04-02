@@ -63,7 +63,6 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     const [couponLoading, setCouponLoading] = useState(false)
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
     const [couponError, setCouponError] = useState("")
-
     // Live countdown timer for promoted coupons, pause when tab hidden
     const [countdownKey, setCountdownKey] = useState(0)
     useEffect(() => {
@@ -378,7 +377,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             status: product.status,
         }, quantity)
         window.dispatchEvent(new Event("cart-updated"))
-        toast.success(tc("addedToCart"))
+        window.dispatchEvent(new Event("open-cart-upsell"))
     }
 
     const canPurchase = ["in_stock", "pre_order"].includes(product.status)
@@ -454,6 +453,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     // Cart-eligible products (fixed price, not service) — digital and physical
     if (isCartEligible) {
         return (
+            <>
             <div className="space-y-3">
                 {/* Promoted Coupon Banners */}
                 {promotedBanners}
@@ -539,6 +539,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     </div>
                 ) : notifyMeButton}
             </div>
+            </>
         )
     }
 

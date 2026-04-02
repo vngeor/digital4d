@@ -54,6 +54,7 @@ const allNavItems = [
   { href: "/admin/users", icon: Users, labelKey: "users" },
   { href: "/admin/roles", icon: Shield, labelKey: "roles" },
   { href: "/admin/audit-logs", icon: ScrollText, labelKey: "auditLogs" },
+  { href: "/admin/settings", icon: Settings, labelKey: "settings" },
 ]
 
 const ROLE_BADGE_COLORS: Record<string, string> = {

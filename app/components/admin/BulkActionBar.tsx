@@ -34,7 +34,7 @@ export function BulkActionBar({
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 animate-fade-in-up">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 py-3 sm:px-5 rounded-2xl border border-white/10 bg-[#1a1a2e] shadow-2xl">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 py-3 sm:px-5 rounded-2xl border border-white/10 bg-[#0d0d1a] shadow-2xl">
         <span className="text-sm font-medium text-white whitespace-nowrap">
           {selectedLabel}
         </span>

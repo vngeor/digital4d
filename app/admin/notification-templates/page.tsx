@@ -740,7 +740,7 @@ export default function NotificationTemplatesPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[5vh] overflow-y-auto">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative glass-strong rounded-2xl w-full max-w-2xl p-6 space-y-6 my-8">
+          <div className="relative bg-[#0d0d1a] border border-white/10 rounded-2xl w-full max-w-2xl p-6 space-y-6 my-8 shadow-2xl">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">
                 {editingTemplate ? t("editTemplate") : t("createTemplate")}
@@ -957,13 +957,9 @@ export default function NotificationTemplatesPage() {
                     {form.couponType === "fixed" && (
                       <div className="w-28">
                         <label className="block text-sm text-gray-400 mb-1">{t("couponCurrency")}</label>
-                        <select
-                          value={form.couponCurrency}
-                          onChange={(e) => setForm({ ...form, couponCurrency: e.target.value })}
-                          className="w-full px-3 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                        >
-                          <option value="EUR" className="bg-slate-800">EUR</option>
-                        </select>
+                        <div className="w-full px-3 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-medium">
+                          € EUR
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1218,7 +1214,7 @@ export default function NotificationTemplatesPage() {
       {showTestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTestModal(false)} />
-          <div className="relative glass-strong rounded-2xl w-full max-w-md p-6 space-y-4">
+          <div className="relative bg-[#0d0d1a] border border-white/10 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">{t("testSendTitle")}</h2>
               <button onClick={() => setShowTestModal(false)} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors">

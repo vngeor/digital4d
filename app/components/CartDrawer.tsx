@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { X, ShoppingCart, Trash2, Minus, Plus, Loader2 } from "lucide-react"
 import { getCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, type CartItem } from "@/lib/cart"
+import { UpsellCard, type UpsellProduct } from "./UpsellCard"
 
 interface CartDrawerProps {
   open: boolean
@@ -18,6 +19,48 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
   const { data: session, status } = useSession()
   const [items, setItems] = useState<CartItem[] | null>(null)
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<"cart" | "upsell">("cart")
+  const [upsellEnabled, setUpsellEnabled] = useState(true)
+  const [upsellOpenOnAdd, setUpsellOpenOnAdd] = useState("upsell")
+
+  interface ShippingSettings {
+    freeShippingEnabled: boolean
+    freeShippingThreshold: number | null
+    freeShippingCurrency: string
+  }
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null)
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(r => r.json())
+      .then((data) => {
+        setShippingSettings({
+          freeShippingEnabled: data.freeShippingEnabled,
+          freeShippingThreshold: data.freeShippingThreshold,
+          freeShippingCurrency: data.freeShippingCurrency,
+        })
+        setUpsellEnabled(data.upsellTabEnabled ?? true)
+        setUpsellOpenOnAdd(data.upsellOpenOnAdd ?? "upsell")
+      })
+      .catch(() => {}) // Silently fail — bar simply won't show
+  }, [])
+
+  const [upsellProducts, setUpsellProducts] = useState<UpsellProduct[]>([])
+
+  const primaryProductId = items?.[0]?.productId ?? null
+  const itemCount = items?.length ?? 0
+  const excludeIds = items?.map((i) => i.productId).join(",") ?? ""
+
+  useEffect(() => {
+    if (!primaryProductId || itemCount === 0) {
+      setUpsellProducts([])
+      return
+    }
+    fetch(`/api/products/related?productId=${primaryProductId}&excludeIds=${excludeIds}`)
+      .then((r) => r.json())
+      .then((data) => setUpsellProducts(Array.isArray(data) ? data.slice(0, 3) : []))
+      .catch(() => setUpsellProducts([]))
+  }, [primaryProductId, itemCount, excludeIds])
 
   const refresh = useCallback(() => {
     setItems(getCart())
@@ -35,6 +78,20 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     document.body.style.overflow = open ? "hidden" : ""
     return () => { document.body.style.overflow = "" }
   }, [open])
+
+  // Reset tab to cart when drawer closes
+  useEffect(() => {
+    if (!open) setActiveTab("cart")
+  }, [open])
+
+  // open-cart-upsell: switch to upsell tab based on admin setting
+  useEffect(() => {
+    const handler = () => {
+      if (upsellOpenOnAdd === "upsell") setActiveTab("upsell")
+    }
+    window.addEventListener("open-cart-upsell", handler)
+    return () => window.removeEventListener("open-cart-upsell", handler)
+  }, [upsellOpenOnAdd])
 
   const handleRemove = (productId: string) => {
     removeFromCart(productId)
@@ -92,6 +149,16 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
   const currency = items?.[0]?.currency || "EUR"
 
+  // Free shipping progress — only show when enabled, threshold > 0, and currencies match
+  const threshold = shippingSettings?.freeShippingThreshold ?? 0
+  const showFreeShipping =
+    !!shippingSettings?.freeShippingEnabled &&
+    threshold > 0 &&                                       // Guard against division by zero
+    shippingSettings.freeShippingCurrency === currency     // Guard against currency mismatch
+  const progress = showFreeShipping ? Math.min(subtotal / threshold, 1) : 0
+  const amountLeft = showFreeShipping ? Math.max(threshold - subtotal, 0) : 0
+  const qualifies = showFreeShipping && subtotal >= threshold
+
   const totalCount = items ? items.reduce((sum, i) => sum + i.quantity, 0) : 0
 
   const getLocalizedName = (item: CartItem) => {
@@ -136,8 +203,51 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
           </button>
         </div>
 
-        {/* Items list */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
+        {/* Tab bar — shown only when upsell is enabled and cart has items */}
+        {upsellEnabled && items && items.length > 0 && (
+          <div className="flex border-b border-white/10 shrink-0">
+            <button
+              onClick={() => setActiveTab("cart")}
+              className={`flex-1 py-2.5 text-sm font-medium transition-colors touch-manipulation ${
+                activeTab === "cart"
+                  ? "text-white border-b-2 border-emerald-400"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              🛒 {t("tabCart")} ({items.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("upsell")}
+              className={`flex-1 py-2.5 text-sm font-medium transition-colors touch-manipulation ${
+                activeTab === "upsell"
+                  ? "text-white border-b-2 border-amber-400"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              ✨ {t("tabUpsell")}
+            </button>
+          </div>
+        )}
+
+        {/* Upsell tab content */}
+        {activeTab === "upsell" && (
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+            {upsellProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 text-slate-500 text-sm">
+                <p>{t("youMightLike")}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {upsellProducts.map((p) => (
+                  <UpsellCard key={p.id} product={p} locale={locale} onClose={onClose} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Items list — only on cart tab */}
+        {activeTab === "cart" && <div className="flex-1 overflow-y-auto overscroll-contain">
           {items === null ? (
             // Loading skeleton
             <div className="p-5 space-y-4">
@@ -245,10 +355,11 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
               })}
             </ul>
           )}
-        </div>
 
-        {/* Footer */}
-        {items && items.length > 0 && (
+        </div>}
+
+        {/* Footer — cart tab */}
+        {activeTab === "cart" && items && items.length > 0 && (
           <div className="border-t border-white/10 p-5 shrink-0 space-y-3">
             {/* Subtotal */}
             <div className="flex items-center justify-between text-sm">
@@ -257,6 +368,29 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                 {subtotal.toFixed(2)} {currency}
               </span>
             </div>
+
+            {/* Free shipping progress bar */}
+            {showFreeShipping && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-center">
+                  {qualifies ? (
+                    <span className="text-emerald-400 font-medium">{t("freeShippingUnlocked")}</span>
+                  ) : (
+                    <span className="text-slate-400">
+                      {t("freeShippingAdd", { amount: amountLeft.toFixed(2), currency })}
+                    </span>
+                  )}
+                </p>
+                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      qualifies ? "bg-emerald-400" : "bg-gradient-to-r from-emerald-500 to-cyan-500"
+                    }`}
+                    style={{ width: `${progress * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Buttons */}
             <button
@@ -274,6 +408,18 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
               className="w-full py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors touch-manipulation"
             >
               {t("continueShopping")}
+            </button>
+          </div>
+        )}
+
+        {/* Footer — upsell tab */}
+        {activeTab === "upsell" && items && items.length > 0 && (
+          <div className="border-t border-white/10 px-5 py-4 shrink-0">
+            <button
+              onClick={() => setActiveTab("cart")}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold hover:opacity-90 transition-opacity touch-manipulation"
+            >
+              {t("upsellViewCart")}
             </button>
           </div>
         )}

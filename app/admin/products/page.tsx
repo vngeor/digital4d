@@ -700,7 +700,7 @@ export default function ProductsPage() {
             </svg>
           </button>
           {showCategoryDropdown && (
-            <div className="absolute top-full mt-1 left-0 w-52 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
+            <div className="absolute top-full mt-1 left-0 w-52 bg-[#0d0d1a] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
               {(() => {
                 const allSlugs = categories.map(c => c.slug)
                 const allSelected = allSlugs.length > 0 && allSlugs.every(s => selectedCategories.has(s))
@@ -788,7 +788,7 @@ export default function ProductsPage() {
               </svg>
             </button>
             {showBrandDropdown && (
-              <div className="absolute top-full mt-1 right-0 w-48 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
+              <div className="absolute top-full mt-1 right-0 w-48 bg-[#0d0d1a] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
                 {(() => {
                   const allBrandIds = brands.map(b => b.id)
                   const allSelected = allBrandIds.length > 0 && allBrandIds.every(id => selectedBrands.has(id))

@@ -101,6 +101,21 @@ export function Header() {
         return () => window.removeEventListener("cart-updated", update)
     }, [])
 
+    // Cart open/close via window events
+    useEffect(() => {
+        const openHandler = () => setCartOpen(true)
+        const closeHandler = () => setCartOpen(false)
+        const openUpsellHandler = () => setCartOpen(true)
+        window.addEventListener("open-cart", openHandler)
+        window.addEventListener("close-cart", closeHandler)
+        window.addEventListener("open-cart-upsell", openUpsellHandler)
+        return () => {
+            window.removeEventListener("open-cart", openHandler)
+            window.removeEventListener("close-cart", closeHandler)
+            window.removeEventListener("open-cart-upsell", openUpsellHandler)
+        }
+    }, [])
+
     // Close mobile menu on route change
     useEffect(() => {
         setMobileMenuOpen(false)
