@@ -942,6 +942,8 @@
       "brand": "Марка",
       "noBrand": "— Без марка —",
       "manageBrands": "Управление на марки",
+      "allCategoriesFilter": "Всички категории",
+      "categories": "категории",
       "allBrandsFilter": "Всички марки",
       "colorVariants": "Цветови варианти",
       "addColor": "Добави цвят",

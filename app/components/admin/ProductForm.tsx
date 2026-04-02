@@ -535,9 +535,9 @@ export function ProductForm({
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="rounded-2xl border border-white/10 w-full max-w-[92vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 pt-2 sm:pt-4">
+      <div className="rounded-2xl border border-white/10 w-full max-w-[92vw] sm:max-w-2xl max-h-[85svh] flex flex-col bg-[#1a1a2e] shadow-2xl">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 shrink-0">
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? t("editProduct") : t("addProduct")}
           </h2>
@@ -549,7 +549,7 @@ export function ProductForm({
           </button>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5 sm:space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -1135,8 +1135,8 @@ export function ProductForm({
                     </div>
 
                     {/* Hex color + Image */}
-                    <div className="flex items-end gap-3">
-                      <div className="flex items-end gap-2">
+                    <div className="flex flex-wrap items-end gap-2">
+                      <div className="flex items-end gap-2 shrink-0">
                         <div>
                           <label className="block text-[10px] text-gray-500 mb-1">{t("colorHex")}</label>
                           <input
@@ -1155,7 +1155,7 @@ export function ProductForm({
                         />
                       </div>
 
-                      <div className="flex-1 flex items-end gap-2">
+                      <div className="flex items-end gap-2 flex-1 min-w-[100px]">
                         {variant.image ? (
                           <div className="relative w-9 h-9 rounded-lg overflow-hidden border border-white/10 shrink-0">
                             <img src={variant.image} alt="" className="w-full h-full object-cover" />
@@ -1187,12 +1187,12 @@ export function ProductForm({
                       </div>
 
                       {/* Variant Status */}
-                      <div>
+                      <div className="shrink-0">
                         <label className="block text-[10px] text-gray-500 mb-1">Status</label>
                         <select
                           value={variant.status}
                           onChange={(e) => updateVariant(index, "status", e.target.value)}
-                          className="px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none"
+                          className="min-w-[100px] px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none"
                         >
                           <option value="in_stock">✅ In Stock</option>
                           <option value="out_of_stock">⏸️ Out of Stock</option>

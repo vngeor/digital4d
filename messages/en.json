@@ -942,6 +942,8 @@
       "brand": "Brand",
       "noBrand": "— No Brand —",
       "manageBrands": "Manage Brands",
+      "allCategoriesFilter": "All categories",
+      "categories": "categories",
       "allBrandsFilter": "All Brands",
       "colorVariants": "Color Variants",
       "addColor": "Add Color",

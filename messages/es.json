@@ -942,6 +942,8 @@
       "brand": "Marca",
       "noBrand": "— Sin marca —",
       "manageBrands": "Gestionar Marcas",
+      "allCategoriesFilter": "Todas las categorías",
+      "categories": "categorías",
       "allBrandsFilter": "Todas las marcas",
       "colorVariants": "Variantes de color",
       "addColor": "Agregar color",

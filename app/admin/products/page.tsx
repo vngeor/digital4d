@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck, Download } from "lucide-react"
+import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Trophy, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck, Download } from "lucide-react"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
@@ -87,7 +87,9 @@ export default function ProductsPage() {
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set())
   const [showBrandDropdown, setShowBrandDropdown] = useState(false)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const brandDropdownRef = useRef<HTMLDivElement>(null)
+  const categoryDropdownRef = useRef<HTMLDivElement>(null)
   const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
@@ -146,11 +148,14 @@ export default function ProductsPage() {
     fetchProducts()
   }, [])
 
-  // Click-outside to close brand dropdown
+  // Click-outside to close brand/category dropdowns
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (brandDropdownRef.current && !brandDropdownRef.current.contains(e.target as Node)) {
         setShowBrandDropdown(false)
+      }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false)
       }
     }
     document.addEventListener("mousedown", handler)
@@ -546,10 +551,10 @@ export default function ProductsPage() {
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "bestSeller", !item.bestSeller) }}
-              className={`p-1 rounded transition-colors text-[10px] ${item.bestSeller ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+              className={`p-1 rounded transition-colors ${item.bestSeller ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
               title={item.bestSeller ? "Remove best seller" : "Set as best seller"}
             >
-              🏆
+              <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
             </button>
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[item.status] || "bg-gray-500/20 text-gray-400"}`}>
               {statusLabels[item.status] || item.status}
@@ -658,43 +663,63 @@ export default function ProductsPage() {
         </Link>
       </div>
 
-      {/* Filters: Category tabs + Brand dropdown */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex flex-wrap gap-2 flex-1 items-center">
+      {/* Filters: Category dropdown + Brand dropdown */}
+      <div className="flex flex-row items-center gap-3 flex-wrap">
+        <div ref={categoryDropdownRef} className="relative">
           <button
-            onClick={() => setSelectedCategories(new Set())}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              selectedCategories.size === 0
-                ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+            className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+              selectedCategories.size > 0
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                : "text-gray-400 hover:text-white bg-white/5 border border-white/10"
             }`}
           >
-            {t("all")}
+            {selectedCategories.size > 0
+              ? `${selectedCategories.size} ${t("categories")}`
+              : t("allCategoriesFilter")}
+            <svg className={`w-3.5 h-3.5 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
-          {categories.map((category) => {
-            const isActive = selectedCategories.has(category.slug)
-            return (
+          {showCategoryDropdown && (
+            <div className="absolute top-full mt-1 left-0 w-52 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
               <button
-                key={category.id}
-                onClick={() => {
-                  setSelectedCategories(prev => {
-                    const next = new Set(prev)
-                    if (next.has(category.slug)) next.delete(category.slug)
-                    else next.add(category.slug)
-                    return next
-                  })
-                }}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
-                  isActive
-                    ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                    : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+                onClick={() => { setSelectedCategories(new Set()); setShowCategoryDropdown(false) }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                  selectedCategories.size === 0 ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300 hover:bg-white/5"
                 }`}
               >
-                {isActive && <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-                {category.nameEn}
+                <span className={`w-4 h-4 rounded border flex items-center justify-center ${selectedCategories.size === 0 ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
+                  {selectedCategories.size === 0 && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                </span>
+                {t("all")}
               </button>
-            )
-          })}
+              {categories.map(category => {
+                const isActive = selectedCategories.has(category.slug)
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      setSelectedCategories(prev => {
+                        const next = new Set(prev)
+                        if (next.has(category.slug)) next.delete(category.slug)
+                        else next.add(category.slug)
+                        return next
+                      })
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                      isActive ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300 hover:bg-white/5"
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isActive ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
+                      {isActive && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                    </span>
+                    {category.nameEn}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
         {brands.length > 0 && (
           <div ref={brandDropdownRef} className="relative">
@@ -804,8 +829,8 @@ export default function ProductsPage() {
                       <Star className={`w-3.5 h-3.5 ${item.featured ? "fill-amber-400" : ""}`} />
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "bestSeller", !item.bestSeller) }}
-                      className={`p-1 rounded text-[10px] ${item.bestSeller ? "text-amber-400" : "text-gray-600"}`}>
-                      🏆
+                      className={`p-1 rounded ${item.bestSeller ? "text-amber-400" : "text-gray-600"}`}>
+                      <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "published", !item.published) }}
                       className={`p-1 rounded ${item.published ? "text-emerald-400" : "text-gray-500"}`}>
