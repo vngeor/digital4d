@@ -685,17 +685,6 @@ export default function ProductsPage() {
           </button>
           {showCategoryDropdown && (
             <div className="absolute top-full mt-1 left-0 w-52 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
-              <button
-                onClick={() => { setSelectedCategories(new Set()); setShowCategoryDropdown(false) }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                  selectedCategories.size === 0 ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300 hover:bg-white/5"
-                }`}
-              >
-                <span className={`w-4 h-4 rounded border flex items-center justify-center ${selectedCategories.size === 0 ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
-                  {selectedCategories.size === 0 && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-                </span>
-                {t("all")}
-              </button>
               {(() => {
                 const allSlugs = categories.map(c => c.slug)
                 const allSelected = allSlugs.length > 0 && allSlugs.every(s => selectedCategories.has(s))
