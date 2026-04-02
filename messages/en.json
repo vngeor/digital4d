@@ -93,6 +93,13 @@
     "termsLink": "Terms of Use",
     "privacyLink": "Privacy Policy"
   },
+  "cookieConsent": {
+    "title": "Cookie Preferences",
+    "message": "We use essential cookies for authentication and analytics to improve your experience. See our",
+    "privacyLink": "Privacy Policy",
+    "accept": "Accept All",
+    "decline": "Decline"
+  },
   "menu": {
     "noContent": "No content available",
     "backToMenu": "Back to {menu}"

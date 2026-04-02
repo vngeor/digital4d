@@ -9,6 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { GlobalPromoStrip } from "./components/GlobalPromoStrip";
 import Footer from "./components/Footer";
+import { CookieConsent } from "./components/CookieConsent";
 
 const exo2 = Exo_2({
   variable: "--font-exo2",
@@ -132,6 +133,7 @@ export default async function RootLayout({
             <GlobalPromoStrip />
             {children}
             <Footer />
+            <CookieConsent />
           </Providers>
           <SpeedInsights />
           <Analytics />

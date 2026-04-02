@@ -93,6 +93,13 @@
     "termsLink": "Términos de uso",
     "privacyLink": "Política de privacidad"
   },
+  "cookieConsent": {
+    "title": "Preferencias de cookies",
+    "message": "Usamos cookies esenciales para autenticación y análisis para mejorar tu experiencia. Consulta nuestra",
+    "privacyLink": "Política de privacidad",
+    "accept": "Aceptar todo",
+    "decline": "Rechazar"
+  },
   "menu": {
     "noContent": "No hay contenido disponible",
     "backToMenu": "Volver a {menu}"
