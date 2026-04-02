@@ -696,6 +696,23 @@ export default function ProductsPage() {
                 </span>
                 {t("all")}
               </button>
+              {(() => {
+                const allSlugs = categories.map(c => c.slug)
+                const allSelected = allSlugs.length > 0 && allSlugs.every(s => selectedCategories.has(s))
+                return (
+                  <button
+                    onClick={() => setSelectedCategories(allSelected ? new Set() : new Set(allSlugs))}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors border-b border-white/5 mb-1 ${
+                      allSelected ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300 hover:bg-white/5"
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allSelected ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
+                      {allSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                    </span>
+                    {t("selectAll")}
+                  </button>
+                )
+              })()}
               {categories.filter(c => !c.parentId).map(parent => {
                 const isParentActive = selectedCategories.has(parent.slug)
                 return (
@@ -767,6 +784,23 @@ export default function ProductsPage() {
             </button>
             {showBrandDropdown && (
               <div className="absolute top-full mt-1 right-0 w-48 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
+                {(() => {
+                  const allBrandIds = brands.map(b => b.id)
+                  const allSelected = allBrandIds.length > 0 && allBrandIds.every(id => selectedBrands.has(id))
+                  return (
+                    <button
+                      onClick={() => setSelectedBrands(allSelected ? new Set() : new Set(allBrandIds))}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors border-b border-white/5 mb-1 ${
+                        allSelected ? "text-lime-400 bg-lime-500/10" : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allSelected ? "border-lime-400 bg-lime-500/20" : "border-white/20"}`}>
+                        {allSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                      </span>
+                      {t("selectAll")}
+                    </button>
+                  )
+                })()}
                 {brands.map(b => {
                   const isActive = selectedBrands.has(b.id)
                   return (
