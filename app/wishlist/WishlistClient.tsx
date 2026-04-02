@@ -304,17 +304,13 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                                         )}
                                                     </div>
                                                     {product.priceType !== "quote" && (
-                                                        product.fileType === "digital" ? (
+                                                        product.priceType === "fixed" && product.fileType !== "service" ? (
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium">
                                                                 <ShoppingCart className="w-3.5 h-3.5" />
                                                             </span>
-                                                        ) : product.fileType === "service" ? (
+                                                        ) : (
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium">
                                                                 <MessageSquare className="w-3.5 h-3.5" />
-                                                            </span>
-                                                        ) : (
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium">
-                                                                <Package className="w-3.5 h-3.5" />
                                                             </span>
                                                         )
                                                     )}

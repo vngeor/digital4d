@@ -773,28 +773,21 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                     </span>
                                                 )}
                                             </div>
-                                            {product.priceType !== "quote" && (
-                                                !["in_stock", "pre_order"].includes(product.status) ? (
-                                                    <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-400 text-xs font-medium group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-all whitespace-nowrap">
-                                                        <Bell className="w-3.5 h-3.5 shrink-0" />
-                                                        {t("notifyMeShort")}
-                                                    </span>
-                                                ) : product.fileType === "digital" ? (
-                                                    <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium group-hover:bg-emerald-500/30 transition-all whitespace-nowrap">
-                                                        <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
-                                                        {t("buyNow")}
-                                                    </span>
-                                                ) : product.fileType === "service" ? (
-                                                    <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium group-hover:bg-amber-500/30 transition-all whitespace-nowrap">
-                                                        <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                                                        {t("getQuote")}
-                                                    </span>
-                                                ) : (
-                                                    <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium group-hover:bg-purple-500/30 transition-all whitespace-nowrap">
-                                                        <Package className="w-3.5 h-3.5 shrink-0" />
-                                                        {t("orderNow")}
-                                                    </span>
-                                                )
+                                            {!["in_stock", "pre_order"].includes(product.status) ? (
+                                                <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-400 text-xs font-medium group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-all whitespace-nowrap">
+                                                    <Bell className="w-3.5 h-3.5 shrink-0" />
+                                                    {t("notifyMeShort")}
+                                                </span>
+                                            ) : product.priceType === "fixed" && product.fileType !== "service" ? (
+                                                <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium group-hover:bg-emerald-500/30 transition-all whitespace-nowrap">
+                                                    <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
+                                                    {t("buyNow")}
+                                                </span>
+                                            ) : (
+                                                <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium group-hover:bg-amber-500/30 transition-all whitespace-nowrap">
+                                                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                                                    {t("getQuote")}
+                                                </span>
                                             )}
                                         </div>
                                     </div>
