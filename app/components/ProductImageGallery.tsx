@@ -75,8 +75,8 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
         currentImage = allImages[selectedImageIndex] || mainImage
     }
 
-    // Determine overlay status: variant status takes priority when showing variant
-    const overlayStatus = showingVariant && selectedVariantIndex >= 0
+    // Determine overlay status: variant status takes priority when a variant is selected
+    const overlayStatus = selectedVariantIndex >= 0
         ? variants[selectedVariantIndex]?.status
         : productStatus
     const overlayBg = overlayStatus ? STATUS_OVERLAY_STYLE[overlayStatus] : null
