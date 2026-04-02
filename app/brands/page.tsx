@@ -1,5 +1,6 @@
 import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
+import Image from "next/image"
 import { Header } from "../components/Header"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import Footer from "@/app/components/Footer"
@@ -76,11 +77,13 @@ export default async function BrandsPage() {
                                         className="group glass rounded-xl p-4 sm:p-6 border border-white/10 hover:border-emerald-500/30 transition-all hover:shadow-lg hover:shadow-emerald-500/10 text-center"
                                     >
                                         {brand.image ? (
-                                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden mx-auto mb-3 sm:mb-4 bg-white/5">
-                                                <img
+                                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden mx-auto mb-3 sm:mb-4 bg-white/5 flex items-center justify-center">
+                                                <Image
                                                     src={brand.image}
                                                     alt={brandName}
-                                                    className="w-full h-full object-contain"
+                                                    width={80}
+                                                    height={80}
+                                                    className="object-contain w-full h-full"
                                                 />
                                             </div>
                                         ) : (
