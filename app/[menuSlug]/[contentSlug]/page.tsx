@@ -59,7 +59,7 @@ export default async function ContentDetailPage({ params }: PageProps) {
     const locale = await getLocale()
 
     // First, try to find a menu item with this slug
-    const menuItem = await prisma.menuItem.findUnique({
+    const menuItem = await prisma.menuItem.findFirst({
         where: { slug: menuSlug, published: true },
     })
 

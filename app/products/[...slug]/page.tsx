@@ -89,7 +89,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     const resolvedSearchParams = await searchParams
     const nonce = (await headers()).get("x-nonce") || ""
     const couponCode = typeof resolvedSearchParams.coupon === "string" ? resolvedSearchParams.coupon : undefined
-    const sizeParam = typeof resolvedSearchParams.size === "string" ? resolvedSearchParams.size : undefined
+    const sizeParam = typeof resolvedSearchParams.weight === "string" ? resolvedSearchParams.weight : undefined
     const t = await getTranslations()
     const locale = await getLocale()
 
@@ -126,7 +126,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     )
     const currentPath = `/products/${slugSegments.join("/")}`
     if (currentPath !== canonicalPath) {
-        const queryString = couponCode ? `?coupon=${couponCode}` : ""
+        const params = new URLSearchParams()
+        if (couponCode) params.set("coupon", couponCode)
+        if (sizeParam) params.set("weight", sizeParam)
+        const queryString = params.toString() ? `?${params.toString()}` : ""
         redirect(canonicalPath + queryString)
     }
 
@@ -402,6 +405,16 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     }
 
     const NEW_CUTOFF = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
+    // For recently viewed: when packages exist, use the lowest-priced package instead of base product price
+    const lowestPkg = product.packages.length > 0
+        ? product.packages.reduce((min, p) => {
+            const eff = parseFloat((p.salePrice ?? p.price).toString())
+            const minEff = parseFloat((min.salePrice ?? min.price).toString())
+            return eff < minEff ? p : min
+        }, product.packages[0])
+        : null
+
     const trackerProduct = {
         id: product.id,
         productUrl: canonicalPath,
@@ -412,9 +425,9 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         descBg: product.descBg,
         descEs: product.descEs,
         image: product.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || product.image,
-        price: product.price?.toString() || "0",
-        salePrice: product.salePrice?.toString() || null,
-        onSale: product.onSale,
+        price: lowestPkg ? lowestPkg.price.toString() : (product.price?.toString() || "0"),
+        salePrice: lowestPkg ? (lowestPkg.salePrice?.toString() || null) : (product.salePrice?.toString() || null),
+        onSale: lowestPkg ? !!lowestPkg.salePrice : product.onSale,
         currency: product.currency,
         priceType: product.priceType,
         fileType: product.fileType,
@@ -541,30 +554,29 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                         {/* Badges */}
                         <div className="flex flex-wrap gap-1 md:gap-2">
                             {product.onSale && (
-                                <>
-                                    <Link
-                                        href="/products?sale=true"
-                                        className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer"
-                                    >
-                                        {t("products.onSale")}
-                                    </Link>
-                                    {product.price && product.salePrice && (
-                                        <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500 text-white">
-                                            -{Math.round((1 - parseFloat(product.salePrice.toString()) / parseFloat(product.price.toString())) * 100)}%
-                                        </span>
-                                    )}
-                                </>
+                                <Link
+                                    href="/products?sale=true"
+                                    className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer"
+                                >
+                                    {t("products.onSale")}
+                                </Link>
                             )}
                             {product.featured && (
-                                <span className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-violet-500/90 text-white shadow-lg">
+                                <Link
+                                    href="/products?featured=true"
+                                    className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-violet-500/90 text-white shadow-lg hover:bg-violet-500 transition-colors cursor-pointer"
+                                >
                                     ⭐ {t("products.featured")}
-                                </span>
+                                </Link>
                             )}
                             {product.bestSeller && (
-                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-amber-500 text-white shadow-lg">
+                                <Link
+                                    href="/products?bestSeller=true"
+                                    className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-amber-500 text-white shadow-lg hover:bg-amber-400 transition-colors cursor-pointer"
+                                >
                                     <Check className="w-2.5 h-2.5 md:w-3 md:h-3" />
                                     {t("products.bestSeller")}
-                                </span>
+                                </Link>
                             )}
                         </div>
 

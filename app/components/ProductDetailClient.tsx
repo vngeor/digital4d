@@ -45,6 +45,9 @@ interface Product {
     fileType: string | null
     priceType: string
     status: string
+    featured?: boolean
+    bestSeller?: boolean
+    createdAt?: string
 }
 
 interface PromotedCoupon {
@@ -109,17 +112,19 @@ export function ProductDetailClient({
 
     const getDefaultVariantIndex = () => {
         if (variants.length === 0) return -1
-        if (!availableVariantIds) {
+        const pkg = selectedPackageIndex >= 0 ? packages[selectedPackageIndex] : null
+        if (!pkg?.packageVariants?.length) {
             // No package filter — prefer first available (in_stock/pre_order) variant
             const first = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
             return first >= 0 ? first : 0
         }
-        // With package filter — prefer first available variant within the package's color set
+        // With package filter — use per-package status (not global variant status)
+        const pvMap = new Map(pkg.packageVariants.map(pv => [pv.variantId, pv.status]))
         const firstAvailable = variants.findIndex(
-            v => availableVariantIds.has(v.id) && ["in_stock", "pre_order"].includes(v.status)
+            v => pvMap.has(v.id) && ["in_stock", "pre_order"].includes(pvMap.get(v.id) || "")
         )
         if (firstAvailable >= 0) return firstAvailable
-        const first = variants.findIndex(v => availableVariantIds.has(v.id))
+        const first = variants.findIndex(v => pvMap.has(v.id))
         return first >= 0 ? first : 0
     }
 
@@ -134,26 +139,28 @@ export function ProductDetailClient({
         return indices.length > 0 ? indices : null
     }, [availableVariantIds, variants])
 
-    // When package changes: update URL + auto-select first valid variant
+    // When package changes: update URL + always auto-select first available color
     const handlePackageChange = (index: number) => {
         setSelectedPackageIndex(index)
         const pkg = packages[index]
         if (!pkg) return
         const url = new URL(window.location.href)
-        url.searchParams.set("size", pkg.slug)
+        url.searchParams.set("weight", pkg.slug)
         router.replace(url.pathname + url.search, { scroll: false })
         if (pkg.packageVariants?.length) {
-            const ids = new Set(pkg.packageVariants.map(pv => pv.variantId))
-            const currentVariantId = variants[selectedVariantIndex]?.id
-            if (!currentVariantId || !ids.has(currentVariantId)) {
-                const firstAvailableIdx = variants.findIndex(
-                    v => ids.has(v.id) && ["in_stock", "pre_order"].includes(v.status)
-                )
-                const firstIdx = firstAvailableIdx >= 0
-                    ? firstAvailableIdx
-                    : variants.findIndex(v => ids.has(v.id))
-                setSelectedVariantIndex(firstIdx >= 0 ? firstIdx : -1)
-            }
+            // Always select first available color using per-package status
+            const pvMap = new Map(pkg.packageVariants.map(pv => [pv.variantId, pv.status]))
+            const firstAvailableIdx = variants.findIndex(
+                v => pvMap.has(v.id) && ["in_stock", "pre_order"].includes(pvMap.get(v.id) || "")
+            )
+            const firstIdx = firstAvailableIdx >= 0
+                ? firstAvailableIdx
+                : variants.findIndex(v => pvMap.has(v.id))
+            setSelectedVariantIndex(firstIdx >= 0 ? firstIdx : -1)
+        } else {
+            // No package variants — select first globally available color
+            const firstAvailableIdx = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
+            setSelectedVariantIndex(firstAvailableIdx >= 0 ? firstAvailableIdx : 0)
         }
     }
 
@@ -173,8 +180,21 @@ export function ProductDetailClient({
     // The effective status used for purchase eligibility
     const effectiveVariantStatus = packageVariantStatus ?? selectedVariantStatus
 
-    // The selected variant's ID for checkout validation
+    // Maps colorId → packageVariant status for the currently selected package
+    const packageVariantStatusMap = useMemo<Map<string, string> | null>(() => {
+        if (!selectedPackage?.packageVariants?.length) return null
+        const map = new Map<string, string>()
+        for (const pv of selectedPackage.packageVariants) {
+            const variant = variants.find(v => v.id === pv.variantId)
+            if (variant) map.set(variant.colorId, pv.status)
+        }
+        return map
+    }, [selectedPackage, variants])
+
+    // The selected variant's ID, image, and color for checkout/cart
     const selectedVariantId = selectedVariantIndex >= 0 ? variants[selectedVariantIndex]?.id : undefined
+    const selectedVariantImage = selectedVariantIndex >= 0 ? variants[selectedVariantIndex]?.image : null
+    const selectedVariantColor = selectedVariantIndex >= 0 ? variants[selectedVariantIndex]?.color ?? null : null
 
     // Price computation — package overrides base product price
     const displayPrice = selectedPackage
@@ -206,7 +226,11 @@ export function ProductDetailClient({
                 gallery={gallery}
                 productStatus={product.status}
                 onVariantChange={setSelectedVariantIndex}
+                selectedVariantIndex={selectedVariantIndex}
                 availableVariantIndices={availableVariantIndices}
+                packageVariantStatusMap={packageVariantStatusMap}
+                isNew={!!product.createdAt && (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000}
+                discountPercent={discountPercent}
             />
 
             {/* Details */}
@@ -298,6 +322,8 @@ export function ProductDetailClient({
                     promotedCoupons={promotedCoupons}
                     selectedVariantStatus={effectiveVariantStatus}
                     selectedVariantId={selectedVariantId}
+                    selectedVariantImage={selectedVariantImage}
+                    selectedVariantColor={selectedVariantColor}
                     selectedPackage={selectedPackage}
                     packages={packages}
                     isWishlisted={isWishlisted}

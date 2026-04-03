@@ -58,12 +58,14 @@ interface ProductActionsProps {
     promotedCoupons?: PromotedCoupon[]
     selectedVariantStatus?: string
     selectedVariantId?: string
+    selectedVariantImage?: string | null
+    selectedVariantColor?: { nameEn: string; nameBg: string; nameEs: string; hex: string } | null
     selectedPackage?: SelectedPackage | null
     packages?: { id: string }[]
     isWishlisted?: boolean
 }
 
-export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedVariantImage, selectedVariantColor, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
     const t = useTranslations("products")
     const tc = useTranslations("cart")
     const { data: session, status } = useSession()
@@ -378,17 +380,30 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         && ["in_stock", "pre_order"].includes(selectedPackage.status))
 
     const handleAddToCart = () => {
+        // Use package price when a package is selected; fall back to product price
+        const effectivePrice = selectedPackage ? selectedPackage.price : (product.price || "0")
+        const effectiveSalePrice = selectedPackage ? (selectedPackage.salePrice || null) : (product.salePrice || null)
+        const effectiveOnSale = selectedPackage ? !!selectedPackage.salePrice : (product.onSale || false)
+        // Use selected variant image if available, else product main image
+        const effectiveImage = selectedVariantImage || (product as unknown as { image?: string }).image || ""
+
         addToCart({
             productId: product.id,
+            packageId: selectedPackage?.id ?? null,
+            packageLabel: selectedPackage?.weight?.label ?? null,
+            colorNameEn: selectedVariantColor?.nameEn ?? null,
+            colorNameBg: selectedVariantColor?.nameBg ?? null,
+            colorNameEs: selectedVariantColor?.nameEs ?? null,
+            colorHex: selectedVariantColor?.hex ?? null,
             productSlug: product.slug,
             productUrl: window.location.pathname,
             nameEn: product.nameEn,
             nameBg: product.nameBg,
             nameEs: product.nameEs,
-            image: (product as unknown as { image?: string }).image || "",
-            price: product.price || "0",
-            salePrice: product.salePrice || null,
-            onSale: product.onSale || false,
+            image: effectiveImage,
+            price: effectivePrice,
+            salePrice: effectiveSalePrice,
+            onSale: effectiveOnSale,
             currency: product.currency || "EUR",
             fileType: product.fileType || "physical",
             priceType: product.priceType,

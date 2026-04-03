@@ -2,6 +2,12 @@ export const CART_KEY = "d4d-cart"
 
 export interface CartItem {
   productId: string
+  packageId?: string | null    // differentiates packages of the same product
+  packageLabel?: string | null // display label, e.g. "1kg"
+  colorNameEn?: string | null
+  colorNameBg?: string | null
+  colorNameEs?: string | null
+  colorHex?: string | null
   productSlug: string
   productUrl: string
   nameEn: string
@@ -19,6 +25,11 @@ export interface CartItem {
   addedAt: number
 }
 
+/** Unique key for a cart item — combines productId + packageId so different packages are distinct */
+export function cartItemKey(productId: string, packageId?: string | null): string {
+  return packageId ? `${productId}:${packageId}` : productId
+}
+
 export function getCart(): CartItem[] {
   try {
     const stored = localStorage.getItem(CART_KEY)
@@ -31,7 +42,8 @@ export function getCart(): CartItem[] {
 export function addToCart(item: Omit<CartItem, "quantity" | "addedAt">, qty = 1): void {
   try {
     const cart = getCart()
-    const existingIndex = cart.findIndex((i) => i.productId === item.productId)
+    const key = cartItemKey(item.productId, item.packageId)
+    const existingIndex = cart.findIndex((i) => cartItemKey(i.productId, i.packageId) === key)
     if (existingIndex >= 0) {
       cart[existingIndex].quantity = Math.min(99, cart[existingIndex].quantity + qty)
     } else {
@@ -43,23 +55,23 @@ export function addToCart(item: Omit<CartItem, "quantity" | "addedAt">, qty = 1)
   }
 }
 
-export function removeFromCart(productId: string): void {
+export function removeFromCart(key: string): void {
   try {
-    const cart = getCart().filter((i) => i.productId !== productId)
+    const cart = getCart().filter((i) => cartItemKey(i.productId, i.packageId) !== key)
     localStorage.setItem(CART_KEY, JSON.stringify(cart))
   } catch {
     // localStorage unavailable
   }
 }
 
-export function updateQuantity(productId: string, quantity: number): void {
+export function updateQuantity(key: string, quantity: number): void {
   try {
     if (quantity <= 0) {
-      removeFromCart(productId)
+      removeFromCart(key)
       return
     }
     const cart = getCart().map((i) =>
-      i.productId === productId ? { ...i, quantity: Math.min(99, Math.max(1, quantity)) } : i
+      cartItemKey(i.productId, i.packageId) === key ? { ...i, quantity: Math.min(99, Math.max(1, quantity)) } : i
     )
     localStorage.setItem(CART_KEY, JSON.stringify(cart))
   } catch {

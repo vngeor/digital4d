@@ -8,7 +8,9 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 
 - **Multilingual** - Full i18n support (BG/EN/ES) with next-intl
 - **E-commerce** - Product catalog, categories, digital downloads, Stripe payments
-- **Product Packages & SIZE×COLOR Matrix** - Weight/size variants (e.g., "1 kg", "500g") per product with individual pricing. SIZE×COLOR matrix (`ProductPackageVariant`) tracks per-combination availability — a specific size+color can be in_stock while others are sold_out. Validated at checkout
+- **Product Packages & SIZE×COLOR Matrix** - Weight/size variants (e.g., "1 kg", "500g") per product with individual pricing. SIZE×COLOR matrix (`ProductPackageVariant`) tracks per-combination availability — a specific size+color can be in_stock while others are sold_out. Validated at checkout. Cart shows weight label + color dot + localized color name per line; different packages of the same product are separate cart entries
+- **Reactive Discount Badge** - Product detail image shows reactive `-%` badge (top-right) that updates when switching packages (e.g., 0.500 kg = -20%, 1 kg = -25%). NEW badge top-left. No duplicate badges on image
+- **Catalog Filters** - Sale (red), Featured ⭐ (violet), Best Seller ✓ (amber) quick-filter buttons on the products page, each activating a themed banner. Badges on product detail pages link directly to the filtered catalog
 - **Coupons & Discounts** - Percentage/fixed coupons, product-specific or global, promotional badges on product cards, live countdown timers
 - **Wishlist** - Save products for later, price drop & coupon notifications
 - **Recently Viewed** - localStorage-based recently viewed products section on homepage (always-carousel with prev/next arrows; all 3 locale names stored; no login required)

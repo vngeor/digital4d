@@ -111,6 +111,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [saleFilter, setSaleFilter] = useState(false)
+    const [featuredFilter, setFeaturedFilter] = useState(false)
+    const [bestSellerFilter, setBestSellerFilter] = useState(false)
     const [selectedColors, setSelectedColors] = useState<string[]>([])
     const [sortBy, setSortBy] = useState<SortOption>("default")
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
@@ -123,6 +125,12 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     useEffect(() => {
         if (searchParams.get("sale") === "true") {
             setSaleFilter(true)
+        }
+        if (searchParams.get("featured") === "true") {
+            setFeaturedFilter(true)
+        }
+        if (searchParams.get("bestSeller") === "true") {
+            setBestSellerFilter(true)
         }
         const categoryParam = searchParams.get("category")
         if (categoryParam) {
@@ -226,12 +234,14 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (product.brand && getLocalizedName(product.brand).toLowerCase().includes(searchQuery.toLowerCase()))
             const matchesSale = !saleFilter || product.onSale
+            const matchesFeatured = !featuredFilter || product.featured
+            const matchesBestSeller = !bestSellerFilter || product.bestSeller
             const matchesBrand = !selectedBrand || (product.brand && getLocalizedName(product.brand) === selectedBrand)
             const matchesColor = selectedColors.length === 0 ||
                 (product.variants || []).some(v => v.colorId && selectedColors.includes(v.colorId))
-            return matchesCategory && matchesSearch && matchesSale && matchesBrand && matchesColor
+            return matchesCategory && matchesSearch && matchesSale && matchesFeatured && matchesBestSeller && matchesBrand && matchesColor
         })
-    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, selectedColors, categoryMap, categories, locale])
+    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, featuredFilter, bestSellerFilter, selectedColors, categoryMap, categories, locale])
 
     const getEffectivePrice = (product: Product): number | null => {
         if (product.onSale && product.salePrice) return parseFloat(product.salePrice)
@@ -411,6 +421,47 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     </div>
                 )}
 
+                {/* Featured Banner */}
+                {featuredFilter && (
+                    <div className="mb-6 p-4 md:p-6 rounded-xl bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-violet-500/10 border border-violet-500/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg md:text-2xl font-bold text-violet-400 flex items-center gap-2">
+                                    ⭐ {t("featuredTitle")}
+                                </h2>
+                                <p className="text-sm md:text-base text-slate-400 mt-1">{t("featuredSubtitle")}</p>
+                            </div>
+                            <button
+                                onClick={() => setFeaturedFilter(false)}
+                                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Best Seller Banner */}
+                {bestSellerFilter && (
+                    <div className="mb-6 p-4 md:p-6 rounded-xl bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 border border-amber-500/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg md:text-2xl font-bold text-amber-400 flex items-center gap-2">
+                                    <Check className="w-5 h-5 md:w-6 md:h-6" />
+                                    {t("bestSellerTitle")}
+                                </h2>
+                                <p className="text-sm md:text-base text-slate-400 mt-1">{t("bestSellerSubtitle")}</p>
+                            </div>
+                            <button
+                                onClick={() => setBestSellerFilter(false)}
+                                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
                     {/* Search */}
@@ -502,7 +553,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         router.push('/products')
                                     }
                                 }}
-                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${!activeSubcategory && !saleFilter
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${!activeSubcategory && !saleFilter && !featuredFilter && !bestSellerFilter
                                         ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
                                         : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
                                     }`}
@@ -519,6 +570,27 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             >
                                 <Tag className="w-3.5 h-3.5" />
                                 {t("onSale")}
+                            </button>
+                            {/* Featured filter */}
+                            <button
+                                onClick={() => { setFeaturedFilter(!featuredFilter); setSelectedCategory(null) }}
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${featuredFilter
+                                        ? "bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-500/30"
+                                        : "text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 border border-violet-500/20"
+                                    }`}
+                            >
+                                ⭐ {t("featured")}
+                            </button>
+                            {/* Best Seller filter */}
+                            <button
+                                onClick={() => { setBestSellerFilter(!bestSellerFilter); setSelectedCategory(null) }}
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${bestSellerFilter
+                                        ? "bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border border-amber-500/30"
+                                        : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/20"
+                                    }`}
+                            >
+                                <Check className="w-3.5 h-3.5" />
+                                {t("bestSeller")}
                             </button>
                             {/* Subcategory tabs (on category pages) — dropdown on mobile, tabs on desktop */}
                             {subcategories && subcategories.length > 0 ? (

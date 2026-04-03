@@ -13,6 +13,7 @@ function getStripe() {
 
 interface CartRequestItem {
   productId: string
+  packageId?: string | null
   quantity: number
 }
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     let sharedCurrency: string | null = null
 
     for (const raw of rawItems as CartRequestItem[]) {
-      const { productId, quantity: rawQty } = raw
+      const { productId, packageId, quantity: rawQty } = raw
       const quantity = Math.max(1, Math.min(99, Math.floor(Number(rawQty) || 1)))
 
       if (!productId) {
@@ -75,11 +76,26 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: `Product "${product.nameEn}" cannot be purchased via cart` }, { status: 400 })
       }
 
-      const effectivePrice = product.onSale && product.salePrice
-        ? parseFloat(product.salePrice.toString())
-        : product.price
-          ? parseFloat(product.price.toString())
-          : null
+      // When a packageId is provided, look up the package price and status
+      let effectivePrice: number | null = null
+      if (packageId) {
+        const pkg = await prisma.productPackage.findUnique({ where: { id: packageId } })
+        if (!pkg || pkg.productId !== productId) {
+          return NextResponse.json({ error: `Package not found for product "${product.nameEn}"` }, { status: 404 })
+        }
+        if (!["in_stock", "pre_order"].includes(pkg.status)) {
+          return NextResponse.json({ error: `Package for "${product.nameEn}" is not available` }, { status: 400 })
+        }
+        effectivePrice = pkg.salePrice
+          ? parseFloat(pkg.salePrice.toString())
+          : parseFloat(pkg.price.toString())
+      } else {
+        effectivePrice = product.onSale && product.salePrice
+          ? parseFloat(product.salePrice.toString())
+          : product.price
+            ? parseFloat(product.price.toString())
+            : null
+      }
 
       if (!effectivePrice || effectivePrice < 0.50) {
         return NextResponse.json({ error: `Product "${product.nameEn}" has no valid price` }, { status: 400 })

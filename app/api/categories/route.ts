@@ -44,8 +44,8 @@ export async function GET() {
       const childrenTotal = childrenWithCounts.reduce((sum, c) => sum + c.productCount, 0)
       return {
         ...cat,
-        // Parents with children: show subcategory count. Parents without children: show product count
-        productCount: cat.children.length > 0 ? cat.children.length : ownCount,
+        // Parents with children: show total product count across all subcategories. Parents without children: show own count
+        productCount: cat.children.length > 0 ? childrenTotal : ownCount,
         children: childrenWithCounts,
       }
     })
