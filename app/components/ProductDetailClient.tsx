@@ -110,7 +110,16 @@ export function ProductDetailClient({
 
     const getDefaultVariantIndex = () => {
         if (variants.length === 0) return -1
-        if (!availableVariantIds) return 0
+        if (!availableVariantIds) {
+            // No package filter — prefer first available (in_stock/pre_order) variant
+            const first = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
+            return first >= 0 ? first : 0
+        }
+        // With package filter — prefer first available variant within the package's color set
+        const firstAvailable = variants.findIndex(
+            v => availableVariantIds.has(v.id) && ["in_stock", "pre_order"].includes(v.status)
+        )
+        if (firstAvailable >= 0) return firstAvailable
         const first = variants.findIndex(v => availableVariantIds.has(v.id))
         return first >= 0 ? first : 0
     }
@@ -138,7 +147,12 @@ export function ProductDetailClient({
             const ids = new Set(pkg.packageVariants.map(pv => pv.variantId))
             const currentVariantId = variants[selectedVariantIndex]?.id
             if (!currentVariantId || !ids.has(currentVariantId)) {
-                const firstIdx = variants.findIndex(v => ids.has(v.id))
+                const firstAvailableIdx = variants.findIndex(
+                    v => ids.has(v.id) && ["in_stock", "pre_order"].includes(v.status)
+                )
+                const firstIdx = firstAvailableIdx >= 0
+                    ? firstAvailableIdx
+                    : variants.findIndex(v => ids.has(v.id))
                 setSelectedVariantIndex(firstIdx >= 0 ? firstIdx : -1)
             }
         }
