@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       const idList = ids.split(",").filter(Boolean)
       const products = await prisma.product.findMany({
         where: { id: { in: idList } },
-        include: { variants: { orderBy: { order: "asc" } }, brand: true },
+        include: { variants: { orderBy: { order: "asc" } }, packages: { orderBy: { order: "asc" } }, brand: true },
       })
       return NextResponse.json(products)
     }
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      include: { variants: { orderBy: { order: "asc" } }, brand: true },
+      include: { variants: { orderBy: { order: "asc" } }, packages: { orderBy: { order: "asc" } }, brand: true },
     })
 
     return NextResponse.json(products)
@@ -155,10 +155,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Re-fetch with variants
+    // Create packages
+    if (Array.isArray(data.packages) && data.packages.length > 0) {
+      const validPackages = data.packages.filter((pkg: any) => pkg.label && pkg.price && !isNaN(parseFloat(pkg.price)))
+      for (const pkg of validPackages) {
+        await prisma.productPackage.create({
+          data: {
+            productId: product.id,
+            label: pkg.label,
+            slug: pkg.slug || pkg.label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, ""),
+            price: parseFloat(pkg.price),
+            salePrice: pkg.salePrice && !isNaN(parseFloat(pkg.salePrice)) ? parseFloat(pkg.salePrice) : null,
+            sku: pkg.sku || null,
+            status: pkg.status || "in_stock",
+            order: pkg.order ?? 0,
+          },
+        })
+      }
+    }
+
+    // Re-fetch with variants and packages
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
-      include: { variants: { orderBy: { order: "asc" } }, brand: true },
+      include: { variants: { orderBy: { order: "asc" } }, packages: { orderBy: { order: "asc" } }, brand: true },
     })
 
     logAuditAction({ userId: session.user.id, action: "create", resource: "products", recordId: product.id, recordTitle: product.nameEn }).catch(() => {})
@@ -305,6 +324,26 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Sync packages: delete old, create new
+    if (Array.isArray(data.packages)) {
+      await prisma.productPackage.deleteMany({ where: { productId: data.id } })
+      const validPackages = data.packages.filter((pkg: any) => pkg.label && pkg.price && !isNaN(parseFloat(pkg.price)))
+      for (const pkg of validPackages) {
+        await prisma.productPackage.create({
+          data: {
+            productId: data.id,
+            label: pkg.label,
+            slug: pkg.slug || pkg.label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, ""),
+            price: parseFloat(pkg.price),
+            salePrice: pkg.salePrice && !isNaN(parseFloat(pkg.salePrice)) ? parseFloat(pkg.salePrice) : null,
+            sku: pkg.sku || null,
+            status: pkg.status || "in_stock",
+            order: pkg.order ?? 0,
+          },
+        })
+      }
+    }
+
     // Cleanup old gallery images that are no longer used
     const newGallerySet = new Set(data.gallery || [])
     const oldGalleryUrls = (oldProduct.gallery as string[] || [])
@@ -329,10 +368,10 @@ export async function PUT(request: NextRequest) {
     const wentOnSale = !oldProduct.onSale && product.onSale
     const salePriceDropped = product.onSale && newSalePriceNum !== null && oldSalePriceNum !== null && newSalePriceNum < oldSalePriceNum
 
-    // Re-fetch with variants
+    // Re-fetch with variants and packages
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
-      include: { variants: { orderBy: { order: "asc" } }, brand: true },
+      include: { variants: { orderBy: { order: "asc" } }, packages: { orderBy: { order: "asc" } }, brand: true },
     })
 
     if (priceDropped || wentOnSale || salePriceDropped) {

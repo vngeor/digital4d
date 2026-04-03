@@ -36,7 +36,13 @@ export default async function ProductsPage() {
             published: true,
         },
         orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-        include: { brand: true },
+        include: {
+            brand: true,
+            variants: {
+                select: { image: true, status: true, colorHex: true, colorNameBg: true, colorNameEn: true, colorNameEs: true },
+                orderBy: { order: "asc" },
+            },
+        },
     })
 
     // Fetch all categories

@@ -12,7 +12,7 @@ function getStripe() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { productId, email, couponCode, quantity: rawQuantity } = await request.json()
+    const { productId, email, couponCode, quantity: rawQuantity, packageId } = await request.json()
     const quantity = Math.max(1, Math.min(99, Math.floor(Number(rawQuantity) || 1)))
 
     if (!productId) {
@@ -40,9 +40,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product is not a digital product" }, { status: 400 })
     }
 
-    // Determine base price (use sale price if on sale)
+    // Determine base price — package overrides product price if provided
     let priceAmount: number
-    if (product.onSale && product.salePrice) {
+    if (packageId) {
+      const pkg = await prisma.productPackage.findFirst({
+        where: { id: packageId, productId: product.id },
+      })
+      if (!pkg) return NextResponse.json({ error: "Invalid package" }, { status: 400 })
+      if (!["in_stock", "pre_order"].includes(pkg.status))
+        return NextResponse.json({ error: "Package not available" }, { status: 400 })
+      priceAmount = parseFloat((pkg.salePrice ?? pkg.price).toString())
+    } else if (product.onSale && product.salePrice) {
       priceAmount = parseFloat(product.salePrice.toString())
     } else if (product.price) {
       priceAmount = parseFloat(product.price.toString())

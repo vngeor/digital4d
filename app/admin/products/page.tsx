@@ -54,6 +54,16 @@ interface Product {
   status: string
   order: number
   variants: ProductVariant[]
+  packages: {
+    id: string
+    label: string
+    slug: string
+    price: string
+    salePrice: string | null
+    sku: string | null
+    status: string
+    order: number
+  }[]
   createdAt: string
   updatedAt: string
 }
@@ -214,6 +224,16 @@ export default function ProductsPage() {
       colorNameEs: string
       colorHex: string
       image: string
+      order: number
+    }>
+    packages: Array<{
+      id?: string
+      label: string
+      slug: string
+      price: string
+      salePrice: string
+      sku: string
+      status: string
       order: number
     }>
   }) => {

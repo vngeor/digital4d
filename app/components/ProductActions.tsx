@@ -38,15 +38,26 @@ interface PromotedCoupon {
     expiresAt: string | null
 }
 
+interface SelectedPackage {
+    id: string
+    label: string
+    price: string
+    salePrice: string | null
+    status: string
+    sku: string | null
+}
+
 interface ProductActionsProps {
     product: Product
     initialCouponCode?: string
     promotedCoupons?: PromotedCoupon[]
     selectedVariantStatus?: string
+    selectedPackage?: SelectedPackage | null
+    packages?: { id: string }[]
     isWishlisted?: boolean
 }
 
-export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, isWishlisted = false }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
     const t = useTranslations("products")
     const { data: session } = useSession()
     const [loading, setLoading] = useState(false)
@@ -330,6 +341,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     productId: product.id,
                     quantity,
                     ...(appliedCoupon ? { couponCode: appliedCoupon.couponCode } : {}),
+                    packageId: selectedPackage?.id ?? null,
                 }),
             })
 
@@ -352,8 +364,12 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         }
     }
 
+    const packageOk = !packages?.length || (selectedPackage !== null && selectedPackage !== undefined
+        && ["in_stock", "pre_order"].includes(selectedPackage.status))
+
     const canPurchase = ["in_stock", "pre_order"].includes(product.status)
         && (selectedVariantStatus === undefined || ["in_stock", "pre_order"].includes(selectedVariantStatus))
+        && packageOk
 
     const handleNotifyMe = async () => {
         if (!session) {
