@@ -42,15 +42,27 @@ interface PromotedCoupon {
     expiresAt: string | null
 }
 
+interface SelectedPackage {
+    id: string
+    label: string
+    price: string
+    salePrice: string | null
+    status: string
+    sku: string | null
+}
+
 interface ProductActionsProps {
     product: Product
     initialCouponCode?: string
     promotedCoupons?: PromotedCoupon[]
     selectedVariantStatus?: string
+    selectedVariantId?: string
+    selectedPackage?: SelectedPackage | null
+    packages?: { id: string }[]
     isWishlisted?: boolean
 }
 
-export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, isWishlisted = false }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
     const t = useTranslations("products")
     const tc = useTranslations("cart")
     const { data: session, status } = useSession()
@@ -337,6 +349,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     productId: product.id,
                     quantity,
                     ...(appliedCoupon ? { couponCode: appliedCoupon.couponCode } : {}),
+                    packageId: selectedPackage?.id ?? null,
+                    variantId: selectedVariantId ?? null,
                 }),
             })
 
@@ -358,6 +372,9 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             setLoading(false)
         }
     }
+
+    const packageOk = !packages?.length || (selectedPackage !== null && selectedPackage !== undefined
+        && ["in_stock", "pre_order"].includes(selectedPackage.status))
 
     const handleAddToCart = () => {
         addToCart({
@@ -382,6 +399,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
 
     const canPurchase = ["in_stock", "pre_order"].includes(product.status)
         && (selectedVariantStatus === undefined || ["in_stock", "pre_order"].includes(selectedVariantStatus))
+        && packageOk
 
     const handleNotifyMe = async () => {
         if (!session) {

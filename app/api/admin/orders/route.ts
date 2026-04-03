@@ -39,6 +39,11 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json()
 
+    const VALID_ORDER_STATUSES = ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
+    if (data.status && !VALID_ORDER_STATUSES.includes(data.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 })
+    }
+
     const order = await prisma.order.create({
       data: {
         orderNumber: generateOrderNumber(),

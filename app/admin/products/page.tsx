@@ -54,6 +54,16 @@ interface Product {
   status: string
   order: number
   variants: ProductVariant[]
+  packages: {
+    id: string
+    label: string
+    slug: string
+    price: string
+    salePrice: string | null
+    sku: string | null
+    status: string
+    order: number
+  }[]
   createdAt: string
   updatedAt: string
 }
@@ -219,6 +229,16 @@ export default function ProductsPage() {
       colorNameEs: string
       colorHex: string
       image: string
+      order: number
+    }>
+    packages: Array<{
+      id?: string
+      label: string
+      slug: string
+      price: string
+      salePrice: string
+      sku: string
+      status: string
       order: number
     }>
   }) => {
@@ -582,6 +602,29 @@ export default function ProductsPage() {
       },
     },
     {
+      key: "toggles",
+      header: "",
+      className: "whitespace-nowrap hidden sm:table-cell md:hidden w-[70px]",
+      render: (item: Product) => (
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "featured", !item.featured) }}
+            className={`p-1 rounded transition-colors ${item.featured ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+            title={item.featured ? "Remove featured" : "Set as featured"}
+          >
+            <Star className={`w-3.5 h-3.5 ${item.featured ? "fill-amber-400" : ""}`} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "bestSeller", !item.bestSeller) }}
+            className={`p-1 rounded transition-colors ${item.bestSeller ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+            title={item.bestSeller ? "Remove best seller" : "Set as best seller"}
+          >
+            <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
+          </button>
+        </div>
+      ),
+    },
+    {
       key: "published",
       header: t("published"),
       className: "whitespace-nowrap hidden sm:table-cell",
@@ -926,9 +969,6 @@ export default function ProductsPage() {
                     <span className="flex items-center gap-1 text-xs text-emerald-400">
                       <Home className="w-3 h-3" />#{homepagePos}
                     </span>
-                  )}
-                  {item.bestSeller && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">🏆</span>
                   )}
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                     item.status === "in_stock" ? "bg-emerald-500/20 text-emerald-400"

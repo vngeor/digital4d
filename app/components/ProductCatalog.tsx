@@ -7,6 +7,15 @@ import Link from "next/link"
 import { Search, Star, Check, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 
+interface ProductVariant {
+    image: string | null
+    status: string
+    colorHex: string
+    colorNameBg: string
+    colorNameEn: string
+    colorNameEs: string
+}
+
 interface Product {
     id: string
     slug: string
@@ -29,6 +38,7 @@ interface Product {
     status: string
     createdAt: string | Date
     brand: { slug: string; nameBg: string; nameEn: string; nameEs: string } | null
+    variants?: ProductVariant[]
 }
 
 interface ProductCategory {
@@ -103,6 +113,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [saleFilter, setSaleFilter] = useState(false)
+    const [selectedColors, setSelectedColors] = useState<string[]>([])
     const [sortBy, setSortBy] = useState<SortOption>("default")
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
     const [categoryDropdownSearch, setCategoryDropdownSearch] = useState("")
@@ -177,6 +188,29 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         return [...new Set(brandNames)].sort()
     }, [products, locale])
 
+    const uniqueColors = useMemo(() => {
+        const colorMap = new Map<string, string>() // lowercase name → hex (first seen)
+        for (const product of products) {
+            for (const variant of product.variants || []) {
+                const name = locale === "bg" ? variant.colorNameBg
+                    : locale === "es" ? variant.colorNameEs
+                    : variant.colorNameEn
+                if (name && !colorMap.has(name.toLowerCase())) {
+                    colorMap.set(name.toLowerCase(), variant.colorHex)
+                }
+            }
+        }
+        return Array.from(colorMap.entries())
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([name, hex]) => ({ name, hex }))
+    }, [products, locale])
+
+    const toggleColor = (colorName: string) => {
+        setSelectedColors(prev =>
+            prev.includes(colorName) ? prev.filter(c => c !== colorName) : [...prev, colorName]
+        )
+    }
+
     const filteredProducts = useMemo(() => {
         return products.filter((product) => {
             const matchesCategory = !selectedCategory || (() => {
@@ -194,9 +228,16 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 (product.brand && getLocalizedName(product.brand).toLowerCase().includes(searchQuery.toLowerCase()))
             const matchesSale = !saleFilter || product.onSale
             const matchesBrand = !selectedBrand || (product.brand && getLocalizedName(product.brand) === selectedBrand)
-            return matchesCategory && matchesSearch && matchesSale && matchesBrand
+            const matchesColor = selectedColors.length === 0 ||
+                (product.variants || []).some(v => {
+                    const name = locale === "bg" ? v.colorNameBg
+                        : locale === "es" ? v.colorNameEs
+                        : v.colorNameEn
+                    return name && selectedColors.includes(name.toLowerCase())
+                })
+            return matchesCategory && matchesSearch && matchesSale && matchesBrand && matchesColor
         })
-    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, categoryMap, categories, locale])
+    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, selectedColors, categoryMap, categories, locale])
 
     const getEffectivePrice = (product: Product): number | null => {
         if (product.onSale && product.salePrice) return parseFloat(product.salePrice)
@@ -423,10 +464,42 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
                     </div>
 
-                    {/* Category Filter */}
-                    <div>
-                        <div className="flex gap-2 flex-wrap">
-                            {/* All Products / All in Category button */}
+                </div>
+
+                {/* Color Swatch Filter */}
+                {uniqueColors.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap mb-4">
+                        <span className="text-xs text-gray-500 shrink-0">{t("color")}:</span>
+                        {uniqueColors.map(({ name, hex }) => {
+                            const isSelected = selectedColors.includes(name)
+                            return (
+                                <button
+                                    key={name}
+                                    onClick={() => toggleColor(name)}
+                                    title={name.charAt(0).toUpperCase() + name.slice(1)}
+                                    className={`w-9 h-9 rounded-full border-2 transition-all touch-manipulation hover:scale-110 ${
+                                        isSelected
+                                            ? "border-emerald-400 ring-2 ring-emerald-400/40 scale-110"
+                                            : "border-white/20 hover:border-white/50"
+                                    }`}
+                                    style={{ backgroundColor: hex }}
+                                />
+                            )
+                        })}
+                        {selectedColors.length > 0 && (
+                            <button
+                                onClick={() => setSelectedColors([])}
+                                className="py-1 px-2 text-xs text-gray-500 hover:text-white transition-colors touch-manipulation"
+                            >
+                                ✕ {t("clearColors")}
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Category Filter */}
+                <div className="flex gap-2 flex-wrap mb-6">
+                    {/* All Products / All in Category button */}
                             <button
                                 onClick={() => {
                                     if (subcategories && initialCategory) {
@@ -586,8 +659,6 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 )}
                             </div>
                             )}
-                        </div>
-                    </div>
                 </div>
 
                 {/* Products Grid */}

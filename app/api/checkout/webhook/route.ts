@@ -78,6 +78,16 @@ export async function POST(request: NextRequest) {
       const isCartCheckout = session.metadata?.type === "cart"
       const userId = session.metadata?.userId || null
 
+      // Idempotency: skip duplicate Stripe event deliveries
+      const [existingPurchase, existingOrder] = await Promise.all([
+        prisma.digitalPurchase.findFirst({ where: { stripeSession: session.id } }),
+        prisma.order.findFirst({ where: { notes: { contains: session.id } } }),
+      ])
+      if (existingPurchase || existingOrder) {
+        console.log(`Duplicate webhook for session ${session.id} — skipping`)
+        return NextResponse.json({ received: true })
+      }
+
       if (isCartCheckout) {
         // ── Cart multi-item flow ──────────────────────────────────────────────
         if (!customerEmail) {
@@ -145,10 +155,20 @@ export async function POST(request: NextRequest) {
                 },
               })
 
-              await prisma.coupon.update({
-                where: { id: couponId },
-                data: { usedCount: { increment: 1 } },
-              })
+              const coupon = await prisma.coupon.findUnique({ where: { id: couponId }, select: { maxUses: true } })
+              if (coupon) {
+                if (coupon.maxUses !== null) {
+                  await prisma.coupon.updateMany({
+                    where: { id: couponId, usedCount: { lt: coupon.maxUses } },
+                    data: { usedCount: { increment: 1 } },
+                  })
+                } else {
+                  await prisma.coupon.update({
+                    where: { id: couponId },
+                    data: { usedCount: { increment: 1 } },
+                  })
+                }
+              }
 
               console.log(`Coupon usage recorded, coupon ${couponId}`)
             } catch (couponError) {
@@ -159,7 +179,9 @@ export async function POST(request: NextRequest) {
         } else {
           // Physical single-item "Buy Now" → create Order
           const nameEn = session.metadata?.nameEn || `Product ${productId}`
-          await createPhysicalOrder(nameEn, 1, "0", "EUR", customerEmail, session.id, userId)
+          const price = session.metadata?.price || (session.amount_total ? (session.amount_total / 100).toFixed(2) : "0")
+          const currency = session.currency?.toUpperCase() || "EUR"
+          await createPhysicalOrder(nameEn, 1, price, currency, customerEmail, session.id, userId)
           console.log(`Physical order created, product ${productId}`)
         }
       }

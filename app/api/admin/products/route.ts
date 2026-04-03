@@ -6,6 +6,8 @@ import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 import { notifyWishlistPriceDrop, notifyStockAvailable } from "@/lib/wishlistNotifications"
 import { buildProductUrlFromDb } from "@/lib/productUrl"
 
+const PRODUCT_STATUSES = ["in_stock", "out_of_stock", "coming_soon", "pre_order", "sold_out"]
+
 export async function GET(request: NextRequest) {
   try {
     const { session, error } = await requirePermissionApi("products", "view")
@@ -21,7 +23,14 @@ export async function GET(request: NextRequest) {
       const idList = ids.split(",").filter(Boolean)
       const products = await prisma.product.findMany({
         where: { id: { in: idList } },
-        include: { variants: { orderBy: { order: "asc" } }, brand: true },
+        include: {
+          variants: { orderBy: { order: "asc" } },
+          packages: {
+            orderBy: { order: "asc" },
+            include: { packageVariants: { select: { variantId: true, status: true } } },
+          },
+          brand: true,
+        },
       })
       return NextResponse.json(products)
     }
@@ -59,7 +68,14 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      include: { variants: { orderBy: { order: "asc" } }, brand: true },
+      include: {
+        variants: { orderBy: { order: "asc" } },
+        packages: {
+          orderBy: { order: "asc" },
+          include: { packageVariants: { select: { variantId: true, status: true } } },
+        },
+        brand: true,
+      },
     })
 
     return NextResponse.json(products)
@@ -133,15 +149,16 @@ export async function POST(request: NextRequest) {
         featured: data.featured || false,
         bestSeller: data.bestSeller || false,
         published: data.published || false,
-        status: data.status || "in_stock",
+        status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
       },
     })
 
-    // Create color variants
+    // Create color variants — collect IDs for packageVariant mapping
+    const createdVariantIds: string[] = []
     if (Array.isArray(data.variants) && data.variants.length > 0) {
       for (const variant of data.variants) {
-        await prisma.productVariant.create({
+        const created = await prisma.productVariant.create({
           data: {
             productId: product.id,
             colorNameBg: variant.colorNameBg,
@@ -149,17 +166,58 @@ export async function POST(request: NextRequest) {
             colorNameEs: variant.colorNameEs,
             colorHex: variant.colorHex,
             image: variant.image || null,
-            status: variant.status || "in_stock",
+            status: PRODUCT_STATUSES.includes(variant.status) ? variant.status : "in_stock",
             order: variant.order ?? 0,
           },
         })
+        createdVariantIds.push(created.id)
       }
     }
 
-    // Re-fetch with variants
+    // Create packages — collect IDs for packageVariant mapping
+    const createdPackageIds: string[] = []
+    if (Array.isArray(data.packages) && data.packages.length > 0) {
+      const validPackages = data.packages.filter((pkg: any) => pkg.label && pkg.price && !isNaN(parseFloat(pkg.price)))
+      for (const [pkgIdx, pkg] of validPackages.entries()) {
+        const created = await prisma.productPackage.create({
+          data: {
+            productId: product.id,
+            label: pkg.label,
+            slug: pkg.slug || pkg.label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, ""),
+            price: parseFloat(pkg.price),
+            salePrice: pkg.salePrice && !isNaN(parseFloat(pkg.salePrice)) ? parseFloat(pkg.salePrice) : null,
+            sku: pkg.sku || null,
+            status: PRODUCT_STATUSES.includes(pkg.status) ? pkg.status : "in_stock",
+            order: pkg.order ?? 0,
+          },
+        })
+        createdPackageIds.push(created.id)
+        // Create packageVariants (SIZE × COLOR matrix entries)
+        const originalPkgIdx = data.packages.indexOf(pkg)
+        const pvList = data.packages[originalPkgIdx]?.packageVariants
+        if (Array.isArray(pvList)) {
+          for (const pv of pvList) {
+            const variantId = createdVariantIds[pv.variantIndex]
+            if (!variantId) continue
+            await prisma.productPackageVariant.create({
+              data: { packageId: created.id, variantId, status: PRODUCT_STATUSES.includes(pv.status) ? pv.status : "in_stock" },
+            })
+          }
+        }
+      }
+    }
+
+    // Re-fetch with variants and packages
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
-      include: { variants: { orderBy: { order: "asc" } }, brand: true },
+      include: {
+        variants: { orderBy: { order: "asc" } },
+        packages: {
+          orderBy: { order: "asc" },
+          include: { packageVariants: { select: { variantId: true, status: true } } },
+        },
+        brand: true,
+      },
     })
 
     logAuditAction({ userId: session.user.id, action: "create", resource: "products", recordId: product.id, recordTitle: product.nameEn }).catch(() => {})
@@ -251,12 +309,13 @@ export async function PUT(request: NextRequest) {
         featured: data.featured || false,
         bestSeller: data.bestSeller || false,
         published: data.published || false,
-        status: data.status || "in_stock",
+        status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
       },
     })
 
-    // Sync color variants: delete old, create new
+    // Sync color variants: delete old, create new — collect IDs for packageVariant mapping
+    const updatedVariantIds: string[] = []
     if (Array.isArray(data.variants)) {
       // Fetch old variants for blob cleanup
       const oldVariants = await prisma.productVariant.findMany({
@@ -264,10 +323,11 @@ export async function PUT(request: NextRequest) {
         select: { image: true, status: true, colorHex: true, colorNameBg: true, colorNameEn: true, colorNameEs: true },
       })
 
+      // Delete old variants (cascades ProductPackageVariant via variantId FK)
       await prisma.productVariant.deleteMany({ where: { productId: data.id } })
 
       for (const variant of data.variants) {
-        await prisma.productVariant.create({
+        const created = await prisma.productVariant.create({
           data: {
             productId: data.id,
             colorNameBg: variant.colorNameBg,
@@ -275,10 +335,11 @@ export async function PUT(request: NextRequest) {
             colorNameEs: variant.colorNameEs,
             colorHex: variant.colorHex,
             image: variant.image || null,
-            status: variant.status || "in_stock",
+            status: PRODUCT_STATUSES.includes(variant.status) ? variant.status : "in_stock",
             order: variant.order ?? 0,
           },
         })
+        updatedVariantIds.push(created.id)
       }
 
       // Cleanup old variant images that are no longer used
@@ -307,6 +368,36 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Sync packages: delete old (cascades packageVariants), create new with packageVariants
+    if (Array.isArray(data.packages)) {
+      await prisma.productPackage.deleteMany({ where: { productId: data.id } })
+      const validPackages = data.packages.filter((pkg: any) => pkg.label && pkg.price && !isNaN(parseFloat(pkg.price)))
+      for (const pkg of validPackages) {
+        const created = await prisma.productPackage.create({
+          data: {
+            productId: data.id,
+            label: pkg.label,
+            slug: pkg.slug || pkg.label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, ""),
+            price: parseFloat(pkg.price),
+            salePrice: pkg.salePrice && !isNaN(parseFloat(pkg.salePrice)) ? parseFloat(pkg.salePrice) : null,
+            sku: pkg.sku || null,
+            status: PRODUCT_STATUSES.includes(pkg.status) ? pkg.status : "in_stock",
+            order: pkg.order ?? 0,
+          },
+        })
+        // Create packageVariants (SIZE × COLOR matrix entries)
+        if (Array.isArray(pkg.packageVariants)) {
+          for (const pv of pkg.packageVariants) {
+            const variantId = updatedVariantIds[pv.variantIndex]
+            if (!variantId) continue
+            await prisma.productPackageVariant.create({
+              data: { packageId: created.id, variantId, status: PRODUCT_STATUSES.includes(pv.status) ? pv.status : "in_stock" },
+            })
+          }
+        }
+      }
+    }
+
     // Cleanup old gallery images that are no longer used
     const newGallerySet = new Set(data.gallery || [])
     const oldGalleryUrls = (oldProduct.gallery as string[] || [])
@@ -331,10 +422,17 @@ export async function PUT(request: NextRequest) {
     const wentOnSale = !oldProduct.onSale && product.onSale
     const salePriceDropped = product.onSale && newSalePriceNum !== null && oldSalePriceNum !== null && newSalePriceNum < oldSalePriceNum
 
-    // Re-fetch with variants
+    // Re-fetch with variants and packages
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
-      include: { variants: { orderBy: { order: "asc" } }, brand: true },
+      include: {
+        variants: { orderBy: { order: "asc" } },
+        packages: {
+          orderBy: { order: "asc" },
+          include: { packageVariants: { select: { variantId: true, status: true } } },
+        },
+        brand: true,
+      },
     })
 
     if (priceDropped || wentOnSale || salePriceDropped) {

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { productId, couponCode, quantity: rawQuantity } = await request.json()
+    const { productId, couponCode, quantity: rawQuantity, packageId, variantId } = await request.json()
     const quantity = Math.max(1, Math.min(99, Math.floor(Number(rawQuantity) || 1)))
 
     if (!productId) {
@@ -46,9 +46,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product cannot be purchased directly" }, { status: 400 })
     }
 
-    // Determine base price (use sale price if on sale)
+    // Determine base price — package overrides product price if provided
     let priceAmount: number
-    if (product.onSale && product.salePrice) {
+    if (packageId) {
+      const pkg = await prisma.productPackage.findFirst({
+        where: { id: packageId, productId: product.id },
+      })
+      if (!pkg) return NextResponse.json({ error: "Invalid package" }, { status: 400 })
+      if (!["in_stock", "pre_order"].includes(pkg.status))
+        return NextResponse.json({ error: "Package not available" }, { status: 400 })
+      // Validate SIZE × COLOR combination if variantId provided
+      if (variantId) {
+        const packageVariant = await prisma.productPackageVariant.findUnique({
+          where: { packageId_variantId: { packageId, variantId } },
+        })
+        if (packageVariant && !["in_stock", "pre_order"].includes(packageVariant.status)) {
+          return NextResponse.json({ error: "This size and color combination is not available" }, { status: 400 })
+        }
+      }
+      priceAmount = parseFloat((pkg.salePrice ?? pkg.price).toString())
+    } else if (product.onSale && product.salePrice) {
       priceAmount = parseFloat(product.salePrice.toString())
     } else if (product.price) {
       priceAmount = parseFloat(product.price.toString())
@@ -180,6 +197,9 @@ export async function POST(request: NextRequest) {
         productSlug: product.slug,
         fileType: product.fileType || "digital",
         nameEn: product.nameEn,
+        price: priceAmount.toFixed(2),
+        packageId: packageId || "",
+        variantId: variantId || "",
         userId: authSession.user.id,
         ...(couponId ? { couponId, couponCode: couponCode.toUpperCase(), originalPrice: originalPrice.toFixed(2), discountAmount: discountAmount.toFixed(2) } : {}),
       },

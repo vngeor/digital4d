@@ -18,6 +18,23 @@ interface ProductVariantData {
   order: number
 }
 
+interface PackageVariantEntry {
+  variantIndex: number
+  status: string
+}
+
+interface ProductPackageData {
+  id?: string
+  label: string
+  slug: string
+  price: string
+  salePrice: string
+  sku: string
+  status: string
+  order: number
+  packageVariants: PackageVariantEntry[]
+}
+
 interface ProductFormData {
   id?: string
   slug: string
@@ -48,6 +65,7 @@ interface ProductFormData {
   status: string
   order: number
   variants: ProductVariantData[]
+  packages: ProductPackageData[]
 }
 
 interface ProductCategory {
@@ -98,6 +116,17 @@ interface ProductFormProps {
       image?: string | null
       status?: string
       order: number
+    }>
+    packages?: Array<{
+      id?: string
+      label: string
+      slug: string
+      price?: string | null
+      salePrice?: string | null
+      sku?: string | null
+      status?: string
+      order: number
+      packageVariants?: Array<{ variantId: string; status: string }>
     }>
   }
   categories: ProductCategory[]
@@ -232,6 +261,20 @@ export function ProductForm({
       image: v.image || "",
       status: v.status || "in_stock",
       order: v.order ?? i,
+    })) || [],
+    packages: initialData?.packages?.map((p, i) => ({
+      id: p.id,
+      label: p.label,
+      slug: p.slug,
+      price: p.price?.toString() || "",
+      salePrice: p.salePrice?.toString() || "",
+      sku: p.sku || "",
+      status: p.status || "in_stock",
+      order: p.order ?? i,
+      packageVariants: p.packageVariants?.map(pv => ({
+        variantIndex: initialData.variants?.findIndex(v => v.id === pv.variantId) ?? -1,
+        status: pv.status,
+      })).filter(pv => pv.variantIndex >= 0) || [],
     })) || [],
   })
 
@@ -595,6 +638,74 @@ export function ProductForm({
     setFormData(prev => ({
       ...prev,
       variants: prev.variants.filter((_, i) => i !== index),
+      packages: prev.packages.map(pkg => ({
+        ...pkg,
+        packageVariants: pkg.packageVariants
+          .filter(pv => pv.variantIndex !== index)
+          .map(pv => ({ ...pv, variantIndex: pv.variantIndex > index ? pv.variantIndex - 1 : pv.variantIndex })),
+      })),
+    }))
+  }
+
+  const togglePackageVariant = (pkgIdx: number, variantIdx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.map((pkg, i) => {
+        if (i !== pkgIdx) return pkg
+        const existing = pkg.packageVariants.find(pv => pv.variantIndex === variantIdx)
+        return {
+          ...pkg,
+          packageVariants: existing
+            ? pkg.packageVariants.filter(pv => pv.variantIndex !== variantIdx)
+            : [...pkg.packageVariants, { variantIndex: variantIdx, status: "in_stock" }],
+        }
+      }),
+    }))
+  }
+
+  const updatePackageVariantStatus = (pkgIdx: number, variantIdx: number, status: string) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.map((pkg, i) => {
+        if (i !== pkgIdx) return pkg
+        return {
+          ...pkg,
+          packageVariants: pkg.packageVariants.map(pv =>
+            pv.variantIndex === variantIdx ? { ...pv, status } : pv
+          ),
+        }
+      }),
+    }))
+  }
+
+  const addPackage = () => {
+    setFormData(prev => ({
+      ...prev,
+      packages: [...prev.packages, {
+        label: "", slug: "", price: "", salePrice: "", sku: "",
+        status: "in_stock", order: prev.packages.length, packageVariants: [],
+      }],
+    }))
+  }
+
+  const removePackage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.filter((_, i) => i !== index),
+    }))
+  }
+
+  const updatePackage = (index: number, field: keyof ProductPackageData, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.map((p, i) => {
+        if (i !== index) return p
+        const updated = { ...p, [field]: value }
+        if (field === "label") {
+          updated.slug = (value as string).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, "")
+        }
+        return updated
+      }),
     }))
   }
 
@@ -1152,6 +1263,154 @@ export function ProductForm({
             </div>
 
             <p className="text-xs text-gray-500">Select products to show as related. If empty, same-category products are shown automatically.</p>
+          </div>
+
+          {/* Package Sizes */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-300">Package Sizes</h3>
+              <button
+                type="button"
+                onClick={addPackage}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Package
+              </button>
+            </div>
+
+            {formData.packages.length === 0 ? (
+              <p className="text-xs text-gray-500 italic">
+                No packages — product has a single price. Add packages to offer multiple sizes (e.g., 250g / 500g / 1kg).
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {formData.packages.map((pkg, index) => (
+                  <div key={index} className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-white">{pkg.label || `Package ${index + 1}`}</span>
+                      <button
+                        type="button"
+                        onClick={() => removePackage(index)}
+                        className="p-1 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Label *</label>
+                        <input
+                          type="text"
+                          value={pkg.label}
+                          onChange={e => updatePackage(index, "label", e.target.value)}
+                          placeholder="e.g. 1kg"
+                          className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Status</label>
+                        <select
+                          value={pkg.status}
+                          onChange={e => updatePackage(index, "status", e.target.value)}
+                          className="w-full px-3 py-1.5 bg-[#0d0d1a] border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                        >
+                          <option value="in_stock">In Stock</option>
+                          <option value="out_of_stock">Out of Stock</option>
+                          <option value="coming_soon">Coming Soon</option>
+                          <option value="pre_order">Pre Order</option>
+                          <option value="sold_out">Sold Out</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Price (€) *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={pkg.price}
+                          onChange={e => updatePackage(index, "price", e.target.value)}
+                          placeholder="0.00"
+                          className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Sale Price (€)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={pkg.salePrice}
+                          onChange={e => updatePackage(index, "salePrice", e.target.value)}
+                          placeholder="Leave empty = no sale"
+                          className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">SKU (optional)</label>
+                        <input
+                          type="text"
+                          value={pkg.sku}
+                          onChange={e => updatePackage(index, "sku", e.target.value)}
+                          placeholder="e.g. PLA-BLACK-1KG"
+                          className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">URL slug (auto)</label>
+                        <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-gray-400 text-sm font-mono">
+                          ?size={pkg.slug || "…"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SIZE × COLOR matrix: available colors for this package */}
+                    {formData.variants.length > 0 && (
+                      <div className="space-y-2 pt-1">
+                        <p className="text-xs text-gray-500">Available colors <span className="text-gray-600">(leave all unchecked = all colors shown)</span></p>
+                        <div className="flex flex-wrap gap-3">
+                          {formData.variants.map((v, vIdx) => {
+                            const pv = pkg.packageVariants.find(x => x.variantIndex === vIdx)
+                            const checked = !!pv
+                            return (
+                              <div key={vIdx} className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => togglePackageVariant(index, vIdx)}
+                                  title={v.colorNameEn || `Color ${vIdx + 1}`}
+                                  className={`w-6 h-6 rounded-full border-2 transition-all flex-shrink-0 ${checked ? "border-emerald-400 ring-2 ring-emerald-400/30" : "border-white/20 hover:border-white/40"}`}
+                                  style={{ backgroundColor: v.colorHex || "#888" }}
+                                />
+                                {checked && (
+                                  <select
+                                    value={pv!.status}
+                                    onChange={e => updatePackageVariantStatus(index, vIdx, e.target.value)}
+                                    className="text-xs bg-[#0d0d1a] border border-white/10 rounded px-1.5 py-1 text-gray-200 focus:outline-none focus:border-emerald-500/50"
+                                  >
+                                    <option value="in_stock">In Stock</option>
+                                    <option value="out_of_stock">Out of Stock</option>
+                                    <option value="pre_order">Pre-Order</option>
+                                    <option value="coming_soon">Coming Soon</option>
+                                    <option value="sold_out">Sold Out</option>
+                                  </select>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Upsell Products */}

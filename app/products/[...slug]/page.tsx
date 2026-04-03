@@ -89,6 +89,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     const resolvedSearchParams = await searchParams
     const nonce = (await headers()).get("x-nonce") || ""
     const couponCode = typeof resolvedSearchParams.coupon === "string" ? resolvedSearchParams.coupon : undefined
+    const sizeParam = typeof resolvedSearchParams.size === "string" ? resolvedSearchParams.size : undefined
     const t = await getTranslations()
     const locale = await getLocale()
 
@@ -98,7 +99,14 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             slug: productSlug,
             published: true,
         },
-        include: { variants: { orderBy: { order: "asc" } }, brand: true },
+        include: {
+            variants: { orderBy: { order: "asc" } },
+            packages: {
+                orderBy: { order: "asc" },
+                include: { packageVariants: { select: { variantId: true, status: true } } },
+            },
+            brand: true,
+        },
     })
 
     if (!product) {
@@ -473,6 +481,8 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                         product={JSON.parse(JSON.stringify(product))}
                         productName={productName}
                         variants={JSON.parse(JSON.stringify(product.variants))}
+                        packages={JSON.parse(JSON.stringify(product.packages))}
+                        initialPackageSlug={sizeParam}
                         locale={locale}
                         mainImage={product.image}
                         gallery={product.gallery || []}
@@ -571,23 +581,6 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                             )}
                         </div>
 
-                        {/* Price */}
-                        <div className="p-3 sm:p-4 md:p-6 rounded-lg md:rounded-xl bg-white/5 border border-white/10">
-                            {product.onSale && product.salePrice ? (
-                                <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                                    <span className="text-xl sm:text-2xl md:text-4xl font-bold text-red-400">
-                                        {parseFloat(product.salePrice.toString()).toFixed(2)} {product.currency}
-                                    </span>
-                                    <span className="text-sm sm:text-base md:text-xl text-gray-500 line-through">
-                                        {price}
-                                    </span>
-                                </div>
-                            ) : (
-                                <span className="text-xl sm:text-2xl md:text-4xl font-bold text-white">
-                                    {price || "-"}
-                                </span>
-                            )}
-                        </div>
                     </ProductDetailClient>
 
                     {/* Description - full width below the grid */}

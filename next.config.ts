@@ -6,6 +6,7 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 // Security headers (CSP, X-Frame-Options, HSTS, etc.) are handled in middleware.ts
 // because CSP requires a dynamic per-request nonce.
 const nextConfig: NextConfig = {
+  distDir: ".next-worktree",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
