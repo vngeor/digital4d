@@ -10,11 +10,11 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **E-commerce** - Product catalog, categories, digital downloads, Stripe payments
 - **Coupons & Discounts** - Percentage/fixed coupons, product-specific or global, promotional badges on product cards, live countdown timers
 - **Wishlist** - Save products for later, price drop & coupon notifications
-- **Recently Viewed** - localStorage-based recently viewed products section on homepage (carousel on mobile, grid on desktop; all 3 locale names stored; no login required)
+- **Recently Viewed** - localStorage-based recently viewed products section on homepage (always-carousel with prev/next arrows; all 3 locale names stored; no login required)
 - **Quote System** - File uploads (STL/OBJ/3MF), quote requests, admin-customer messaging
 - **Notifications** - Unified notification system with scheduling, smart recipient selection, coupon & wishlist alerts
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content, show/hide from nav, title alignment
-- **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs; quick field toggles (published/featured/bestSeller) with optimistic UI directly in the table
+- **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs; quick field toggles (published/featured/bestSeller) with optimistic UI directly in the table; EUR-only currency throughout
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
 - **Security** - Nonce-based CSP (per-request, strict-dynamic), rate limiting (login, register, search, coupons, quotes), security headers (HSTS, X-Frame-Options, nosniff), XSS sanitization (sanitize-html), input validation, checkout origin whitelist, sanitized error logging, auto-logout after 5 min inactivity, permission-gated admin pages and API routes
 - **Birthday Prompts** - Registration birthDate field, profile banner for missing birthDate, header indicator with pulsing dot
@@ -340,7 +340,7 @@ Manage your product catalog with full e-commerce features.
 **Categories** (`/admin/products/categories`):
 - Create/edit product categories
 - Multilingual names and descriptions
-- Color-coded badges
+- 41-color visual swatch picker
 - Category images
 
 ---
@@ -486,7 +486,7 @@ Define content categories with custom styling.
 | Slug | Type identifier (e.g., `news`, `service`) |
 | Name | Multilingual display name |
 | Description | Type description for listing pages |
-| Color | Badge color (cyan, purple, emerald, amber, etc.) |
+| Color | Badge color — 41 options via visual swatch picker (all Tailwind base colors + cobalt, navy, ocean, plum, crimson, coral, gold, mint, jade, silver, etc.) |
 | Order | Display order |
 
 ---
