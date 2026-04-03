@@ -100,10 +100,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             published: true,
         },
         include: {
-            variants: { orderBy: { order: "asc" } },
+            variants: { include: { color: true }, orderBy: { order: "asc" } },
             packages: {
                 orderBy: { order: "asc" },
-                include: { packageVariants: { select: { variantId: true, status: true } } },
+                include: { weight: true, packageVariants: { select: { variantId: true, status: true } } },
             },
             brand: true,
         },

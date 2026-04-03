@@ -119,7 +119,10 @@ export default async function CategoryPage({ params }: PageProps) {
         prisma.product.findMany({
             where: { category: { in: categorySlugs }, published: true },
             orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-            include: { brand: true },
+            include: {
+                brand: true,
+                variants: { include: { color: true }, orderBy: { order: "asc" } },
+            },
         }),
         prisma.productCategory.findMany({
             include: { children: true, parent: true },

@@ -10,10 +10,8 @@ import { WishlistButton } from "./WishlistButton"
 interface ProductVariant {
     image: string | null
     status: string
-    colorHex: string
-    colorNameBg: string
-    colorNameEn: string
-    colorNameEs: string
+    colorId: string
+    color: { nameBg: string; nameEn: string; nameEs: string; hex: string }
 }
 
 interface Product {
@@ -189,25 +187,26 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     }, [products, locale])
 
     const uniqueColors = useMemo(() => {
-        const colorMap = new Map<string, string>() // lowercase name → hex (first seen)
+        const colorMap = new Map<string, string>() // colorId → hex (first seen)
+        const colorNames = new Map<string, string>() // colorId → localized name
         for (const product of products) {
             for (const variant of product.variants || []) {
-                const name = locale === "bg" ? variant.colorNameBg
-                    : locale === "es" ? variant.colorNameEs
-                    : variant.colorNameEn
-                if (name && !colorMap.has(name.toLowerCase())) {
-                    colorMap.set(name.toLowerCase(), variant.colorHex)
-                }
+                if (!variant.colorId || colorMap.has(variant.colorId)) continue
+                const name = locale === "bg" ? variant.color.nameBg
+                    : locale === "es" ? variant.color.nameEs
+                    : variant.color.nameEn
+                colorMap.set(variant.colorId, variant.color.hex)
+                colorNames.set(variant.colorId, name)
             }
         }
         return Array.from(colorMap.entries())
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([name, hex]) => ({ name, hex }))
+            .map(([id, hex]) => ({ id, hex, name: colorNames.get(id) || "" }))
+            .sort((a, b) => a.name.localeCompare(b.name))
     }, [products, locale])
 
-    const toggleColor = (colorName: string) => {
+    const toggleColor = (colorId: string) => {
         setSelectedColors(prev =>
-            prev.includes(colorName) ? prev.filter(c => c !== colorName) : [...prev, colorName]
+            prev.includes(colorId) ? prev.filter(c => c !== colorId) : [...prev, colorId]
         )
     }
 
@@ -229,12 +228,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             const matchesSale = !saleFilter || product.onSale
             const matchesBrand = !selectedBrand || (product.brand && getLocalizedName(product.brand) === selectedBrand)
             const matchesColor = selectedColors.length === 0 ||
-                (product.variants || []).some(v => {
-                    const name = locale === "bg" ? v.colorNameBg
-                        : locale === "es" ? v.colorNameEs
-                        : v.colorNameEn
-                    return name && selectedColors.includes(name.toLowerCase())
-                })
+                (product.variants || []).some(v => v.colorId && selectedColors.includes(v.colorId))
             return matchesCategory && matchesSearch && matchesSale && matchesBrand && matchesColor
         })
     }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, selectedColors, categoryMap, categories, locale])
@@ -470,12 +464,12 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 {uniqueColors.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap mb-4">
                         <span className="text-xs text-gray-500 shrink-0">{t("color")}:</span>
-                        {uniqueColors.map(({ name, hex }) => {
-                            const isSelected = selectedColors.includes(name)
+                        {uniqueColors.map(({ id, name, hex }) => {
+                            const isSelected = selectedColors.includes(id)
                             return (
                                 <button
-                                    key={name}
-                                    onClick={() => toggleColor(name)}
+                                    key={id}
+                                    onClick={() => toggleColor(id)}
                                     title={name.charAt(0).toUpperCase() + name.slice(1)}
                                     className={`w-9 h-9 rounded-full border-2 transition-all touch-manipulation hover:scale-110 ${
                                         isSelected

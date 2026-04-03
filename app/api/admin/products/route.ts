@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
       const products = await prisma.product.findMany({
         where: { id: { in: idList } },
         include: {
-          variants: { orderBy: { order: "asc" } },
+          variants: { include: { color: true }, orderBy: { order: "asc" } },
           packages: {
             orderBy: { order: "asc" },
-            include: { packageVariants: { select: { variantId: true, status: true } } },
+            include: { weight: true, packageVariants: { select: { variantId: true, status: true } } },
           },
           brand: true,
         },
@@ -69,10 +69,10 @@ export async function GET(request: NextRequest) {
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
       include: {
-        variants: { orderBy: { order: "asc" } },
+        variants: { include: { color: true }, orderBy: { order: "asc" } },
         packages: {
           orderBy: { order: "asc" },
-          include: { packageVariants: { select: { variantId: true, status: true } } },
+          include: { weight: true, packageVariants: { select: { variantId: true, status: true } } },
         },
         brand: true,
       },
@@ -158,13 +158,11 @@ export async function POST(request: NextRequest) {
     const createdVariantIds: string[] = []
     if (Array.isArray(data.variants) && data.variants.length > 0) {
       for (const variant of data.variants) {
+        if (!variant.colorId) continue
         const created = await prisma.productVariant.create({
           data: {
             productId: product.id,
-            colorNameBg: variant.colorNameBg,
-            colorNameEn: variant.colorNameEn,
-            colorNameEs: variant.colorNameEs,
-            colorHex: variant.colorHex,
+            colorId: variant.colorId,
             image: variant.image || null,
             status: PRODUCT_STATUSES.includes(variant.status) ? variant.status : "in_stock",
             order: variant.order ?? 0,
@@ -177,13 +175,17 @@ export async function POST(request: NextRequest) {
     // Create packages — collect IDs for packageVariant mapping
     const createdPackageIds: string[] = []
     if (Array.isArray(data.packages) && data.packages.length > 0) {
-      const validPackages = data.packages.filter((pkg: any) => pkg.label && pkg.price && !isNaN(parseFloat(pkg.price)))
+      const validPackages = data.packages.filter((pkg: any) => pkg.weightId && pkg.price && !isNaN(parseFloat(pkg.price)))
       for (const [pkgIdx, pkg] of validPackages.entries()) {
+        // Fetch weight label for slug generation
+        const weight = await prisma.weight.findUnique({ where: { id: pkg.weightId }, select: { label: true } })
+        const weightLabel = weight?.label || pkg.weightId
+        const slug = pkg.slug || weightLabel.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, "")
         const created = await prisma.productPackage.create({
           data: {
             productId: product.id,
-            label: pkg.label,
-            slug: pkg.slug || pkg.label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, ""),
+            weightId: pkg.weightId,
+            slug,
             price: parseFloat(pkg.price),
             salePrice: pkg.salePrice && !isNaN(parseFloat(pkg.salePrice)) ? parseFloat(pkg.salePrice) : null,
             sku: pkg.sku || null,
@@ -211,10 +213,10 @@ export async function POST(request: NextRequest) {
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
       include: {
-        variants: { orderBy: { order: "asc" } },
+        variants: { include: { color: true }, orderBy: { order: "asc" } },
         packages: {
           orderBy: { order: "asc" },
-          include: { packageVariants: { select: { variantId: true, status: true } } },
+          include: { weight: true, packageVariants: { select: { variantId: true, status: true } } },
         },
         brand: true,
       },
@@ -317,23 +319,21 @@ export async function PUT(request: NextRequest) {
     // Sync color variants: delete old, create new — collect IDs for packageVariant mapping
     const updatedVariantIds: string[] = []
     if (Array.isArray(data.variants)) {
-      // Fetch old variants for blob cleanup
+      // Fetch old variants for blob cleanup and stock change detection
       const oldVariants = await prisma.productVariant.findMany({
         where: { productId: data.id },
-        select: { image: true, status: true, colorHex: true, colorNameBg: true, colorNameEn: true, colorNameEs: true },
+        select: { image: true, status: true, colorId: true },
       })
 
       // Delete old variants (cascades ProductPackageVariant via variantId FK)
       await prisma.productVariant.deleteMany({ where: { productId: data.id } })
 
       for (const variant of data.variants) {
+        if (!variant.colorId) continue
         const created = await prisma.productVariant.create({
           data: {
             productId: data.id,
-            colorNameBg: variant.colorNameBg,
-            colorNameEn: variant.colorNameEn,
-            colorNameEs: variant.colorNameEs,
-            colorHex: variant.colorHex,
+            colorId: variant.colorId,
             image: variant.image || null,
             status: PRODUCT_STATUSES.includes(variant.status) ? variant.status : "in_stock",
             order: variant.order ?? 0,
@@ -354,14 +354,20 @@ export async function PUT(request: NextRequest) {
       }
 
       // Detect variant status changes → notify wishlist users
-      const oldVarStatusMap = new Map(oldVariants.map(v => [v.colorHex, v.status]))
+      const oldVarStatusMap = new Map(oldVariants.map(v => [v.colorId, v.status]))
+      const prodNames = { nameBg: product.nameBg, nameEn: product.nameEn, nameEs: product.nameEs }
       for (const nv of data.variants) {
-        const oldStatus = oldVarStatusMap.get(nv.colorHex)
+        const oldStatus = oldVarStatusMap.get(nv.colorId)
         const newStatus = nv.status || "in_stock"
         if (oldStatus && oldStatus !== "in_stock" && newStatus === "in_stock") {
-          // Variant became available — notify (fire and forget, productWithVariants fetched later)
-          const variantNames = { nameBg: nv.colorNameBg, nameEn: nv.colorNameEn, nameEs: nv.colorNameEs }
-          const prodNames = { nameBg: product.nameBg, nameEn: product.nameEn, nameEs: product.nameEs }
+          // Variant became available — fetch color names for notification
+          const color = await prisma.color.findUnique({
+            where: { id: nv.colorId },
+            select: { nameBg: true, nameEn: true, nameEs: true },
+          })
+          const variantNames = color
+            ? { nameBg: color.nameBg, nameEn: color.nameEn, nameEs: color.nameEs }
+            : { nameBg: "", nameEn: "", nameEs: "" }
           notifyStockAvailable(product.id, product.slug, prodNames, `/products/${product.slug}`, variantNames, nv.image || null)
             .catch((err) => console.error("Failed to send variant stock notifications:", err instanceof Error ? err.message : "Unknown"))
         }
@@ -371,13 +377,17 @@ export async function PUT(request: NextRequest) {
     // Sync packages: delete old (cascades packageVariants), create new with packageVariants
     if (Array.isArray(data.packages)) {
       await prisma.productPackage.deleteMany({ where: { productId: data.id } })
-      const validPackages = data.packages.filter((pkg: any) => pkg.label && pkg.price && !isNaN(parseFloat(pkg.price)))
+      const validPackages = data.packages.filter((pkg: any) => pkg.weightId && pkg.price && !isNaN(parseFloat(pkg.price)))
       for (const pkg of validPackages) {
+        // Fetch weight label for slug generation
+        const weight = await prisma.weight.findUnique({ where: { id: pkg.weightId }, select: { label: true } })
+        const weightLabel = weight?.label || pkg.weightId
+        const slug = pkg.slug || weightLabel.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, "")
         const created = await prisma.productPackage.create({
           data: {
             productId: data.id,
-            label: pkg.label,
-            slug: pkg.slug || pkg.label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, ""),
+            weightId: pkg.weightId,
+            slug,
             price: parseFloat(pkg.price),
             salePrice: pkg.salePrice && !isNaN(parseFloat(pkg.salePrice)) ? parseFloat(pkg.salePrice) : null,
             sku: pkg.sku || null,
@@ -426,10 +436,10 @@ export async function PUT(request: NextRequest) {
     const productWithVariants = await prisma.product.findUnique({
       where: { id: product.id },
       include: {
-        variants: { orderBy: { order: "asc" } },
+        variants: { include: { color: true }, orderBy: { order: "asc" } },
         packages: {
           orderBy: { order: "asc" },
-          include: { packageVariants: { select: { variantId: true, status: true } } },
+          include: { weight: true, packageVariants: { select: { variantId: true, status: true } } },
         },
         brand: true,
       },
