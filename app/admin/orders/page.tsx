@@ -93,11 +93,16 @@ export default function OrdersPage() {
     }
 
     const method = editingOrder ? "PUT" : "POST"
-    await fetch("/api/admin/orders", {
+    const res = await fetch("/api/admin/orders", {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      toast.error(err.error || t("saveFailed"))
+      return
+    }
     setShowForm(false)
     setEditingOrder(null)
     toast.success(t("savedSuccess"))
@@ -123,11 +128,15 @@ export default function OrdersPage() {
   }
 
   const handleStatusChange = async (order: Order, newStatus: string) => {
-    await fetch("/api/admin/orders", {
+    const res = await fetch("/api/admin/orders", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...order, status: newStatus }),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      toast.error(err.error || t("updateFailed"))
+    }
     fetchOrders()
   }
 
@@ -284,7 +293,7 @@ export default function OrdersPage() {
           data={orders}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noOrders")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noOrders")}</p><p className="text-xs text-gray-600">Orders will appear here when customers make purchases</p></div>}
           renderMobileCard={(item: Order) => {
             const config = statusConfig[item.status]
             return (
@@ -360,7 +369,7 @@ export default function OrdersPage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
+          <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-xl max-h-[90vh] overflow-y-auto bg-[#0d0d1a] shadow-2xl">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
               <h2 className="text-xl font-bold text-white">
                 {editingOrder ? t("editOrder") : t("addOrder")}

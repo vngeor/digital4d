@@ -18,7 +18,11 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [rememberMe, setRememberMe] = useState(false)
 
-    const callbackUrl = searchParams.get("callbackUrl") || "/"
+    const rawCallback = searchParams.get("callbackUrl") || "/"
+    // Only allow internal paths: starts with "/" but NOT "//" (protocol-relative URL trick)
+    const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//")
+        ? rawCallback
+        : "/"
 
     // Load remembered email from localStorage
     useEffect(() => {

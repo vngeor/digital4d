@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { getTranslations, getLocale } from "next-intl/server"
 import Link from "next/link"
+import Image from "next/image"
 import { Header } from "@/app/components/Header"
 import { ProductCatalog } from "@/app/components/ProductCatalog"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
@@ -10,6 +11,8 @@ import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 import { ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 interface PageProps {
     params: Promise<{ slug: string[] }>
@@ -71,10 +74,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CategoryPage({ params }: PageProps) {
     const { slug: slugSegments } = await params
     const categorySlug = slugSegments[slugSegments.length - 1]
+    if (!SLUG_PATTERN.test(categorySlug)) notFound()
+
     const t = await getTranslations()
     const locale = await getLocale()
 
-    // Fetch category with parent and children
+    // Fetch category first (products depend on its slugs)
     const category = await prisma.productCategory.findFirst({
         where: { slug: categorySlug },
         include: { parent: { include: { children: { orderBy: { order: "asc" } } } }, children: { orderBy: { order: "asc" } } },
@@ -103,36 +108,36 @@ export default async function CategoryPage({ params }: PageProps) {
     const parentName = category.parent ? getLocalizedName(category.parent) : null
     const isParent = !category.parentId && category.children.length > 0
 
-    // Fetch products: if parent, include all children's products too
+    // Compute categorySlugs here (depends on category)
     const categorySlugs = isParent
         ? [categorySlug, ...category.children.map(c => c.slug)]
         : [categorySlug]
 
-    const products = await prisma.product.findMany({
-        where: { category: { in: categorySlugs }, published: true },
-        orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-        include: { brand: true },
-    })
-
-    // Fetch all categories for ProductCatalog
-    const allCategories = await prisma.productCategory.findMany({
-        include: { children: true, parent: true },
-        orderBy: [{ order: "asc" }],
-    })
-
-    // Build coupon map
+    // Parallel data fetching (independent queries)
     const now = new Date()
-    const promotedCouponsRaw = await prisma.coupon.findMany({
-        where: {
-            showOnProduct: true,
-            active: true,
-            AND: [
-                { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
-                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
-            ],
-        },
-        select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
-    })
+    const [products, allCategories, promotedCouponsRaw, session] = await Promise.all([
+        prisma.product.findMany({
+            where: { category: { in: categorySlugs }, published: true },
+            orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
+            include: { brand: true },
+        }),
+        prisma.productCategory.findMany({
+            include: { children: true, parent: true },
+            orderBy: [{ order: "asc" }],
+        }),
+        prisma.coupon.findMany({
+            where: {
+                showOnProduct: true,
+                active: true,
+                AND: [
+                    { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+                    { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+                ],
+            },
+            select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
+        }),
+        auth(),
+    ])
 
     const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
     const globalCoupons = promotedCouponsRaw.filter(c => c.productIds.length === 0)
@@ -153,8 +158,7 @@ export default async function CategoryPage({ params }: PageProps) {
         }
     }
 
-    // Fetch wishlisted product IDs
-    const session = await auth()
+    // Wishlist depends on session
     let wishlistedProductIds: string[] = []
     if (session?.user?.id) {
         const wishlistItems = await prisma.wishlistItem.findMany({
@@ -182,10 +186,13 @@ export default async function CategoryPage({ params }: PageProps) {
                     {/* Category Image Banner */}
                     {category.image && (
                         <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden mb-6 sm:mb-8">
-                            <img
+                            <Image
                                 src={category.image}
                                 alt={categoryName}
-                                className="w-full h-full object-cover"
+                                fill
+                                priority
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, 1200px"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
                         </div>

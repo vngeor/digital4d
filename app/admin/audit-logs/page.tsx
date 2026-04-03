@@ -721,7 +721,7 @@ export default function AuditLogsPage() {
       {/* Details Modal */}
       {viewingDetails && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setViewingDetails(null)}>
-          <div className="glass-strong rounded-2xl border border-white/10 w-full max-w-lg max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#0d0d1a] rounded-2xl border border-white/10 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <h3 className="text-lg font-semibold text-white">{t("detailsTitle")}</h3>
               <button onClick={() => setViewingDetails(null)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">

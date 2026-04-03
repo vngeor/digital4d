@@ -6,6 +6,8 @@ import { toast } from "sonner"
 import { X, Save, Loader2, Upload } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
 import { COLOR_CLASSES } from "./TypeForm"
+import { RichTextEditor } from "./RichTextEditor"
+import { ColorPicker } from "./ColorPicker"
 
 interface CategoryFormData {
   id?: string
@@ -16,6 +18,8 @@ interface CategoryFormData {
   descBg: string
   descEn: string
   descEs: string
+  title: string
+  titleAlign: string
   image: string
   color: string
   order: number
@@ -41,6 +45,8 @@ interface ProductCategoryFormProps {
     descBg?: string | null
     descEn?: string | null
     descEs?: string | null
+    title?: string | null
+    titleAlign?: string | null
     image?: string | null
     color?: string
     order?: number
@@ -60,24 +66,6 @@ function generateSlug(name: string): string {
     .trim()
 }
 
-const COLOR_OPTIONS = [
-  { value: "cyan", label: "Cyan" },
-  { value: "purple", label: "Purple" },
-  { value: "emerald", label: "Emerald" },
-  { value: "amber", label: "Amber" },
-  { value: "red", label: "Red" },
-  { value: "blue", label: "Blue" },
-  { value: "pink", label: "Pink" },
-  { value: "orange", label: "Orange" },
-  { value: "teal", label: "Teal" },
-  { value: "indigo", label: "Indigo" },
-  { value: "rose", label: "Rose" },
-  { value: "lime", label: "Lime" },
-  { value: "sky", label: "Sky" },
-  { value: "violet", label: "Violet" },
-  { value: "fuchsia", label: "Fuchsia" },
-  { value: "yellow", label: "Yellow" },
-]
 
 export function ProductCategoryForm({
   initialData,
@@ -103,6 +91,8 @@ export function ProductCategoryForm({
     descBg: initialData?.descBg || "",
     descEn: initialData?.descEn || "",
     descEs: initialData?.descEs || "",
+    title: initialData?.title || "",
+    titleAlign: initialData?.titleAlign || "left",
     image: initialData?.image || "",
     color: initialData?.color ?? "emerald",
     order: initialData?.order ?? 0,
@@ -199,9 +189,9 @@ export function ProductCategoryForm({
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 pt-2 sm:pt-4">
+      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] sm:max-w-lg max-h-[85svh] flex flex-col bg-[#0d0d1a] shadow-2xl">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 shrink-0">
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? t("editCategory") : t("addCategory")}
           </h2>
@@ -213,49 +203,32 @@ export function ProductCategoryForm({
           </button>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("slug")} <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) => updateField("slug", e.target.value)}
-                placeholder="e.g., 3d-models"
-                className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                  errors.slug ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
-                }`}
-              />
-              {errors.slug ? (
-                <p className="text-xs text-red-400 mt-1">{errors.slug}</p>
-              ) : (
-                <p className="text-xs text-gray-500 mt-1">{t("slugHelp")}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("color")}
-              </label>
-              <select
-                value={formData.color}
-                onChange={(e) => updateField("color", e.target.value)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-              >
-                {COLOR_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div className="mt-2">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${COLOR_CLASSES[formData.color] || "bg-gray-500/20 text-gray-400"}`}>
-                  Preview
-                </span>
-              </div>
-            </div>
+        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5 sm:space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              {t("slug")} <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.slug}
+              onChange={(e) => updateField("slug", e.target.value)}
+              placeholder="e.g., 3d-models"
+              className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                errors.slug ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+              }`}
+            />
+            {errors.slug ? (
+              <p className="text-xs text-red-400 mt-1">{errors.slug}</p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-1">{t("slugHelp")}</p>
+            )}
           </div>
+
+          <ColorPicker
+            label={t("color")}
+            value={formData.color}
+            onChange={(color) => updateField("color", color)}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -355,6 +328,41 @@ export function ProductCategoryForm({
             </div>
           </div>
 
+          {/* Title + Alignment — single global field */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-400">{t("pageTitle")}</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.title}
+                onChange={e => updateField("title", e.target.value)}
+                className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors text-sm"
+                placeholder="Page title..."
+              />
+              <div className="flex gap-1">
+                {(["left", "center", "right"] as const).map(align => (
+                  <button
+                    key={align}
+                    type="button"
+                    onClick={() => updateField("titleAlign", align)}
+                    title={align.charAt(0).toUpperCase() + align.slice(1)}
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                      formData.titleAlign === align
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        : "bg-white/5 text-gray-400 hover:text-white border border-white/10"
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      {align === "left" && <path d="M3 5h18v2H3V5zm0 4h12v2H3V9zm0 4h18v2H3v-2zm0 4h12v2H3v-2z" />}
+                      {align === "center" && <path d="M3 5h18v2H3V5zm3 4h12v2H6V9zm-3 4h18v2H3v-2zm3 4h12v2H6v-2z" />}
+                      {align === "right" && <path d="M3 5h18v2H3V5zm6 4h12v2H9V9zm-6 4h18v2H3v-2zm6 4h12v2H9v-2z" />}
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div>
             <div className="flex flex-wrap gap-2 mb-4">
               {languageTabs.map((tab) => {
@@ -415,20 +423,9 @@ export function ProductCategoryForm({
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("description")} ({activeTab.toUpperCase()})
                 </label>
-                <textarea
-                  value={
-                    formData[
-                      `desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof CategoryFormData
-                    ] as string
-                  }
-                  onChange={(e) =>
-                    updateField(
-                      `desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof CategoryFormData,
-                      e.target.value
-                    )
-                  }
-                  rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                <RichTextEditor
+                  value={formData[`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof CategoryFormData] as string}
+                  onChange={val => updateField(`desc${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}` as keyof CategoryFormData, val)}
                 />
               </div>
             </div>

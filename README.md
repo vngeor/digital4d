@@ -10,6 +10,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **E-commerce** - Product catalog, categories, digital downloads, Stripe payments
 - **Coupons & Discounts** - Percentage/fixed coupons, product-specific or global, promotional badges on product cards, live countdown timers
 - **Wishlist** - Save products for later, price drop & coupon notifications
+- **Recently Viewed** - localStorage-based recently viewed products section on homepage (carousel on mobile, grid on desktop; all 3 locale names stored; no login required)
 - **Quote System** - File uploads (STL/OBJ/3MF), quote requests, admin-customer messaging
 - **Notifications** - Unified notification system with scheduling, smart recipient selection, coupon & wishlist alerts
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content, show/hide from nav, title alignment
@@ -178,6 +179,7 @@ CRON_SECRET="generate-random-32-byte-hex"  # For scheduled notification template
 | `npm run db:seed` | Seed database |
 | `npm run blob:cleanup` | Delete orphaned blob files |
 | `npm run blob:cleanup:dry` | Preview orphaned blobs (dry run) |
+| `npm run deploy:clean` | Deploy to Vercel without build cache |
 
 ## Database Schema
 
@@ -332,6 +334,8 @@ Manage your product catalog with full e-commerce features.
 - 👁 Published — show/hide on frontend
 - ⭐ Featured — star badge + homepage priority
 - 🏆 Best Seller — amber badge on product cards and detail page
+
+**Export**: "Export CSV" button downloads all products as `products-YYYY-MM-DD.csv` (SKU, name BG/EN/ES, category, brand, type, status, price, sale price, featured, best seller, published, tags, slug). UTF-8 BOM for Excel Cyrillic support.
 
 **Categories** (`/admin/products/categories`):
 - Create/edit product categories

@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "At least one user must be selected" }, { status: 400 })
     }
 
-    if (!type || !title || !message) {
+    if (!type || !title?.trim() || !message?.trim()) {
       return NextResponse.json({ error: "Type, title, and message are required" }, { status: 400 })
     }
 

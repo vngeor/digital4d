@@ -33,7 +33,7 @@ interface SortableDataTableProps<T> {
   searchable?: boolean
   searchPlaceholder?: string
   pageSize?: number
-  emptyMessage?: string
+  emptyMessage?: React.ReactNode
   onRowClick?: (item: T) => void
   onReorder?: (items: T[]) => void
   selectable?: boolean
@@ -138,8 +138,11 @@ export function SortableDataTable<T extends { id: string; order: number }>({
   const [page, setPage] = useState(1)
   const [items, setItems] = useState(data)
 
-  // Update items when data changes
-  if (JSON.stringify(data.map(d => d.id)) !== JSON.stringify(items.map(i => i.id))) {
+  // Update items when data changes (IDs or field values)
+  if (
+    JSON.stringify(data.map(d => d.id)) !== JSON.stringify(items.map(i => i.id)) ||
+    JSON.stringify(data) !== JSON.stringify(items)
+  ) {
     setItems(data)
   }
 

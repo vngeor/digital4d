@@ -2,6 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import { Header } from "./components/Header"
 import { NewsSection } from "./components/NewsSection"
 import { HomeProductsSection } from "./components/HomeProductsSection"
+import { RecentlyViewedSection } from "./components/RecentlyViewedSection"
 import { HeroCarousel } from "./components/HeroCarousel"
 import { FeaturedCards } from "./components/FeaturedCards"
 import { BackgroundOrbs } from "./components/BackgroundOrbs"
@@ -39,7 +40,10 @@ export default async function Home() {
             { order: "asc" },
         ],
         take: 8,
-        include: { brand: true },
+        include: {
+            brand: true,
+            variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+        },
     })
 
     // Fetch product categories for badge colors
@@ -152,7 +156,7 @@ export default async function Home() {
             category: product.category,
             categoryColor: category?.color || "emerald",
             categoryName,
-            image: product.image,
+            image: product.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || product.image,
             status: product.status,
             featured: product.featured,
             isNew: product.createdAt >= newCutoff,
@@ -279,6 +283,9 @@ export default async function Home() {
 
             {/* Products Section */}
             <HomeProductsSection products={products} couponMap={couponMap} bestSellerIds={bestSellerIds} />
+
+            {/* Recently Viewed */}
+            <RecentlyViewedSection />
 
             {/* News Section */}
             <NewsSection newsItems={newsItems} showAllLink={true} compact={true} />

@@ -39,8 +39,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 }
 
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
 export default async function BrandDetailPage({ params }: PageProps) {
     const { slug } = await params
+    if (!SLUG_PATTERN.test(slug)) notFound()
+
     const t = await getTranslations()
     const locale = await getLocale()
 

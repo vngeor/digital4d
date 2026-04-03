@@ -513,7 +513,7 @@ export default function CouponsPage() {
           data={coupons}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noCoupons")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noCoupons")}</p><p className="text-xs text-gray-600">Create discount codes to boost sales</p></div>}
           renderMobileCard={(item: Coupon) => {
             const status = getCouponStatus(item)
             return (
@@ -812,7 +812,7 @@ function CouponForm({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
+      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0d0d1a] shadow-2xl">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
           <h2 className="text-xl font-bold text-white">
@@ -906,13 +906,9 @@ function CouponForm({
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   {t("currency")}
                 </label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => updateField("currency", e.target.value)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                >
-                  <option value="EUR">EUR (€)</option>
-                </select>
+                <div className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-medium">
+                  € EUR
+                </div>
               </div>
             )}
           </div>
@@ -1053,7 +1049,7 @@ function CouponForm({
 
               {/* Dropdown Results */}
               {showProductDropdown && (productResults.length > 0 || searchingProducts) && (
-                <div className="absolute z-10 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a2e] shadow-xl">
+                <div className="absolute z-10 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0d0d1a] shadow-xl">
                   {/* Select All / Deselect All */}
                   {productResults.length > 0 && (
                     <button

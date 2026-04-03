@@ -157,11 +157,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Banner ID required" }, { status: 400 })
     }
 
+    const banner = await prisma.banner.findUnique({ where: { id } })
+    if (!banner) {
+      return NextResponse.json({ error: "Banner not found" }, { status: 404 })
+    }
+
     await prisma.banner.delete({
       where: { id },
     })
 
-    logAuditAction({ userId: session.user.id, action: "delete", resource: "banners", recordId: id }).catch(() => {})
+    logAuditAction({ userId: session.user.id, action: "delete", resource: "banners", recordId: id, recordTitle: banner.titleEn }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {

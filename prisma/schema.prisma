@@ -619,7 +619,6 @@ model TemplateSendLog {
   @@index([userId])
 }
 
-
 // Site-wide configurable settings (singleton row)
 model SiteSettings {
   id                    String   @id @default("singleton")

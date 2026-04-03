@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Trophy, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck } from "lucide-react"
+import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Trophy, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck, Download } from "lucide-react"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
@@ -75,6 +75,8 @@ interface ProductCategory {
   nameEn: string
   nameEs: string
   color: string
+  parentId: string | null
+  children: ProductCategory[]
 }
 
 const FILE_TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
@@ -94,8 +96,12 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [selectedBrandFilter, setSelectedBrandFilter] = useState<string | null>(null)
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set())
+  const [showBrandDropdown, setShowBrandDropdown] = useState(false)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+  const brandDropdownRef = useRef<HTMLDivElement>(null)
+  const categoryDropdownRef = useRef<HTMLDivElement>(null)
   const [deleteItem, setDeleteItem] = useState<{ id: string, name: string } | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
@@ -138,23 +144,13 @@ export default function ProductsPage() {
     setBrands(Array.isArray(data) ? data : [])
   }
 
-  const fetchAllProducts = async () => {
+  const fetchProducts = async () => {
+    setLoading(true)
     const res = await fetch("/api/admin/products")
     const data = await res.json()
-    setAllProducts(Array.isArray(data) ? data : [])
-  }
-
-  const fetchProducts = async (category?: string | null) => {
-    setLoading(true)
-    const url = category
-      ? `/api/admin/products?category=${encodeURIComponent(category)}`
-      : "/api/admin/products"
-    const res = await fetch(url)
-    const data = await res.json()
-    setProducts(Array.isArray(data) ? data : [])
-    if (!category) {
-      setAllProducts(Array.isArray(data) ? data : [])
-    }
+    const items = Array.isArray(data) ? data : []
+    setProducts(items)
+    setAllProducts(items)
     setLoading(false)
   }
 
@@ -162,12 +158,21 @@ export default function ProductsPage() {
     fetchCategories()
     fetchBrands()
     fetchProducts()
-    fetchAllProducts()
   }, [])
 
+  // Click-outside to close brand/category dropdowns
   useEffect(() => {
-    fetchProducts(selectedCategory)
-  }, [selectedCategory])
+    const handler = (e: MouseEvent) => {
+      if (brandDropdownRef.current && !brandDropdownRef.current.contains(e.target as Node)) {
+        setShowBrandDropdown(false)
+      }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
 
   // Deep link: open edit form when ?edit=<id> or create form when ?action=create
   useEffect(() => {
@@ -253,8 +258,7 @@ export default function ProductsPage() {
     setShowForm(false)
     setEditingProduct(null)
     toast.success(t("savedSuccess"))
-    fetchProducts(selectedCategory)
-    fetchAllProducts() // Refresh homepage positions
+    fetchProducts()
   }
 
   const handleDelete = (id: string, name: string) => {
@@ -287,17 +291,49 @@ export default function ProductsPage() {
     }
     setDeleteItem(null)
     toast.success(t("deletedSuccess"))
-    fetchProducts(selectedCategory)
-    fetchAllProducts() // Refresh homepage positions
+    fetchProducts()
+  }
+
+  const handleExportCsv = async () => {
+    try {
+      const res = await fetch("/api/admin/products/export")
+      if (!res.ok) { toast.error(t("exportFailed")); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `products-${new Date().toISOString().slice(0, 10)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error(t("exportFailed"))
+    }
+  }
+
+  const handleToggleField = async (id: string, field: "published" | "featured" | "bestSeller", value: boolean) => {
+    // Optimistic update
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+    setAllProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "toggleField", id, field, value }),
+    })
+    if (!res.ok) {
+      // Revert on failure
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: !value } : p))
+      setAllProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: !value } : p))
+      toast.error(t("saveFailed"))
+    }
   }
 
   const handleReorder = async (items: Product[]) => {
     setProducts(items)
     // Also update allProducts if not filtering
-    if (!selectedCategory) {
+    if (selectedCategories.size === 0) {
       setAllProducts(items)
     }
-    await fetch("/api/admin/products", {
+    const res = await fetch("/api/admin/products", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -305,10 +341,13 @@ export default function ProductsPage() {
         items: items.map((item, index) => ({ id: item.id, order: index })),
       }),
     })
-    // Refresh allProducts to update homepage positions
-    if (selectedCategory) {
-      fetchAllProducts()
+    if (!res.ok) {
+      toast.error(t("reorderFailed"))
+      fetchProducts()
+      return
     }
+    // Refresh to update homepage positions
+    fetchProducts()
   }
 
   const handleBulkDelete = async () => {
@@ -323,7 +362,6 @@ export default function ProductsPage() {
       setSelectedIds(new Set())
       setBulkDeleteConfirm(false)
       fetchProducts()
-      fetchAllProducts()
     } else {
       toast.error(t("deleteFailed"))
     }
@@ -343,7 +381,22 @@ export default function ProductsPage() {
       )
       setSelectedIds(new Set())
       fetchProducts()
-      fetchAllProducts()
+    } else {
+      toast.error(t("updateFailed"))
+    }
+  }
+
+  const handleBulkSetStatus = async (status: string) => {
+    const ids = Array.from(selectedIds)
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "setStatus", ids, status }),
+    })
+    if (res.ok) {
+      toast.success(tb("bulkSetStatusSuccess", { count: ids.length }))
+      setSelectedIds(new Set())
+      fetchProducts()
     } else {
       toast.error(t("updateFailed"))
     }
@@ -541,9 +594,25 @@ export default function ProductsPage() {
           sold_out: "Sold Out",
         }
         return (
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[item.status] || "bg-gray-500/20 text-gray-400"}`}>
-            {statusLabels[item.status] || item.status}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "featured", !item.featured) }}
+              className={`p-1 rounded transition-colors ${item.featured ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+              title={item.featured ? "Remove featured" : "Set as featured"}
+            >
+              <Star className={`w-3.5 h-3.5 ${item.featured ? "fill-amber-400" : ""}`} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "bestSeller", !item.bestSeller) }}
+              className={`p-1 rounded transition-colors ${item.bestSeller ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+              title={item.bestSeller ? "Remove best seller" : "Set as best seller"}
+            >
+              <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
+            </button>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[item.status] || "bg-gray-500/20 text-gray-400"}`}>
+              {statusLabels[item.status] || item.status}
+            </span>
+          </div>
         )
       },
     },
@@ -628,6 +697,15 @@ export default function ProductsPage() {
           <p className="text-sm lg:text-base text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
+          {can("products", "view") && (
+            <button
+              onClick={handleExportCsv}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 text-gray-400 text-sm font-medium hover:text-white hover:bg-white/5 transition-all"
+            >
+              <Download className="w-4 h-4" />
+              {t("exportCSV")}
+            </button>
+          )}
           {can("products", "create") && (
             <button
               onClick={() => {
@@ -661,44 +739,169 @@ export default function ProductsPage() {
         </Link>
       </div>
 
-      {/* Filters: Category tabs + Brand dropdown */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex flex-wrap gap-2 flex-1">
+      {/* Filters: Category dropdown + Brand dropdown */}
+      <div className="flex flex-row items-center gap-3 flex-wrap">
+        <div ref={categoryDropdownRef} className="relative">
           <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              selectedCategory === null
-                ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+            className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+              selectedCategories.size > 0
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                : "text-gray-400 hover:text-white bg-white/5 border border-white/10"
             }`}
           >
-            {t("all")}
+            {selectedCategories.size > 0
+              ? `${selectedCategories.size} ${t("categories")}`
+              : t("allCategoriesFilter")}
+            <svg className={`w-3.5 h-3.5 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.slug)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                selectedCategory === category.slug
-                  ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                  : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
-              }`}
-            >
-              {category.nameEn}
-            </button>
-          ))}
+          {showCategoryDropdown && (
+            <div className="absolute top-full mt-1 left-0 w-52 bg-[#0d0d1a] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
+              {(() => {
+                const allSlugs = categories.map(c => c.slug)
+                const allSelected = allSlugs.length > 0 && allSlugs.every(s => selectedCategories.has(s))
+                return (
+                  <button
+                    onClick={() => setSelectedCategories(allSelected ? new Set() : new Set(allSlugs))}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors border-b border-white/5 mb-1 ${
+                      allSelected ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300 hover:bg-white/5"
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allSelected ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
+                      {allSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                    </span>
+                    {t("selectAll")}
+                  </button>
+                )
+              })()}
+              {categories.filter(c => !c.parentId).map(parent => {
+                const isParentActive = selectedCategories.has(parent.slug)
+                return (
+                  <div key={parent.id}>
+                    <button
+                      onClick={() => {
+                        setSelectedCategories(prev => {
+                          const next = new Set(prev)
+                          if (next.has(parent.slug)) next.delete(parent.slug)
+                          else next.add(parent.slug)
+                          return next
+                        })
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                        isParentActive ? "text-emerald-400 bg-emerald-500/10" : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isParentActive ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
+                        {isParentActive && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                      </span>
+                      {parent.nameEn}
+                    </button>
+                    {parent.children?.map(child => {
+                      const isChildActive = selectedCategories.has(child.slug)
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => {
+                            setSelectedCategories(prev => {
+                              const next = new Set(prev)
+                              if (next.has(child.slug)) next.delete(child.slug)
+                              else next.add(child.slug)
+                              return next
+                            })
+                          }}
+                          className={`w-full flex items-center gap-2 pl-7 pr-3 py-1.5 text-left text-xs transition-colors ${
+                            isChildActive ? "text-emerald-400 bg-emerald-500/10" : "text-gray-400 hover:bg-white/5"
+                          }`}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${isChildActive ? "border-emerald-400 bg-emerald-500/20" : "border-white/20"}`}>
+                            {isChildActive && <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                          </span>
+                          {child.nameEn}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
         {brands.length > 0 && (
-          <select
-            value={selectedBrandFilter || ""}
-            onChange={(e) => setSelectedBrandFilter(e.target.value || null)}
-            className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+          <div ref={brandDropdownRef} className="relative">
+            <button
+              onClick={() => setShowBrandDropdown(!showBrandDropdown)}
+              className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                selectedBrands.size > 0
+                  ? "bg-lime-500/20 text-lime-400 border border-lime-500/30"
+                  : "text-gray-400 hover:text-white bg-white/5 border border-white/10"
+              }`}
+            >
+              {selectedBrands.size > 0
+                ? `${selectedBrands.size} brand${selectedBrands.size > 1 ? "s" : ""}`
+                : t("allBrandsFilter")}
+              <svg className={`w-3.5 h-3.5 transition-transform ${showBrandDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {showBrandDropdown && (
+              <div className="absolute top-full mt-1 right-0 w-48 bg-[#0d0d1a] border border-white/10 rounded-xl shadow-xl z-30 py-1 max-h-60 overflow-y-auto">
+                {(() => {
+                  const allBrandIds = brands.map(b => b.id)
+                  const allSelected = allBrandIds.length > 0 && allBrandIds.every(id => selectedBrands.has(id))
+                  return (
+                    <button
+                      onClick={() => setSelectedBrands(allSelected ? new Set() : new Set(allBrandIds))}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors border-b border-white/5 mb-1 ${
+                        allSelected ? "text-lime-400 bg-lime-500/10" : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allSelected ? "border-lime-400 bg-lime-500/20" : "border-white/20"}`}>
+                        {allSelected && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                      </span>
+                      {t("selectAll")}
+                    </button>
+                  )
+                })()}
+                {brands.map(b => {
+                  const isActive = selectedBrands.has(b.id)
+                  return (
+                    <button
+                      key={b.id}
+                      onClick={() => {
+                        setSelectedBrands(prev => {
+                          const next = new Set(prev)
+                          if (next.has(b.id)) next.delete(b.id)
+                          else next.add(b.id)
+                          return next
+                        })
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                        isActive ? "text-lime-400 bg-lime-500/10" : "text-gray-300 hover:bg-white/5"
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${isActive ? "border-lime-400 bg-lime-500/20" : "border-white/20"}`}>
+                        {isActive && <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                      </span>
+                      {b.nameEn}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+        {(selectedCategories.size > 0 || selectedBrands.size > 0) && (
+          <button
+            onClick={() => { setSelectedCategories(new Set()); setSelectedBrands(new Set()) }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
           >
-            <option value="">{t("allBrandsFilter")}</option>
-            {brands.map(b => (
-              <option key={b.id} value={b.id}>{b.nameEn}</option>
-            ))}
-          </select>
+            <span className="w-4 h-4 rounded-full bg-emerald-500 text-white text-[10px] flex items-center justify-center font-bold">
+              {selectedCategories.size + selectedBrands.size}
+            </span>
+            Clear filters
+          </button>
         )}
       </div>
 
@@ -706,10 +909,13 @@ export default function ProductsPage() {
         <SkeletonDataTable columns={6} />
       ) : (
         <SortableDataTable
-          data={selectedBrandFilter ? products.filter(p => p.brandId === selectedBrandFilter) : products}
+          data={products.filter(p =>
+            (selectedCategories.size === 0 || selectedCategories.has(p.category)) &&
+            (selectedBrands.size === 0 || (p.brandId !== null && selectedBrands.has(p.brandId)))
+          )}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noProducts")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><Package className="w-10 h-10 text-gray-600" /><p className="text-gray-400">{t("noProducts")}</p><p className="text-xs text-gray-600">Create your first product to get started</p></div>}
           onReorder={handleReorder}
           onRowClick={(item) => {
             setEditingProduct(item)
@@ -878,6 +1084,7 @@ export default function ProductsPage() {
         onDelete={can("products", "delete") ? () => setBulkDeleteConfirm(true) : undefined}
         onPublish={can("products", "edit") ? () => handleBulkPublish(true) : undefined}
         onUnpublish={can("products", "edit") ? () => handleBulkPublish(false) : undefined}
+        onSetStatus={can("products", "edit") ? handleBulkSetStatus : undefined}
         onClear={() => setSelectedIds(new Set())}
         deleteLabel={tb("bulkDelete")}
         publishLabel={tb("bulkPublish")}

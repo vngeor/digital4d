@@ -531,7 +531,7 @@ export default function UsersPage() {
           data={filteredUsers}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noUsers")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noUsers")}</p><p className="text-xs text-gray-600">Users will appear here when they register</p></div>}
           renderMobileCard={(item: User) => (
             <>
               <div className="flex items-center justify-between gap-2">
@@ -602,7 +602,7 @@ export default function UsersPage() {
       {/* User Details Modal */}
       {viewingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setViewingUser(null); setEditing(false); setModalTab("details") }}>
-          <div className={`rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-[95vw] md:max-w-3xl" : "max-w-[95vw] md:max-w-lg"} max-h-[85vh] overflow-y-auto transition-all bg-[#1a1a2e] shadow-2xl`} onClick={(e) => e.stopPropagation()}>
+          <div className={`rounded-2xl border border-white/10 w-full ${modalTab === "permissions" ? "max-w-[95vw] md:max-w-3xl" : "max-w-[95vw] md:max-w-lg"} max-h-[85vh] overflow-y-auto transition-all bg-[#0d0d1a] shadow-2xl`} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <div className="flex items-center gap-3">

@@ -1,4 +1,30 @@
 {
+  "cart": {
+    "title": "Carrito",
+    "empty": "Tu carrito está vacío",
+    "emptySubtitle": "Añade productos para empezar",
+    "browseProducts": "Ver productos",
+    "addToCart": "Añadir al carrito",
+    "addedToCart": "¡Añadido al carrito!",
+    "buyNow": "Comprar ahora",
+    "checkout": "Pagar",
+    "continueShopping": "Seguir comprando",
+    "remove": "Eliminar",
+    "subtotal": "Subtotal",
+    "items": "{count} artículos",
+    "item": "1 artículo",
+    "upsellAdded": "¡Añadido al carrito!",
+    "upsellTitle": "Los clientes también compraron",
+    "upsellViewCart": "Ver carrito",
+    "upsellContinue": "Continuar comprando",
+    "youMightLike": "También te puede gustar",
+    "tabCart": "Carrito",
+    "tabUpsell": "Recomendados",
+    "freeShippingUnlocked": "🎉 ¡Envío gratis desbloqueado!",
+    "freeShippingAdd": "Añade {amount} {currency} más para envío gratis",
+    "orderConfirmed": "¡Pedido confirmado!",
+    "orderConfirmedDesc": "Nos pondremos en contacto contigo para la entrega."
+  },
   "nav": {
     "services": "Servicios",
     "products": "Productos",
@@ -93,6 +119,13 @@
     "termsLink": "Términos de uso",
     "privacyLink": "Política de privacidad"
   },
+  "cookieConsent": {
+    "title": "Preferencias de cookies",
+    "message": "Usamos cookies esenciales para autenticación y análisis para mejorar tu experiencia. Consulta nuestra",
+    "privacyLink": "Política de privacidad",
+    "accept": "Aceptar todo",
+    "decline": "Rechazar"
+  },
   "menu": {
     "noContent": "No hay contenido disponible",
     "backToMenu": "Volver a {menu}"
@@ -162,6 +195,7 @@
       "roles": "Roles",
       "brands": "Marcas",
       "auditLogs": "Auditoría",
+      "settings": "Configuración",
       "logout": "Cerrar sesión",
       "idleWarningTitle": "Sesión por expirar",
       "idleWarningMessage": "Se cerrará su sesión en {seconds} segundos por inactividad.",
@@ -179,7 +213,8 @@
       "confirmBulkDelete": "¿Estás seguro de que quieres eliminar {count} elementos? Esta acción no se puede deshacer.",
       "bulkDeleteSuccess": "{count} elementos eliminados",
       "bulkPublishSuccess": "{count} elementos publicados",
-      "bulkUnpublishSuccess": "{count} elementos despublicados"
+      "bulkUnpublishSuccess": "{count} elementos despublicados",
+      "bulkSetStatusSuccess": "{count} productos actualizados"
     },
     "search": {
       "placeholder": "Buscar páginas, productos, pedidos...",
@@ -667,7 +702,9 @@
       "statusCancelled": "Cancelado",
       "copied": "¡Copiado!",
       "clickToCopy": "Clic para copiar",
-      "deleteFailed": "Error al eliminar el pedido"
+      "deleteFailed": "Error al eliminar el pedido",
+      "saveFailed": "Error al guardar el pedido",
+      "updateFailed": "Error al actualizar el pedido"
     },
     "users": {
       "title": "Gestión de Usuarios",
@@ -862,6 +899,7 @@
       "slug": "Slug",
       "slugHelp": "Identificador amigable para URL (ej. news, service)",
       "name": "Nombre",
+      "description": "Descripción",
       "color": "Color",
       "order": "Orden",
       "actions": "Acciones",
@@ -936,9 +974,13 @@
       "homepage": "Inicio",
       "deleteFailed": "Error al eliminar el producto",
       "updateFailed": "Error al actualizar producto",
+      "reorderFailed": "Error al reordenar productos",
       "brand": "Marca",
       "noBrand": "— Sin marca —",
       "manageBrands": "Gestionar Marcas",
+      "allCategoriesFilter": "Todas las categorías",
+      "categories": "categorías",
+      "selectAll": "Seleccionar todo",
       "allBrandsFilter": "Todas las marcas",
       "colorVariants": "Variantes de color",
       "addColor": "Agregar color",
@@ -946,7 +988,9 @@
       "colorName": "Nombre del color",
       "colorHex": "Código Hex",
       "variantImage": "Imagen",
-      "noVariants": "No se han añadido variantes de color"
+      "noVariants": "No se han añadido variantes de color",
+      "exportCSV": "Exportar CSV",
+      "exportFailed": "Error al exportar. Inténtalo de nuevo."
     },
     "brands": {
       "title": "Gestión de Marcas",
@@ -984,6 +1028,7 @@
       "slugHelp": "Identificador amigable para URL",
       "name": "Nombre",
       "description": "Descripción",
+      "pageTitle": "Título de la página",
       "image": "Imagen",
       "color": "Color",
       "order": "Orden",
@@ -1085,6 +1130,19 @@
     "common": {
       "uploadFailed": "Error al subir",
       "uploadImageFailed": "Error al subir la imagen"
+    },
+    "settings": {
+      "title": "Configuración",
+      "subtitle": "Configuración del sitio",
+      "freeShippingSection": "Envío Gratis",
+      "freeShippingSectionDesc": "Muestra una barra de progreso en el carrito para pedidos más grandes",
+      "enableThreshold": "Activar umbral de envío gratis",
+      "threshold": "Importe mínimo del pedido",
+      "preview": "Los clientes que gasten {threshold} {currency} o más obtienen envío gratis",
+      "save": "Guardar configuración",
+      "saved": "¡Configuración guardada!",
+      "saveFailed": "Error al guardar la configuración",
+      "thresholdRequired": "Introduce un importe válido"
     }
   },
   "brandsPage": {
@@ -1200,7 +1258,9 @@
   "homeProducts": {
     "title": "Nuestros Productos",
     "subtitle": "Explora nuestra gama de productos de impresión 3D",
-    "viewAll": "Ver Todos los Productos"
+    "viewAll": "Ver Todos los Productos",
+    "recentlyViewedTitle": "Vistos Recientemente",
+    "recentlyViewedSubtitle": "Productos que has estado mirando"
   },
   "checkout": {
     "title": "Checkout",

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const [quotes, total, pendingCount] = await Promise.all([
       prisma.quoteRequest.findMany({
         where,
-        orderBy: sort === "oldest" ? { updatedAt: "asc" as const } : { createdAt: "desc" as const },
+        orderBy: sort === "oldest" ? { createdAt: "asc" as const } : { createdAt: "desc" as const },
         skip: (page - 1) * limit,
         take: limit,
         select: {
@@ -127,8 +127,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Quote not found" }, { status: 404 })
     }
 
-    // Validate quoted price is not negative
-    if (data.quotedPrice) {
+    // Validate quoted price is not negative (allow 0 for free quotes)
+    const hasPrice = data.quotedPrice !== null && data.quotedPrice !== undefined && data.quotedPrice !== ""
+    if (hasPrice) {
       const price = parseFloat(data.quotedPrice)
       if (isNaN(price) || price < 0) {
         return NextResponse.json({ error: "Quoted price cannot be negative" }, { status: 400 })
@@ -144,7 +145,7 @@ export async function PUT(request: NextRequest) {
       viewedAt?: null
     } = {
       status: data.status,
-      quotedPrice: data.quotedPrice ? parseFloat(data.quotedPrice) : null,
+      quotedPrice: hasPrice ? parseFloat(data.quotedPrice) : null,
       adminNotes: data.adminNotes || null,
     }
 

@@ -56,6 +56,7 @@ interface ProductFormData {
   image: string
   gallery: string[]
   relatedProductIds: string[]
+  upsellProductIds: string[]
   fileUrl: string
   fileType: string
   featured: boolean
@@ -97,6 +98,7 @@ interface ProductFormProps {
     image?: string | null
     gallery?: string[]
     relatedProductIds?: string[]
+    upsellProductIds?: string[]
     fileUrl?: string | null
     fileType?: string | null
     brandId?: string | null
@@ -211,6 +213,14 @@ export function ProductForm({
   const relatedSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const allRelatedProductsRef = useRef<Array<{ id: string; nameEn: string; nameBg: string; image: string | null }>>([])
   const allRelatedLoadedRef = useRef(false)
+  // Upsell products picker state (shares allRelatedProductsRef + allRelatedLoadedRef cache)
+  const [upsellSearch, setUpsellSearch] = useState("")
+  const [upsellResults, setUpsellResults] = useState<Array<{ id: string; nameEn: string; nameBg: string; image: string | null }>>([])
+  const [selectedUpsell, setSelectedUpsell] = useState<Array<{ id: string; nameEn: string; nameBg: string; image: string | null }>>([])
+  const [searchingUpsell, setSearchingUpsell] = useState(false)
+  const [showUpsellDropdown, setShowUpsellDropdown] = useState(false)
+  const upsellDropdownRef = useRef<HTMLDivElement>(null)
+  const upsellSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const [autoSlug, setAutoSlug] = useState(!initialData?.id)
   const [formData, setFormData] = useState<ProductFormData>({
@@ -234,6 +244,7 @@ export function ProductForm({
     image: initialData?.image || "",
     gallery: initialData?.gallery ?? [],
     relatedProductIds: initialData?.relatedProductIds ?? [],
+    upsellProductIds: initialData?.upsellProductIds ?? [],
     fileUrl: initialData?.fileUrl || "",
     fileType: initialData?.fileType || "physical",
     featured: initialData?.featured ?? false,
@@ -309,6 +320,31 @@ export function ProductForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Click-outside handler for upsell dropdown
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (upsellDropdownRef.current && !upsellDropdownRef.current.contains(e.target as Node)) {
+        setShowUpsellDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  // Load selected upsell products on mount (for edit mode)
+  useEffect(() => {
+    if (formData.upsellProductIds.length > 0 && selectedUpsell.length === 0) {
+      fetch(`/api/admin/products?ids=${formData.upsellProductIds.join(",")}`)
+        .then(res => res.ok ? res.json() : [])
+        .then((data: Array<{ id: string; nameEn: string; nameBg: string; image: string | null }>) => {
+          const products = Array.isArray(data) ? data : []
+          setSelectedUpsell(products.map(p => ({ id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image })))
+        })
+        .catch(() => {})
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const loadAllRelatedProducts = async () => {
     if (allRelatedLoadedRef.current) return
     setSearchingRelated(true)
@@ -370,6 +406,73 @@ export function ProductForm({
   const removeRelatedProduct = (productId: string) => {
     setFormData(prev => ({ ...prev, relatedProductIds: prev.relatedProductIds.filter(id => id !== productId) }))
     setSelectedRelated(prev => prev.filter(p => p.id !== productId))
+  }
+
+  const loadAllUpsellProducts = async () => {
+    // Share cache with related products — avoids double fetch
+    if (allRelatedLoadedRef.current) {
+      setUpsellResults(allRelatedProductsRef.current)
+      return
+    }
+    setSearchingUpsell(true)
+    try {
+      const res = await fetch("/api/admin/products")
+      if (res.ok) {
+        const data = await res.json()
+        const products = (Array.isArray(data) ? data : []).map((p: { id: string; nameEn: string; nameBg: string; image: string | null }) => ({
+          id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image,
+        }))
+        allRelatedProductsRef.current = products
+        allRelatedLoadedRef.current = true
+        setUpsellResults(products)
+      }
+    } catch {
+      setUpsellResults([])
+    } finally {
+      setSearchingUpsell(false)
+    }
+  }
+
+  const searchUpsellProducts = (query: string) => {
+    if (upsellSearchTimeoutRef.current) clearTimeout(upsellSearchTimeoutRef.current)
+    if (!query.trim()) {
+      if (allRelatedLoadedRef.current) setUpsellResults(allRelatedProductsRef.current)
+      return
+    }
+    upsellSearchTimeoutRef.current = setTimeout(async () => {
+      setSearchingUpsell(true)
+      try {
+        const res = await fetch(`/api/admin/products?search=${encodeURIComponent(query)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setUpsellResults(
+            (Array.isArray(data) ? data : []).slice(0, 20).map((p: { id: string; nameEn: string; nameBg: string; image: string | null }) => ({
+              id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image,
+            }))
+          )
+        }
+      } catch {
+        setUpsellResults([])
+      } finally {
+        setSearchingUpsell(false)
+      }
+    }, 300)
+  }
+
+  const toggleUpsellProduct = (product: { id: string; nameEn: string; nameBg: string; image: string | null }) => {
+    const isSelected = formData.upsellProductIds.includes(product.id)
+    if (isSelected) {
+      setFormData(prev => ({ ...prev, upsellProductIds: prev.upsellProductIds.filter(id => id !== product.id) }))
+      setSelectedUpsell(prev => prev.filter(p => p.id !== product.id))
+    } else {
+      setFormData(prev => ({ ...prev, upsellProductIds: [...prev.upsellProductIds, product.id] }))
+      setSelectedUpsell(prev => [...prev, product])
+    }
+  }
+
+  const removeUpsellProduct = (productId: string) => {
+    setFormData(prev => ({ ...prev, upsellProductIds: prev.upsellProductIds.filter(id => id !== productId) }))
+    setSelectedUpsell(prev => prev.filter(p => p.id !== productId))
   }
 
   const getCategoryName = (cat: ProductCategory) => {
@@ -646,9 +749,9 @@ export function ProductForm({
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="rounded-2xl border border-white/10 w-full max-w-[92vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 pt-2 sm:pt-4">
+      <div className="rounded-2xl border border-white/10 w-full max-w-[92vw] sm:max-w-2xl max-h-[85svh] flex flex-col bg-[#0d0d1a] shadow-2xl">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 shrink-0">
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? t("editProduct") : t("addProduct")}
           </h2>
@@ -660,7 +763,7 @@ export function ProductForm({
           </button>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5 sm:space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -729,7 +832,7 @@ export function ProductForm({
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
                 </button>
                 {showCategoryDropdown && (
-                  <div className="absolute z-50 w-full mt-1 rounded-xl border border-white/10 bg-[#1a1a2e] shadow-2xl overflow-hidden">
+                  <div className="absolute z-50 w-full mt-1 rounded-xl border border-white/10 bg-[#0d0d1a] shadow-2xl overflow-hidden">
                     <div className="p-2 border-b border-white/10">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -1310,6 +1413,91 @@ export function ProductForm({
             )}
           </div>
 
+          {/* Upsell Products */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              Upsell Products
+            </h3>
+
+            {selectedUpsell.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedUpsell.map(product => (
+                  <span
+                    key={product.id}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-sm"
+                  >
+                    {product.image && (
+                      <img src={product.image} alt="" className="w-5 h-5 rounded object-cover" />
+                    )}
+                    <span className="max-w-[150px] truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeUpsellProduct(product.id)}
+                      className="ml-0.5 hover:text-red-400 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div ref={upsellDropdownRef} className="relative">
+              <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
+                <Search className="w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  value={upsellSearch}
+                  onChange={(e) => {
+                    setUpsellSearch(e.target.value)
+                    searchUpsellProducts(e.target.value)
+                  }}
+                  onFocus={() => {
+                    setShowUpsellDropdown(true)
+                    loadAllUpsellProducts()
+                  }}
+                  placeholder="Search products to upsell..."
+                  className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
+                />
+                {searchingUpsell && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+              </div>
+
+              {showUpsellDropdown && (
+                <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-[#1e1e36] border border-white/10 shadow-xl">
+                  {upsellResults
+                    .filter(p => p.id !== formData.id)
+                    .map(product => {
+                      const isSelected = formData.upsellProductIds.includes(product.id)
+                      return (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => toggleUpsellProduct(product)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
+                            isSelected ? "bg-amber-500/10 text-amber-300" : "text-gray-300 hover:bg-white/5"
+                          }`}
+                        >
+                          {product.image ? (
+                            <img src={product.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-white/10 flex-shrink-0" />
+                          )}
+                          <span className="flex-1 truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
+                          {isSelected && <Check className="w-4 h-4 text-amber-400 flex-shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  {upsellResults.length === 0 && !searchingUpsell && (
+                    <p className="px-3 py-3 text-sm text-gray-500 text-center">No products found</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-500">Products shown in the Add to Cart popup. Pick high-margin items. If empty, same-category products shown automatically.</p>
+          </div>
+
           {/* Color Variants */}
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
@@ -1394,8 +1582,8 @@ export function ProductForm({
                     </div>
 
                     {/* Hex color + Image */}
-                    <div className="flex items-end gap-3">
-                      <div className="flex items-end gap-2">
+                    <div className="flex flex-wrap items-end gap-2">
+                      <div className="flex items-end gap-2 shrink-0">
                         <div>
                           <label className="block text-[10px] text-gray-500 mb-1">{t("colorHex")}</label>
                           <input
@@ -1414,7 +1602,7 @@ export function ProductForm({
                         />
                       </div>
 
-                      <div className="flex-1 flex items-end gap-2">
+                      <div className="flex items-end gap-2 flex-1 min-w-[100px]">
                         {variant.image ? (
                           <div className="relative w-9 h-9 rounded-lg overflow-hidden border border-white/10 shrink-0">
                             <img src={variant.image} alt="" className="w-full h-full object-cover" />
@@ -1446,12 +1634,12 @@ export function ProductForm({
                       </div>
 
                       {/* Variant Status */}
-                      <div>
+                      <div className="shrink-0">
                         <label className="block text-[10px] text-gray-500 mb-1">Status</label>
                         <select
                           value={variant.status}
                           onChange={(e) => updateVariant(index, "status", e.target.value)}
-                          className="px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none"
+                          className="min-w-[100px] px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-emerald-500/50 transition-colors appearance-none"
                         >
                           <option value="in_stock">✅ In Stock</option>
                           <option value="out_of_stock">⏸️ Out of Stock</option>

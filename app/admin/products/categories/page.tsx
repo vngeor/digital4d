@@ -21,6 +21,8 @@ interface ProductCategory {
   descBg: string | null
   descEn: string | null
   descEs: string | null
+  title: string | null
+  titleAlign: string
   image: string | null
   color: string
   order: number
@@ -225,7 +227,7 @@ export default function CategoriesPage() {
           data={categories}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noCategories")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noCategories")}</p><p className="text-xs text-gray-600">Create categories to organize your products</p></div>}
           renderMobileCard={(item: ProductCategory) => (
             <>
               <div className="flex items-center justify-between gap-2">

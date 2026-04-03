@@ -100,7 +100,7 @@ export function GlobalPromoStrip() {
     return (
       <Link
         href={current.link}
-        className="sticky top-0 z-50 block bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 transition-all cursor-pointer"
+        className="block bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 transition-all cursor-pointer"
       >
         {content}
       </Link>
@@ -108,7 +108,7 @@ export function GlobalPromoStrip() {
   }
 
   return (
-    <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-cyan-600">
+    <div className="bg-gradient-to-r from-emerald-600 to-cyan-600">
       {content}
     </div>
   )

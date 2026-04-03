@@ -37,11 +37,14 @@ interface Product {
     id: string
     slug: string
     nameEn: string
+    nameBg: string
+    nameEs: string
     price: string | null
     salePrice?: string | null
     onSale?: boolean
     currency?: string
     fileType: string | null
+    priceType: string
     status: string
 }
 

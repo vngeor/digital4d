@@ -37,8 +37,12 @@ const STATUS_OVERLAY_TEXT: Record<string, Record<string, string>> = {
 
 export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange, availableVariantIndices }: ProductImageGalleryProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-    const [selectedVariantIndex, setSelectedVariantIndex] = useState(variants.length > 0 ? 0 : -1)
-    const [showingVariant, setShowingVariant] = useState(false)
+    const firstAvailableVariant = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
+    const defaultVariantIndex = variants.length > 0 ? (firstAvailableVariant >= 0 ? firstAvailableVariant : 0) : -1
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(defaultVariantIndex)
+    const [showingVariant, setShowingVariant] = useState(
+        defaultVariantIndex >= 0 && !!variants[defaultVariantIndex]?.image
+    )
     const [lightboxOpen, setLightboxOpen] = useState(false)
     const touchStartX = useRef(0)
     const touchStartY = useRef(0)
@@ -76,9 +80,11 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
         currentImage = allImages[selectedImageIndex] || mainImage
     }
 
-    // Determine overlay status: variant status takes priority when showing variant
-    const overlayStatus = showingVariant && selectedVariantIndex >= 0
-        ? variants[selectedVariantIndex]?.status
+    // Determine overlay status: use variant's unavailable status if it has one, else fall back to product status
+    // This ensures "sold_out" product-level overlay always shows, even if the selected variant is "in_stock"
+    const variantStatus = selectedVariantIndex >= 0 ? variants[selectedVariantIndex]?.status : null
+    const overlayStatus = (variantStatus && STATUS_OVERLAY_STYLE[variantStatus])
+        ? variantStatus
         : productStatus
     const overlayBg = overlayStatus ? STATUS_OVERLAY_STYLE[overlayStatus] : null
     const overlayText = overlayStatus ? STATUS_OVERLAY_TEXT[overlayStatus]?.[locale] || STATUS_OVERLAY_TEXT[overlayStatus]?.en : null

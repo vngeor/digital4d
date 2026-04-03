@@ -30,40 +30,34 @@ export default async function ProductsPage() {
     const t = await getTranslations()
     const locale = await getLocale()
 
-    // Fetch published products
-    const products = await prisma.product.findMany({
-        where: {
-            published: true,
-        },
-        orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-        include: {
-            brand: true,
-            variants: {
-                select: { image: true, status: true, colorHex: true, colorNameBg: true, colorNameEn: true, colorNameEs: true },
-                orderBy: { order: "asc" },
-            },
-        },
-    })
-
-    // Fetch all categories
-    const categories = await prisma.productCategory.findMany({
-        include: { children: true, parent: true },
-        orderBy: [{ order: "asc" }],
-    })
-
-    // Fetch promoted coupons for product card badges
+    // Parallel data fetching (all independent queries)
     const now = new Date()
-    const promotedCouponsRaw = await prisma.coupon.findMany({
-        where: {
-            showOnProduct: true,
-            active: true,
-            AND: [
-                { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
-                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
-            ],
-        },
-        select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
-    })
+    const [products, categories, promotedCouponsRaw, session] = await Promise.all([
+        prisma.product.findMany({
+            where: { published: true },
+            orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
+            include: {
+                brand: true,
+                variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+            },
+        }),
+        prisma.productCategory.findMany({
+            include: { children: true, parent: true },
+            orderBy: [{ order: "asc" }],
+        }),
+        prisma.coupon.findMany({
+            where: {
+                showOnProduct: true,
+                active: true,
+                AND: [
+                    { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+                    { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+                ],
+            },
+            select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
+        }),
+        auth(),
+    ])
 
     // Build coupon map: productId → best coupon badge info
     const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
@@ -85,8 +79,13 @@ export default async function ProductsPage() {
         }
     }
 
-    // Fetch wishlisted product IDs for authenticated user
-    const session = await auth()
+    // Compute display image: first available (in_stock/pre_order) variant image, or main product image
+    const productsForDisplay = products.map(p => ({
+        ...p,
+        image: p.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || p.image,
+    }))
+
+    // Wishlist depends on session
     let wishlistedProductIds: string[] = []
     if (session?.user?.id) {
         const wishlistItems = await prisma.wishlistItem.findMany({
@@ -120,7 +119,7 @@ export default async function ProductsPage() {
 
             {/* Products Grid with Client-Side Filtering */}
             <ProductCatalog
-                products={JSON.parse(JSON.stringify(products))}
+                products={JSON.parse(JSON.stringify(productsForDisplay))}
                 categories={JSON.parse(JSON.stringify(categories))}
                 locale={locale}
                 wishlistedProductIds={wishlistedProductIds}

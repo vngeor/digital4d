@@ -508,7 +508,7 @@ export default function QuotesPage() {
           columns={columns}
           searchable={false}
           pageSize={100}
-          emptyMessage={t("noQuotes")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noQuotes")}</p><p className="text-xs text-gray-600">Quote requests will appear here</p></div>}
           renderMobileCard={(item: QuoteRequest) => {
             const badge = STATUS_BADGES[item.status] || STATUS_BADGES.pending
             const hasCounterOffer = (item.status === "pending" && item.userResponse) || item.status === "counter_offer"

@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Search, Star, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell } from "lucide-react"
+import { Search, Star, Check, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 
 interface ProductVariant {
@@ -173,6 +173,14 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         }
     }
 
+    // O(1) category lookup — replaces O(n) .find() per product render
+    const categoryMap = useMemo(
+        () => new Map(categories.map(c => [c.slug, c])),
+        [categories]
+    )
+
+    const [isPending, startTransition] = useTransition()
+
     const uniqueBrands = useMemo(() => {
         const brandNames = products
             .map(p => p.brand ? getLocalizedName(p.brand) : null)
@@ -207,13 +215,10 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         return products.filter((product) => {
             const matchesCategory = !selectedCategory || (() => {
                 if (product.category === selectedCategory) return true
-                // If selected is a parent category, also match its children
-                const selectedCat = categories.find(c => c.slug === selectedCategory)
+                // If selected is a parent category, also match its children using O(1) map
+                const selectedCat = categoryMap.get(selectedCategory)
                 if (selectedCat && !selectedCat.parentId) {
-                    const childSlugs = categories
-                        .filter(c => c.parentId === selectedCat.id)
-                        .map(c => c.slug)
-                    return childSlugs.includes(product.category)
+                    return categories.some(c => c.parentId === selectedCat.id && c.slug === product.category)
                 }
                 return false
             })()
@@ -232,7 +237,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 })
             return matchesCategory && matchesSearch && matchesSale && matchesBrand && matchesColor
         })
-    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, selectedColors, categories, locale])
+    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, selectedColors, categoryMap, categories, locale])
 
     const getEffectivePrice = (product: Product): number | null => {
         if (product.onSale && product.salePrice) return parseFloat(product.salePrice)
@@ -276,9 +281,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         })
     }, [filteredProducts, sortBy, locale])
 
-    // Build flat navigable items for category dropdown (for keyboard nav)
-    const categoryNavItems = useMemo(() => {
-        const searchTerm = categoryDropdownSearch.toLowerCase()
+    // Expensive memo — rebuilds only when categories/products/expansion state changes (NOT on search keystrokes)
+    const allCategoryNavItems = useMemo(() => {
         const items: Array<{ id: string; label: string; href: string; isChild: boolean; isActive: boolean; childCount?: number; productCount?: number }> = []
 
         // Count products per category slug
@@ -294,9 +298,6 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         for (const parent of parents) {
             const children = categories.filter(c => c.parentId === parent.id)
             const parentName = getLocalizedName(parent)
-            const matchesSearch = !searchTerm || parentName.toLowerCase().includes(searchTerm) ||
-                children.some(c => getLocalizedName(c).toLowerCase().includes(searchTerm))
-            if (!matchesSearch) continue
 
             const isParentActive = selectedCategory === parent.slug || initialCategory === parent.slug
             const parentProductCount = children.length > 0
@@ -305,10 +306,9 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             items.push({ id: parent.id, label: parentName, href: `/products/category/${parent.slug}`, isChild: false, isActive: isParentActive, childCount: children.length > 0 ? children.length : undefined, productCount: parentProductCount })
 
             const isExpanded = expandedCategories.has(parent.id)
-            if (children.length > 0 && (isExpanded || searchTerm)) {
+            if (children.length > 0 && isExpanded) {
                 for (const child of children) {
                     const childName = getLocalizedName(child)
-                    if (searchTerm && !childName.toLowerCase().includes(searchTerm) && !parentName.toLowerCase().includes(searchTerm)) continue
                     const isChildActive = selectedCategory === child.slug || initialCategory === child.slug
                     items.push({ id: child.id, label: childName, href: `/products/category/${parent.slug}/${child.slug}`, isChild: true, isActive: isChildActive, productCount: countBySlug[child.slug] || 0 })
                 }
@@ -320,12 +320,22 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         const orphans = categories.filter(c => c.parentId && !parentIds.has(c.parentId))
         for (const orphan of orphans) {
             const orphanName = getLocalizedName(orphan)
-            if (searchTerm && !orphanName.toLowerCase().includes(searchTerm)) continue
             items.push({ id: orphan.id, label: orphanName, href: `/products/category/${orphan.slug}`, isChild: false, isActive: selectedCategory === orphan.slug, productCount: countBySlug[orphan.slug] || 0 })
         }
 
         return items
-    }, [categories, categoryDropdownSearch, expandedCategories, selectedCategory, initialCategory, t, locale, products])
+    }, [categories, expandedCategories, selectedCategory, initialCategory, t, locale, products])
+
+    // Cheap memo — just filters pre-built items on search keystrokes
+    const categoryNavItems = useMemo(() => {
+        if (!categoryDropdownSearch) return allCategoryNavItems
+        const searchTerm = categoryDropdownSearch.toLowerCase()
+        // When searching, also expand children so they appear in results
+        return allCategoryNavItems.filter(item => {
+            if (item.id === "_all") return true
+            return item.label.toLowerCase().includes(searchTerm)
+        })
+    }, [allCategoryNavItems, categoryDropdownSearch])
 
     // Reset active index on search change
     useEffect(() => {
@@ -368,15 +378,11 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         }
     }
 
-    const getCategoryColor = (categorySlug: string) => {
-        const category = categories.find((c) => c.slug === categorySlug)
-        return category?.color || "gray"
-    }
+    const getCategoryColor = (categorySlug: string) => categoryMap.get(categorySlug)?.color || "gray"
 
     const getCategoryName = (categorySlug: string) => {
-        const category = categories.find((c) => c.slug === categorySlug)
-        if (!category) return categorySlug
-        return getLocalizedName(category)
+        const cat = categoryMap.get(categorySlug)
+        return cat ? getLocalizedName(cat) : categorySlug
     }
 
     const formatPrice = (product: Product) => {
@@ -420,7 +426,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             type="text"
                             placeholder={t("search")}
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => { const val = e.target.value; startTransition(() => setSearchQuery(val)) }}
                             className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                         />
                     </div>
@@ -662,8 +668,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                         <p>{t("noProducts")}</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {sortedProducts.map((product) => {
+                    <div className={`grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 ${isPending ? "opacity-60 transition-opacity" : ""}`}>
+                        {sortedProducts.map((product, productIndex) => {
                             const name = getLocalizedName(product)
                             const desc = getLocalizedDesc(product)
                             const categoryColor = getCategoryColor(product.category)
@@ -687,6 +693,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                             <img
                                                 src={product.image}
                                                 alt={name}
+                                                loading={productIndex < 6 ? "eager" : "lazy"}
                                                 className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
@@ -717,8 +724,10 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         {(product.featured || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && (
                                             <div className="absolute top-3 left-3 flex flex-wrap gap-1">
                                                 {product.featured && (
-                                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
-                                                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white fill-white" />
+                                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                        <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                                        </svg>
                                                     </div>
                                                 )}
                                                 {(Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
@@ -775,7 +784,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         {product.bestSeller && (
                                             <div className="absolute bottom-3 right-3">
                                                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+                                                    <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                     {t("bestSeller")}
                                                 </span>
                                             </div>
@@ -837,28 +846,21 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                     </span>
                                                 )}
                                             </div>
-                                            {product.priceType !== "quote" && (
-                                                !["in_stock", "pre_order"].includes(product.status) ? (
-                                                    <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-400 text-xs font-medium group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-all whitespace-nowrap">
-                                                        <Bell className="w-3.5 h-3.5 shrink-0" />
-                                                        {t("notifyMeShort")}
-                                                    </span>
-                                                ) : product.fileType === "digital" ? (
-                                                    <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium group-hover:bg-emerald-500/30 transition-all whitespace-nowrap">
-                                                        <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
-                                                        {t("buyNow")}
-                                                    </span>
-                                                ) : product.fileType === "service" ? (
-                                                    <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium group-hover:bg-amber-500/30 transition-all whitespace-nowrap">
-                                                        <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                                                        {t("getQuote")}
-                                                    </span>
-                                                ) : (
-                                                    <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium group-hover:bg-purple-500/30 transition-all whitespace-nowrap">
-                                                        <Package className="w-3.5 h-3.5 shrink-0" />
-                                                        {t("orderNow")}
-                                                    </span>
-                                                )
+                                            {!["in_stock", "pre_order"].includes(product.status) ? (
+                                                <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-400 text-xs font-medium group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-all whitespace-nowrap">
+                                                    <Bell className="w-3.5 h-3.5 shrink-0" />
+                                                    {t("notifyMeShort")}
+                                                </span>
+                                            ) : product.priceType === "fixed" && product.fileType !== "service" ? (
+                                                <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium group-hover:bg-emerald-500/30 transition-all whitespace-nowrap">
+                                                    <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
+                                                    {t("buyNow")}
+                                                </span>
+                                            ) : (
+                                                <span className="w-full sm:w-auto flex sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium group-hover:bg-amber-500/30 transition-all whitespace-nowrap">
+                                                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                                                    {t("getQuote")}
+                                                </span>
                                             )}
                                         </div>
                                     </div>

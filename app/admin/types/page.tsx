@@ -221,7 +221,7 @@ export default function TypesPage() {
           data={types}
           columns={columns}
           searchPlaceholder={t("searchPlaceholder")}
-          emptyMessage={t("noTypes")}
+          emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noTypes")}</p><p className="text-xs text-gray-600">Create content types to categorize news and services</p></div>}
           renderMobileCard={(item: ContentType) => (
             <>
               <div className="flex items-center justify-between gap-2">

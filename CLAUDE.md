@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm run dev          # Start dev server (http://localhost:3000)
-npm run build        # Prisma generate + DB push + Next.js build
+npm run build        # Prisma generate + Next.js build
 npm run lint         # ESLint (flat config, Next.js core-web-vitals + typescript)
 npm run start        # Start production server
 npm run postinstall  # Prisma generate (runs automatically after npm install)
@@ -15,6 +15,8 @@ npm run db:generate  # Regenerate Prisma client
 npm run db:push      # Push schema changes to DB
 npm run db:studio    # Open Prisma Studio GUI
 npm run db:seed      # Seed database (npx tsx prisma/seed.ts)
+
+npm run deploy:clean     # Deploy to Vercel without build cache (vercel --force)
 
 npm run blob:cleanup     # Delete orphaned Vercel Blob files
 npm run blob:cleanup:dry # Dry run of blob cleanup
@@ -71,6 +73,7 @@ No test framework is configured.
 - Admin CRUD routes in `app/api/admin/` (types, products, categories, brands, content, banners, menu, orders, quotes, users, roles, users/permissions, coupons, notifications, notification-templates)
 - HTTP methods per route: GET (list/filter), POST (create), PUT (update by ID), PATCH (bulk operations like reordering, or `toggleField` for single-field boolean updates), DELETE (by ID in query params)
 - **`PATCH /api/admin/products`** with `action: "toggleField"` — updates a single boolean field (`published`, `featured`, `bestSeller`) by ID with permission check and audit log. Validates `value` is boolean. Used for optimistic UI toggles in the admin products table (⭐/🏆/👁 buttons with `stopPropagation`)
+- **`GET /api/admin/products/export`** — downloads all products as CSV with UTF-8 BOM (for Excel Cyrillic support). Columns: SKU, Name (EN/BG/ES), Category, Brand, Type, Status, Price, Sale Price, On Sale, Price Type, Currency, Featured, Best Seller, Published, Tags (pipe-separated), Created At, Slug. Requires `products.view` permission
 - Error format: `{ error: "message" }` with appropriate HTTP status
 - No optimistic updates — refetch after mutations (exception: products toggleField uses optimistic UI with revert on failure)
 
@@ -115,7 +118,8 @@ No test framework is configured.
 
 ### Pages
 
-- **Homepage** (`app/page.tsx`): hero carousel, featured products with badges (NEW/Best Seller/Featured), news section, featured cards. Product carousel (CSS scroll-snap) auto-scrolls when >4 products. Best seller badge controlled by admin `bestSeller` toggle on Product model
+- **Homepage** (`app/page.tsx`): hero carousel, featured products with badges (NEW/Best Seller/Featured), news section, featured cards. Product carousel (CSS scroll-snap) auto-scrolls when >4 products. Best seller badge controlled by admin `bestSeller` toggle on Product model. `RecentlyViewedSection` client component rendered between products and news — reads `d4d-recently-viewed` localStorage key, shows nothing until user visits a product page
+- **Recently Viewed** (`lib/recentlyViewed.ts`, `app/components/RecentlyViewedTracker.tsx`, `app/components/RecentlyViewedSection.tsx`): `RecentlyViewedTracker` (invisible client component) on product detail page saves product data to localStorage on mount (all 3 locale names, category color/names, brand, status, prices, URL). `RecentlyViewedSection` reads localStorage client-side only (null init prevents hydration mismatch), renders carousel (mobile >4 items) or 4-column grid (desktop), max 8 items displayed, max 10 stored
 - **Products** (`app/products/`): catalog with filtering, detail pages, digital download. Hierarchical SEO URLs: `/products/[parent-category]/[subcategory]/[brand]/[product-slug]`. Catch-all route `app/products/[...slug]/page.tsx` with 301 redirect from old flat URLs. URL builder utility: `lib/productUrl.ts` (`buildProductUrl()`, `buildProductUrlFromDb()`, `buildProductUrlsBatch()`)
 - **Brands** (`app/brands/`): listing page with brand cards + detail page (`/brands/[slug]`) with logo, title (aligned), rich description, and filtered ProductCatalog
 - **News** (`app/news/`): listing and detail pages with modal view
@@ -148,6 +152,7 @@ No test framework is configured.
 - Admin sidebar has live pending quotes badge (30s polling via `data.pendingCount`), mobile hamburger menu with drawer overlay
 - Admin pages: dashboard, products, categories, brands, orders, quotes, content, banners, menu, types, media, coupons, notifications, users, roles, audit logs
 - **Admin Quotes** (`/admin/quotes`): server-side pagination (page/limit/search/sort params), extracted `QuoteDetailModal` component with 2 tabs (Details + Conversation & Reply). Features: waiting time column with color-coded badges (blue < 24h, amber 1-3d, red pulsing 3+d), urgency filter row (client-side on `updatedAt`), sort toggle (newest/oldest first via API `sort=oldest` → `orderBy: updatedAt asc`), needs-reply pulsing dot, copy-to-clipboard buttons, localized chat messages via `localizeMessage()`, coupon picker, view tracking. Mobile cards show all badges.
+- **Admin dashboard** (`/admin`): stats cards, orders chart, recent orders, recent users, recent activity log (last 7 `AuditLog` entries — colored action badge + resource + record title + user + relative time, "View All" links to audit logs)
 - **Audit logs** (`/admin/audit-logs`): action badges with icons (Plus/Pencil/Trash2), resource badges with matching sidebar icons (Package, FileText, etc.) via `ACTION_STYLES` and `RESOURCE_STYLES` maps
 
 ### Frontend Components
@@ -247,9 +252,13 @@ No test framework is configured.
 
 ### Payments
 
-- **Stripe** checkout for digital products, webhook at `/api/checkout/webhook` creates `DigitalPurchase` records. Supports quantity (1-99, validated server-side). Server validates `inStock` before creating session
-- **Coupon support**: checkout accepts `couponCode`, validates server-side, applies discount, records `CouponUsage` after payment
-- **Quantity selector**: [-] [qty] [+] buttons on product detail page for all product types (digital/service/physical). Passed to Stripe checkout and QuoteForm
+- **Stripe** checkout for digital and physical fixed-price products. Webhook at `/api/checkout/webhook` creates `DigitalPurchase` (digital) or `Order` (physical) records. Supports quantity (1-99, validated server-side). Server validates `in_stock`/`pre_order` before creating session
+- **Single-item "Buy Now"**: `/api/checkout` — express checkout from product detail page. Supports coupon codes for digital products. `fileType` and `nameEn` in Stripe metadata so webhook can route correctly
+- **Cart checkout**: `lib/cart.ts` localStorage helpers (`d4d-cart` key). CartDrawer slides in from right. `/api/checkout/cart` creates multi-item Stripe session (validates products, enforces single currency, `metadata.type="cart"`)
+- **Webhook routing**: detects `metadata.type === "cart"` BEFORE the `!productId` guard. Cart items loop: digital → `DigitalPurchase`, physical → `Order` (uses `generateOrderNumber()`, stores session ID in `notes`)
+- **Button logic**: `priceType === "fixed"` + `fileType !== "service"` → Add to Cart + Buy Now (emerald). Service → Get Quote (amber). Non-fixed physical → Get Quote (amber). Consistent across ProductActions (detail) and all 5 card locations
+- **Coupon support**: single-item "Buy Now" only (digital products). Cart checkout v1 has no coupon input
+- **Quantity selector**: [-] [qty] [+] on product detail for all types. Passed to Stripe checkout and QuoteForm
 - Downloads: token-based (32 hex bytes), max 3 downloads, 7-day expiring links
 - Currency mapping: BGN→bgn, EUR→eur, USD→usd
 
@@ -317,7 +326,8 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 - **GA4 / Meta Pixel tracking**: needs tracking IDs from admin
 - **Product reviews/ratings**: user reviews with star ratings on product pages
 - **Testimonials section**: customer testimonials on homepage
-- **GA4 / Meta Pixel tracking**: needs tracking IDs from admin (still pending)
+- **Free shipping threshold**: "Add X more for free shipping" progress bar in CartDrawer. Threshold + enabled toggle configurable from admin panel (new SiteSettings/key-value model). Per-currency support
+- **Coupon code in cart**: Cart v1 skipped coupons (product-specific restrictions make multi-item application complex). Future: add coupon field to CartDrawer that validates against cart items, or enable Stripe-native promotion codes
 
 ### Postponed
 - **Live chat widget**: Tawk.to (free) — script tag integration, deferred

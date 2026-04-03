@@ -1,4 +1,30 @@
 {
+  "cart": {
+    "title": "Количка",
+    "empty": "Количката ви е празна",
+    "emptySubtitle": "Добавете продукти за начало",
+    "browseProducts": "Разгледай продукти",
+    "addToCart": "Добави в количката",
+    "addedToCart": "Добавено в количката!",
+    "buyNow": "Купи сега",
+    "checkout": "Плати",
+    "continueShopping": "Продължи пазаруването",
+    "remove": "Премахни",
+    "subtotal": "Междинна сума",
+    "items": "{count} артикула",
+    "item": "1 артикул",
+    "upsellAdded": "Добавено в количката!",
+    "upsellTitle": "Клиентите купиха и",
+    "upsellViewCart": "Виж количката",
+    "upsellContinue": "Продължи пазаруването",
+    "youMightLike": "Може да харесаш",
+    "tabCart": "Кошница",
+    "tabUpsell": "Препоръчани",
+    "freeShippingUnlocked": "🎉 Получихте безплатна доставка!",
+    "freeShippingAdd": "Добавете още {amount} {currency} за безплатна доставка",
+    "orderConfirmed": "Поръчката е потвърдена!",
+    "orderConfirmedDesc": "Ще се свържем с вас за доставката."
+  },
   "nav": {
     "services": "Услуги",
     "products": "Продукти",
@@ -93,6 +119,13 @@
     "termsLink": "Условия за ползване",
     "privacyLink": "Политика за поверителност"
   },
+  "cookieConsent": {
+    "title": "Предпочитания за бисквитки",
+    "message": "Използваме основни бисквитки за автентикация и аналитика за подобряване на вашето преживяване. Вижте нашата",
+    "privacyLink": "Политика за поверителност",
+    "accept": "Приемам всички",
+    "decline": "Отказвам"
+  },
   "menu": {
     "noContent": "Няма налично съдържание",
     "backToMenu": "Обратно към {menu}"
@@ -162,6 +195,7 @@
       "roles": "Роли",
       "brands": "Марки",
       "auditLogs": "Одит",
+      "settings": "Настройки",
       "logout": "Изход",
       "idleWarningTitle": "Сесията изтича",
       "idleWarningMessage": "Ще бъдете излезли след {seconds} секунди поради неактивност.",
@@ -179,7 +213,8 @@
       "confirmBulkDelete": "Сигурни ли сте, че искате да изтриете {count} елемента? Това не може да бъде отменено.",
       "bulkDeleteSuccess": "{count} елемента изтрити",
       "bulkPublishSuccess": "{count} елемента публикувани",
-      "bulkUnpublishSuccess": "{count} елемента скрити"
+      "bulkUnpublishSuccess": "{count} елемента скрити",
+      "bulkSetStatusSuccess": "{count} продукта обновени"
     },
     "search": {
       "placeholder": "Търсене на страници, продукти, поръчки...",
@@ -667,7 +702,9 @@
       "statusCancelled": "Отказана",
       "copied": "Копирано!",
       "clickToCopy": "Кликни за копиране",
-      "deleteFailed": "Грешка при изтриване на поръчка"
+      "deleteFailed": "Грешка при изтриване на поръчка",
+      "saveFailed": "Грешка при запазване на поръчка",
+      "updateFailed": "Грешка при обновяване на поръчка"
     },
     "users": {
       "title": "Управление на потребители",
@@ -862,6 +899,7 @@
       "slug": "Slug",
       "slugHelp": "URL-friendly идентификатор (напр. news, service)",
       "name": "Име",
+      "description": "Описание",
       "color": "Цвят",
       "order": "Ред",
       "actions": "Действия",
@@ -936,9 +974,13 @@
       "homepage": "Начало",
       "deleteFailed": "Грешка при изтриване на продукт",
       "updateFailed": "Грешка при обновяване на продукт",
+      "reorderFailed": "Грешка при пренареждане на продукти",
       "brand": "Марка",
       "noBrand": "— Без марка —",
       "manageBrands": "Управление на марки",
+      "allCategoriesFilter": "Всички категории",
+      "categories": "категории",
+      "selectAll": "Избери всички",
       "allBrandsFilter": "Всички марки",
       "colorVariants": "Цветови варианти",
       "addColor": "Добави цвят",
@@ -946,7 +988,9 @@
       "colorName": "Име на цвят",
       "colorHex": "Hex код",
       "variantImage": "Изображение",
-      "noVariants": "Няма добавени цветови варианти"
+      "noVariants": "Няма добавени цветови варианти",
+      "exportCSV": "Експорт CSV",
+      "exportFailed": "Грешка при експорт. Моля, опитайте отново."
     },
     "brands": {
       "title": "Управление на марки",
@@ -984,6 +1028,7 @@
       "slugHelp": "URL-friendly идентификатор",
       "name": "Име",
       "description": "Описание",
+      "pageTitle": "Заглавие на страницата",
       "image": "Изображение",
       "color": "Цвят",
       "order": "Ред",
@@ -1085,6 +1130,19 @@
     "common": {
       "uploadFailed": "Качването не успя",
       "uploadImageFailed": "Неуспешно качване на изображение"
+    },
+    "settings": {
+      "title": "Настройки",
+      "subtitle": "Конфигурация на сайта",
+      "freeShippingSection": "Безплатна доставка",
+      "freeShippingSectionDesc": "Покажи лента за напредък в количката за по-големи поръчки",
+      "enableThreshold": "Активирай праг за безплатна доставка",
+      "threshold": "Минимална сума на поръчка",
+      "preview": "Клиенти, поръчали над {threshold} {currency}, получават безплатна доставка",
+      "save": "Запази настройките",
+      "saved": "Настройките са запазени!",
+      "saveFailed": "Грешка при запазването",
+      "thresholdRequired": "Моля въведете валидна сума"
     }
   },
   "brandsPage": {
@@ -1100,7 +1158,7 @@
     "subtitle": "Разгледайте нашите продукти и услуги за 3D печат",
     "allProducts": "Всички продукти",
     "allCategories": "Всички категории",
-    "featured": "Препоръчани",
+    "featured": "Препоръчан",
     "search": "Търси продукти...",
     "noProducts": "Няма намерени продукти",
     "category": "Категория",
@@ -1200,7 +1258,9 @@
   "homeProducts": {
     "title": "Нашите продукти",
     "subtitle": "Разгледайте нашата гама от продукти за 3D печат",
-    "viewAll": "Виж всички продукти"
+    "viewAll": "Виж всички продукти",
+    "recentlyViewedTitle": "Наскоро разгледани",
+    "recentlyViewedSubtitle": "Продукти, които разгледахте"
   },
   "checkout": {
     "title": "Плащане",

@@ -6,6 +6,7 @@ import { X, Save, Loader2 } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
 import { COLOR_CLASSES, COLOR_OPTIONS } from "@/lib/colors"
 import { RichTextEditor } from "./RichTextEditor"
+import { ColorPicker } from "./ColorPicker"
 
 // Re-export for backwards compatibility
 export { COLOR_CLASSES, COLOR_OPTIONS }
@@ -131,9 +132,9 @@ export function TypeForm({
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto bg-[#1a1a2e] shadow-2xl">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 pt-2 sm:pt-4">
+      <div className="rounded-2xl border border-white/10 w-full max-w-[95vw] sm:max-w-lg max-h-[85svh] flex flex-col bg-[#0d0d1a] shadow-2xl">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 shrink-0">
           <h2 className="text-xl font-bold text-white">
             {initialData?.id ? t("editType") : t("addType")}
           </h2>
@@ -145,44 +146,32 @@ export function TypeForm({
           </button>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("slug")} <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) => updateField("slug", e.target.value)}
-                placeholder="e.g., news"
-                className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                  errors.slug ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
-                }`}
-              />
-              {errors.slug ? (
-                <p className="text-xs text-red-400 mt-1">{errors.slug}</p>
-              ) : (
-                <p className="text-xs text-gray-500 mt-1">{t("slugHelp")}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("color")}
-              </label>
-              <select
-                value={formData.color}
-                onChange={(e) => updateField("color", e.target.value)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-              >
-                {COLOR_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5 sm:space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              {t("slug")} <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.slug}
+              onChange={(e) => updateField("slug", e.target.value)}
+              placeholder="e.g., news"
+              className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                errors.slug ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
+              }`}
+            />
+            {errors.slug ? (
+              <p className="text-xs text-red-400 mt-1">{errors.slug}</p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-1">{t("slugHelp")}</p>
+            )}
           </div>
+
+          <ColorPicker
+            label={t("color")}
+            value={formData.color}
+            onChange={(color) => updateField("color", color)}
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2">

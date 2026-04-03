@@ -7,9 +7,11 @@ import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 import { headers } from "next/headers"
 import { ProductDetailClient } from "../../components/ProductDetailClient"
+import { RecentlyViewedTracker } from "../../components/RecentlyViewedTracker"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { buildProductUrl } from "@/lib/productUrl"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Check } from "lucide-react"
+import { RelatedProductsCarousel, type RelatedCard } from "@/app/components/RelatedProductsCarousel"
 import { sanitizeHtml } from "@/lib/sanitize"
 import type { Product } from "@prisma/client"
 import type { Metadata } from "next"
@@ -184,7 +186,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     if (product.relatedProductIds && product.relatedProductIds.length > 0) {
         relatedProducts = await prisma.product.findMany({
             where: { id: { in: product.relatedProductIds }, published: true },
-            include: { brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } } },
+            include: {
+                brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } },
+                variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+            },
             take: 6,
         })
     } else {
@@ -207,9 +212,18 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             },
             take: 4,
             orderBy: [{ featured: "desc" }, { order: "asc" }],
-            include: { brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } } },
+            include: {
+                brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } },
+                variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+            },
         })
     }
+
+    // Compute display images for related products (first available variant image, or main product image)
+    const relatedForDisplay = relatedProducts.map(p => ({
+        ...p,
+        image: p.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || p.image,
+    }))
 
     // Build URLs for related products (handle cross-category products)
     const relatedProductUrls: Record<string, string> = {}
@@ -288,6 +302,28 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         }
     }
 
+    const relatedCards: RelatedCard[] = relatedForDisplay.map(r => ({
+        id: r.id,
+        name: locale === "bg" ? (r.nameBg || r.nameEn) : locale === "es" ? (r.nameEs || r.nameEn) : r.nameEn,
+        brandName: r.brand
+            ? (locale === "bg" ? (r.brand.nameBg || r.brand.nameEn) : locale === "es" ? (r.brand.nameEs || r.brand.nameEn) : r.brand.nameEn)
+            : null,
+        desc: getLocalizedDesc(r),
+        image: r.image,
+        price: r.price ? r.price.toString() : null,
+        salePrice: r.salePrice ? r.salePrice.toString() : null,
+        onSale: r.onSale,
+        currency: r.currency,
+        priceType: r.priceType,
+        fileType: r.fileType,
+        status: r.status,
+        featured: r.featured,
+        bestSeller: r.bestSeller,
+        isNew: (Date.now() - new Date(r.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000,
+        url: relatedProductUrls[r.id] || `/products/${r.slug}`,
+        coupon: relatedCouponMap[r.id] ?? null,
+    }))
+
     const productName = getLocalizedName(product)
     const productDesc = getLocalizedDesc(product)
     const categoryName = category ? getLocalizedName(category) : product.category
@@ -365,6 +401,38 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         })),
     }
 
+    const NEW_CUTOFF = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const trackerProduct = {
+        id: product.id,
+        productUrl: canonicalPath,
+        nameEn: product.nameEn,
+        nameBg: product.nameBg,
+        nameEs: product.nameEs,
+        descEn: product.descEn,
+        descBg: product.descBg,
+        descEs: product.descEs,
+        image: product.variants.find(v => ["in_stock", "pre_order"].includes(v.status))?.image || product.image,
+        price: product.price?.toString() || "0",
+        salePrice: product.salePrice?.toString() || null,
+        onSale: product.onSale,
+        currency: product.currency,
+        priceType: product.priceType,
+        fileType: product.fileType,
+        category: product.category,
+        categoryColor: category?.color || "emerald",
+        categoryNameEn: category?.nameEn || product.category,
+        categoryNameBg: category?.nameBg || product.category,
+        categoryNameEs: category?.nameEs || product.category,
+        status: product.status,
+        featured: product.featured,
+        bestSeller: product.bestSeller,
+        isNew: product.createdAt >= NEW_CUTOFF,
+        brandNameEn: product.brand?.nameEn || null,
+        brandNameBg: product.brand?.nameBg || null,
+        brandNameEs: product.brand?.nameEs || null,
+        brandSlug: product.brand?.slug || null,
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             {/* JSON-LD: Product + Breadcrumb */}
@@ -376,6 +444,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             <BackgroundOrbs />
 
             <Header />
+            <RecentlyViewedTracker product={trackerProduct} />
 
             {/* Page Header */}
             <section className="relative pt-16 sm:pt-24 md:pt-32 pb-8 px-4">
@@ -499,9 +568,14 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                 : product.status === "sold_out" ? t("products.soldOut")
                                 : t("products.outOfStock")}
                             </span>
+                            {product.featured && (
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-violet-500/90 text-white shadow-lg">
+                                    ⭐ {t("products.featured")}
+                                </span>
+                            )}
                             {product.bestSeller && (
                                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                    <svg className="w-2.5 h-2.5 md:w-3 md:h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
+                                    <Check className="w-2.5 h-2.5 md:w-3 md:h-3" />
                                     {t("products.bestSeller")}
                                 </span>
                             )}
@@ -523,184 +597,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                     )}
 
                     {/* Related Products */}
-                    {relatedProducts.length > 0 && (
-                        <div className="mt-8 md:mt-16">
-                            <h2 className="text-lg md:text-2xl font-bold text-white mb-4 md:mb-8">
-                                {t("products.relatedProducts")}
-                            </h2>
-                            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 md:gap-6 relative z-10">
-                                {relatedProducts.map((related) => {
-                                    const relatedName = getLocalizedName(related)
-                                    const relatedPrice = related.price
-                                        ? `${parseFloat(related.price.toString()).toFixed(2)} ${related.currency}`
-                                        : "-"
-
-                                    // Calculate discount percentage for related products
-                                    const relatedDiscountPercent = related.onSale && related.price && related.salePrice
-                                        ? Math.round((1 - parseFloat(related.salePrice.toString()) / parseFloat(related.price.toString())) * 100)
-                                        : 0
-
-                                    return (
-                                        <Link
-                                            key={related.id}
-                                            href={relatedProductUrls[related.id] || `/products/${related.slug}`}
-                                            className="group glass rounded-xl md:rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all"
-                                        >
-                                            <div className="relative h-28 md:h-40 overflow-hidden bg-white/5">
-                                                {related.image ? (
-                                                    <img
-                                                        src={related.image}
-                                                        alt={relatedName}
-                                                        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                                        </svg>
-                                                    </div>
-                                                )}
-                                                {/* Status overlay for related products */}
-                                                {(related.status === "sold_out" || related.status === "out_of_stock" || related.status === "coming_soon") && (
-                                                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                                                        <div className={`px-3 py-1 -rotate-12 shadow-lg ${
-                                                            related.status === "sold_out" ? "bg-red-600/80"
-                                                            : related.status === "coming_soon" ? "bg-blue-600/80"
-                                                            : "bg-gray-600/80"
-                                                        }`}>
-                                                            <span className="text-white font-bold text-[10px] tracking-wider uppercase">
-                                                                {related.status === "sold_out" ? t("products.soldOut")
-                                                                : related.status === "coming_soon" ? t("products.comingSoon")
-                                                                : t("products.outOfStock")}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {/* Top-left: Featured + NEW badges */}
-                                                {(related.featured || (Date.now() - new Date(related.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && (
-                                                    <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-                                                        {related.featured && (
-                                                            <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
-                                                                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                                </svg>
-                                                            </div>
-                                                        )}
-                                                        {(Date.now() - new Date(related.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
-                                                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-cyan-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">NEW</span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {/* Best Seller badge */}
-                                                {related.bestSeller && (
-                                                    <div className="absolute bottom-2 right-2">
-                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg"><svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>{t("products.bestSeller")}</span>
-                                                    </div>
-                                                )}
-                                                {/* Sale badges for related products */}
-                                                {related.onSale && (
-                                                    <div className="absolute top-2 right-2 flex gap-1">
-                                                        <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">
-                                                            {t("products.onSale")}
-                                                        </span>
-                                                        {relatedDiscountPercent > 0 && (
-                                                            <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">
-                                                                -{relatedDiscountPercent}%
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {/* Coupon Badge */}
-                                                {relatedCouponMap[related.id] && (
-                                                    <div className="absolute bottom-1.5 left-1.5 md:bottom-2 md:left-2">
-                                                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-orange-500 text-white shadow-lg">
-                                                            <svg className="w-2.5 h-2.5 md:w-3 md:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                                                            </svg>
-                                                            -{relatedCouponMap[related.id].type === "percentage"
-                                                                ? `${relatedCouponMap[related.id].value}%`
-                                                                : `${relatedCouponMap[related.id].value} ${relatedCouponMap[related.id].currency || "EUR"}`}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="p-2 md:p-4">
-                                                <h3 className="font-semibold text-xs md:text-base text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
-                                                    {relatedName}
-                                                </h3>
-                                                {related.brand && (
-                                                    <p className="text-[10px] md:text-xs text-slate-500 font-medium">
-                                                        {getLocalizedName(related.brand)}
-                                                    </p>
-                                                )}
-                                                {(() => {
-                                                    const desc = getLocalizedDesc(related)
-                                                    if (!desc) return null
-                                                    const text = desc.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim()
-                                                    if (!text) return null
-                                                    return (
-                                                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">
-                                                            {text.length > 100 ? text.substring(0, 100) + "..." : text}
-                                                        </p>
-                                                    )
-                                                })()}
-                                                {/* Price */}
-                                                <div className="mt-1 md:mt-2">
-                                                    {related.priceType === "quote" ? (
-                                                        <span className="text-[10px] md:text-sm text-amber-400 font-medium">
-                                                            {t("products.requestQuote")}
-                                                        </span>
-                                                    ) : related.onSale && related.salePrice ? (
-                                                        <div className="flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2">
-                                                            <span className="text-xs md:text-base font-bold text-red-400">
-                                                                {parseFloat(related.salePrice.toString()).toFixed(2)} {related.currency}
-                                                            </span>
-                                                            <span className="text-[10px] md:text-xs text-gray-500 line-through">
-                                                                {relatedPrice}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-xs md:text-base font-bold text-white">
-                                                            {relatedPrice}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {!["in_stock", "pre_order"].includes(related.status) ? (
-                                                    <span className="w-full flex items-center justify-center gap-1.5 mt-1 md:mt-2 px-2 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-cyan-400 text-xs font-medium">
-                                                        <svg className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                                        </svg>
-                                                        {t("products.notifyMeShort")}
-                                                    </span>
-                                                ) : related.fileType === "digital" ? (
-                                                    <span className="w-full flex items-center justify-center gap-1.5 mt-1 md:mt-2 px-2 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium">
-                                                        <svg className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                        </svg>
-                                                        {t("products.buyNow")}
-                                                    </span>
-                                                ) : related.fileType === "service" || related.priceType === "quote" ? (
-                                                    <span className="w-full flex items-center justify-center gap-1.5 mt-1 md:mt-2 px-2 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-medium">
-                                                        <svg className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                                        </svg>
-                                                        {t("products.getQuote")}
-                                                    </span>
-                                                ) : (
-                                                    <span className="w-full flex items-center justify-center gap-1.5 mt-1 md:mt-2 px-2 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs font-medium">
-                                                        <svg className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                                        </svg>
-                                                        {t("products.orderNow")}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </Link>
-                                    )
-                                })}
-                            </div>
-                        </div>
-                    )}
+                    <RelatedProductsCarousel cards={relatedCards} />
 
                     {/* Back Link */}
                     <div className="mt-12 relative z-10">

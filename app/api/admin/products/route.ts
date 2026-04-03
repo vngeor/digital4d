@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
         image: data.image || null,
         gallery: data.gallery || [],
         relatedProductIds: data.relatedProductIds || [],
+        upsellProductIds: data.upsellProductIds || [],
         fileUrl: data.fileUrl || null,
         fileType: data.fileType || "physical",
         featured: data.featured || false,
@@ -300,6 +301,7 @@ export async function PUT(request: NextRequest) {
         image: data.image || null,
         gallery: data.gallery || [],
         relatedProductIds: data.relatedProductIds || [],
+        upsellProductIds: data.upsellProductIds || [],
         fileUrl: data.fileUrl || null,
         fileType: data.fileType || "physical",
         featured: data.featured || false,
@@ -404,7 +406,7 @@ export async function PUT(request: NextRequest) {
       })
     }
 
-    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "relatedProductIds", "fileUrl", "fileType", "featured", "bestSeller", "published", "status", "order"]
+    const productFields = ["slug", "sku", "nameBg", "nameEn", "nameEs", "descBg", "descEn", "descEs", "price", "salePrice", "onSale", "currency", "priceType", "category", "tags", "brandId", "image", "gallery", "relatedProductIds", "upsellProductIds", "fileUrl", "fileType", "featured", "bestSeller", "published", "status", "order"]
     const details = getChangeDetails(oldProduct as Record<string, unknown>, product as Record<string, unknown>, productFields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "products", recordId: product.id, recordTitle: product.nameEn, details }).catch(() => {})
 
@@ -533,6 +535,20 @@ export async function PATCH(request: NextRequest) {
         }
       }
 
+      // Clean up stale upsellProductIds references in other products
+      for (const deletedId of ids) {
+        const refUpsell = await prisma.product.findMany({
+          where: { upsellProductIds: { has: deletedId } },
+          select: { id: true, upsellProductIds: true },
+        })
+        for (const ref of refUpsell) {
+          await prisma.product.update({
+            where: { id: ref.id },
+            data: { upsellProductIds: ref.upsellProductIds.filter(rid => rid !== deletedId) },
+          })
+        }
+      }
+
       for (const p of products) {
         logAuditAction({ userId: session.user.id, action: "delete", resource: "products", recordId: p.id }).catch(() => {})
       }
@@ -562,6 +578,97 @@ export async function PATCH(request: NextRequest) {
       }
 
       return NextResponse.json({ success: true, count: ids.length })
+    }
+
+    if (action === "setStatus") {
+      const { session, error } = await requirePermissionApi("products", "edit")
+      if (error) return error
+
+      const { ids, status } = body
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return NextResponse.json({ error: "IDs array required" }, { status: 400 })
+      }
+
+      const VALID_STATUSES = ["in_stock", "out_of_stock", "coming_soon", "pre_order", "sold_out"]
+      if (!VALID_STATUSES.includes(status)) {
+        return NextResponse.json({ error: "Invalid status value" }, { status: 400 })
+      }
+
+      // Fetch before update — needed to detect in_stock transitions for wishlist notifications
+      const oldProducts = await prisma.product.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, slug: true, status: true, nameBg: true, nameEn: true, nameEs: true },
+      })
+
+      for (const id of ids) {
+        await prisma.product.update({ where: { id }, data: { status } })
+      }
+
+      // Notify wishlist users for products that just became in_stock
+      if (status === "in_stock") {
+        for (const p of oldProducts) {
+          if (p.status !== "in_stock") {
+            notifyStockAvailable(
+              p.id,
+              p.slug,
+              { nameBg: p.nameBg, nameEn: p.nameEn, nameEs: p.nameEs }
+            ).catch((err) => console.error("Failed to send stock available notifications:", err instanceof Error ? err.message : "Unknown"))
+          }
+        }
+      }
+
+      for (const p of oldProducts) {
+        logAuditAction({
+          userId: session.user.id,
+          action: "edit",
+          resource: "products",
+          recordId: p.id,
+          recordTitle: p.nameEn,
+          details: JSON.stringify({ status: { from: p.status, to: status } }),
+        }).catch(() => {})
+      }
+
+      return NextResponse.json({ success: true, count: oldProducts.length })
+    }
+
+    if (action === "toggleField") {
+      const { session, error } = await requirePermissionApi("products", "edit")
+      if (error) return error
+
+      const { id, field, value } = body
+      if (!id || !field) {
+        return NextResponse.json({ error: "Product ID and field required" }, { status: 400 })
+      }
+
+      const allowedFields = ["published", "featured", "bestSeller"]
+      if (!allowedFields.includes(field)) {
+        return NextResponse.json({ error: `Field "${field}" is not toggleable` }, { status: 400 })
+      }
+
+      if (typeof value !== "boolean") {
+        return NextResponse.json({ error: "Value must be a boolean" }, { status: 400 })
+      }
+
+      const oldProduct = await prisma.product.findUnique({ where: { id } })
+      if (!oldProduct) {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 })
+      }
+
+      await prisma.product.update({
+        where: { id },
+        data: { [field]: value },
+      })
+
+      logAuditAction({
+        userId: session.user.id,
+        action: "edit",
+        resource: "products",
+        recordId: id,
+        recordTitle: oldProduct.nameEn,
+        details: JSON.stringify({ [field]: { from: (oldProduct as Record<string, unknown>)[field], to: value } }),
+      }).catch(() => {})
+
+      return NextResponse.json({ success: true })
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 })
@@ -620,6 +727,18 @@ export async function DELETE(request: NextRequest) {
       await prisma.product.update({
         where: { id: ref.id },
         data: { relatedProductIds: ref.relatedProductIds.filter(rid => rid !== id) },
+      })
+    }
+
+    // Clean up stale upsellProductIds references in other products
+    const referencingUpsell = await prisma.product.findMany({
+      where: { upsellProductIds: { has: id } },
+      select: { id: true, upsellProductIds: true },
+    })
+    for (const ref of referencingUpsell) {
+      await prisma.product.update({
+        where: { id: ref.id },
+        data: { upsellProductIds: ref.upsellProductIds.filter(rid => rid !== id) },
       })
     }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
-import { Ticket } from "lucide-react"
+import { Check, Ticket } from "lucide-react"
 
 const COLOR_CLASSES: Record<string, string> = {
     cyan: "bg-cyan-500/20 text-cyan-400",
@@ -152,17 +152,17 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                             <Link
                                 key={product.id}
                                 href={product.productUrl}
-                                className={`group glass rounded-xl overflow-hidden hover:bg-white/10 hover:scale-[1.02] transition-[transform,background-color] duration-300 flex flex-col h-full ${useCarousel ? "snap-start shrink-0 w-[calc(50%-4px)] sm:w-[calc(50%-6px)] lg:w-[calc(25%-15px)]" : ""}`}
+                                className={`group glass rounded-2xl overflow-hidden hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col h-full ${useCarousel ? "snap-start shrink-0 w-[calc(50%-4px)] sm:w-[calc(50%-6px)] lg:w-[calc(25%-15px)]" : ""}`}
                             >
                                 {/* Image */}
-                                <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
+                                <div className="relative h-32 sm:h-40 overflow-hidden bg-white/5">
                                     {product.image ? (
                                         <>
                                             <img
                                                 src={product.image}
                                                 alt={product.name}
                                                 loading="lazy"
-                                                className="w-full h-full object-contain p-2"
+                                                className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
                                         </>
@@ -211,7 +211,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                     {(product.featured || product.isNew) && (
                                         <div className="absolute top-2 left-2 flex flex-wrap gap-1">
                                             {product.featured && (
-                                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
+                                                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg">
                                                     <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                                     </svg>
@@ -229,9 +229,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                     {bestSellerIds.includes(product.id) && (
                                         <div className="absolute bottom-2 right-2">
                                             <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                                </svg>
+                                                <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                 {tProducts("bestSeller")}
                                             </span>
                                         </div>
@@ -261,7 +259,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
 
                                 {/* Content */}
                                 <div className="p-3 sm:p-4 pt-1 flex flex-col flex-1">
-                                    <h3 className="text-sm sm:text-base md:text-lg font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2">
+                                    <h3 className="text-sm sm:text-base md:text-lg font-bold mb-1 group-hover:text-emerald-400 transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] md:min-h-[3.5rem]">
                                         {product.name}
                                     </h3>
                                     {product.brand && (
@@ -308,26 +306,19 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                                 </svg>
                                                 {tProducts("notifyMeShort")}
                                             </span>
-                                        ) : product.fileType === "digital" ? (
+                                        ) : product.priceType === "fixed" && product.fileType !== "service" ? (
                                             <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-medium">
                                                 <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                                 </svg>
                                                 {tProducts("buyNow")}
                                             </span>
-                                        ) : product.fileType === "service" || product.priceType === "quote" ? (
+                                        ) : (
                                             <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/20 text-amber-400 text-[10px] sm:text-xs font-medium">
                                                 <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                                 </svg>
                                                 {tProducts("getQuote")}
-                                            </span>
-                                        ) : (
-                                            <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 text-[10px] sm:text-xs font-medium">
-                                                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                                </svg>
-                                                {tProducts("orderNow")}
                                             </span>
                                         )}
                                     </div>

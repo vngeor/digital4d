@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import prisma from "@/lib/prisma"
+import { auth } from "@/auth"
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -11,8 +12,13 @@ function getStripe() {
 }
 
 export async function POST(request: NextRequest) {
+  const authSession = await auth()
+  if (!authSession?.user?.id) {
+    return NextResponse.json({ error: "Please log in to checkout" }, { status: 401 })
+  }
+
   try {
-    const { productId, email, couponCode, quantity: rawQuantity, packageId, variantId } = await request.json()
+    const { productId, couponCode, quantity: rawQuantity, packageId, variantId } = await request.json()
     const quantity = Math.max(1, Math.min(99, Math.floor(Number(rawQuantity) || 1)))
 
     if (!productId) {
@@ -36,8 +42,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product is not available for purchase" }, { status: 400 })
     }
 
-    if (product.fileType !== "digital") {
-      return NextResponse.json({ error: "Product is not a digital product" }, { status: 400 })
+    if (product.fileType === "service" || product.priceType !== "fixed") {
+      return NextResponse.json({ error: "Product cannot be purchased directly" }, { status: 400 })
     }
 
     // Determine base price — package overrides product price if provided
@@ -98,9 +104,10 @@ export async function POST(request: NextRequest) {
       }
 
       // Per-user limit
-      if (email && coupon.perUserLimit > 0) {
+      const userEmail = authSession.user.email
+      if (userEmail && coupon.perUserLimit > 0) {
         const userUsages = await prisma.couponUsage.count({
-          where: { couponId: coupon.id, email },
+          where: { couponId: coupon.id, email: userEmail },
         })
         if (userUsages >= coupon.perUserLimit) {
           return NextResponse.json({ error: "You have already used this coupon" }, { status: 400 })
@@ -184,10 +191,13 @@ export async function POST(request: NextRequest) {
       mode: "payment",
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/checkout/cancel?product=${product.slug}`,
-      customer_email: email || undefined,
+      customer_email: authSession.user.email || undefined,
       metadata: {
         productId: product.id,
         productSlug: product.slug,
+        fileType: product.fileType || "digital",
+        nameEn: product.nameEn,
+        userId: authSession.user.id,
         ...(couponId ? { couponId, couponCode: couponCode.toUpperCase(), originalPrice: originalPrice.toFixed(2), discountAmount: discountAmount.toFixed(2) } : {}),
       },
     })
