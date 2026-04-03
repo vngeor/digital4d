@@ -604,7 +604,7 @@ export default function ProductsPage() {
     {
       key: "toggles",
       header: "",
-      className: "whitespace-nowrap hidden sm:table-cell w-[70px]",
+      className: "whitespace-nowrap hidden sm:table-cell md:hidden w-[70px]",
       render: (item: Product) => (
         <div className="flex items-center gap-1.5">
           <button
