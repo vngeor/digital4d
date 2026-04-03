@@ -1193,93 +1193,6 @@ export function ProductForm({
               />
             </div>
           )}
-          {/* Related Products */}
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
-            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
-              <Link2 className="w-4 h-4" />
-              Related Products
-            </h3>
-
-            {/* Selected related products tags */}
-            {selectedRelated.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedRelated.map(product => (
-                  <span
-                    key={product.id}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-sm"
-                  >
-                    {product.image && (
-                      <img src={product.image} alt="" className="w-5 h-5 rounded object-cover" />
-                    )}
-                    <span className="max-w-[150px] truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeRelatedProduct(product.id)}
-                      className="ml-0.5 hover:text-red-400 transition-colors"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Search dropdown */}
-            <div ref={relatedDropdownRef} className="relative">
-              <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
-                <Search className="w-4 h-4 text-gray-500" />
-                <input
-                  type="text"
-                  value={relatedSearch}
-                  onChange={(e) => {
-                    setRelatedSearch(e.target.value)
-                    searchRelatedProducts(e.target.value)
-                  }}
-                  onFocus={() => {
-                    setShowRelatedDropdown(true)
-                    loadAllRelatedProducts()
-                  }}
-                  placeholder="Search products to add..."
-                  className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
-                />
-                {searchingRelated && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
-              </div>
-
-              {showRelatedDropdown && (
-                <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-[#1e1e36] border border-white/10 shadow-xl">
-                  {relatedResults
-                    .filter(p => p.id !== formData.id) // Exclude current product
-                    .map(product => {
-                      const isSelected = formData.relatedProductIds.includes(product.id)
-                      return (
-                        <button
-                          key={product.id}
-                          type="button"
-                          onClick={() => toggleRelatedProduct(product)}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
-                            isSelected ? "bg-emerald-500/10 text-emerald-300" : "text-gray-300 hover:bg-white/5"
-                          }`}
-                        >
-                          {product.image ? (
-                            <img src={product.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
-                          ) : (
-                            <div className="w-8 h-8 rounded bg-white/10 flex-shrink-0" />
-                          )}
-                          <span className="flex-1 truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
-                          {isSelected && <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
-                        </button>
-                      )
-                    })}
-                  {relatedResults.length === 0 && !searchingRelated && (
-                    <p className="px-3 py-3 text-sm text-gray-500 text-center">No products found</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <p className="text-xs text-gray-500">Select products to show as related. If empty, same-category products are shown automatically.</p>
-          </div>
-
           {/* Package Sizes */}
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
@@ -1435,91 +1348,6 @@ export function ProductForm({
             )}
           </div>
 
-          {/* Upsell Products */}
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
-            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              Upsell Products
-            </h3>
-
-            {selectedUpsell.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedUpsell.map(product => (
-                  <span
-                    key={product.id}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-sm"
-                  >
-                    {product.image && (
-                      <img src={product.image} alt="" className="w-5 h-5 rounded object-cover" />
-                    )}
-                    <span className="max-w-[150px] truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeUpsellProduct(product.id)}
-                      className="ml-0.5 hover:text-red-400 transition-colors"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div ref={upsellDropdownRef} className="relative">
-              <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
-                <Search className="w-4 h-4 text-gray-500" />
-                <input
-                  type="text"
-                  value={upsellSearch}
-                  onChange={(e) => {
-                    setUpsellSearch(e.target.value)
-                    searchUpsellProducts(e.target.value)
-                  }}
-                  onFocus={() => {
-                    setShowUpsellDropdown(true)
-                    loadAllUpsellProducts()
-                  }}
-                  placeholder="Search products to upsell..."
-                  className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
-                />
-                {searchingUpsell && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
-              </div>
-
-              {showUpsellDropdown && (
-                <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-[#1e1e36] border border-white/10 shadow-xl">
-                  {upsellResults
-                    .filter(p => p.id !== formData.id)
-                    .map(product => {
-                      const isSelected = formData.upsellProductIds.includes(product.id)
-                      return (
-                        <button
-                          key={product.id}
-                          type="button"
-                          onClick={() => toggleUpsellProduct(product)}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
-                            isSelected ? "bg-amber-500/10 text-amber-300" : "text-gray-300 hover:bg-white/5"
-                          }`}
-                        >
-                          {product.image ? (
-                            <img src={product.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
-                          ) : (
-                            <div className="w-8 h-8 rounded bg-white/10 flex-shrink-0" />
-                          )}
-                          <span className="flex-1 truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
-                          {isSelected && <Check className="w-4 h-4 text-amber-400 flex-shrink-0" />}
-                        </button>
-                      )
-                    })}
-                  {upsellResults.length === 0 && !searchingUpsell && (
-                    <p className="px-3 py-3 text-sm text-gray-500 text-center">No products found</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <p className="text-xs text-gray-500">Products shown in the Add to Cart popup. Pick high-margin items. If empty, same-category products shown automatically.</p>
-          </div>
-
           {/* Color Variants */}
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
@@ -1650,6 +1478,178 @@ export function ProductForm({
                 })}
               </div>
             )}
+          </div>
+
+          {/* Related Products */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+              <Link2 className="w-4 h-4" />
+              Related Products
+            </h3>
+
+            {/* Selected related products tags */}
+            {selectedRelated.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedRelated.map(product => (
+                  <span
+                    key={product.id}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-sm"
+                  >
+                    {product.image && (
+                      <img src={product.image} alt="" className="w-5 h-5 rounded object-cover" />
+                    )}
+                    <span className="max-w-[150px] truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeRelatedProduct(product.id)}
+                      className="ml-0.5 hover:text-red-400 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Search dropdown */}
+            <div ref={relatedDropdownRef} className="relative">
+              <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
+                <Search className="w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  value={relatedSearch}
+                  onChange={(e) => {
+                    setRelatedSearch(e.target.value)
+                    searchRelatedProducts(e.target.value)
+                  }}
+                  onFocus={() => {
+                    setShowRelatedDropdown(true)
+                    loadAllRelatedProducts()
+                  }}
+                  placeholder="Search products to add..."
+                  className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
+                />
+                {searchingRelated && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+              </div>
+
+              {showRelatedDropdown && (
+                <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-[#1e1e36] border border-white/10 shadow-xl">
+                  {relatedResults
+                    .filter(p => p.id !== formData.id) // Exclude current product
+                    .map(product => {
+                      const isSelected = formData.relatedProductIds.includes(product.id)
+                      return (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => toggleRelatedProduct(product)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
+                            isSelected ? "bg-emerald-500/10 text-emerald-300" : "text-gray-300 hover:bg-white/5"
+                          }`}
+                        >
+                          {product.image ? (
+                            <img src={product.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-white/10 flex-shrink-0" />
+                          )}
+                          <span className="flex-1 truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
+                          {isSelected && <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  {relatedResults.length === 0 && !searchingRelated && (
+                    <p className="px-3 py-3 text-sm text-gray-500 text-center">No products found</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-500">Select products to show as related. If empty, same-category products are shown automatically.</p>
+          </div>
+
+          {/* Upsell Products */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              Upsell Products
+            </h3>
+
+            {selectedUpsell.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedUpsell.map(product => (
+                  <span
+                    key={product.id}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-sm"
+                  >
+                    {product.image && (
+                      <img src={product.image} alt="" className="w-5 h-5 rounded object-cover" />
+                    )}
+                    <span className="max-w-[150px] truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeUpsellProduct(product.id)}
+                      className="ml-0.5 hover:text-red-400 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div ref={upsellDropdownRef} className="relative">
+              <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
+                <Search className="w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  value={upsellSearch}
+                  onChange={(e) => {
+                    setUpsellSearch(e.target.value)
+                    searchUpsellProducts(e.target.value)
+                  }}
+                  onFocus={() => {
+                    setShowUpsellDropdown(true)
+                    loadAllUpsellProducts()
+                  }}
+                  placeholder="Search products to upsell..."
+                  className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
+                />
+                {searchingUpsell && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+              </div>
+
+              {showUpsellDropdown && (
+                <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-[#1e1e36] border border-white/10 shadow-xl">
+                  {upsellResults
+                    .filter(p => p.id !== formData.id)
+                    .map(product => {
+                      const isSelected = formData.upsellProductIds.includes(product.id)
+                      return (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => toggleUpsellProduct(product)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
+                            isSelected ? "bg-amber-500/10 text-amber-300" : "text-gray-300 hover:bg-white/5"
+                          }`}
+                        >
+                          {product.image ? (
+                            <img src={product.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-white/10 flex-shrink-0" />
+                          )}
+                          <span className="flex-1 truncate">{locale === "bg" ? product.nameBg : product.nameEn}</span>
+                          {isSelected && <Check className="w-4 h-4 text-amber-400 flex-shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  {upsellResults.length === 0 && !searchingUpsell && (
+                    <p className="px-3 py-3 text-sm text-gray-500 text-center">No products found</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-500">Products shown in the Add to Cart popup. Pick high-margin items. If empty, same-category products shown automatically.</p>
           </div>
 
           {/* Settings */}
