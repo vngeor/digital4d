@@ -37,6 +37,10 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json()
 
+    if (data.slug && !/^[a-z0-9-]+$/.test(data.slug)) {
+      return NextResponse.json({ error: "Slug may only contain lowercase letters, numbers, and hyphens" }, { status: 400 })
+    }
+
     // Check for existing slug
     const existing = await prisma.productCategory.findUnique({ where: { slug: data.slug } })
     if (existing) {
@@ -92,6 +96,10 @@ export async function PUT(request: NextRequest) {
       where: { id: data.id },
       select: { slug: true },
     })
+
+    if (data.slug && !/^[a-z0-9-]+$/.test(data.slug)) {
+      return NextResponse.json({ error: "Slug may only contain lowercase letters, numbers, and hyphens" }, { status: 400 })
+    }
 
     // Prevent circular parent references (handles deep chains A→B→C→A)
     if (data.parentId && await wouldCreateCircle(data.parentId, data.id)) {

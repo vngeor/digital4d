@@ -197,6 +197,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
+    const VALID_ROLES = ["ADMIN", "EDITOR", "AUTHOR", "SUBSCRIBER"]
+    if (data.role !== undefined && !VALID_ROLES.includes(data.role)) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 })
+    }
+
     // Prevent admin from demoting themselves
     if (data.role && data.id === session.user.id && data.role !== "ADMIN") {
       return NextResponse.json(

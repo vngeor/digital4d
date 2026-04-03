@@ -136,6 +136,11 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    const QUOTE_STATUSES = ["pending", "quoted", "accepted", "user_declined", "rejected"]
+    if (data.status && !QUOTE_STATUSES.includes(data.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 })
+    }
+
     // Build update data
     const updateData: {
       status?: string

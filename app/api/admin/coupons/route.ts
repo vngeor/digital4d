@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") // "active" | "expired" | "inactive" | null (all)
     const source = searchParams.get("source") // "auto" | null
     const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "20")
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const conditions: any[] = []

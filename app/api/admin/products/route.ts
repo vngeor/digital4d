@@ -6,6 +6,8 @@ import { logAuditAction, getChangeDetails } from "@/lib/auditLog"
 import { notifyWishlistPriceDrop, notifyStockAvailable } from "@/lib/wishlistNotifications"
 import { buildProductUrlFromDb } from "@/lib/productUrl"
 
+const PRODUCT_STATUSES = ["in_stock", "out_of_stock", "coming_soon", "pre_order", "sold_out"]
+
 export async function GET(request: NextRequest) {
   try {
     const { session, error } = await requirePermissionApi("products", "view")
@@ -147,7 +149,7 @@ export async function POST(request: NextRequest) {
         featured: data.featured || false,
         bestSeller: data.bestSeller || false,
         published: data.published || false,
-        status: data.status || "in_stock",
+        status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
       },
     })
@@ -164,7 +166,7 @@ export async function POST(request: NextRequest) {
             colorNameEs: variant.colorNameEs,
             colorHex: variant.colorHex,
             image: variant.image || null,
-            status: variant.status || "in_stock",
+            status: PRODUCT_STATUSES.includes(variant.status) ? variant.status : "in_stock",
             order: variant.order ?? 0,
           },
         })
@@ -185,7 +187,7 @@ export async function POST(request: NextRequest) {
             price: parseFloat(pkg.price),
             salePrice: pkg.salePrice && !isNaN(parseFloat(pkg.salePrice)) ? parseFloat(pkg.salePrice) : null,
             sku: pkg.sku || null,
-            status: pkg.status || "in_stock",
+            status: PRODUCT_STATUSES.includes(pkg.status) ? pkg.status : "in_stock",
             order: pkg.order ?? 0,
           },
         })
@@ -198,7 +200,7 @@ export async function POST(request: NextRequest) {
             const variantId = createdVariantIds[pv.variantIndex]
             if (!variantId) continue
             await prisma.productPackageVariant.create({
-              data: { packageId: created.id, variantId, status: pv.status || "in_stock" },
+              data: { packageId: created.id, variantId, status: PRODUCT_STATUSES.includes(pv.status) ? pv.status : "in_stock" },
             })
           }
         }
@@ -307,7 +309,7 @@ export async function PUT(request: NextRequest) {
         featured: data.featured || false,
         bestSeller: data.bestSeller || false,
         published: data.published || false,
-        status: data.status || "in_stock",
+        status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
       },
     })
@@ -333,7 +335,7 @@ export async function PUT(request: NextRequest) {
             colorNameEs: variant.colorNameEs,
             colorHex: variant.colorHex,
             image: variant.image || null,
-            status: variant.status || "in_stock",
+            status: PRODUCT_STATUSES.includes(variant.status) ? variant.status : "in_stock",
             order: variant.order ?? 0,
           },
         })
@@ -379,7 +381,7 @@ export async function PUT(request: NextRequest) {
             price: parseFloat(pkg.price),
             salePrice: pkg.salePrice && !isNaN(parseFloat(pkg.salePrice)) ? parseFloat(pkg.salePrice) : null,
             sku: pkg.sku || null,
-            status: pkg.status || "in_stock",
+            status: PRODUCT_STATUSES.includes(pkg.status) ? pkg.status : "in_stock",
             order: pkg.order ?? 0,
           },
         })
@@ -389,7 +391,7 @@ export async function PUT(request: NextRequest) {
             const variantId = updatedVariantIds[pv.variantIndex]
             if (!variantId) continue
             await prisma.productPackageVariant.create({
-              data: { packageId: created.id, variantId, status: pv.status || "in_stock" },
+              data: { packageId: created.id, variantId, status: PRODUCT_STATUSES.includes(pv.status) ? pv.status : "in_stock" },
             })
           }
         }
