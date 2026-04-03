@@ -41,6 +41,8 @@ export const RESOURCE_NAV_MAP: Record<string, Resource> = {
   "/admin/media": "media",
   "/admin/coupons": "coupons",
   "/admin/brands": "brands",
+  "/admin/colors": "products",
+  "/admin/weights": "products",
   "/admin/notifications": "notifications",
   "/admin/notification-templates": "notifications",
   "/admin/audit-logs": "audit",

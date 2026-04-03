@@ -7,12 +7,22 @@ import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search, Plus, Trash2, 
 import { useKeyboardSave } from "./useKeyboardSave"
 import { RichTextEditor } from "./RichTextEditor"
 
+interface ColorOption {
+  id: string
+  nameBg: string
+  nameEn: string
+  nameEs: string
+  hex: string
+}
+
+interface WeightOption {
+  id: string
+  label: string
+}
+
 interface ProductVariantData {
   id?: string
-  colorNameBg: string
-  colorNameEn: string
-  colorNameEs: string
-  colorHex: string
+  colorId: string
   image: string
   status: string
   order: number
@@ -25,7 +35,7 @@ interface PackageVariantEntry {
 
 interface ProductPackageData {
   id?: string
-  label: string
+  weightId: string
   slug: string
   price: string
   salePrice: string
@@ -109,17 +119,14 @@ interface ProductFormProps {
     order?: number
     variants?: Array<{
       id?: string
-      colorNameBg: string
-      colorNameEn: string
-      colorNameEs: string
-      colorHex: string
+      colorId: string
       image?: string | null
       status?: string
       order: number
     }>
     packages?: Array<{
       id?: string
-      label: string
+      weightId: string
       slug: string
       price?: string | null
       salePrice?: string | null
@@ -191,6 +198,8 @@ export function ProductForm({
   const locale = useLocale()
   const formRef = useRef<HTMLFormElement>(null)
   useKeyboardSave(formRef)
+  const [colors, setColors] = useState<ColorOption[]>([])
+  const [weights, setWeights] = useState<WeightOption[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [galleryUploading, setGalleryUploading] = useState(false)
@@ -254,17 +263,14 @@ export function ProductForm({
     order: initialData?.order ?? 0,
     variants: initialData?.variants?.map((v, i) => ({
       id: v.id,
-      colorNameBg: v.colorNameBg,
-      colorNameEn: v.colorNameEn,
-      colorNameEs: v.colorNameEs,
-      colorHex: v.colorHex,
+      colorId: v.colorId,
       image: v.image || "",
       status: v.status || "in_stock",
       order: v.order ?? i,
     })) || [],
     packages: initialData?.packages?.map((p, i) => ({
       id: p.id,
-      label: p.label,
+      weightId: p.weightId,
       slug: p.slug,
       price: p.price?.toString() || "",
       salePrice: p.salePrice?.toString() || "",
@@ -283,6 +289,17 @@ export function ProductForm({
       setFormData(prev => ({ ...prev, slug: generateSlug(formData.nameEn) }))
     }
   }, [formData.nameEn, autoSlug])
+
+  // Fetch colors and weights for the selectors
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/admin/colors").then(r => r.json()),
+      fetch("/api/admin/weights").then(r => r.json()),
+    ]).then(([c, w]) => {
+      setColors(Array.isArray(c) ? c : [])
+      setWeights(Array.isArray(w) ? w : [])
+    }).catch(() => {})
+  }, [])
 
   // Click-outside handler for category dropdown
   useEffect(() => {
@@ -623,10 +640,7 @@ export function ProductForm({
     setFormData(prev => ({
       ...prev,
       variants: [...prev.variants, {
-        colorNameBg: "",
-        colorNameEn: "",
-        colorNameEs: "",
-        colorHex: "#10b981",
+        colorId: colors[0]?.id || "",
         image: "",
         status: "in_stock",
         order: prev.variants.length,
@@ -682,7 +696,7 @@ export function ProductForm({
     setFormData(prev => ({
       ...prev,
       packages: [...prev.packages, {
-        label: "", slug: "", price: "", salePrice: "", sku: "",
+        weightId: weights[0]?.id || "", slug: "", price: "", salePrice: "", sku: "",
         status: "in_stock", order: prev.packages.length, packageVariants: [],
       }],
     }))
@@ -701,8 +715,9 @@ export function ProductForm({
       packages: prev.packages.map((p, i) => {
         if (i !== index) return p
         const updated = { ...p, [field]: value }
-        if (field === "label") {
-          updated.slug = (value as string).toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, "")
+        if (field === "weightId") {
+          const w = weights.find(w => w.id === value)
+          if (w) updated.slug = w.label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9.-]/g, "")
         }
         return updated
       }),
@@ -1288,7 +1303,7 @@ export function ProductForm({
                 {formData.packages.map((pkg, index) => (
                   <div key={index} className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-white">{pkg.label || `Package ${index + 1}`}</span>
+                      <span className="text-sm font-medium text-white">{weights.find(w => w.id === pkg.weightId)?.label || `Package ${index + 1}`}</span>
                       <button
                         type="button"
                         onClick={() => removePackage(index)}
@@ -1300,14 +1315,21 @@ export function ProductForm({
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Label *</label>
-                        <input
-                          type="text"
-                          value={pkg.label}
-                          onChange={e => updatePackage(index, "label", e.target.value)}
-                          placeholder="e.g. 1kg"
-                          className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50"
-                        />
+                        <label className="block text-xs text-gray-500 mb-1">Weight / Size *</label>
+                        {weights.length === 0 ? (
+                          <p className="text-xs text-amber-400 py-1.5">No weights defined — add in <strong>Admin › Weights</strong> first.</p>
+                        ) : (
+                          <select
+                            value={pkg.weightId}
+                            onChange={e => updatePackage(index, "weightId", e.target.value)}
+                            className="w-full px-3 py-1.5 bg-[#0d0d1a] border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                          >
+                            <option value="">— Select Weight —</option>
+                            {weights.map(w => (
+                              <option key={w.id} value={w.id}>{w.label}</option>
+                            ))}
+                          </select>
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Status</label>
@@ -1384,9 +1406,9 @@ export function ProductForm({
                                 <button
                                   type="button"
                                   onClick={() => togglePackageVariant(index, vIdx)}
-                                  title={v.colorNameEn || `Color ${vIdx + 1}`}
+                                  title={colors.find(c => c.id === v.colorId)?.nameEn || `Color ${vIdx + 1}`}
                                   className={`w-6 h-6 rounded-full border-2 transition-all flex-shrink-0 ${checked ? "border-emerald-400 ring-2 ring-emerald-400/30" : "border-white/20 hover:border-white/40"}`}
-                                  style={{ backgroundColor: v.colorHex || "#888" }}
+                                  style={{ backgroundColor: colors.find(c => c.id === v.colorId)?.hex || "#888" }}
                                 />
                                 {checked && (
                                   <select
@@ -1526,16 +1548,18 @@ export function ProductForm({
                   onChange={handleVariantImageUpload}
                   className="hidden"
                 />
-                {formData.variants.map((variant, index) => (
+                {formData.variants.map((variant, index) => {
+                  const selectedColor = colors.find(c => c.id === variant.colorId)
+                  return (
                   <div key={index} className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-6 h-6 rounded-full border border-white/20 shrink-0"
-                          style={{ backgroundColor: variant.colorHex }}
+                          style={{ backgroundColor: selectedColor?.hex || "#888" }}
                         />
                         <span className="text-sm text-white font-medium">
-                          {variant.colorNameEn || `Color ${index + 1}`}
+                          {selectedColor?.nameEn || `Color ${index + 1}`}
                         </span>
                       </div>
                       <button
@@ -1547,61 +1571,35 @@ export function ProductForm({
                       </button>
                     </div>
 
-                    {/* Color names - 3 inline inputs */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">BG</label>
-                        <input
-                          type="text"
-                          value={variant.colorNameBg}
-                          onChange={(e) => updateVariant(index, "colorNameBg", e.target.value)}
-                          placeholder="Червен"
-                          className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">EN</label>
-                        <input
-                          type="text"
-                          value={variant.colorNameEn}
-                          onChange={(e) => updateVariant(index, "colorNameEn", e.target.value)}
-                          placeholder="Red"
-                          className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">ES</label>
-                        <input
-                          type="text"
-                          value={variant.colorNameEs}
-                          onChange={(e) => updateVariant(index, "colorNameEs", e.target.value)}
-                          placeholder="Rojo"
-                          className="w-full px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                        />
-                      </div>
+                    {/* Color selector dropdown */}
+                    <div>
+                      <label className="block text-[10px] text-gray-500 mb-1">Color</label>
+                      {colors.length === 0 ? (
+                        <p className="text-xs text-amber-400">No colors defined yet — add colors in <strong>Admin › Colors</strong> first.</p>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={variant.colorId}
+                            onChange={(e) => updateVariant(index, "colorId", e.target.value)}
+                            className="flex-1 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-colors"
+                          >
+                            <option value="">— Select Color —</option>
+                            {colors.map(c => (
+                              <option key={c.id} value={c.id}>{c.nameEn} ({c.nameBg})</option>
+                            ))}
+                          </select>
+                          {selectedColor && (
+                            <div
+                              className="w-7 h-7 rounded-full border border-white/20 shrink-0"
+                              style={{ backgroundColor: selectedColor.hex }}
+                            />
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Hex color + Image */}
+                    {/* Image */}
                     <div className="flex flex-wrap items-end gap-2">
-                      <div className="flex items-end gap-2 shrink-0">
-                        <div>
-                          <label className="block text-[10px] text-gray-500 mb-1">{t("colorHex")}</label>
-                          <input
-                            type="text"
-                            value={variant.colorHex}
-                            onChange={(e) => updateVariant(index, "colorHex", e.target.value)}
-                            placeholder="#FF0000"
-                            className="w-24 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm font-mono placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                          />
-                        </div>
-                        <input
-                          type="color"
-                          value={variant.colorHex}
-                          onChange={(e) => updateVariant(index, "colorHex", e.target.value)}
-                          className="w-9 h-9 rounded-lg border border-white/10 bg-transparent cursor-pointer"
-                        />
-                      </div>
-
                       <div className="flex items-end gap-2 flex-1 min-w-[100px]">
                         {variant.image ? (
                           <div className="relative w-9 h-9 rounded-lg overflow-hidden border border-white/10 shrink-0">
@@ -1648,7 +1646,8 @@ export function ProductForm({
                       </div>
                     </div>
                   </div>
-                ))}
+                )
+                })}
               </div>
             )}
           </div>

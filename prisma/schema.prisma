@@ -243,14 +243,38 @@ model Brand {
   @@index([order])
 }
 
+model Color {
+  id        String           @id @default(cuid())
+  nameBg    String
+  nameEn    String
+  nameEs    String
+  hex       String
+  order     Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  variants  ProductVariant[]
+
+  @@index([order])
+}
+
+model Weight {
+  id        String           @id @default(cuid())
+  label     String           @unique
+  grams     Int?
+  order     Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  packages  ProductPackage[]
+
+  @@index([order])
+}
+
 model ProductVariant {
   id              String                 @id @default(cuid())
   productId       String
   product         Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
-  colorNameBg     String
-  colorNameEn     String
-  colorNameEs     String
-  colorHex        String
+  colorId         String
+  color           Color                  @relation(fields: [colorId], references: [id])
   image           String?
   status          String                 @default("in_stock")
   order           Int                    @default(0)
@@ -259,6 +283,7 @@ model ProductVariant {
   packageVariants ProductPackageVariant[]
 
   @@index([productId])
+  @@index([colorId])
   @@index([order])
 }
 
@@ -266,7 +291,8 @@ model ProductPackage {
   id              String                 @id @default(cuid())
   productId       String
   product         Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
-  label           String
+  weightId        String
+  weight          Weight                 @relation(fields: [weightId], references: [id])
   slug            String
   price           Decimal                @db.Decimal(10, 2)
   salePrice       Decimal?               @db.Decimal(10, 2)
@@ -278,6 +304,7 @@ model ProductPackage {
   packageVariants ProductPackageVariant[]
 
   @@index([productId])
+  @@index([weightId])
   @@index([order])
 }
 

@@ -44,11 +44,12 @@ interface PromotedCoupon {
 
 interface SelectedPackage {
     id: string
-    label: string
     price: string
     salePrice: string | null
     status: string
     sku: string | null
+    weightId: string
+    weight: { label: string }
 }
 
 interface ProductActionsProps {

@@ -16,10 +16,8 @@ import { useAdminPermissions } from "@/app/components/admin/AdminPermissionsCont
 
 interface ProductVariant {
   id: string
-  colorNameBg: string
-  colorNameEn: string
-  colorNameEs: string
-  colorHex: string
+  colorId: string
+  color: { nameBg: string; nameEn: string; nameEs: string; hex: string }
   image: string | null
   order: number
 }
@@ -56,7 +54,8 @@ interface Product {
   variants: ProductVariant[]
   packages: {
     id: string
-    label: string
+    weightId: string
+    weight: { label: string }
     slug: string
     price: string
     salePrice: string | null
@@ -224,16 +223,13 @@ export default function ProductsPage() {
     order: number
     variants: Array<{
       id?: string
-      colorNameBg: string
-      colorNameEn: string
-      colorNameEs: string
-      colorHex: string
+      colorId: string
       image: string
       order: number
     }>
     packages: Array<{
       id?: string
-      label: string
+      weightId: string
       slug: string
       price: string
       salePrice: string

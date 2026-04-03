@@ -8,12 +8,10 @@ import { ProductActions } from "./ProductActions"
 
 interface Variant {
     id: string
-    colorNameBg: string
-    colorNameEn: string
-    colorNameEs: string
-    colorHex: string
     image: string | null
     status: string
+    colorId: string
+    color: { nameBg: string; nameEn: string; nameEs: string; hex: string }
 }
 
 interface PackageVariantEntry {
@@ -23,13 +21,14 @@ interface PackageVariantEntry {
 
 interface PackageData {
     id: string
-    label: string
     slug: string
     price: string
     salePrice: string | null
     sku: string | null
     status: string
     order: number
+    weightId: string
+    weight: { label: string }
     packageVariants?: PackageVariantEntry[]
 }
 
@@ -240,7 +239,7 @@ export function ProductDetailClient({
                 {packages.length > 0 && (
                     <div className="space-y-2">
                         <p className="text-sm font-medium text-gray-300">
-                            {t("size")}{selectedPackage ? `: ${selectedPackage.label}` : ""}
+                            {t("size")}{selectedPackage ? `: ${selectedPackage.weight.label}` : ""}
                         </p>
                         <div className="flex flex-wrap gap-2">
                             {packages.map((pkg, index) => {
@@ -259,7 +258,7 @@ export function ProductDetailClient({
                                                     : "bg-transparent border-white/30 text-gray-300 hover:border-emerald-500/60 hover:text-white"
                                         }`}
                                     >
-                                        {pkg.label}
+                                        {pkg.weight.label}
                                     </button>
                                 )
                             })}

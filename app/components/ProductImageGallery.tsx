@@ -4,12 +4,10 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Variant {
-    colorNameBg: string
-    colorNameEn: string
-    colorNameEs: string
-    colorHex: string
     image: string | null
     status: string
+    colorId: string
+    color: { nameBg: string; nameEn: string; nameEs: string; hex: string }
 }
 
 interface ProductImageGalleryProps {
@@ -51,11 +49,11 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
     const getColorName = (variant: Variant) => {
         switch (locale) {
             case "bg":
-                return variant.colorNameBg
+                return variant.color.nameBg
             case "es":
-                return variant.colorNameEs
+                return variant.color.nameEs
             default:
-                return variant.colorNameEn
+                return variant.color.nameEn
         }
     }
 
@@ -216,7 +214,7 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                                     >
                                         <div
                                             className="w-6 h-6 rounded-full"
-                                            style={{ backgroundColor: variant.colorHex }}
+                                            style={{ backgroundColor: variant.color.hex }}
                                         />
                                         {isUnavailable && (
                                             <div className="absolute inset-0 flex items-center justify-center">

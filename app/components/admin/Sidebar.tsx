@@ -23,6 +23,8 @@ import {
   Ticket,
   BellRing,
   BadgeCheck,
+  Palette,
+  Weight,
   X,
 } from "lucide-react"
 import type { PermissionMap } from "@/lib/permissions"
@@ -47,6 +49,8 @@ const allNavItems = [
   { href: "/admin/types", icon: Tag, labelKey: "types" },
   { href: "/admin/products", icon: Package, labelKey: "products" },
   { href: "/admin/brands", icon: BadgeCheck, labelKey: "brands" },
+  { href: "/admin/colors", icon: Palette, labelKey: "colors" },
+  { href: "/admin/weights", icon: Weight, labelKey: "weights" },
   { href: "/admin/quotes", icon: MessageSquare, labelKey: "quotes", showBadge: true },
   { href: "/admin/orders", icon: ShoppingCart, labelKey: "orders" },
   { href: "/admin/coupons", icon: Ticket, labelKey: "coupons" },
