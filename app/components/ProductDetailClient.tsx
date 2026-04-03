@@ -214,6 +214,28 @@ export function ProductDetailClient({
             <div className="space-y-3 md:space-y-6">
                 {children}
 
+                {/* Reactive status badge — updates when variant is selected */}
+                {(() => {
+                    const status = effectiveVariantStatus ?? product.status
+                    const badgeClass = status === "in_stock" ? "bg-emerald-500/20 text-emerald-400"
+                        : status === "pre_order" ? "bg-purple-500/20 text-purple-400"
+                        : status === "coming_soon" ? "bg-blue-500/20 text-blue-400"
+                        : status === "sold_out" ? "bg-red-500/20 text-red-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    const label = status === "in_stock" ? t("inStock")
+                        : status === "pre_order" ? t("preOrder")
+                        : status === "coming_soon" ? t("comingSoon")
+                        : status === "sold_out" ? t("soldOut")
+                        : t("outOfStock")
+                    return (
+                        <div className="-mt-1 md:-mt-3">
+                            <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium ${badgeClass}`}>
+                                {label}
+                            </span>
+                        </div>
+                    )
+                })()}
+
                 {/* Package Size Selector */}
                 {packages.length > 0 && (
                     <div className="space-y-2">
@@ -262,11 +284,6 @@ export function ProductDetailClient({
                             <span className="text-sm sm:text-base md:text-xl text-gray-500 line-through">
                                 {displayPrice?.toFixed(2)} {product.currency}
                             </span>
-                            {discountPercent !== null && (
-                                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500 text-white self-center">
-                                    -{discountPercent}%
-                                </span>
-                            )}
                         </div>
                     ) : (
                         <span className="text-xl sm:text-2xl md:text-4xl font-bold text-white">
