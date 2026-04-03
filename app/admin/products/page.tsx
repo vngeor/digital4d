@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck } from "lucide-react"
+import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Trophy, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck } from "lucide-react"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
@@ -259,6 +259,21 @@ export default function ProductsPage() {
 
   const handleDelete = (id: string, name: string) => {
     setDeleteItem({ id, name })
+  }
+
+  const handleToggleField = async (id: string, field: "published" | "featured" | "bestSeller", value: boolean) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+    setAllProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "toggleField", id, field, value }),
+    })
+    if (!res.ok) {
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: !value } : p))
+      setAllProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: !value } : p))
+      toast.error("Failed to update")
+    }
   }
 
   const confirmDelete = async () => {
@@ -527,26 +542,46 @@ export default function ProductsPage() {
         }
         return (
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[item.status] || "bg-gray-500/20 text-gray-400"}`}>
-            {item.bestSeller && <span>🏆</span>}
             {statusLabels[item.status] || item.status}
           </span>
         )
       },
     },
     {
+      key: "toggles",
+      header: "",
+      className: "whitespace-nowrap hidden sm:table-cell w-[70px]",
+      render: (item: Product) => (
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "featured", !item.featured) }}
+            className={`p-1 rounded transition-colors ${item.featured ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+            title={item.featured ? "Remove featured" : "Set as featured"}
+          >
+            <Star className={`w-3.5 h-3.5 ${item.featured ? "fill-amber-400" : ""}`} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "bestSeller", !item.bestSeller) }}
+            className={`p-1 rounded transition-colors ${item.bestSeller ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
+            title={item.bestSeller ? "Remove best seller" : "Set as best seller"}
+          >
+            <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
+          </button>
+        </div>
+      ),
+    },
+    {
       key: "published",
       header: t("published"),
       className: "whitespace-nowrap hidden sm:table-cell",
       render: (item: Product) => (
-        item.published ? (
-          <span className="flex items-center gap-1 text-emerald-400">
-            <Eye className="w-3.5 h-3.5" />
-          </span>
-        ) : (
-          <span className="flex items-center gap-1 text-gray-500">
-            <EyeOff className="w-3.5 h-3.5" />
-          </span>
-        )
+        <button
+          onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "published", !item.published) }}
+          className={`p-1.5 rounded-lg transition-colors ${item.published ? "text-emerald-400 hover:bg-emerald-500/10" : "text-gray-500 hover:bg-white/5"}`}
+          title={item.published ? "Unpublish" : "Publish"}
+        >
+          {item.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+        </button>
       ),
     },
     {
@@ -706,12 +741,19 @@ export default function ProductsPage() {
                       <p className="text-xs text-gray-500 truncate">{item.nameBg}</p>
                     </div>
                   </div>
-                  <div className="shrink-0">
-                    {item.published ? (
-                      <Eye className="w-4 h-4 text-emerald-400" />
-                    ) : (
-                      <EyeOff className="w-4 h-4 text-gray-500" />
-                    )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "featured", !item.featured) }}
+                      className={`p-1 rounded ${item.featured ? "text-amber-400" : "text-gray-600"}`}>
+                      <Star className={`w-3.5 h-3.5 ${item.featured ? "fill-amber-400" : ""}`} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "bestSeller", !item.bestSeller) }}
+                      className={`p-1 rounded ${item.bestSeller ? "text-amber-400" : "text-gray-600"}`}>
+                      <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "published", !item.published) }}
+                      className={`p-1 rounded ${item.published ? "text-emerald-400" : "text-gray-500"}`}>
+                      {item.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -736,9 +778,6 @@ export default function ProductsPage() {
                     <span className="flex items-center gap-1 text-xs text-emerald-400">
                       <Home className="w-3 h-3" />#{homepagePos}
                     </span>
-                  )}
-                  {item.bestSeller && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">🏆</span>
                   )}
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                     item.status === "in_stock" ? "bg-emerald-500/20 text-emerald-400"

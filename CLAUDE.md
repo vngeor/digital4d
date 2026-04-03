@@ -164,6 +164,7 @@ No test framework is configured.
 - **`QuoteForm`**: drag-and-drop file upload, auto-fill from profile
 - **`ProfileEditForm`**: modal form with validation, portaled to `document.body`. BirthDate is required; when empty, field gets a pulsing pink-to-rose gradient border (`animate-pulse-glow`) with `highlightBirthDate` prop. Gradient: `linear-gradient(to right, lab(56.9303 76.8162 -8.07021), lab(56.101 79.4328 31.4532))`. iOS-safe: body scroll lock (`position: fixed` pattern), `max-h-[85svh]` for stable sizing, flex-col layout (fixed header + scrollable body), date inputs wrapped in `overflow-hidden` with `min-w-0`
 - **`NewsModal`**: article display with category colors
+- **`CookieConsent`**: GDPR cookie banner — glassmorphic floating card fixed bottom-center, appears 800ms after first visit (delayed to avoid flash). Stores preference in `localStorage` key `d4d-cookie-consent` (`"accepted"` or `"declined"`). Accept/Decline buttons + X dismiss (all treated as decline). Links to `/privacy`. Renders `null` on SSR and until client-side localStorage check completes (prevents hydration mismatch). Added to `app/layout.tsx` inside `NextIntlClientProvider`. All 3 locales (`cookieConsent.*` keys).
 - **`Dinosaur3D` / `Dinosaur3DWrapper`**: 3D T-Rex model (Three.js, React Three Fiber, OrbitControls), dynamically imported with SSR disabled
 
 ### Styling
@@ -316,7 +317,7 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 - **GA4 / Meta Pixel tracking**: needs tracking IDs from admin
 - **Product reviews/ratings**: user reviews with star ratings on product pages
 - **Testimonials section**: customer testimonials on homepage
-- **Cookie consent popup**: GDPR-compliant cookie banner with accept/reject options
+- **GA4 / Meta Pixel tracking**: needs tracking IDs from admin (still pending)
 
 ### Postponed
 - **Live chat widget**: Tawk.to (free) — script tag integration, deferred

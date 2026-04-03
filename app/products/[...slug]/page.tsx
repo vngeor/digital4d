@@ -97,7 +97,14 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             slug: productSlug,
             published: true,
         },
-        include: { variants: { orderBy: { order: "asc" } }, packages: { orderBy: { order: "asc" } }, brand: true },
+        include: {
+            variants: { orderBy: { order: "asc" } },
+            packages: {
+                orderBy: { order: "asc" },
+                include: { packageVariants: { select: { variantId: true, status: true } } },
+            },
+            brand: true,
+        },
     })
 
     if (!product) {

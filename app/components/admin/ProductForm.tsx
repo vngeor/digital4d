@@ -18,6 +18,11 @@ interface ProductVariantData {
   order: number
 }
 
+interface PackageVariantEntry {
+  variantIndex: number
+  status: string
+}
+
 interface ProductPackageData {
   id?: string
   label: string
@@ -27,6 +32,7 @@ interface ProductPackageData {
   sku: string
   status: string
   order: number
+  packageVariants: PackageVariantEntry[]
 }
 
 interface ProductFormData {
@@ -118,6 +124,7 @@ interface ProductFormProps {
       sku?: string | null
       status?: string
       order: number
+      packageVariants?: Array<{ variantId: string; status: string }>
     }>
   }
   categories: ProductCategory[]
@@ -253,6 +260,10 @@ export function ProductForm({
       sku: p.sku || "",
       status: p.status || "in_stock",
       order: p.order ?? i,
+      packageVariants: p.packageVariants?.map(pv => ({
+        variantIndex: initialData.variants?.findIndex(v => v.id === pv.variantId) ?? -1,
+        status: pv.status,
+      })).filter(pv => pv.variantIndex >= 0) || [],
     })) || [],
   })
 
@@ -524,6 +535,43 @@ export function ProductForm({
     setFormData(prev => ({
       ...prev,
       variants: prev.variants.filter((_, i) => i !== index),
+      packages: prev.packages.map(pkg => ({
+        ...pkg,
+        packageVariants: pkg.packageVariants
+          .filter(pv => pv.variantIndex !== index)
+          .map(pv => ({ ...pv, variantIndex: pv.variantIndex > index ? pv.variantIndex - 1 : pv.variantIndex })),
+      })),
+    }))
+  }
+
+  const togglePackageVariant = (pkgIdx: number, variantIdx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.map((pkg, i) => {
+        if (i !== pkgIdx) return pkg
+        const existing = pkg.packageVariants.find(pv => pv.variantIndex === variantIdx)
+        return {
+          ...pkg,
+          packageVariants: existing
+            ? pkg.packageVariants.filter(pv => pv.variantIndex !== variantIdx)
+            : [...pkg.packageVariants, { variantIndex: variantIdx, status: "in_stock" }],
+        }
+      }),
+    }))
+  }
+
+  const updatePackageVariantStatus = (pkgIdx: number, variantIdx: number, status: string) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.map((pkg, i) => {
+        if (i !== pkgIdx) return pkg
+        return {
+          ...pkg,
+          packageVariants: pkg.packageVariants.map(pv =>
+            pv.variantIndex === variantIdx ? { ...pv, status } : pv
+          ),
+        }
+      }),
     }))
   }
 
@@ -532,7 +580,7 @@ export function ProductForm({
       ...prev,
       packages: [...prev.packages, {
         label: "", slug: "", price: "", salePrice: "", sku: "",
-        status: "in_stock", order: prev.packages.length,
+        status: "in_stock", order: prev.packages.length, packageVariants: [],
       }],
     }))
   }
@@ -1219,6 +1267,43 @@ export function ProductForm({
                         </div>
                       </div>
                     </div>
+
+                    {/* SIZE × COLOR matrix: available colors for this package */}
+                    {formData.variants.length > 0 && (
+                      <div className="space-y-2 pt-1">
+                        <p className="text-xs text-gray-500">Available colors <span className="text-gray-600">(leave all unchecked = all colors shown)</span></p>
+                        <div className="flex flex-wrap gap-3">
+                          {formData.variants.map((v, vIdx) => {
+                            const pv = pkg.packageVariants.find(x => x.variantIndex === vIdx)
+                            const checked = !!pv
+                            return (
+                              <div key={vIdx} className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => togglePackageVariant(index, vIdx)}
+                                  title={v.colorNameEn || `Color ${vIdx + 1}`}
+                                  className={`w-6 h-6 rounded-full border-2 transition-all flex-shrink-0 ${checked ? "border-emerald-400 ring-2 ring-emerald-400/30" : "border-white/20 hover:border-white/40"}`}
+                                  style={{ backgroundColor: v.colorHex || "#888" }}
+                                />
+                                {checked && (
+                                  <select
+                                    value={pv!.status}
+                                    onChange={e => updatePackageVariantStatus(index, vIdx, e.target.value)}
+                                    className="text-xs bg-[#0d0d1a] border border-white/10 rounded px-1.5 py-1 text-gray-200 focus:outline-none focus:border-emerald-500/50"
+                                  >
+                                    <option value="in_stock">In Stock</option>
+                                    <option value="out_of_stock">Out of Stock</option>
+                                    <option value="pre_order">Pre-Order</option>
+                                    <option value="coming_soon">Coming Soon</option>
+                                    <option value="sold_out">Sold Out</option>
+                                  </select>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

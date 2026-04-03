@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "next-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/Users/veseliangeorgiev/.nvm/versions/node/v22.17.1/bin/node",
+      "runtimeArgs": ["/Users/veseliangeorgiev/digital4d-next/node_modules/.bin/next", "dev", "--webpack"],
       "port": 3000,
       "autoPort": true
     },

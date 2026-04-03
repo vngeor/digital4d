@@ -12,7 +12,7 @@ function getStripe() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { productId, email, couponCode, quantity: rawQuantity, packageId } = await request.json()
+    const { productId, email, couponCode, quantity: rawQuantity, packageId, variantId } = await request.json()
     const quantity = Math.max(1, Math.min(99, Math.floor(Number(rawQuantity) || 1)))
 
     if (!productId) {
@@ -49,6 +49,15 @@ export async function POST(request: NextRequest) {
       if (!pkg) return NextResponse.json({ error: "Invalid package" }, { status: 400 })
       if (!["in_stock", "pre_order"].includes(pkg.status))
         return NextResponse.json({ error: "Package not available" }, { status: 400 })
+      // Validate SIZE × COLOR combination if variantId provided
+      if (variantId) {
+        const packageVariant = await prisma.productPackageVariant.findUnique({
+          where: { packageId_variantId: { packageId, variantId } },
+        })
+        if (packageVariant && !["in_stock", "pre_order"].includes(packageVariant.status)) {
+          return NextResponse.json({ error: "This size and color combination is not available" }, { status: 400 })
+        }
+      }
       priceAmount = parseFloat((pkg.salePrice ?? pkg.price).toString())
     } else if (product.onSale && product.salePrice) {
       priceAmount = parseFloat(product.salePrice.toString())

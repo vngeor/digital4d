@@ -1,17 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { ProductImageGallery } from "./ProductImageGallery"
 import { ProductActions } from "./ProductActions"
 
 interface Variant {
+    id: string
     colorNameBg: string
     colorNameEn: string
     colorNameEs: string
     colorHex: string
     image: string | null
+    status: string
+}
+
+interface PackageVariantEntry {
+    variantId: string
     status: string
 }
 
@@ -24,6 +30,7 @@ interface PackageData {
     sku: string | null
     status: string
     order: number
+    packageVariants?: PackageVariantEntry[]
 }
 
 interface Product {
@@ -51,7 +58,7 @@ interface ProductDetailClientProps {
     product: Product
     productName: string
     variants: Variant[]
-    packages: PackageData[]
+    packages?: PackageData[]
     initialPackageSlug?: string
     locale: string
     mainImage: string | null
@@ -66,7 +73,7 @@ export function ProductDetailClient({
     product,
     productName,
     variants,
-    packages,
+    packages = [],
     initialPackageSlug,
     locale,
     mainImage,
@@ -79,8 +86,6 @@ export function ProductDetailClient({
     const t = useTranslations("products")
     const router = useRouter()
 
-    const [selectedVariantIndex, setSelectedVariantIndex] = useState(variants.length > 0 ? 0 : -1)
-
     const getDefaultPackageIndex = () => {
         if (packages.length === 0) return -1
         if (initialPackageSlug) {
@@ -90,9 +95,35 @@ export function ProductDetailClient({
         const firstAvailable = packages.findIndex(p => ["in_stock", "pre_order"].includes(p.status))
         return firstAvailable >= 0 ? firstAvailable : 0
     }
+
     const [selectedPackageIndex, setSelectedPackageIndex] = useState(getDefaultPackageIndex)
     const selectedPackage = selectedPackageIndex >= 0 && packages.length > 0 ? packages[selectedPackageIndex] : null
 
+    // Compute available variant IDs for selected package (null = all variants shown)
+    const availableVariantIds = useMemo<Set<string> | null>(() => {
+        if (!selectedPackage?.packageVariants?.length) return null
+        return new Set(selectedPackage.packageVariants.map(pv => pv.variantId))
+    }, [selectedPackage])
+
+    const getDefaultVariantIndex = () => {
+        if (variants.length === 0) return -1
+        if (!availableVariantIds) return 0
+        const first = variants.findIndex(v => availableVariantIds.has(v.id))
+        return first >= 0 ? first : 0
+    }
+
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(getDefaultVariantIndex)
+
+    // Indices of variants visible for the selected package
+    const availableVariantIndices = useMemo<number[] | null>(() => {
+        if (!availableVariantIds) return null
+        const indices = variants
+            .map((v, i) => (availableVariantIds.has(v.id) ? i : -1))
+            .filter(i => i >= 0)
+        return indices.length > 0 ? indices : null
+    }, [availableVariantIds, variants])
+
+    // When package changes: update URL + auto-select first valid variant
     const handlePackageChange = (index: number) => {
         setSelectedPackageIndex(index)
         const pkg = packages[index]
@@ -100,11 +131,34 @@ export function ProductDetailClient({
         const url = new URL(window.location.href)
         url.searchParams.set("size", pkg.slug)
         router.replace(url.pathname + url.search, { scroll: false })
+        if (pkg.packageVariants?.length) {
+            const ids = new Set(pkg.packageVariants.map(pv => pv.variantId))
+            const currentVariantId = variants[selectedVariantIndex]?.id
+            if (!currentVariantId || !ids.has(currentVariantId)) {
+                const firstIdx = variants.findIndex(v => ids.has(v.id))
+                setSelectedVariantIndex(firstIdx >= 0 ? firstIdx : -1)
+            }
+        }
     }
 
+    // Base variant status from the variant itself
     const selectedVariantStatus = selectedVariantIndex >= 0
         ? variants[selectedVariantIndex]?.status || "in_stock"
         : undefined
+
+    // Junction-level status overrides variant status when both package + variant selected
+    const packageVariantStatus = useMemo<string | undefined>(() => {
+        if (!selectedPackage?.packageVariants?.length || selectedVariantIndex < 0) return undefined
+        const variantId = variants[selectedVariantIndex]?.id
+        if (!variantId) return undefined
+        return selectedPackage.packageVariants.find(pv => pv.variantId === variantId)?.status
+    }, [selectedPackage, selectedVariantIndex, variants])
+
+    // The effective status used for purchase eligibility
+    const effectiveVariantStatus = packageVariantStatus ?? selectedVariantStatus
+
+    // The selected variant's ID for checkout validation
+    const selectedVariantId = selectedVariantIndex >= 0 ? variants[selectedVariantIndex]?.id : undefined
 
     // Price computation — package overrides base product price
     const displayPrice = selectedPackage
@@ -121,6 +175,10 @@ export function ProductDetailClient({
         ? Math.min(...packages.map(p => parseFloat(p.price)))
         : null
 
+    const discountPercent = isOnSale && displaySalePrice && displayPrice
+        ? Math.round((1 - displaySalePrice / displayPrice) * 100)
+        : null
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
             {/* Image + Color Variants */}
@@ -132,6 +190,7 @@ export function ProductDetailClient({
                 gallery={gallery}
                 productStatus={product.status}
                 onVariantChange={setSelectedVariantIndex}
+                availableVariantIndices={availableVariantIndices}
             />
 
             {/* Details */}
@@ -186,6 +245,11 @@ export function ProductDetailClient({
                             <span className="text-sm sm:text-base md:text-xl text-gray-500 line-through">
                                 {displayPrice?.toFixed(2)} {product.currency}
                             </span>
+                            {discountPercent !== null && (
+                                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500 text-white self-center">
+                                    -{discountPercent}%
+                                </span>
+                            )}
                         </div>
                     ) : (
                         <span className="text-xl sm:text-2xl md:text-4xl font-bold text-white">
@@ -199,7 +263,8 @@ export function ProductDetailClient({
                     product={product}
                     initialCouponCode={initialCouponCode}
                     promotedCoupons={promotedCoupons}
-                    selectedVariantStatus={selectedVariantStatus}
+                    selectedVariantStatus={effectiveVariantStatus}
+                    selectedVariantId={selectedVariantId}
                     selectedPackage={selectedPackage}
                     packages={packages}
                     isWishlisted={isWishlisted}

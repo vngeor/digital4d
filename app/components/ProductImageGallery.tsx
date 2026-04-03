@@ -20,6 +20,7 @@ interface ProductImageGalleryProps {
     gallery?: string[]
     productStatus?: string
     onVariantChange?: (index: number) => void
+    availableVariantIndices?: number[] | null
 }
 
 const STATUS_OVERLAY_STYLE: Record<string, string> = {
@@ -34,7 +35,7 @@ const STATUS_OVERLAY_TEXT: Record<string, Record<string, string>> = {
     coming_soon: { bg: "ОЧАКВАЙТЕ СКОРО", en: "COMING SOON", es: "PRÓXIMAMENTE" },
 }
 
-export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange }: ProductImageGalleryProps) {
+export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange, availableVariantIndices }: ProductImageGalleryProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const [selectedVariantIndex, setSelectedVariantIndex] = useState(variants.length > 0 ? 0 : -1)
     const [showingVariant, setShowingVariant] = useState(false)
@@ -194,6 +195,8 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                         <div className="flex items-center gap-2 flex-wrap">
                             {variants.map((variant, index) => {
                                 const isUnavailable = variant.status === "sold_out" || variant.status === "out_of_stock"
+                                const isHidden = availableVariantIndices !== null && availableVariantIndices !== undefined && !availableVariantIndices.includes(index)
+                                if (isHidden) return null
                                 return (
                                     <button
                                         key={index}

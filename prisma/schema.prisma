@@ -244,39 +244,54 @@ model Brand {
 }
 
 model ProductVariant {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  colorNameBg String
-  colorNameEn String
-  colorNameEs String
-  colorHex    String
-  image       String?
-  status      String   @default("in_stock")
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String                 @id @default(cuid())
+  productId       String
+  product         Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  colorNameBg     String
+  colorNameEn     String
+  colorNameEs     String
+  colorHex        String
+  image           String?
+  status          String                 @default("in_stock")
+  order           Int                    @default(0)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  packageVariants ProductPackageVariant[]
 
   @@index([productId])
   @@index([order])
 }
 
 model ProductPackage {
-  id        String   @id @default(cuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  label     String
-  slug      String
-  price     Decimal  @db.Decimal(10, 2)
-  salePrice Decimal? @db.Decimal(10, 2)
-  sku       String?
-  status    String   @default("in_stock")
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String                 @id @default(cuid())
+  productId       String
+  product         Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label           String
+  slug            String
+  price           Decimal                @db.Decimal(10, 2)
+  salePrice       Decimal?               @db.Decimal(10, 2)
+  sku             String?
+  status          String                 @default("in_stock")
+  order           Int                    @default(0)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  packageVariants ProductPackageVariant[]
 
   @@index([productId])
   @@index([order])
+}
+
+model ProductPackageVariant {
+  id        String         @id @default(cuid())
+  packageId String
+  package   ProductPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  status    String         @default("in_stock")
+
+  @@unique([packageId, variantId])
+  @@index([packageId])
+  @@index([variantId])
 }
 
 // Product category model (supports parent/child hierarchy for subcategories)

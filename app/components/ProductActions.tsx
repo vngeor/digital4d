@@ -52,12 +52,13 @@ interface ProductActionsProps {
     initialCouponCode?: string
     promotedCoupons?: PromotedCoupon[]
     selectedVariantStatus?: string
+    selectedVariantId?: string
     selectedPackage?: SelectedPackage | null
     packages?: { id: string }[]
     isWishlisted?: boolean
 }
 
-export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
     const t = useTranslations("products")
     const { data: session } = useSession()
     const [loading, setLoading] = useState(false)
@@ -342,6 +343,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     quantity,
                     ...(appliedCoupon ? { couponCode: appliedCoupon.couponCode } : {}),
                     packageId: selectedPackage?.id ?? null,
+                    variantId: selectedVariantId ?? null,
                 }),
             })
 
