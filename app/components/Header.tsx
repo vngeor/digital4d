@@ -53,6 +53,7 @@ export function Header() {
     const [expandedCategoryMobile, setExpandedCategoryMobile] = useState<string | null>(null)
     const [userDropdownOpen, setUserDropdownOpen] = useState(false)
     const [missingBirthDate, setMissingBirthDate] = useState(false)
+    const [loadingTimedOut, setLoadingTimedOut] = useState(false)
     const userDropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -128,6 +129,16 @@ export function Header() {
         document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
         return () => { document.body.style.overflow = '' }
     }, [mobileMenuOpen])
+
+    // Fallback: if session loading takes > 3s, treat as unauthenticated
+    useEffect(() => {
+        if (status !== "loading") {
+            setLoadingTimedOut(false)
+            return
+        }
+        const timer = setTimeout(() => setLoadingTimedOut(true), 3000)
+        return () => clearTimeout(timer)
+    }, [status])
 
     // Close user dropdown when clicking outside
     useEffect(() => {
@@ -261,7 +272,7 @@ export function Header() {
                     </button>
 
                     {/* Auth Button */}
-                    {status === "loading" ? (
+                    {(status === "loading" && !loadingTimedOut) ? (
                         <div className="w-8 h-8 rounded-full bg-slate-700 animate-pulse" />
                     ) : session ? (
                         <div className="relative" ref={userDropdownRef}>
@@ -349,12 +360,20 @@ export function Header() {
                             )}
                         </div>
                     ) : (
-                        <Link
-                            href="/login"
-                            className="hidden lg:block px-5 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 font-semibold text-sm hover:scale-105 transition-transform"
-                        >
-                            {t("login")}
-                        </Link>
+                        <>
+                            <Link
+                                href="/login"
+                                className="hidden lg:block px-5 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 font-semibold text-sm hover:scale-105 transition-transform"
+                            >
+                                {t("login")}
+                            </Link>
+                            <Link
+                                href="/login"
+                                className="lg:hidden px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-xs font-semibold touch-manipulation"
+                            >
+                                {t("login")}
+                            </Link>
+                        </>
                     )}
 
                     {/* Mobile Menu Button — 3 lines morph to X */}
