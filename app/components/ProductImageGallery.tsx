@@ -19,6 +19,10 @@ interface ProductImageGalleryProps {
     productStatus?: string
     onVariantChange?: (index: number) => void
     availableVariantIndices?: number[] | null
+    packageVariantStatusMap?: Map<string, string> | null
+    isNew?: boolean
+    discountPercent?: number | null
+    selectedVariantIndex?: number // parent-controlled: synced when package changes
 }
 
 const STATUS_OVERLAY_STYLE: Record<string, string> = {
@@ -33,7 +37,7 @@ const STATUS_OVERLAY_TEXT: Record<string, Record<string, string>> = {
     coming_soon: { bg: "ОЧАКВАЙТЕ СКОРО", en: "COMING SOON", es: "PRÓXIMAMENTE" },
 }
 
-export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange, availableVariantIndices }: ProductImageGalleryProps) {
+export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange, availableVariantIndices, packageVariantStatusMap, isNew, discountPercent, selectedVariantIndex: controlledVariantIndex }: ProductImageGalleryProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const firstAvailableVariant = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
     const defaultVariantIndex = variants.length > 0 ? (firstAvailableVariant >= 0 ? firstAvailableVariant : 0) : -1
@@ -41,6 +45,14 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
     const [showingVariant, setShowingVariant] = useState(
         defaultVariantIndex >= 0 && !!variants[defaultVariantIndex]?.image
     )
+
+    // Sync internal selection when parent changes it (e.g., package switch auto-selects a color)
+    useEffect(() => {
+        if (controlledVariantIndex !== undefined && controlledVariantIndex !== selectedVariantIndex) {
+            setSelectedVariantIndex(controlledVariantIndex)
+            setShowingVariant(controlledVariantIndex >= 0 && !!variants[controlledVariantIndex]?.image)
+        }
+    }, [controlledVariantIndex]) // eslint-disable-line react-hooks/exhaustive-deps
     const [lightboxOpen, setLightboxOpen] = useState(false)
     const touchStartX = useRef(0)
     const touchStartY = useRef(0)
@@ -78,11 +90,14 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
         currentImage = allImages[selectedImageIndex] || mainImage
     }
 
-    // Determine overlay status: use variant's unavailable status if it has one, else fall back to product status
-    // This ensures "sold_out" product-level overlay always shows, even if the selected variant is "in_stock"
+    // Determine overlay status: prefer per-package status, then global variant status, then product status
     const variantStatus = selectedVariantIndex >= 0 ? variants[selectedVariantIndex]?.status : null
-    const overlayStatus = (variantStatus && STATUS_OVERLAY_STYLE[variantStatus])
-        ? variantStatus
+    const selectedVariantColorId = selectedVariantIndex >= 0 ? variants[selectedVariantIndex]?.colorId : null
+    const effectiveVariantStatus = selectedVariantColorId
+        ? (packageVariantStatusMap?.get(selectedVariantColorId) ?? variantStatus)
+        : variantStatus
+    const overlayStatus = (effectiveVariantStatus && STATUS_OVERLAY_STYLE[effectiveVariantStatus])
+        ? effectiveVariantStatus
         : productStatus
     const overlayBg = overlayStatus ? STATUS_OVERLAY_STYLE[overlayStatus] : null
     const overlayText = overlayStatus ? STATUS_OVERLAY_TEXT[overlayStatus]?.[locale] || STATUS_OVERLAY_TEXT[overlayStatus]?.en : null
@@ -170,6 +185,23 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                             </div>
                         </div>
                     )}
+
+                    {/* Top-left: NEW badge */}
+                    {isNew && (
+                        <div className="absolute top-3 left-3 pointer-events-none z-10">
+                            <span className="px-4 py-2 rounded-lg text-base font-black bg-cyan-500 text-white shadow-xl tracking-widest uppercase">NEW</span>
+                        </div>
+                    )}
+
+                    {/* Top-right: Discount badge */}
+                    {discountPercent && discountPercent > 0 && (
+                        <div className="absolute top-3 right-3 pointer-events-none z-10">
+                            <span className="-rotate-6 inline-block px-4 py-2 rounded-xl text-base font-black bg-red-500 text-white shadow-xl tracking-wide">
+                                -{discountPercent}%
+                            </span>
+                        </div>
+                    )}
+
                 </div>
 
                 {/* Gallery Thumbnails — only when multiple images exist */}
@@ -198,7 +230,8 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                     <div className={`p-3 md:p-4 ${showThumbnails ? "" : "border-t border-white/10"}`}>
                         <div className="flex items-center gap-2 flex-wrap">
                             {variants.map((variant, index) => {
-                                const isUnavailable = variant.status === "sold_out" || variant.status === "out_of_stock"
+                                const effectiveStatus = packageVariantStatusMap?.get(variant.colorId) ?? variant.status
+                                const isUnavailable = effectiveStatus === "sold_out" || effectiveStatus === "out_of_stock"
                                 const isHidden = availableVariantIndices !== null && availableVariantIndices !== undefined && !availableVariantIndices.includes(index)
                                 if (isHidden) return null
                                 return (
@@ -225,20 +258,24 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                                 )
                             })}
                         </div>
-                        {showingVariant && selectedColorName && (
-                            <p className="text-xs text-slate-400 mt-2">
-                                {selectedColorName}
-                                {variants[selectedVariantIndex] && variants[selectedVariantIndex].status !== "in_stock" && (
-                                    <span className={`ml-2 ${
-                                        variants[selectedVariantIndex].status === "sold_out" ? "text-red-400"
-                                        : variants[selectedVariantIndex].status === "out_of_stock" ? "text-gray-400"
-                                        : "text-slate-400"
-                                    }`}>
-                                        — {getStatusLabel(variants[selectedVariantIndex].status)}
-                                    </span>
-                                )}
-                            </p>
-                        )}
+                        {showingVariant && selectedColorName && (() => {
+                            const sel = variants[selectedVariantIndex]
+                            const selEffective = sel ? (packageVariantStatusMap?.get(sel.colorId) ?? sel.status) : undefined
+                            return (
+                                <p className="text-xs text-slate-400 mt-2">
+                                    {selectedColorName}
+                                    {selEffective && selEffective !== "in_stock" && (
+                                        <span className={`ml-2 ${
+                                            selEffective === "sold_out" ? "text-red-400"
+                                            : selEffective === "out_of_stock" ? "text-gray-400"
+                                            : "text-slate-400"
+                                        }`}>
+                                            — {getStatusLabel(selEffective)}
+                                        </span>
+                                    )}
+                                </p>
+                            )
+                        })()}
                     </div>
                 )}
             </div>

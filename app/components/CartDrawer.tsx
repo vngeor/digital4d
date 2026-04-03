@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { X, ShoppingCart, Trash2, Minus, Plus, Loader2 } from "lucide-react"
-import { getCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, type CartItem } from "@/lib/cart"
+import { getCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, cartItemKey, type CartItem } from "@/lib/cart"
 import { UpsellCard, type UpsellProduct } from "./UpsellCard"
 
 interface CartDrawerProps {
@@ -93,19 +93,19 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     return () => window.removeEventListener("open-cart-upsell", handler)
   }, [upsellOpenOnAdd])
 
-  const handleRemove = (productId: string) => {
-    removeFromCart(productId)
+  const handleRemove = (key: string) => {
+    removeFromCart(key)
     window.dispatchEvent(new Event("cart-updated"))
   }
 
-  const handleQty = (productId: string, delta: number) => {
-    const item = items?.find((i) => i.productId === productId)
+  const handleQty = (key: string, delta: number) => {
+    const item = items?.find((i) => cartItemKey(i.productId, i.packageId) === key)
     if (!item) return
     const newQty = item.quantity + delta
     if (newQty <= 0) {
-      handleRemove(productId)
+      handleRemove(key)
     } else {
-      updateQuantity(productId, newQty)
+      updateQuantity(key, newQty)
       window.dispatchEvent(new Event("cart-updated"))
     }
   }
@@ -125,7 +125,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+          items: items.map((i) => ({ productId: i.productId, packageId: i.packageId ?? null, quantity: i.quantity })),
         }),
       })
       const data = await res.json()
@@ -283,8 +283,9 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
               {items.map((item) => {
                 const effectivePrice = getEffectivePrice(item)
                 const isOnSale = item.onSale && item.salePrice !== null
+                const itemKey = cartItemKey(item.productId, item.packageId)
                 return (
-                  <li key={item.productId} className="py-4 flex gap-3">
+                  <li key={itemKey} className="py-4 flex gap-3">
                     {/* Product image */}
                     {item.image ? (
                       <Link href={item.productUrl} onClick={onClose} className="shrink-0">
@@ -309,6 +310,27 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                       >
                         {getLocalizedName(item)}
                       </Link>
+                      {(item.packageLabel || item.colorNameEn) && (
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {item.packageLabel && (
+                            <span className="text-xs text-slate-400">{item.packageLabel}</span>
+                          )}
+                          {item.packageLabel && item.colorNameEn && (
+                            <span className="text-xs text-slate-600">·</span>
+                          )}
+                          {item.colorHex && (
+                            <span
+                              className="w-3 h-3 rounded-full inline-block border border-white/20 shrink-0"
+                              style={{ backgroundColor: item.colorHex }}
+                            />
+                          )}
+                          {item.colorNameEn && (
+                            <span className="text-xs text-slate-400">
+                              {locale === "bg" ? item.colorNameBg : locale === "es" ? item.colorNameEs : item.colorNameEn}
+                            </span>
+                          )}
+                        </div>
+                      )}
 
                       {/* Price */}
                       <div className="flex items-center gap-1.5 mt-1">
@@ -326,7 +348,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                       <div className="flex items-center gap-2 mt-2">
                         <div className="flex items-center gap-1 glass rounded-lg border border-white/10 px-1">
                           <button
-                            onClick={() => handleQty(item.productId, -1)}
+                            onClick={() => handleQty(itemKey, -1)}
                             className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white transition-colors touch-manipulation disabled:opacity-40"
                             disabled={item.quantity <= 1}
                           >
@@ -334,7 +356,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                           </button>
                           <span className="w-6 text-center text-sm text-white font-medium">{item.quantity}</span>
                           <button
-                            onClick={() => handleQty(item.productId, 1)}
+                            onClick={() => handleQty(itemKey, 1)}
                             className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white transition-colors touch-manipulation disabled:opacity-40"
                             disabled={item.quantity >= 99}
                           >
@@ -342,7 +364,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                           </button>
                         </div>
                         <button
-                          onClick={() => handleRemove(item.productId)}
+                          onClick={() => handleRemove(itemKey)}
                           className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors touch-manipulation"
                           aria-label={t("remove")}
                         >
