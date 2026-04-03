@@ -555,19 +555,6 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                                     )}
                                 </>
                             )}
-                            <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium ${
-                                product.status === "in_stock" ? "bg-emerald-500/20 text-emerald-400"
-                                : product.status === "pre_order" ? "bg-purple-500/20 text-purple-400"
-                                : product.status === "coming_soon" ? "bg-blue-500/20 text-blue-400"
-                                : product.status === "sold_out" ? "bg-red-500/20 text-red-400"
-                                : "bg-gray-500/20 text-gray-400"
-                            }`}>
-                                {product.status === "in_stock" ? t("products.inStock")
-                                : product.status === "pre_order" ? t("products.preOrder")
-                                : product.status === "coming_soon" ? t("products.comingSoon")
-                                : product.status === "sold_out" ? t("products.soldOut")
-                                : t("products.outOfStock")}
-                            </span>
                             {product.featured && (
                                 <span className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-violet-500/90 text-white shadow-lg">
                                     ⭐ {t("products.featured")}
