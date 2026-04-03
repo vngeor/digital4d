@@ -8,6 +8,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 
 - **Multilingual** - Full i18n support (BG/EN/ES) with next-intl
 - **E-commerce** - Product catalog, categories, digital downloads, Stripe payments
+- **Product Packages & SIZE×COLOR Matrix** - Weight/size variants (e.g., "1 kg", "500g") per product with individual pricing. SIZE×COLOR matrix (`ProductPackageVariant`) tracks per-combination availability — a specific size+color can be in_stock while others are sold_out. Validated at checkout
 - **Coupons & Discounts** - Percentage/fixed coupons, product-specific or global, promotional badges on product cards, live countdown timers
 - **Wishlist** - Save products for later, price drop & coupon notifications
 - **Recently Viewed** - localStorage-based recently viewed products section on homepage (carousel on mobile, grid on desktop; all 3 locale names stored; no login required)
@@ -189,6 +190,9 @@ Key models:
 - **RolePermission** - Per-role permission overrides
 - **UserPermission** - Per-user permission overrides
 - **Product** - E-commerce catalog with multilingual content
+- **ProductVariant** - Color variants per product (colorHex, colorName BG/EN/ES, image, status)
+- **ProductPackage** - Size/weight variants per product (label, price, salePrice, status)
+- **ProductPackageVariant** - SIZE×COLOR junction — per-combination status (in_stock/sold_out/etc.)
 - **ProductCategory** - Product categorization
 - **Order** - Customer orders
 - **QuoteRequest** - Quote requests with file attachments
@@ -633,6 +637,7 @@ All admin tables include:
 - **GA4 / Meta Pixel tracking**
 - **Product reviews/ratings**
 - **Testimonials section**
+- **Color + Size filters on products page** - Filter catalog by variant color swatches and package size/weight chips (e.g., "1 kg"), dynamically generated from actual DB data
 
 ---
 
