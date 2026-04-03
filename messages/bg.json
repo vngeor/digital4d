@@ -881,6 +881,8 @@
       "resource_coupons": "Купони",
       "resource_notifications": "Известия",
       "resource_brands": "Марки",
+      "resource_colors": "Цветове",
+      "resource_weights": "Тежести",
       "clearLogs": "Изчисти журнала",
       "clearLogsFiltered": "Изчисти филтрираните",
       "confirmClearTitle": "Изчистване на одит журнала",

@@ -881,6 +881,8 @@
       "resource_coupons": "Cupones",
       "resource_notifications": "Notificaciones",
       "resource_brands": "Marcas",
+      "resource_colors": "Colores",
+      "resource_weights": "Pesos",
       "clearLogs": "Limpiar registros",
       "clearLogsFiltered": "Limpiar filtrados",
       "confirmClearTitle": "Limpiar registros de auditoría",

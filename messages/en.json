@@ -881,6 +881,8 @@
       "resource_coupons": "Coupons",
       "resource_notifications": "Notifications",
       "resource_brands": "Brands",
+      "resource_colors": "Colors",
+      "resource_weights": "Weights",
       "clearLogs": "Clear Logs",
       "clearLogsFiltered": "Clear Filtered",
       "confirmClearTitle": "Clear Audit Logs",
