@@ -48,9 +48,16 @@ const securityHeaders: Record<string, string> = {
 }
 
 function buildCspHeader(nonce: string): string {
+  const isDev = process.env.NODE_ENV === "development"
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com`,
+    [
+      "script-src 'self'",
+      `'nonce-${nonce}'`,
+      "'strict-dynamic'",
+      isDev ? "'unsafe-eval'" : "",
+      "https://js.stripe.com",
+    ].filter(Boolean).join(" "),
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://lh3.googleusercontent.com https://platform-lookaside.fbsbx.com https://graph.facebook.com https://*.public.blob.vercel-storage.com https://*.blob.vercel-storage.com https://avatars.githubusercontent.com",
     "font-src 'self' https://fonts.gstatic.com",
