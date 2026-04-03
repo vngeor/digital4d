@@ -265,21 +265,6 @@ export default function ProductsPage() {
     setDeleteItem({ id, name })
   }
 
-  const handleToggleField = async (id: string, field: "published" | "featured" | "bestSeller", value: boolean) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
-    setAllProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
-    const res = await fetch("/api/admin/products", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "toggleField", id, field, value }),
-    })
-    if (!res.ok) {
-      setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: !value } : p))
-      setAllProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: !value } : p))
-      toast.error("Failed to update")
-    }
-  }
-
   const confirmDelete = async () => {
     if (!deleteItem) return
     const res = await fetch(`/api/admin/products?id=${deleteItem.id}`, { method: "DELETE" })
