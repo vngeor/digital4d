@@ -48,6 +48,7 @@ interface Product {
     featured?: boolean
     bestSeller?: boolean
     createdAt?: string
+    brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
 }
 
 interface PromotedCoupon {
