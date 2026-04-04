@@ -310,6 +310,11 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                       >
                         {getLocalizedName(item)}
                       </Link>
+                      {(item.brandNameEn || item.brandNameBg) && (
+                        <span className="text-xs text-slate-500">
+                          {locale === "bg" ? item.brandNameBg : locale === "es" ? item.brandNameEs : item.brandNameEn}
+                        </span>
+                      )}
                       {(item.packageLabel || item.colorNameEn) && (
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           {item.packageLabel && (

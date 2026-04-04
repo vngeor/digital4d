@@ -21,6 +21,7 @@ interface Product {
     fileType: string | null
     priceType: string
     status: string
+    brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
 }
 
 interface CouponDiscount {
@@ -395,6 +396,9 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             colorNameBg: selectedVariantColor?.nameBg ?? null,
             colorNameEs: selectedVariantColor?.nameEs ?? null,
             colorHex: selectedVariantColor?.hex ?? null,
+            brandNameEn: product.brand?.nameEn ?? null,
+            brandNameBg: product.brand?.nameBg ?? null,
+            brandNameEs: product.brand?.nameEs ?? null,
             productSlug: product.slug,
             productUrl: window.location.pathname,
             nameEn: product.nameEn,

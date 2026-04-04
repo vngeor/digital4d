@@ -547,6 +547,9 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     {/* All Products / All in Category button */}
                             <button
                                 onClick={() => {
+                                    setSaleFilter(false)
+                                    setFeaturedFilter(false)
+                                    setBestSellerFilter(false)
                                     if (subcategories && initialCategory) {
                                         router.push(`/products/category/${initialCategory}`)
                                     } else {
@@ -631,7 +634,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                     ))}
                                 </>
                             ) : (
-                            <div ref={categoryDropdownRef} className="relative">
+                            <div ref={categoryDropdownRef} className="relative w-full sm:w-auto">
                                 <button
                                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                                     className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${selectedCategory
@@ -647,7 +650,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 </button>
 
                                 {showCategoryDropdown && (
-                                    <div className="absolute top-full mt-2 right-0 w-64 sm:w-72 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                    <div className="absolute top-full mt-2 left-0 sm:left-auto sm:right-0 w-64 sm:w-72 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
                                         {/* Search */}
                                         <div className="p-2 border-b border-white/10">
                                             <div className="relative">
