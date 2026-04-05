@@ -130,14 +130,14 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
       })
       const data = await res.json()
       if (!res.ok) {
-        alert(data.error || "Checkout failed")
+        alert(data.error || t("checkoutFailed"))
         return
       }
       clearCart()
       window.dispatchEvent(new Event("cart-updated"))
       window.location.href = data.url
     } catch {
-      alert("Something went wrong. Please try again.")
+      alert(t("checkoutError"))
     } finally {
       setLoading(false)
     }
@@ -171,7 +171,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[54] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[57] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
@@ -179,7 +179,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
       {/* Drawer panel */}
       <div
-        className={`fixed right-0 top-0 bottom-0 z-[55] w-full max-w-sm flex flex-col bg-slate-950 border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out ${
+        className={`fixed right-0 top-0 bottom-0 z-[58] w-full max-w-sm flex flex-col bg-slate-950 border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -310,6 +310,11 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                       >
                         {getLocalizedName(item)}
                       </Link>
+                      {(item.brandNameEn || item.brandNameBg) && (
+                        <span className="text-xs text-slate-500">
+                          {locale === "bg" ? item.brandNameBg : locale === "es" ? item.brandNameEs : item.brandNameEn}
+                        </span>
+                      )}
                       {(item.packageLabel || item.colorNameEn) && (
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           {item.packageLabel && (
@@ -321,7 +326,9 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                           {item.colorHex && (
                             <span
                               className="w-3 h-3 rounded-full inline-block border border-white/20 shrink-0"
-                              style={{ backgroundColor: item.colorHex }}
+                              style={item.colorHex2
+                                ? { background: `linear-gradient(135deg, ${item.colorHex} 50%, ${item.colorHex2} 50%)` }
+                                : { backgroundColor: item.colorHex }}
                             />
                           )}
                           {item.colorNameEn && (

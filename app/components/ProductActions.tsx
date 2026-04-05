@@ -21,6 +21,7 @@ interface Product {
     fileType: string | null
     priceType: string
     status: string
+    brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
 }
 
 interface CouponDiscount {
@@ -59,13 +60,15 @@ interface ProductActionsProps {
     selectedVariantStatus?: string
     selectedVariantId?: string
     selectedVariantImage?: string | null
-    selectedVariantColor?: { nameEn: string; nameBg: string; nameEs: string; hex: string } | null
+    selectedVariantColor?: { nameEn: string; nameBg: string; nameEs: string; hex: string; hex2?: string | null } | null
     selectedPackage?: SelectedPackage | null
     packages?: { id: string }[]
     isWishlisted?: boolean
+    productUrl?: string
+    suppressCartDrawer?: boolean
 }
 
-export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedVariantImage, selectedVariantColor, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedVariantImage, selectedVariantColor, selectedPackage, packages, isWishlisted = false, productUrl, suppressCartDrawer }: ProductActionsProps) {
     const t = useTranslations("products")
     const tc = useTranslations("cart")
     const { data: session, status } = useSession()
@@ -339,7 +342,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     const handleBuyNow = async () => {
         if (status === "loading") return  // Wait until session resolves
         if (!session) {
-            const callbackUrl = encodeURIComponent(window.location.pathname)
+            const callbackUrl = encodeURIComponent(productUrl ?? window.location.pathname)
             window.location.href = `/login?callbackUrl=${callbackUrl}`
             return
         }
@@ -395,8 +398,12 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             colorNameBg: selectedVariantColor?.nameBg ?? null,
             colorNameEs: selectedVariantColor?.nameEs ?? null,
             colorHex: selectedVariantColor?.hex ?? null,
+            colorHex2: selectedVariantColor?.hex2 ?? null,
+            brandNameEn: product.brand?.nameEn ?? null,
+            brandNameBg: product.brand?.nameBg ?? null,
+            brandNameEs: product.brand?.nameEs ?? null,
             productSlug: product.slug,
-            productUrl: window.location.pathname,
+            productUrl: productUrl ?? window.location.pathname,
             nameEn: product.nameEn,
             nameBg: product.nameBg,
             nameEs: product.nameEs,
@@ -410,7 +417,11 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             status: product.status,
         }, quantity)
         window.dispatchEvent(new Event("cart-updated"))
-        window.dispatchEvent(new Event("open-cart-upsell"))
+        if (suppressCartDrawer) {
+            toast.success(tc("addedToCart"))
+        } else {
+            window.dispatchEvent(new Event("open-cart-upsell"))
+        }
     }
 
     const canPurchase = ["in_stock", "pre_order"].includes(product.status)
@@ -419,7 +430,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
 
     const handleNotifyMe = async () => {
         if (!session) {
-            const callbackUrl = encodeURIComponent(window.location.pathname)
+            const callbackUrl = encodeURIComponent(productUrl ?? window.location.pathname)
             window.location.href = `/login?callbackUrl=${callbackUrl}`
             return
         }
@@ -554,7 +565,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 {canPurchase && quantitySelector}
 
                 {canPurchase ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <button
                             onClick={handleAddToCart}
                             className="flex-1 py-3 rounded-xl border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors font-semibold flex items-center justify-center gap-2 touch-manipulation"

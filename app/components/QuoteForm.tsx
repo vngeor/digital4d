@@ -74,12 +74,12 @@ export function QuoteForm({ productId, productName, quantity, onClose, isOrderIn
         const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf("."))
 
         if (!allowedExtensions.includes(fileExtension)) {
-            setError("Invalid file type. Allowed: STL, OBJ, 3MF")
+            setError(t("invalidFileType"))
             return
         }
 
         if (file.size > 50 * 1024 * 1024) {
-            setError("File too large. Maximum size is 50MB.")
+            setError(t("fileTooLarge"))
             return
         }
 
@@ -127,12 +127,12 @@ export function QuoteForm({ productId, productName, quantity, onClose, isOrderIn
     }
 
     return createPortal(
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center z-50 p-3 pb-safe sm:p-4 sm:pb-safe">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center z-[65] p-3 pb-safe sm:p-4 sm:pb-safe">
             <div className="glass-strong rounded-2xl border border-white/10 w-full sm:max-w-lg max-h-[90dvh] sm:max-h-[85dvh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
                     <div>
                         <h2 className="text-xl font-bold text-white">
-                            {isOrderInquiry ? "Order Inquiry" : t("title")}
+                            {isOrderInquiry ? t("orderInquiry") : t("title")}
                         </h2>
                         {productName && (
                             <p className="text-sm text-gray-400 mt-1">{productName}</p>

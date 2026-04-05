@@ -23,7 +23,9 @@
     "freeShippingUnlocked": "🎉 ¡Envío gratis desbloqueado!",
     "freeShippingAdd": "Añade {amount} {currency} más para envío gratis",
     "orderConfirmed": "¡Pedido confirmado!",
-    "orderConfirmedDesc": "Nos pondremos en contacto contigo para la entrega."
+    "orderConfirmedDesc": "Nos pondremos en contacto contigo para la entrega.",
+    "checkoutFailed": "Error al pagar",
+    "checkoutError": "Algo salió mal. Por favor, inténtelo de nuevo."
   },
   "nav": {
     "services": "Servicios",
@@ -672,7 +674,14 @@
       "updateFailed": "Error al actualizar el contenido",
       "confirmDeleteTitle": "Confirmar eliminación",
       "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
-      "homepage": "Inicio"
+      "homepage": "Inicio",
+      "image": "Imagen",
+      "uploadImage": "Subir imagen",
+      "uploading": "Subiendo...",
+      "imageOr": "o",
+      "pasteImageUrl": "Pegar URL de imagen...",
+      "imageUploadHelp": "Máx. 5MB. Compatibles: JPEG, PNG, GIF, WebP",
+      "imageRecommendedContent": "Recomendado: 1200 x 630px (ratio 1.9:1 - apto para redes sociales)"
     },
     "orders": {
       "title": "Gestión de Pedidos",
@@ -994,7 +1003,46 @@
       "variantImage": "Imagen",
       "noVariants": "No se han añadido variantes de color",
       "exportCSV": "Exportar CSV",
-      "exportFailed": "Error al exportar. Inténtalo de nuevo."
+      "exportFailed": "Error al exportar. Inténtalo de nuevo.",
+      "brandRequired": "La marca es obligatoria",
+      "relatedProducts": "Productos relacionados",
+      "searchRelatedPlaceholder": "Buscar productos para agregar...",
+      "relatedHelp": "Selecciona productos para mostrar como relacionados. Si está vacío, se muestran automáticamente productos de la misma categoría.",
+      "upsellProducts": "Productos Upsell",
+      "searchUpsellPlaceholder": "Buscar productos para upsell...",
+      "upsellHelp": "Productos mostrados en el popup 'Añadir al carrito'. Elige artículos de alto margen. Si está vacío, se muestran productos de la misma categoría.",
+      "slugRequired": "Slug es requerido",
+      "nameEnRequired": "El nombre en inglés es obligatorio",
+      "nameBgRequired": "El nombre en búlgaro es obligatorio",
+      "nameEsRequired": "El nombre en español es obligatorio",
+      "categoryRequired": "La categoría es obligatoria",
+      "slugPlaceholder": "ej. 3d-model-dragon",
+      "skuPlaceholder": "ej. PROD-001",
+      "generateSku": "Generar SKU",
+      "uploadImage": "Subir imagen",
+      "uploading": "Subiendo...",
+      "imageOr": "o",
+      "pasteImageUrl": "Pegar URL de imagen...",
+      "imageUploadHelp": "Máx 5MB. Formatos: JPEG, PNG, GIF, WebP",
+      "imageRecommended": "Recomendado: 800 × 800px (cuadrado 1:1, PNG transparente)",
+      "galleryImages": "Imágenes de galería",
+      "addImage": "Agregar imagen",
+      "galleryHelp": "Agrega imágenes adicionales del producto. Máx 5MB cada una.",
+      "packageSizes": "Tamaños de paquete",
+      "addPackage": "Agregar paquete",
+      "noPackages": "Sin paquetes — el producto tiene un precio único. Agrega paquetes para múltiples tamaños (ej. 250g / 500g / 1kg).",
+      "weightSize": "Peso / Tamaño",
+      "noWeights": "Sin pesos definidos — agrega en Admin › Pesos primero.",
+      "selectWeight": "— Seleccionar peso —",
+      "status": "Estado",
+      "salePricePlaceholder": "Dejar vacío = sin descuento",
+      "skuOptional": "SKU (opcional)",
+      "skuPackagePlaceholder": "ej. PLA-BLACK-1KG",
+      "urlSlugAuto": "URL slug (automático)",
+      "availableColors": "Colores disponibles",
+      "colorLabel": "Color",
+      "noColors": "Sin colores definidos — agrega colores en Admin › Colores primero.",
+      "selectColor": "— Seleccionar color —"
     },
     "brands": {
       "title": "Gestión de Marcas",
@@ -1021,7 +1069,16 @@
       "saveFailed": "Error al guardar la marca",
       "deleteFailed": "Error al eliminar la marca",
       "confirmDeleteTitle": "Confirmar eliminación",
-      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"? Los productos con esta marca quedarán sin marca."
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"? Los productos con esta marca quedarán sin marca.",
+      "slugRequired": "El slug es obligatorio",
+      "nameEnRequired": "El nombre en inglés es obligatorio",
+      "nameBgRequired": "El nombre en búlgaro es obligatorio",
+      "nameEsRequired": "El nombre en español es obligatorio",
+      "uploading": "Subiendo...",
+      "upload": "Subir",
+      "imageOr": "o",
+      "pasteImageUrl": "Pegar URL de imagen...",
+      "imageUploadHelp": "Máx. 5MB. Compatibles: JPEG, PNG, GIF, WebP"
     },
     "colors": {
       "title": "Colores",
@@ -1052,7 +1109,16 @@
       "saveFailed": "Error al guardar color",
       "deleteFailed": "Error al eliminar color",
       "confirmDeleteTitle": "Eliminar color",
-      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?"
+      "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar \"{name}\"?",
+      "nameEnRequired": "El nombre en inglés es obligatorio",
+      "nameBgRequired": "El nombre en búlgaro es obligatorio",
+      "nameEsRequired": "El nombre en español es obligatorio",
+      "hexRequired": "El color hex es obligatorio",
+      "color1Primary": "Color 1 (Principal)",
+      "color2Secondary": "Color 2 (Secundario)",
+      "removeColor2": "Eliminar",
+      "splitSwatchesHint": "Las muestras divididas aparecen en diagonal en las páginas de productos y en el carrito.",
+      "addSecondColor": "Añadir segundo color (para filamentos bicolor)"
     },
     "weights": {
       "title": "Pesos",
@@ -1091,6 +1157,7 @@
       "name": "Nombre",
       "description": "Descripción",
       "pageTitle": "Título de la página",
+      "titleAlignment": "Alineación del título",
       "image": "Imagen",
       "color": "Color",
       "order": "Orden",
@@ -1110,7 +1177,17 @@
       "backToProducts": "Volver a Productos",
       "deleteFailed": "Error al eliminar la categoría",
       "parentCategory": "Categoría principal",
-      "noParent": "— Ninguna (nivel superior)"
+      "noParent": "— Ninguna (nivel superior)",
+      "slugRequired": "El slug es obligatorio",
+      "nameEnRequired": "El nombre en inglés es obligatorio",
+      "nameBgRequired": "El nombre en búlgaro es obligatorio",
+      "nameEsRequired": "El nombre en español es obligatorio",
+      "uploading": "Subiendo...",
+      "upload": "Subir",
+      "imageOr": "o",
+      "pasteImageUrl": "Pegar URL de imagen...",
+      "imageUploadHelp": "Máx. 5MB. Compatibles: JPEG, PNG, GIF, WebP",
+      "imageRecommended": "Recomendado: 400 x 400px (cuadrado 1:1)"
     },
     "quotes": {
       "title": "Solicitudes de Cotización",
@@ -1232,6 +1309,10 @@
     "color": "Color",
     "clearColors": "Limpiar",
     "clearSizes": "Limpiar",
+    "filters": "Filtros",
+    "clearAll": "Limpiar todo",
+    "clearPrice": "Limpiar precio",
+    "brandRequired": "La marca es obligatoria",
     "requestQuote": "Solicitar Cotización",
     "buyNow": "Comprar Ahora",
     "orderNow": "Pedir Ahora",
@@ -1298,7 +1379,14 @@
     "notifyMeShort": "Notifícame",
     "notifyMeSubscribed": "Serás notificado",
     "notifyMeSuccess": "¡Serás notificado cuando este producto esté disponible!",
-    "notifyMeError": "Error al suscribirse a las notificaciones"
+    "notifyMeError": "Error al suscribirse a las notificaciones",
+    "productCount": "{count, plural, one {# producto} other {# productos}}",
+    "priceMinMaxError": "El precio mínimo no puede superar el máximo",
+    "applyFilters": "Aplicar filtros",
+    "quickView": "Vista rápida",
+    "viewFullDetails": "Ver detalles completos",
+    "readMore": "Leer más",
+    "showLess": "Ver menos"
   },
   "quotes": {
     "title": "Solicitar Cotización",
@@ -1320,7 +1408,10 @@
     "success": "¡Solicitud enviada con éxito!",
     "successMessage": "Revisaremos tu solicitud y te responderemos en 24 horas.",
     "error": "Error al enviar la solicitud. Por favor, intenta de nuevo.",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "invalidFileType": "Tipo de archivo no válido. Permitidos: STL, OBJ, 3MF",
+    "fileTooLarge": "Archivo demasiado grande. Tamaño máximo: 50MB.",
+    "orderInquiry": "Consulta de pedido"
   },
   "homeProducts": {
     "title": "Nuestros Productos",
@@ -1452,7 +1543,8 @@
     "outOfStock": "Agotado",
     "comingSoon": "Próximamente",
     "preOrder": "Pre-Pedido",
-    "soldOut": "Agotado"
+    "soldOut": "Agotado",
+    "error": "Algo salió mal"
   },
   "search": {
     "placeholder": "Buscar productos, noticias, páginas...",

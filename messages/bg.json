@@ -23,7 +23,9 @@
     "freeShippingUnlocked": "🎉 Получихте безплатна доставка!",
     "freeShippingAdd": "Добавете още {amount} {currency} за безплатна доставка",
     "orderConfirmed": "Поръчката е потвърдена!",
-    "orderConfirmedDesc": "Ще се свържем с вас за доставката."
+    "orderConfirmedDesc": "Ще се свържем с вас за доставката.",
+    "checkoutFailed": "Грешка при плащане",
+    "checkoutError": "Нещо се обърка. Моля, опитайте отново."
   },
   "nav": {
     "services": "Услуги",
@@ -672,7 +674,14 @@
       "updateFailed": "Неуспешно обновяване на съдържание",
       "confirmDeleteTitle": "Потвърждаване на изтриване",
       "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
-      "homepage": "Начална стр."
+      "homepage": "Начална стр.",
+      "image": "Изображение",
+      "uploadImage": "Качи изображение",
+      "uploading": "Качване...",
+      "imageOr": "или",
+      "pasteImageUrl": "Постави URL на изображение...",
+      "imageUploadHelp": "Макс. 5MB. Поддържани: JPEG, PNG, GIF, WebP",
+      "imageRecommendedContent": "Препоръчано: 1200 x 630px (съотношение 1.9:1 - подходящо за социални мрежи)"
     },
     "orders": {
       "title": "Управление на поръчки",
@@ -994,7 +1003,46 @@
       "variantImage": "Изображение",
       "noVariants": "Няма добавени цветови варианти",
       "exportCSV": "Експорт CSV",
-      "exportFailed": "Грешка при експорт. Моля, опитайте отново."
+      "exportFailed": "Грешка при експорт. Моля, опитайте отново.",
+      "brandRequired": "Марката е задължителна",
+      "relatedProducts": "Свързани продукти",
+      "searchRelatedPlaceholder": "Търси продукти за добавяне...",
+      "relatedHelp": "Изберете продукти за показване като свързани. Ако е празно, автоматично се показват продукти от същата категория.",
+      "upsellProducts": "Upsell продукти",
+      "searchUpsellPlaceholder": "Търси продукти за upsell...",
+      "upsellHelp": "Продукти показани в изскачащия прозорец 'Добави в количката'. Изберете артикули с висок марж. Ако е празно, се показват продукти от същата категория.",
+      "slugRequired": "Slug е задължителен",
+      "nameEnRequired": "Английското ime е задължително",
+      "nameBgRequired": "Българското ime е задължително",
+      "nameEsRequired": "Испанското ime е задължително",
+      "categoryRequired": "Категорията е задължителна",
+      "slugPlaceholder": "напр. 3d-model-dragon",
+      "skuPlaceholder": "напр. PROD-001",
+      "generateSku": "Генерирай SKU",
+      "uploadImage": "Качи изображение",
+      "uploading": "Качване...",
+      "imageOr": "или",
+      "pasteImageUrl": "Постави URL на изображение...",
+      "imageUploadHelp": "Макс 5MB. Поддържани: JPEG, PNG, GIF, WebP",
+      "imageRecommended": "Препоръчително: 800 × 800px (1:1 квадрат, прозрачен PNG)",
+      "galleryImages": "Галерия изображения",
+      "addImage": "Добави изображение",
+      "galleryHelp": "Добавете допълнителни снимки на продукта. Макс 5MB всяка.",
+      "packageSizes": "Размери на пакет",
+      "addPackage": "Добави пакет",
+      "noPackages": "Няма пакети — продуктът има единична цена. Добавете пакети за различни размери (напр. 250g / 500g / 1kg).",
+      "weightSize": "Тегло / Размер",
+      "noWeights": "Няма дефинирани тегла — добавете в Admin › Тегла.",
+      "selectWeight": "— Изберете тегло —",
+      "status": "Статус",
+      "salePricePlaceholder": "Оставете празно = без намаление",
+      "skuOptional": "SKU (по избор)",
+      "skuPackagePlaceholder": "напр. PLA-BLACK-1KG",
+      "urlSlugAuto": "URL slug (автоматично)",
+      "availableColors": "Налични цветове",
+      "colorLabel": "Цвят",
+      "noColors": "Няма дефинирани цветове — добавете в Admin › Цветове.",
+      "selectColor": "— Изберете цвят —"
     },
     "brands": {
       "title": "Управление на марки",
@@ -1021,7 +1069,16 @@
       "saveFailed": "Неуспешно запазване на марка",
       "deleteFailed": "Грешка при изтриване на марка",
       "confirmDeleteTitle": "Потвърждаване на изтриване",
-      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"? Продуктите с тази марка ще останат без марка."
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"? Продуктите с тази марка ще останат без марка.",
+      "slugRequired": "Slug е задължителен",
+      "nameEnRequired": "Английското наименование е задължително",
+      "nameBgRequired": "Българското наименование е задължително",
+      "nameEsRequired": "Испанското наименование е задължително",
+      "uploading": "Качване...",
+      "upload": "Качи",
+      "imageOr": "или",
+      "pasteImageUrl": "Постави URL на изображение...",
+      "imageUploadHelp": "Макс. 5MB. Поддържани: JPEG, PNG, GIF, WebP"
     },
     "colors": {
       "title": "Цветове",
@@ -1052,7 +1109,16 @@
       "saveFailed": "Грешка при запазване на цвят",
       "deleteFailed": "Грешка при изтриване на цвят",
       "confirmDeleteTitle": "Изтриване на цвят",
-      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?"
+      "confirmDeleteMessage": "Сигурни ли сте, че искате да изтриете \"{name}\"?",
+      "nameEnRequired": "Английското наименование е задължително",
+      "nameBgRequired": "Българското наименование е задължително",
+      "nameEsRequired": "Испанското наименование е задължително",
+      "hexRequired": "Hex цветът е задължителен",
+      "color1Primary": "Цвят 1 (Основен)",
+      "color2Secondary": "Цвят 2 (Допълнителен)",
+      "removeColor2": "Премахни",
+      "splitSwatchesHint": "Разделените мостри се показват диагонално на страниците с продукти и в количката.",
+      "addSecondColor": "Добави втори цвят (за двуцветни филаменти)"
     },
     "weights": {
       "title": "Тегла",
@@ -1091,6 +1157,7 @@
       "name": "Име",
       "description": "Описание",
       "pageTitle": "Заглавие на страницата",
+      "titleAlignment": "Наредба на заглавието",
       "image": "Изображение",
       "color": "Цвят",
       "order": "Ред",
@@ -1110,7 +1177,17 @@
       "backToProducts": "Обратно към продукти",
       "deleteFailed": "Грешка при изтриване на категория",
       "parentCategory": "Родителска категория",
-      "noParent": "— Няма (основна категория)"
+      "noParent": "— Няма (основна категория)",
+      "slugRequired": "Slug е задължителен",
+      "nameEnRequired": "Английското наименование е задължително",
+      "nameBgRequired": "Българското наименование е задължително",
+      "nameEsRequired": "Испанското наименование е задължително",
+      "uploading": "Качване...",
+      "upload": "Качи",
+      "imageOr": "или",
+      "pasteImageUrl": "Постави URL на изображение...",
+      "imageUploadHelp": "Макс. 5MB. Поддържани: JPEG, PNG, GIF, WebP",
+      "imageRecommended": "Препоръчано: 400 x 400px (1:1 квадрат)"
     },
     "quotes": {
       "title": "Заявки за оферти",
@@ -1232,6 +1309,10 @@
     "color": "Цвят",
     "clearColors": "Изчисти",
     "clearSizes": "Изчисти",
+    "filters": "Филтри",
+    "clearAll": "Изчисти всички",
+    "clearPrice": "Изчисти цена",
+    "brandRequired": "Марката е задължителна",
     "requestQuote": "Поискай оферта",
     "buyNow": "Купи сега",
     "orderNow": "Поръчай",
@@ -1298,7 +1379,14 @@
     "notifyMeShort": "Уведоми ме",
     "notifyMeSubscribed": "Ще бъдете уведомени",
     "notifyMeSuccess": "Ще бъдете уведомени, когато продуктът е наличен!",
-    "notifyMeError": "Грешка при записване за уведомление"
+    "notifyMeError": "Грешка при записване за уведомление",
+    "productCount": "{count, plural, one {# продукт} other {# продукта}}",
+    "priceMinMaxError": "Минималната цена не може да е по-висока от максималната",
+    "applyFilters": "Приложи филтрите",
+    "quickView": "Бърз преглед",
+    "viewFullDetails": "Виж пълните детайли",
+    "readMore": "Прочети повече",
+    "showLess": "Покажи по-малко"
   },
   "quotes": {
     "title": "Заявка за оферта",
@@ -1320,7 +1408,10 @@
     "success": "Заявката е изпратена успешно!",
     "successMessage": "Ще прегледаме заявката и ще се свържем с вас до 24 часа.",
     "error": "Неуспешно изпращане. Моля, опитайте отново.",
-    "close": "Затвори"
+    "close": "Затвори",
+    "invalidFileType": "Невалиден тип файл. Разрешени: STL, OBJ, 3MF",
+    "fileTooLarge": "Файлът е твърде голям. Максимален размер: 50MB.",
+    "orderInquiry": "Запитване за поръчка"
   },
   "homeProducts": {
     "title": "Нашите продукти",
@@ -1452,7 +1543,8 @@
     "outOfStock": "Изчерпан",
     "comingSoon": "Очаквайте скоро",
     "preOrder": "Предварителна поръчка",
-    "soldOut": "Разпродадено"
+    "soldOut": "Разпродадено",
+    "error": "Нещо се обърка"
   },
   "search": {
     "placeholder": "Търси продукти, новини, страници...",

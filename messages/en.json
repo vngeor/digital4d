@@ -23,7 +23,9 @@
     "freeShippingUnlocked": "🎉 You've got free shipping!",
     "freeShippingAdd": "Add {amount} {currency} more for free shipping",
     "orderConfirmed": "Order confirmed!",
-    "orderConfirmedDesc": "We'll contact you to arrange delivery."
+    "orderConfirmedDesc": "We'll contact you to arrange delivery.",
+    "checkoutFailed": "Checkout failed",
+    "checkoutError": "Something went wrong. Please try again."
   },
   "nav": {
     "services": "Services",
@@ -672,7 +674,14 @@
       "updateFailed": "Failed to update content",
       "confirmDeleteTitle": "Confirm Delete",
       "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
-      "homepage": "Homepage"
+      "homepage": "Homepage",
+      "image": "Image",
+      "uploadImage": "Upload Image",
+      "uploading": "Uploading...",
+      "imageOr": "or",
+      "pasteImageUrl": "Paste image URL...",
+      "imageUploadHelp": "Max 5MB. Supported: JPEG, PNG, GIF, WebP",
+      "imageRecommendedContent": "Recommended: 1200 x 630px (1.9:1 ratio - social media friendly)"
     },
     "orders": {
       "title": "Order Management",
@@ -994,7 +1003,46 @@
       "variantImage": "Image",
       "noVariants": "No color variants added",
       "exportCSV": "Export CSV",
-      "exportFailed": "Export failed. Please try again."
+      "exportFailed": "Export failed. Please try again.",
+      "brandRequired": "Brand is required",
+      "relatedProducts": "Related Products",
+      "searchRelatedPlaceholder": "Search products to add...",
+      "relatedHelp": "Select products to show as related. If empty, same-category products are shown automatically.",
+      "upsellProducts": "Upsell Products",
+      "searchUpsellPlaceholder": "Search products to upsell...",
+      "upsellHelp": "Products shown in the Add to Cart popup. Pick high-margin items. If empty, same-category products shown automatically.",
+      "slugRequired": "Slug is required",
+      "nameEnRequired": "English name is required",
+      "nameBgRequired": "Bulgarian name is required",
+      "nameEsRequired": "Spanish name is required",
+      "categoryRequired": "Category is required",
+      "slugPlaceholder": "e.g., 3d-model-dragon",
+      "skuPlaceholder": "e.g., PROD-001",
+      "generateSku": "Generate SKU",
+      "uploadImage": "Upload Image",
+      "uploading": "Uploading...",
+      "imageOr": "or",
+      "pasteImageUrl": "Paste image URL...",
+      "imageUploadHelp": "Max 5MB. Supported: JPEG, PNG, GIF, WebP",
+      "imageRecommended": "Recommended: 800 × 800px (1:1 square, transparent PNG)",
+      "galleryImages": "Gallery Images",
+      "addImage": "Add Image",
+      "galleryHelp": "Add additional product images. Max 5MB each.",
+      "packageSizes": "Package Sizes",
+      "addPackage": "Add Package",
+      "noPackages": "No packages — product has a single price. Add packages to offer multiple sizes (e.g., 250g / 500g / 1kg).",
+      "weightSize": "Weight / Size",
+      "noWeights": "No weights defined — add in Admin › Weights first.",
+      "selectWeight": "— Select Weight —",
+      "status": "Status",
+      "salePricePlaceholder": "Leave empty = no sale",
+      "skuOptional": "SKU (optional)",
+      "skuPackagePlaceholder": "e.g. PLA-BLACK-1KG",
+      "urlSlugAuto": "URL slug (auto)",
+      "availableColors": "Available colors",
+      "colorLabel": "Color",
+      "noColors": "No colors defined yet — add colors in Admin › Colors first.",
+      "selectColor": "— Select Color —"
     },
     "brands": {
       "title": "Brand Management",
@@ -1021,7 +1069,16 @@
       "saveFailed": "Failed to save brand",
       "deleteFailed": "Failed to delete brand",
       "confirmDeleteTitle": "Confirm Delete",
-      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"? Products using this brand will have no brand assigned."
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"? Products using this brand will have no brand assigned.",
+      "slugRequired": "Slug is required",
+      "nameEnRequired": "English name is required",
+      "nameBgRequired": "Bulgarian name is required",
+      "nameEsRequired": "Spanish name is required",
+      "uploading": "Uploading...",
+      "upload": "Upload",
+      "imageOr": "or",
+      "pasteImageUrl": "Paste image URL...",
+      "imageUploadHelp": "Max 5MB. Supported: JPEG, PNG, GIF, WebP"
     },
     "colors": {
       "title": "Colors",
@@ -1052,7 +1109,16 @@
       "saveFailed": "Failed to save color",
       "deleteFailed": "Failed to delete color",
       "confirmDeleteTitle": "Delete Color",
-      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?"
+      "confirmDeleteMessage": "Are you sure you want to delete \"{name}\"?",
+      "nameEnRequired": "English name is required",
+      "nameBgRequired": "Bulgarian name is required",
+      "nameEsRequired": "Spanish name is required",
+      "hexRequired": "Hex color is required",
+      "color1Primary": "Color 1 (Primary)",
+      "color2Secondary": "Color 2 (Secondary)",
+      "removeColor2": "Remove",
+      "splitSwatchesHint": "Split swatches appear diagonally on product pages and in cart.",
+      "addSecondColor": "Add second color (for dual-color filaments)"
     },
     "weights": {
       "title": "Weights",
@@ -1091,6 +1157,7 @@
       "name": "Name",
       "description": "Description",
       "pageTitle": "Page Title",
+      "titleAlignment": "Title Alignment",
       "image": "Image",
       "color": "Color",
       "order": "Order",
@@ -1110,7 +1177,17 @@
       "backToProducts": "Back to Products",
       "deleteFailed": "Failed to delete category",
       "parentCategory": "Parent Category",
-      "noParent": "— None (top-level)"
+      "noParent": "— None (top-level)",
+      "slugRequired": "Slug is required",
+      "nameEnRequired": "English name is required",
+      "nameBgRequired": "Bulgarian name is required",
+      "nameEsRequired": "Spanish name is required",
+      "uploading": "Uploading...",
+      "upload": "Upload",
+      "imageOr": "or",
+      "pasteImageUrl": "Paste image URL...",
+      "imageUploadHelp": "Max 5MB. Supported: JPEG, PNG, GIF, WebP",
+      "imageRecommended": "Recommended: 400 x 400px (1:1 square)"
     },
     "quotes": {
       "title": "Quote Requests",
@@ -1232,6 +1309,10 @@
     "color": "Color",
     "clearColors": "Clear",
     "clearSizes": "Clear",
+    "filters": "Filters",
+    "clearAll": "Clear all",
+    "clearPrice": "Clear price",
+    "brandRequired": "Brand is required",
     "requestQuote": "Request Quote",
     "buyNow": "Buy Now",
     "orderNow": "Order Now",
@@ -1298,7 +1379,14 @@
     "notifyMeShort": "Notify Me",
     "notifyMeSubscribed": "You'll Be Notified",
     "notifyMeSuccess": "You'll be notified when this product is available!",
-    "notifyMeError": "Failed to subscribe for notifications"
+    "notifyMeError": "Failed to subscribe for notifications",
+    "productCount": "{count, plural, one {# product} other {# products}}",
+    "priceMinMaxError": "Min price cannot exceed max price",
+    "applyFilters": "Apply filters",
+    "quickView": "Quick View",
+    "viewFullDetails": "View full details",
+    "readMore": "Read more",
+    "showLess": "Show less"
   },
   "quotes": {
     "title": "Request a Quote",
@@ -1320,7 +1408,10 @@
     "success": "Quote request submitted successfully!",
     "successMessage": "We'll review your request and get back to you within 24 hours.",
     "error": "Failed to submit quote request. Please try again.",
-    "close": "Close"
+    "close": "Close",
+    "invalidFileType": "Invalid file type. Allowed: STL, OBJ, 3MF",
+    "fileTooLarge": "File too large. Maximum size is 50MB.",
+    "orderInquiry": "Order Inquiry"
   },
   "homeProducts": {
     "title": "Our Products",
@@ -1452,7 +1543,8 @@
     "outOfStock": "Out of Stock",
     "comingSoon": "Coming Soon",
     "preOrder": "Pre-Order",
-    "soldOut": "Sold Out"
+    "soldOut": "Sold Out",
+    "error": "Something went wrong"
   },
   "search": {
     "placeholder": "Search products, news, pages...",

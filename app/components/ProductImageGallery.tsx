@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useTranslations } from "next-intl"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Variant {
     image: string | null
     status: string
     colorId: string
-    color: { nameBg: string; nameEn: string; nameEs: string; hex: string }
+    color: { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
 }
 
 interface ProductImageGalleryProps {
@@ -38,6 +39,7 @@ const STATUS_OVERLAY_TEXT: Record<string, Record<string, string>> = {
 }
 
 export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange, availableVariantIndices, packageVariantStatusMap, isNew, discountPercent, selectedVariantIndex: controlledVariantIndex }: ProductImageGalleryProps) {
+    const t = useTranslations("products")
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const firstAvailableVariant = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
     const defaultVariantIndex = variants.length > 0 ? (firstAvailableVariant >= 0 ? firstAvailableVariant : 0) : -1
@@ -71,8 +73,8 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
 
     const getStatusLabel = (status: string) => {
         switch (status) {
-            case "sold_out": return locale === "bg" ? "Разпродадено" : locale === "es" ? "Agotado" : "Sold Out"
-            case "out_of_stock": return locale === "bg" ? "Изчерпан" : locale === "es" ? "Agotado" : "Out of Stock"
+            case "sold_out": return t("soldOut")
+            case "out_of_stock": return t("outOfStock")
             default: return ""
         }
     }
@@ -247,7 +249,9 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                                     >
                                         <div
                                             className="w-6 h-6 rounded-full"
-                                            style={{ backgroundColor: variant.color.hex }}
+                                            style={variant.color.hex2
+                                                ? { background: `linear-gradient(135deg, ${variant.color.hex} 50%, ${variant.color.hex2} 50%)` }
+                                                : { backgroundColor: variant.color.hex }}
                                         />
                                         {isUnavailable && (
                                             <div className="absolute inset-0 flex items-center justify-center">
@@ -283,7 +287,7 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
             {/* Lightbox */}
             {lightboxOpen && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden"
+                    className="fixed inset-0 z-[65] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden"
                     onClick={() => { if (!swiped.current) setLightboxOpen(false) }}
                     onTouchStart={(e) => {
                         touchStartX.current = e.touches[0].clientX
