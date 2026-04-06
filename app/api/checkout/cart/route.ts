@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
 
     const stripe = getStripe()
     const stripeSession = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      automatic_payment_methods: { enabled: true },
       line_items: lineItems,
       mode: "payment",
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
