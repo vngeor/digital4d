@@ -16,6 +16,7 @@ interface Color {
   nameEn: string
   nameEs: string
   hex: string
+  hex2?: string | null
   order: number
   _count: { variants: number }
 }
@@ -39,7 +40,7 @@ export default function ColorsPage() {
 
   useEffect(() => { fetchColors() }, [])
 
-  const handleSubmit = async (data: { id?: string; nameBg: string; nameEn: string; nameEs: string; hex: string; order: number }) => {
+  const handleSubmit = async (data: { id?: string; nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null; order: number }) => {
     const method = data.id ? "PUT" : "POST"
     const res = await fetch("/api/admin/colors", {
       method,
@@ -88,7 +89,9 @@ export default function ColorsPage() {
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-full border border-white/20 shrink-0"
-            style={{ backgroundColor: item.hex }}
+            style={item.hex2
+              ? { background: `linear-gradient(135deg, ${item.hex} 50%, ${item.hex2} 50%)` }
+              : { backgroundColor: item.hex }}
           />
           <div className="min-w-0">
             <p className="font-medium text-white text-sm">{item.nameEn}</p>
@@ -102,7 +105,12 @@ export default function ColorsPage() {
       header: t("hex"),
       className: "hidden sm:table-cell",
       render: (item: Color) => (
-        <span className="font-mono text-sm text-cyan-400">{item.hex}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-sm text-cyan-400">{item.hex}</span>
+          {item.hex2 && (
+            <span className="font-mono text-sm text-cyan-400/60">+ {item.hex2}</span>
+          )}
+        </div>
       ),
     },
     {
@@ -183,7 +191,9 @@ export default function ColorsPage() {
                 <div className="flex items-center gap-3 min-w-0">
                   <div
                     className="w-10 h-10 rounded-full border border-white/20 shrink-0"
-                    style={{ backgroundColor: item.hex }}
+                    style={item.hex2
+                      ? { background: `linear-gradient(135deg, ${item.hex} 50%, ${item.hex2} 50%)` }
+                      : { backgroundColor: item.hex }}
                   />
                   <div className="min-w-0">
                     <p className="font-medium text-white text-sm">{item.nameEn}</p>
@@ -196,7 +206,12 @@ export default function ColorsPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-sm text-cyan-400">{item.hex}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-sm text-cyan-400">{item.hex}</span>
+                  {item.hex2 && (
+                    <span className="font-mono text-sm text-cyan-400/60">+ {item.hex2}</span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   {can("products", "edit") && (
                     <button onClick={() => { setEditingColor(item); setShowForm(true) }} className="p-2 rounded-lg hover:bg-white/10 transition-colors">

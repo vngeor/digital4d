@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Loader2, Truck, Sparkles, Search, X, Check } from "lucide-react"
+import { Loader2, Truck, Sparkles, Search, X, Check, Gift } from "lucide-react"
 
 interface Settings {
   freeShippingEnabled: boolean
@@ -12,6 +12,17 @@ interface Settings {
   upsellTabEnabled: boolean
   upsellOpenOnAdd: string
   globalUpsellProductIds: string[]
+  welcomePopupEnabled:    boolean
+  welcomePopupTitleBg:    string
+  welcomePopupTitleEn:    string
+  welcomePopupTitleEs:    string
+  welcomePopupMessageBg:  string
+  welcomePopupMessageEn:  string
+  welcomePopupMessageEs:  string
+  welcomePopupImage:      string
+  welcomePopupCouponCode: string
+  welcomePopupDelay:      number
+  welcomePopupLink:       string
 }
 
 type ProductOption = { id: string; nameEn: string; nameBg: string; image: string | null }
@@ -25,6 +36,17 @@ export default function SettingsPage() {
     upsellTabEnabled: true,
     upsellOpenOnAdd: "upsell",
     globalUpsellProductIds: [],
+    welcomePopupEnabled:    false,
+    welcomePopupTitleBg:    "",
+    welcomePopupTitleEn:    "",
+    welcomePopupTitleEs:    "",
+    welcomePopupMessageBg:  "",
+    welcomePopupMessageEn:  "",
+    welcomePopupMessageEs:  "",
+    welcomePopupImage:      "",
+    welcomePopupCouponCode: "",
+    welcomePopupDelay:      2,
+    welcomePopupLink:       "",
   })
   const [thresholdInput, setThresholdInput] = useState("")
   const [loading, setLoading] = useState(true)
@@ -41,6 +63,11 @@ export default function SettingsPage() {
   const globalUpsellLoadedRef = useRef(false)
   const globalUpsellTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Welcome Popup state
+  const [popupLang, setPopupLang] = useState<"bg" | "en" | "es">("bg")
+  const [popupUploading, setPopupUploading] = useState(false)
+  const popupImageRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     fetch("/api/admin/settings")
       .then(r => r.json())
@@ -52,6 +79,17 @@ export default function SettingsPage() {
           upsellTabEnabled: data.upsellTabEnabled ?? true,
           upsellOpenOnAdd: data.upsellOpenOnAdd ?? "upsell",
           globalUpsellProductIds: data.globalUpsellProductIds ?? [],
+          welcomePopupEnabled:    Boolean(data.welcomePopupEnabled),
+          welcomePopupTitleBg:    data.welcomePopupTitleBg    ?? "",
+          welcomePopupTitleEn:    data.welcomePopupTitleEn    ?? "",
+          welcomePopupTitleEs:    data.welcomePopupTitleEs    ?? "",
+          welcomePopupMessageBg:  data.welcomePopupMessageBg  ?? "",
+          welcomePopupMessageEn:  data.welcomePopupMessageEn  ?? "",
+          welcomePopupMessageEs:  data.welcomePopupMessageEs  ?? "",
+          welcomePopupImage:      data.welcomePopupImage      ?? "",
+          welcomePopupCouponCode: data.welcomePopupCouponCode ?? "",
+          welcomePopupDelay:      data.welcomePopupDelay      ?? 2,
+          welcomePopupLink:       data.welcomePopupLink       ?? "",
         })
         setThresholdInput(data.freeShippingThreshold?.toString() ?? "")
         // Load display objects for saved globalUpsellProductIds
@@ -65,6 +103,11 @@ export default function SettingsPage() {
         }
       })
       .finally(() => setLoading(false))
+  }, [])
+
+  // Cleanup upsell search timeout on unmount
+  useEffect(() => {
+    return () => { if (globalUpsellTimeoutRef.current) clearTimeout(globalUpsellTimeoutRef.current) }
   }, [])
 
   // Click-outside handler for upsell dropdown
@@ -138,10 +181,26 @@ export default function SettingsPage() {
     setSelectedGlobalUpsell(prev => prev.filter(p => p.id !== productId))
   }
 
+  const handlePopupImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPopupUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      if (!res.ok) { toast.error("Upload failed"); return }
+      const data = await res.json()
+      setSettings(s => ({ ...s, welcomePopupImage: data.url }))
+    } catch { toast.error("Upload failed") }
+    finally { setPopupUploading(false); if (popupImageRef.current) popupImageRef.current.value = "" }
+  }
+
   const handleSave = async () => {
+    if (saving) return
+    const thresholdVal = parseFloat(thresholdInput)
     if (settings.freeShippingEnabled) {
-      const val = parseFloat(thresholdInput)
-      if (!thresholdInput || isNaN(val) || val <= 0) {
+      if (!thresholdInput || isNaN(thresholdVal) || thresholdVal <= 0) {
         toast.error(t("thresholdRequired"))
         return
       }
@@ -153,11 +212,22 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           freeShippingEnabled: settings.freeShippingEnabled,
-          freeShippingThreshold: settings.freeShippingEnabled ? parseFloat(thresholdInput) : null,
+          freeShippingThreshold: settings.freeShippingEnabled ? thresholdVal : null,
           freeShippingCurrency: settings.freeShippingCurrency,
           upsellTabEnabled: settings.upsellTabEnabled,
           upsellOpenOnAdd: settings.upsellOpenOnAdd,
           globalUpsellProductIds: settings.globalUpsellProductIds,
+          welcomePopupEnabled:    settings.welcomePopupEnabled,
+          welcomePopupTitleBg:    settings.welcomePopupTitleBg,
+          welcomePopupTitleEn:    settings.welcomePopupTitleEn,
+          welcomePopupTitleEs:    settings.welcomePopupTitleEs,
+          welcomePopupMessageBg:  settings.welcomePopupMessageBg,
+          welcomePopupMessageEn:  settings.welcomePopupMessageEn,
+          welcomePopupMessageEs:  settings.welcomePopupMessageEs,
+          welcomePopupImage:      settings.welcomePopupImage,
+          welcomePopupCouponCode: settings.welcomePopupCouponCode,
+          welcomePopupDelay:      settings.welcomePopupDelay,
+          welcomePopupLink:       settings.welcomePopupLink,
         }),
       })
       if (!res.ok) throw new Error()
@@ -241,16 +311,16 @@ export default function SettingsPage() {
             <Sparkles className="w-5 h-5 text-amber-400" />
           </div>
           <div>
-            <h2 className="text-white font-semibold">Upsell Cart Tab</h2>
+            <h2 className="text-white font-semibold">{t("upsellSection")}</h2>
             <p className="text-slate-400 text-sm">
-              Show recommended products in a dedicated tab inside the cart drawer after add-to-cart.
+              {t("upsellSectionDesc")}
             </p>
           </div>
         </div>
 
         {/* Enable toggle */}
         <label className="flex items-center justify-between gap-4 cursor-pointer p-3 rounded-xl bg-white/5 hover:bg-white/[0.08] transition-colors">
-          <span className="text-sm text-slate-300">Enable upsell cart tab</span>
+          <span className="text-sm text-slate-300">{t("enableUpsell")}</span>
           <input
             type="checkbox"
             checked={Boolean(settings.upsellTabEnabled)}
@@ -263,11 +333,11 @@ export default function SettingsPage() {
           <div className="space-y-5 pl-1">
             {/* Open behavior */}
             <div className="space-y-2">
-              <p className="text-sm text-slate-400">After &ldquo;Add to Cart&rdquo;, open cart on:</p>
+              <p className="text-sm text-slate-400">{t("openCartOn")}</p>
               <div className="flex flex-col sm:flex-row gap-3">
                 {[
-                  { val: "upsell", label: "✨ Upsell tab (Recommended)" },
-                  { val: "cart", label: "🛒 Cart tab" },
+                  { val: "upsell", label: t("upsellTabOption") },
+                  { val: "cart", label: t("cartTabOption") },
                 ].map(({ val, label }) => (
                   <label key={val} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -287,7 +357,7 @@ export default function SettingsPage() {
             {/* Global upsell product picker */}
             <div className="space-y-2">
               <p className="text-sm text-slate-400">
-                Global upsell products — shown when a product has no per-product upsell picks:
+                {t("globalUpsellLabel")}
               </p>
 
               {/* Selected chips */}
@@ -323,7 +393,7 @@ export default function SettingsPage() {
                     value={globalUpsellSearch}
                     onChange={e => { setGlobalUpsellSearch(e.target.value); searchGlobalUpsellProducts(e.target.value) }}
                     onFocus={() => { setShowGlobalUpsellDropdown(true); loadAllGlobalUpsellProducts() }}
-                    placeholder="Search products to upsell globally..."
+                    placeholder={t("searchUpsellPlaceholder")}
                     className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
                   />
                   {searchingGlobalUpsell && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
@@ -350,18 +420,186 @@ export default function SettingsPage() {
                       )
                     })}
                     {globalUpsellResults.length === 0 && !searchingGlobalUpsell && (
-                      <p className="px-3 py-3 text-sm text-gray-500 text-center">No products found</p>
+                      <p className="px-3 py-3 text-sm text-gray-500 text-center">{t("noProductsFound")}</p>
                     )}
                   </div>
                 )}
               </div>
               <p className="text-xs text-slate-500">
-                If empty, same-category products are shown automatically as fallback.
+                {t("globalUpsellHint")}
               </p>
             </div>
           </div>
         )}
       </div>
+
+      {/* Welcome Popup Card */}
+      {(() => {
+        const TITLE_PLACEHOLDERS: Record<"bg" | "en" | "es", string> = { bg: "Добре дошли!", en: "Welcome!", es: "¡Bienvenido!" }
+        const MSG_PLACEHOLDERS: Record<"bg" | "en" | "es", string> = { bg: "Специално предложение само за вас...", en: "A special offer just for you...", es: "Oferta especial solo para ti..." }
+        return (
+          <div className="glass rounded-2xl p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center shrink-0">
+                <Gift className="w-5 h-5 text-violet-400" />
+              </div>
+              <div>
+                <h2 className="text-white font-semibold">{t("welcomePopupSection")}</h2>
+                <p className="text-slate-400 text-sm">{t("welcomePopupSectionDesc")}</p>
+              </div>
+            </div>
+
+            {/* Enable toggle */}
+            <label className="flex items-center justify-between gap-4 cursor-pointer p-3 rounded-xl bg-white/5 hover:bg-white/[0.08] transition-colors">
+              <span className="text-sm text-slate-300">{t("enableWelcomePopup")}</span>
+              <input
+                type="checkbox"
+                checked={Boolean(settings.welcomePopupEnabled)}
+                onChange={e => setSettings(s => ({ ...s, welcomePopupEnabled: e.target.checked }))}
+                className="w-4 h-4 rounded accent-violet-500"
+              />
+            </label>
+
+            {settings.welcomePopupEnabled && (
+              <div className="space-y-5 pl-1">
+                {/* Language tabs */}
+                <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit">
+                  {(["bg", "en", "es"] as const).map(lang => (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => setPopupLang(lang)}
+                      className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors touch-manipulation ${
+                        popupLang === lang
+                          ? "bg-violet-500 text-white"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {lang.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Title */}
+                <div className="space-y-2">
+                  <label className="text-sm text-slate-400">{t("titleLabel", { lang: popupLang.toUpperCase() })}</label>
+                  <input
+                    type="text"
+                    value={settings[`welcomePopupTitle${popupLang.charAt(0).toUpperCase() + popupLang.slice(1)}` as keyof Settings] as string}
+                    onChange={e => setSettings(s => ({ ...s, [`welcomePopupTitle${popupLang.charAt(0).toUpperCase() + popupLang.slice(1)}`]: e.target.value }))}
+                    placeholder={TITLE_PLACEHOLDERS[popupLang]}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors"
+                  />
+                </div>
+
+                {/* Message */}
+                <div className="space-y-2">
+                  <label className="text-sm text-slate-400">{t("messageLabel", { lang: popupLang.toUpperCase() })}</label>
+                  <textarea
+                    rows={3}
+                    value={settings[`welcomePopupMessage${popupLang.charAt(0).toUpperCase() + popupLang.slice(1)}` as keyof Settings] as string}
+                    onChange={e => setSettings(s => ({ ...s, [`welcomePopupMessage${popupLang.charAt(0).toUpperCase() + popupLang.slice(1)}`]: e.target.value }))}
+                    placeholder={MSG_PLACEHOLDERS[popupLang]}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
+                  />
+                </div>
+
+                <div className="border-t border-white/10 pt-4 space-y-4">
+                  {/* Banner image */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">{t("bannerImageLabel")}</label>
+                    <input
+                      ref={popupImageRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePopupImageUpload}
+                    />
+                    {settings.welcomePopupImage ? (
+                      <div className="flex items-start gap-3">
+                        <img
+                          src={settings.welcomePopupImage}
+                          alt="Popup banner"
+                          className="w-32 h-20 object-cover rounded-xl border border-white/10"
+                        />
+                        <div className="flex flex-col gap-2">
+                          <button
+                            type="button"
+                            onClick={() => popupImageRef.current?.click()}
+                            disabled={popupUploading}
+                            className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition-colors touch-manipulation disabled:opacity-50"
+                          >
+                            {popupUploading ? t("uploading") : t("changeImage")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSettings(s => ({ ...s, welcomePopupImage: "" }))}
+                            className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-sm hover:bg-red-500/20 transition-colors touch-manipulation"
+                          >
+                            {t("removeImage")}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => popupImageRef.current?.click()}
+                        disabled={popupUploading}
+                        className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 border-dashed text-slate-400 text-sm hover:bg-white/10 hover:text-white transition-colors touch-manipulation disabled:opacity-50 w-full"
+                      >
+                        {popupUploading ? t("uploading") : t("uploadBannerImage")}
+                      </button>
+                    )}
+                    <p className="text-xs text-slate-500">{t("bannerImageHint")}</p>
+                  </div>
+
+                  {/* Campaign link */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">{t("campaignLinkLabel")}</label>
+                    <input
+                      type="url"
+                      value={settings.welcomePopupLink}
+                      onChange={e => setSettings(s => ({ ...s, welcomePopupLink: e.target.value }))}
+                      placeholder={t("campaignLinkPlaceholder")}
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm placeholder-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors"
+                    />
+                    <p className="text-xs text-slate-500">{t("campaignLinkHint")}</p>
+                  </div>
+
+                  {/* Coupon code */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">{t("couponCodeLabel")}</label>
+                    <input
+                      type="text"
+                      value={settings.welcomePopupCouponCode}
+                      onChange={e => setSettings(s => ({ ...s, welcomePopupCouponCode: e.target.value.toUpperCase() }))}
+                      placeholder="WELCOME10"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors uppercase"
+                    />
+                    <p className="text-xs text-slate-500">{t("couponCodeHint")}</p>
+                  </div>
+
+                  {/* Delay */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-slate-400">{t("delayLabel")}</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min={0}
+                        max={30}
+                        value={settings.welcomePopupDelay}
+                        onChange={e => setSettings(s => ({ ...s, welcomePopupDelay: Math.max(0, Math.min(30, parseInt(e.target.value) || 0)) }))}
+                        className="w-24 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm focus:outline-none focus:border-violet-500/50 transition-colors"
+                      />
+                      <span className="text-sm text-slate-500">{t("delayHint")}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Save button */}
       <button

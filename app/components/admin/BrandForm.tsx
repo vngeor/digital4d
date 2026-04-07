@@ -73,6 +73,12 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
   })
 
   useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel() }
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [onCancel])
+
+  useEffect(() => {
     if (autoSlug && formData.nameEn) {
       setFormData((prev) => ({ ...prev, slug: generateSlug(formData.nameEn) }))
     }
@@ -82,10 +88,10 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.slug.trim()) newErrors.slug = "Slug is required"
-    if (!formData.nameEn.trim()) newErrors.nameEn = "English name is required"
-    if (!formData.nameBg.trim()) newErrors.nameBg = "Bulgarian name is required"
-    if (!formData.nameEs.trim()) newErrors.nameEs = "Spanish name is required"
+    if (!formData.slug.trim()) newErrors.slug = t("slugRequired")
+    if (!formData.nameEn.trim()) newErrors.nameEn = t("nameEnRequired")
+    if (!formData.nameBg.trim()) newErrors.nameBg = t("nameBgRequired")
+    if (!formData.nameEs.trim()) newErrors.nameEs = t("nameEsRequired")
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -216,18 +222,18 @@ export function BrandForm({ initialData, onSubmit, onCancel }: BrandFormProps) {
                   className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
                 >
                   {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {uploading ? "Uploading..." : "Upload"}
+                  {uploading ? t("uploading") : t("upload")}
                 </button>
-                <span className="text-gray-500 text-sm self-center">or</span>
+                <span className="text-gray-500 text-sm self-center">{t("imageOr")}</span>
                 <input
                   type="url"
                   value={formData.image}
                   onChange={(e) => updateField("image", e.target.value)}
-                  placeholder="Paste image URL..."
+                  placeholder={t("pasteImageUrl")}
                   className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
-              <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
+              <p className="text-xs text-gray-500">{t("imageUploadHelp")}</p>
               <p className="text-xs text-emerald-400/70">{t("logoRecommendation")}</p>
             </div>
           </div>

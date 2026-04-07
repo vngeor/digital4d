@@ -88,6 +88,12 @@ export function ContentForm({
   const [uploading, setUploading] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   useKeyboardSave(formRef)
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel() }
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [onCancel])
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
@@ -372,7 +378,7 @@ export function ContentForm({
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2">
-              Image
+              {t("image")}
             </label>
             <div className="space-y-3">
               {/* Image Preview */}
@@ -413,19 +419,19 @@ export function ContentForm({
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  {uploading ? "Uploading..." : "Upload Image"}
+                  {uploading ? t("uploading") : t("uploadImage")}
                 </button>
-                <span className="text-gray-500 text-sm self-center">or</span>
+                <span className="text-gray-500 text-sm self-center">{t("imageOr")}</span>
                 <input
                   type="url"
                   value={formData.image}
                   onChange={(e) => updateField("image", e.target.value)}
-                  placeholder="Paste image URL..."
+                  placeholder={t("pasteImageUrl")}
                   className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
-              <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
-              <p className="text-xs text-emerald-400/70">Recommended: 1200 x 630px (1.9:1 ratio - social media friendly)</p>
+              <p className="text-xs text-gray-500">{t("imageUploadHelp")}</p>
+              <p className="text-xs text-emerald-400/70">{t("imageRecommendedContent")}</p>
             </div>
           </div>
 

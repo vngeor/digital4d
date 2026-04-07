@@ -128,6 +128,13 @@
     "accept": "Accept All",
     "decline": "Decline"
   },
+  "welcomePopup": {
+    "close": "Continue shopping",
+    "copy": "Copy code",
+    "copied": "Copied!",
+    "shopNow": "Shop Now →",
+    "noThanks": "No thanks"
+  },
   "menu": {
     "noContent": "No content available",
     "backToMenu": "Back to {menu}"
@@ -1281,7 +1288,35 @@
       "save": "Save Settings",
       "saved": "Settings saved!",
       "saveFailed": "Failed to save settings",
-      "thresholdRequired": "Please enter a valid threshold amount"
+      "thresholdRequired": "Please enter a valid threshold amount",
+      "welcomePopupSection": "Welcome Popup",
+      "welcomePopupSectionDesc": "Show a one-time popup to first-time visitors with a welcome message and optional coupon code.",
+      "enableWelcomePopup": "Enable welcome popup",
+      "titleLabel": "Title ({lang})",
+      "messageLabel": "Message ({lang})",
+      "bannerImageLabel": "Banner Image (optional)",
+      "bannerImageHint": "Recommended: 900 × 400 px (2.25:1 ratio). Keep subject centered — sides may crop on mobile. Auto-converted to WebP on upload.",
+      "uploading": "Uploading…",
+      "changeImage": "Change image",
+      "removeImage": "Remove",
+      "uploadBannerImage": "Upload banner image",
+      "campaignLinkLabel": "Campaign Link (optional)",
+      "campaignLinkPlaceholder": "https://www.digital4d.eu/products/...",
+      "campaignLinkHint": "Clicking the banner image or \u201cShop Now\u201d button redirects visitors here. Leave empty for no redirect.",
+      "couponCodeLabel": "Coupon Code (optional)",
+      "couponCodeHint": "Visitors can copy this code with one click. Stored as-is (uppercase).",
+      "delayLabel": "Show delay (seconds)",
+      "delayHint": "seconds after page load (0\u201330)",
+      "upsellSection": "Upsell Cart Tab",
+      "upsellSectionDesc": "Show recommended products in a dedicated tab inside the cart drawer after add-to-cart.",
+      "enableUpsell": "Enable upsell cart tab",
+      "openCartOn": "After \u201cAdd to Cart\u201d, open cart on:",
+      "upsellTabOption": "\u2728 Upsell tab (Recommended)",
+      "cartTabOption": "\uD83D\uDED2 Cart tab",
+      "globalUpsellLabel": "Global upsell products \u2014 shown when a product has no per-product upsell picks:",
+      "searchUpsellPlaceholder": "Search products to upsell globally...",
+      "noProductsFound": "No products found",
+      "globalUpsellHint": "If empty, same-category products are shown automatically as fallback."
     }
   },
   "brandsPage": {

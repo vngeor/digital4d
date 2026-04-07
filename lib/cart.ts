@@ -8,6 +8,10 @@ export interface CartItem {
   colorNameBg?: string | null
   colorNameEs?: string | null
   colorHex?: string | null
+  colorHex2?: string | null
+  brandNameEn?: string | null
+  brandNameBg?: string | null
+  brandNameEs?: string | null
   productSlug: string
   productUrl: string
   nameEn: string

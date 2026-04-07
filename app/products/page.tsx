@@ -39,6 +39,7 @@ export default async function ProductsPage() {
             include: {
                 brand: true,
                 variants: { include: { color: true }, orderBy: { order: "asc" } },
+                packages: { include: { weight: { select: { label: true } }, packageVariants: { select: { variantId: true, status: true } } }, orderBy: { order: "asc" } },
             },
         }),
         prisma.productCategory.findMany({

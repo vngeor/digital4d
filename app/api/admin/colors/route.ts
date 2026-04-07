@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
         nameEn: data.nameEn.trim(),
         nameEs: data.nameEs.trim(),
         hex: data.hex.trim(),
+        hex2: data.hex2?.trim() || null,
         order: data.order ?? 0,
       },
     })
@@ -76,11 +77,12 @@ export async function PUT(request: NextRequest) {
         nameEn: data.nameEn?.trim() ?? oldColor.nameEn,
         nameEs: data.nameEs?.trim() ?? oldColor.nameEs,
         hex: data.hex?.trim() ?? oldColor.hex,
+        hex2: "hex2" in data ? (data.hex2?.trim() || null) : oldColor.hex2,
         order: data.order ?? oldColor.order,
       },
     })
 
-    const fields = ["nameBg", "nameEn", "nameEs", "hex", "order"]
+    const fields = ["nameBg", "nameEn", "nameEs", "hex", "hex2", "order"]
     const details = getChangeDetails(oldColor as Record<string, unknown>, color as Record<string, unknown>, fields)
     logAuditAction({ userId: session.user.id, action: "edit", resource: "colors", recordId: color.id, recordTitle: color.nameEn, details }).catch(() => {})
 

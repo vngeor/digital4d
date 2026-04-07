@@ -68,7 +68,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
     const [descExpanded, setDescExpanded] = useState(false)
     const backdropRef = useRef<HTMLDivElement>(null)
 
-    // Scroll backdrop to top on mount so the modal header is always visible
+    // Scroll modal box to top on mount so the modal header is always visible
     useEffect(() => { backdropRef.current?.scrollTo(0, 0) }, [])
 
     const packages = product.packages ?? []
@@ -252,13 +252,12 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
     return (
         /* Backdrop — z-[55] sits above header (z-50); lightbox + QuoteForm use z-[65] */
         <div
-            ref={backdropRef}
-            className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm overflow-y-auto"
+            className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm overflow-hidden flex items-start justify-center px-4 py-6"
             onClick={onClose}
         >
-            <div className="flex min-h-full items-start justify-center px-4 py-6">
             <div
-                className="relative w-full max-w-4xl bg-[#0d0d1a] border border-white/10 rounded-2xl shadow-2xl"
+                ref={backdropRef}
+                className="relative w-full max-w-4xl max-h-[88svh] overflow-y-auto overscroll-y-contain bg-[#0d0d1a] border border-white/10 rounded-2xl shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Close button */}
@@ -423,7 +422,6 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                     </div>
                 </div>
             </div>
-            </div>{/* end centering wrapper */}
         </div>
     )
 }

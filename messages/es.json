@@ -128,6 +128,13 @@
     "accept": "Aceptar todo",
     "decline": "Rechazar"
   },
+  "welcomePopup": {
+    "close": "Continuar comprando",
+    "copy": "Copiar código",
+    "copied": "¡Copiado!",
+    "shopNow": "Ver ahora →",
+    "noThanks": "No, gracias"
+  },
   "menu": {
     "noContent": "No hay contenido disponible",
     "backToMenu": "Volver a {menu}"
@@ -1281,7 +1288,35 @@
       "save": "Guardar configuración",
       "saved": "¡Configuración guardada!",
       "saveFailed": "Error al guardar la configuración",
-      "thresholdRequired": "Introduce un importe válido"
+      "thresholdRequired": "Introduce un importe válido",
+      "welcomePopupSection": "Ventana emergente de bienvenida",
+      "welcomePopupSectionDesc": "Muestra una ventana emergente única a nuevos visitantes con un mensaje de bienvenida y un cupón opcional.",
+      "enableWelcomePopup": "Activar ventana emergente",
+      "titleLabel": "Título ({lang})",
+      "messageLabel": "Mensaje ({lang})",
+      "bannerImageLabel": "Imagen de banner (opcional)",
+      "bannerImageHint": "Recomendado: 900 × 400 px (relación 2.25:1). Mantén el sujeto centrado — los lados pueden recortarse en móvil. Se convierte automáticamente a WebP al subir.",
+      "uploading": "Subiendo…",
+      "changeImage": "Cambiar imagen",
+      "removeImage": "Eliminar",
+      "uploadBannerImage": "Subir imagen de banner",
+      "campaignLinkLabel": "Enlace de campaña (opcional)",
+      "campaignLinkPlaceholder": "https://www.digital4d.eu/products/...",
+      "campaignLinkHint": "Al hacer clic en el banner o el bot\u00f3n \u201cVer ahora\u201d se redirige a los visitantes aqu\u00ed. D\u00e9jalo vac\u00edo para sin redirecci\u00f3n.",
+      "couponCodeLabel": "Código de cupón (opcional)",
+      "couponCodeHint": "Los visitantes pueden copiar este código con un clic. Se almacena tal cual (mayúsculas).",
+      "delayLabel": "Retraso de visualización (segundos)",
+      "delayHint": "segundos después de cargar la página (0\u201330)",
+      "upsellSection": "Pestaña de venta adicional",
+      "upsellSectionDesc": "Muestra productos recomendados en una pestaña dedicada dentro del carrito al añadir un producto.",
+      "enableUpsell": "Activar pestaña de venta adicional",
+      "openCartOn": "Después de \u201cAñadir al carrito\u201d, abrir el carrito en:",
+      "upsellTabOption": "\u2728 Pestaña de recomendaciones (Recomendado)",
+      "cartTabOption": "\uD83D\uDED2 Pestaña del carrito",
+      "globalUpsellLabel": "Productos globales \u2014 se muestran cuando un producto no tiene recomendaciones propias:",
+      "searchUpsellPlaceholder": "Buscar productos para recomendar...",
+      "noProductsFound": "No se encontraron productos",
+      "globalUpsellHint": "Si está vacío, se muestran automáticamente productos de la misma categoría como alternativa."
     }
   },
   "brandsPage": {

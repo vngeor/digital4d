@@ -42,7 +42,14 @@ export default async function Home() {
         take: 8,
         include: {
             brand: true,
-            variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+            variants: { include: { color: true }, orderBy: { order: "asc" } },
+            packages: {
+                include: {
+                    weight: true,
+                    packageVariants: { select: { variantId: true, status: true } },
+                },
+                orderBy: { order: "asc" },
+            },
         },
     })
 
@@ -193,6 +200,64 @@ export default async function Home() {
         }
     }
 
+    // Build quickView product map for QuickViewModal (full data, trilingual)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const quickViewProducts: Record<string, any> = {}
+    for (const p of dbProducts) {
+        quickViewProducts[p.id] = {
+            id: p.id,
+            slug: p.slug,
+            nameBg: p.nameBg,
+            nameEn: p.nameEn,
+            nameEs: p.nameEs,
+            descBg: p.descBg,
+            descEn: p.descEn,
+            descEs: p.descEs,
+            price: p.price?.toString() || null,
+            salePrice: p.salePrice?.toString() || null,
+            onSale: p.onSale,
+            currency: p.currency,
+            priceType: p.priceType,
+            fileType: p.fileType,
+            status: p.status,
+            image: p.image,
+            gallery: p.gallery,
+            featured: p.featured,
+            bestSeller: p.bestSeller,
+            createdAt: p.createdAt.toISOString(),
+            brand: p.brand ? {
+                slug: p.brand.slug,
+                nameBg: p.brand.nameBg,
+                nameEn: p.brand.nameEn,
+                nameEs: p.brand.nameEs,
+            } : null,
+            variants: p.variants.map(v => ({
+                id: v.id,
+                image: v.image,
+                status: v.status,
+                colorId: v.colorId,
+                color: {
+                    nameBg: v.color.nameBg,
+                    nameEn: v.color.nameEn,
+                    nameEs: v.color.nameEs,
+                    hex: v.color.hex,
+                    hex2: v.color.hex2,
+                },
+            })),
+            packages: p.packages.map(pkg => ({
+                id: pkg.id,
+                price: pkg.price.toString(),
+                salePrice: pkg.salePrice?.toString() || null,
+                status: pkg.status,
+                weight: { label: pkg.weight.label },
+                packageVariants: pkg.packageVariants,
+            })),
+            category: p.category,
+        }
+    }
+    // Serialize categories for client component
+    const serializedCategories = JSON.parse(JSON.stringify(productCategories))
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white overflow-clip">
             <BackgroundOrbs />
@@ -282,7 +347,14 @@ export default async function Home() {
             {cardBanners.length > 0 && <FeaturedCards cards={cardBanners} />}
 
             {/* Products Section */}
-            <HomeProductsSection products={products} couponMap={couponMap} bestSellerIds={bestSellerIds} />
+            <HomeProductsSection
+                products={products}
+                couponMap={couponMap}
+                bestSellerIds={bestSellerIds}
+                locale={locale}
+                quickViewProducts={quickViewProducts}
+                categories={serializedCategories}
+            />
 
             {/* Recently Viewed */}
             <RecentlyViewedSection />

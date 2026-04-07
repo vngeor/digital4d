@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Heart, ArrowLeft, ShoppingCart, MessageSquare, Package, Bell, Star, Tag, Ticket } from "lucide-react"
 import { toast } from "sonner"
 import { Header } from "../components/Header"
@@ -91,6 +92,7 @@ const COLOR_CLASSES: Record<string, string> = {
 }
 
 export function WishlistClient({ items: initialItems, categories, locale, translations: t, couponMap, productUrlMap }: WishlistClientProps) {
+    const tw = useTranslations("wishlist")
     const [items, setItems] = useState(initialItems)
 
     const getLocalizedName = (item: { nameBg: string; nameEn: string; nameEs: string }) => {
@@ -120,7 +122,7 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                 toast.success(t.removeFromWishlist)
             }
         } catch {
-            toast.error("Something went wrong")
+            toast.error(tw("error"))
         }
     }
 

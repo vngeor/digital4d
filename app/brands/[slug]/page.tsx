@@ -74,7 +74,11 @@ export default async function BrandDetailPage({ params }: PageProps) {
     const products = await prisma.product.findMany({
         where: { brandId: brand.id, published: true },
         orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-        include: { brand: true },
+        include: {
+            brand: true,
+            variants: { include: { color: true }, orderBy: { order: "asc" } },
+            packages: { include: { weight: { select: { label: true } }, packageVariants: { select: { variantId: true, status: true } } }, orderBy: { order: "asc" } },
+        },
     })
 
     // Fetch categories for ProductCatalog

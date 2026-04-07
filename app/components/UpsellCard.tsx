@@ -23,6 +23,9 @@ export interface UpsellProduct {
   productUrl: string
   bestSeller?: boolean
   featured?: boolean
+  brandNameEn?: string | null
+  brandNameBg?: string | null
+  brandNameEs?: string | null
 }
 
 interface UpsellCardProps {
@@ -58,6 +61,9 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
     if (p.priceType !== "fixed" || isUnavailable) return
     addToCart({
       productId: p.id,
+      brandNameEn: p.brandNameEn ?? null,
+      brandNameBg: p.brandNameBg ?? null,
+      brandNameEs: p.brandNameEs ?? null,
       productSlug: p.slug,
       productUrl: p.productUrl,
       nameEn: p.nameEn,
@@ -121,6 +127,11 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
             {name}
           </p>
         </Link>
+        {(p.brandNameEn || p.brandNameBg) && (
+          <p className="text-[10px] text-slate-500 leading-tight">
+            {locale === "bg" ? p.brandNameBg : locale === "es" ? p.brandNameEs : p.brandNameEn}
+          </p>
+        )}
         {/* Price */}
         <div className="mt-auto">
           {p.onSale && p.salePrice ? (

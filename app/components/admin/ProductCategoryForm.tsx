@@ -100,6 +100,12 @@ export function ProductCategoryForm({
   })
 
   useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel() }
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [onCancel])
+
+  useEffect(() => {
     if (autoSlug && formData.nameEn) {
       setFormData(prev => ({ ...prev, slug: generateSlug(formData.nameEn) }))
     }
@@ -111,16 +117,16 @@ export function ProductCategoryForm({
     const newErrors: Record<string, string> = {}
 
     if (!formData.slug.trim()) {
-      newErrors.slug = "Slug is required"
+      newErrors.slug = t("slugRequired")
     }
     if (!formData.nameEn.trim()) {
-      newErrors.nameEn = "English name is required"
+      newErrors.nameEn = t("nameEnRequired")
     }
     if (!formData.nameBg.trim()) {
-      newErrors.nameBg = "Bulgarian name is required"
+      newErrors.nameBg = t("nameBgRequired")
     }
     if (!formData.nameEs.trim()) {
-      newErrors.nameEs = "Spanish name is required"
+      newErrors.nameEs = t("nameEsRequired")
     }
 
     setErrors(newErrors)
@@ -312,54 +318,45 @@ export function ProductCategoryForm({
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  {uploading ? "Uploading..." : "Upload"}
+                  {uploading ? t("uploading") : t("upload")}
                 </button>
-                <span className="text-gray-500 text-sm self-center">or</span>
+                <span className="text-gray-500 text-sm self-center">{t("imageOr")}</span>
                 <input
                   type="url"
                   value={formData.image}
                   onChange={(e) => updateField("image", e.target.value)}
-                  placeholder="Paste image URL..."
+                  placeholder={t("pasteImageUrl")}
                   className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
-              <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
-              <p className="text-xs text-emerald-400/70">Recommended: 400 x 400px (1:1 square)</p>
+              <p className="text-xs text-gray-500">{t("imageUploadHelp")}</p>
+              <p className="text-xs text-emerald-400/70">{t("imageRecommended")}</p>
             </div>
           </div>
 
-          {/* Title + Alignment — single global field */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-400">{t("pageTitle")}</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={formData.title}
-                onChange={e => updateField("title", e.target.value)}
-                className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors text-sm"
-                placeholder="Page title..."
-              />
-              <div className="flex gap-1">
-                {(["left", "center", "right"] as const).map(align => (
-                  <button
-                    key={align}
-                    type="button"
-                    onClick={() => updateField("titleAlign", align)}
-                    title={align.charAt(0).toUpperCase() + align.slice(1)}
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-                      formData.titleAlign === align
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                        : "bg-white/5 text-gray-400 hover:text-white border border-white/10"
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      {align === "left" && <path d="M3 5h18v2H3V5zm0 4h12v2H3V9zm0 4h18v2H3v-2zm0 4h12v2H3v-2z" />}
-                      {align === "center" && <path d="M3 5h18v2H3V5zm3 4h12v2H6V9zm-3 4h18v2H3v-2zm3 4h12v2H6v-2z" />}
-                      {align === "right" && <path d="M3 5h18v2H3V5zm6 4h12v2H9V9zm-6 4h18v2H3v-2zm6 4h12v2H9v-2z" />}
-                    </svg>
-                  </button>
-                ))}
-              </div>
+          {/* Title Alignment */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-400">{t("titleAlignment")}</label>
+            <div className="flex gap-1">
+              {(["left", "center", "right"] as const).map(align => (
+                <button
+                  key={align}
+                  type="button"
+                  onClick={() => updateField("titleAlign", align)}
+                  title={align.charAt(0).toUpperCase() + align.slice(1)}
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                    formData.titleAlign === align
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                      : "bg-white/5 text-gray-400 hover:text-white border border-white/10"
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    {align === "left" && <path d="M3 5h18v2H3V5zm0 4h12v2H3V9zm0 4h18v2H3v-2zm0 4h12v2H3v-2z" />}
+                    {align === "center" && <path d="M3 5h18v2H3V5zm3 4h12v2H6V9zm-3 4h18v2H3v-2zm3 4h12v2H6v-2z" />}
+                    {align === "right" && <path d="M3 5h18v2H3V5zm6 4h12v2H9V9zm-6 4h18v2H3v-2zm6 4h12v2H9v-2z" />}
+                  </svg>
+                </button>
+              ))}
             </div>
           </div>
 

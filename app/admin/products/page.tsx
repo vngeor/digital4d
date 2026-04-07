@@ -568,11 +568,11 @@ export default function ProductsPage() {
           sold_out: "bg-red-500/20 text-red-400",
         }
         const statusLabels: Record<string, string> = {
-          in_stock: "In Stock",
-          out_of_stock: "Out of Stock",
-          coming_soon: "Coming Soon",
-          pre_order: "Pre-Order",
-          sold_out: "Sold Out",
+          in_stock: t("inStock"),
+          out_of_stock: t("outOfStock"),
+          coming_soon: t("comingSoon"),
+          pre_order: t("preOrder"),
+          sold_out: t("soldOut"),
         }
         return (
           <div className="flex items-center gap-1.5">

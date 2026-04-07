@@ -129,40 +129,37 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     const handlePromotedCouponClick = (code: string) => {
         setCouponCode(code)
         setCouponError("")
-        // Auto-apply after setting state
-        setTimeout(() => {
-            const applyPromoted = async () => {
-                setCouponLoading(true)
-                try {
-                    const res = await fetch("/api/coupons/validate", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ code, productId: product.id }),
+        // Auto-apply — uses `code` param directly so no need to wait for state update
+        void (async () => {
+            setCouponLoading(true)
+            try {
+                const res = await fetch("/api/coupons/validate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code, productId: product.id }),
+                })
+                const data = await res.json()
+                if (data.valid) {
+                    setAppliedCoupon({
+                        couponId: data.coupon.id,
+                        couponCode: data.coupon.code,
+                        original: data.discount.original,
+                        discountAmount: data.discount.discountAmount,
+                        final: data.discount.final,
+                        productCurrency: data.discount.productCurrency,
+                        type: data.coupon.type,
+                        value: data.coupon.value,
                     })
-                    const data = await res.json()
-                    if (data.valid) {
-                        setAppliedCoupon({
-                            couponId: data.coupon.id,
-                            couponCode: data.coupon.code,
-                            original: data.discount.original,
-                            discountAmount: data.discount.discountAmount,
-                            final: data.discount.final,
-                            productCurrency: data.discount.productCurrency,
-                            type: data.coupon.type,
-                            value: data.coupon.value,
-                        })
-                        toast.success(t("couponApplied"))
-                    } else {
-                        setCouponError(t("invalidCoupon"))
-                    }
-                } catch {
+                    toast.success(t("couponApplied"))
+                } else {
                     setCouponError(t("invalidCoupon"))
-                } finally {
-                    setCouponLoading(false)
                 }
+            } catch {
+                setCouponError(t("invalidCoupon"))
+            } finally {
+                setCouponLoading(false)
             }
-            applyPromoted()
-        }, 0)
+        })()
     }
 
     // Promoted coupon banners (shown when admin enables showOnProduct)

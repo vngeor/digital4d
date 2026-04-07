@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X } from "lucide-react"
+import { X, Plus, Trash2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 interface ColorFormData {
@@ -10,6 +10,7 @@ interface ColorFormData {
   nameEn: string
   nameEs: string
   hex: string
+  hex2?: string | null
   order: number
 }
 
@@ -25,6 +26,12 @@ const LANGUAGE_TABS = [
   { key: "es" as const, label: "Español" },
 ]
 
+/** Inline style for single or dual color swatch */
+function swatchStyle(hex: string, hex2?: string | null): React.CSSProperties {
+  if (hex2) return { background: `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)` }
+  return { backgroundColor: hex }
+}
+
 export function ColorForm({ initialData, onSubmit, onCancel }: ColorFormProps) {
   const t = useTranslations("admin.colors")
   const [activeTab, setActiveTab] = useState<"en" | "bg" | "es">("en")
@@ -34,6 +41,7 @@ export function ColorForm({ initialData, onSubmit, onCancel }: ColorFormProps) {
     nameEn: "",
     nameEs: "",
     hex: "#10b981",
+    hex2: null,
     order: 0,
     ...initialData,
   })
@@ -47,10 +55,10 @@ export function ColorForm({ initialData, onSubmit, onCancel }: ColorFormProps) {
 
   const validate = () => {
     const errs: Record<string, string> = {}
-    if (!formData.nameEn.trim()) errs.nameEn = "English name is required"
-    if (!formData.nameBg.trim()) errs.nameBg = "Bulgarian name is required"
-    if (!formData.nameEs.trim()) errs.nameEs = "Spanish name is required"
-    if (!formData.hex.trim()) errs.hex = "Hex color is required"
+    if (!formData.nameEn.trim()) errs.nameEn = t("nameEnRequired")
+    if (!formData.nameBg.trim()) errs.nameBg = t("nameBgRequired")
+    if (!formData.nameEs.trim()) errs.nameEs = t("nameEsRequired")
+    if (!formData.hex.trim()) errs.hex = t("hexRequired")
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -67,7 +75,7 @@ export function ColorForm({ initialData, onSubmit, onCancel }: ColorFormProps) {
   }
 
   const nameField = activeTab === "bg" ? "nameBg" : activeTab === "es" ? "nameEs" : "nameEn"
-  const nameLabel = activeTab === "bg" ? "Наименование" : activeTab === "es" ? "Nombre" : "Name"
+  const nameLabel = activeTab === "bg" ? t("nameFieldBg") : activeTab === "es" ? t("nameFieldEs") : t("nameFieldEn")
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -115,18 +123,18 @@ export function ColorForm({ initialData, onSubmit, onCancel }: ColorFormProps) {
               {errors[nameField] && <p className="mt-1 text-xs text-red-400">{errors[nameField]}</p>}
             </div>
 
-            {/* Color picker */}
+            {/* Color 1 */}
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">{t("hex")}</label>
+              <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                {formData.hex2 ? t("color1Primary") : t("hex")}
+              </label>
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <input
-                    type="color"
-                    value={formData.hex}
-                    onChange={e => setFormData(prev => ({ ...prev, hex: e.target.value }))}
-                    className="w-12 h-10 rounded-lg border border-white/10 cursor-pointer bg-transparent p-0.5"
-                  />
-                </div>
+                <input
+                  type="color"
+                  value={formData.hex}
+                  onChange={e => setFormData(prev => ({ ...prev, hex: e.target.value }))}
+                  className="w-12 h-10 rounded-lg border border-white/10 cursor-pointer bg-transparent p-0.5"
+                />
                 <input
                   type="text"
                   value={formData.hex}
@@ -135,13 +143,61 @@ export function ColorForm({ initialData, onSubmit, onCancel }: ColorFormProps) {
                   placeholder="#000000"
                   maxLength={7}
                 />
+                {/* Live preview — split when hex2 set */}
                 <div
                   className="w-10 h-10 rounded-lg border border-white/20 shrink-0"
-                  style={{ backgroundColor: formData.hex }}
+                  style={swatchStyle(formData.hex, formData.hex2)}
                 />
               </div>
               {errors.hex && <p className="mt-1 text-xs text-red-400">{errors.hex}</p>}
             </div>
+
+            {/* Color 2 (optional) */}
+            {formData.hex2 != null ? (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium text-gray-400">{t("color2Secondary")}</label>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, hex2: null }))}
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    {t("removeColor2")}
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={formData.hex2 || "#ffffff"}
+                    onChange={e => setFormData(prev => ({ ...prev, hex2: e.target.value }))}
+                    className="w-12 h-10 rounded-lg border border-white/10 cursor-pointer bg-transparent p-0.5"
+                  />
+                  <input
+                    type="text"
+                    value={formData.hex2 || ""}
+                    onChange={e => setFormData(prev => ({ ...prev, hex2: e.target.value }))}
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-base sm:text-sm text-white font-mono placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                    placeholder="#000000"
+                    maxLength={7}
+                  />
+                  <div
+                    className="w-10 h-10 rounded-lg border border-white/20 shrink-0"
+                    style={{ backgroundColor: formData.hex2 || "#ffffff" }}
+                  />
+                </div>
+                <p className="mt-1.5 text-[11px] text-slate-500">{t("splitSwatchesHint")}</p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, hex2: "#ffffff" }))}
+                className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                {t("addSecondColor")}
+              </button>
+            )}
 
             {/* Order */}
             <div>

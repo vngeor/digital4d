@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     // 2. Fetch upsell products — 3-tier: per-product → global → same-category
     const include = {
-      brand: { select: { slug: true } },
+      brand: { select: { slug: true, nameEn: true, nameBg: true, nameEs: true } },
       variants: {
         select: { image: true, status: true },
         orderBy: { order: "asc" as const },
@@ -104,6 +104,9 @@ export async function GET(request: NextRequest) {
         productUrl: urlMap[p.id] || `/products/${p.slug}`,
         bestSeller: p.bestSeller,
         featured: p.featured,
+        brandNameEn: p.brand?.nameEn ?? null,
+        brandNameBg: p.brand?.nameBg ?? null,
+        brandNameEs: p.brand?.nameEs ?? null,
       }))
     )
   } catch {

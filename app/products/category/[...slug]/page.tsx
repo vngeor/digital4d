@@ -105,6 +105,8 @@ export default async function CategoryPage({ params }: PageProps) {
 
     const categoryName = getLocalizedName(category)
     const categoryDesc = getLocalizedDesc(category)
+    const displayTitle = category.title || categoryName
+    const alignClass = category.titleAlign === "center" ? "text-center" : category.titleAlign === "right" ? "text-right" : "text-left"
     const parentName = category.parent ? getLocalizedName(category.parent) : null
     const isParent = !category.parentId && category.children.length > 0
 
@@ -122,6 +124,7 @@ export default async function CategoryPage({ params }: PageProps) {
             include: {
                 brand: true,
                 variants: { include: { color: true }, orderBy: { order: "asc" } },
+                packages: { include: { weight: { select: { label: true } }, packageVariants: { select: { variantId: true, status: true } } }, orderBy: { order: "asc" } },
             },
         }),
         prisma.productCategory.findMany({
@@ -222,8 +225,8 @@ export default async function CategoryPage({ params }: PageProps) {
                     </nav>
 
                     {/* Category Name */}
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words">
-                        {categoryName}
+                    <h1 className={`text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent break-words ${alignClass}`}>
+                        {displayTitle}
                     </h1>
 
                     {/* Category Description */}

@@ -11,7 +11,7 @@ interface Variant {
     image: string | null
     status: string
     colorId: string
-    color: { nameBg: string; nameEn: string; nameEs: string; hex: string }
+    color: { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
 }
 
 interface PackageVariantEntry {
@@ -48,6 +48,7 @@ interface Product {
     featured?: boolean
     bestSeller?: boolean
     createdAt?: string
+    brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
 }
 
 interface PromotedCoupon {

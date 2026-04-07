@@ -14,6 +14,17 @@ export async function GET() {
       upsellTabEnabled: s?.upsellTabEnabled ?? true,
       upsellOpenOnAdd: s?.upsellOpenOnAdd ?? "upsell",
       globalUpsellProductIds: s?.globalUpsellProductIds ?? [],
+      welcomePopupEnabled:    s?.welcomePopupEnabled    ?? false,
+      welcomePopupTitleBg:    s?.welcomePopupTitleBg    ?? "",
+      welcomePopupTitleEn:    s?.welcomePopupTitleEn    ?? "",
+      welcomePopupTitleEs:    s?.welcomePopupTitleEs    ?? "",
+      welcomePopupMessageBg:  s?.welcomePopupMessageBg  ?? "",
+      welcomePopupMessageEn:  s?.welcomePopupMessageEn  ?? "",
+      welcomePopupMessageEs:  s?.welcomePopupMessageEs  ?? "",
+      welcomePopupImage:      s?.welcomePopupImage      ?? "",
+      welcomePopupCouponCode: s?.welcomePopupCouponCode ?? "",
+      welcomePopupDelay:      s?.welcomePopupDelay      ?? 2,
+      welcomePopupLink:       s?.welcomePopupLink       ?? "",
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
@@ -27,7 +38,13 @@ export async function PUT(request: NextRequest) {
     const { error } = await requirePermissionApi("settings", "edit")
     if (error) return error
     const body = await request.json()
-    const { freeShippingEnabled, freeShippingThreshold, freeShippingCurrency, upsellTabEnabled, upsellOpenOnAdd, globalUpsellProductIds } = body
+    const {
+      freeShippingEnabled, freeShippingThreshold, freeShippingCurrency,
+      upsellTabEnabled, upsellOpenOnAdd, globalUpsellProductIds,
+      welcomePopupEnabled, welcomePopupTitleBg, welcomePopupTitleEn, welcomePopupTitleEs,
+      welcomePopupMessageBg, welcomePopupMessageEn, welcomePopupMessageEs,
+      welcomePopupImage, welcomePopupCouponCode, welcomePopupDelay, welcomePopupLink,
+    } = body
     const data = {
       freeShippingEnabled: Boolean(freeShippingEnabled),
       freeShippingThreshold: freeShippingThreshold != null ? parseFloat(String(freeShippingThreshold)) : null,
@@ -35,6 +52,17 @@ export async function PUT(request: NextRequest) {
       upsellTabEnabled: Boolean(upsellTabEnabled),
       upsellOpenOnAdd: upsellOpenOnAdd === "cart" ? "cart" : "upsell",
       globalUpsellProductIds: Array.isArray(globalUpsellProductIds) ? globalUpsellProductIds : [],
+      welcomePopupEnabled:    Boolean(welcomePopupEnabled),
+      welcomePopupTitleBg:    String(welcomePopupTitleBg    ?? ""),
+      welcomePopupTitleEn:    String(welcomePopupTitleEn    ?? ""),
+      welcomePopupTitleEs:    String(welcomePopupTitleEs    ?? ""),
+      welcomePopupMessageBg:  String(welcomePopupMessageBg  ?? ""),
+      welcomePopupMessageEn:  String(welcomePopupMessageEn  ?? ""),
+      welcomePopupMessageEs:  String(welcomePopupMessageEs  ?? ""),
+      welcomePopupImage:      String(welcomePopupImage      ?? ""),
+      welcomePopupCouponCode: String(welcomePopupCouponCode ?? "").toUpperCase().trim(),
+      welcomePopupDelay:      Math.max(0, Math.min(30, parseInt(String(welcomePopupDelay ?? 2)) || 2)),
+      welcomePopupLink:       String(welcomePopupLink ?? "").trim(),
     }
 
     const existing = await prisma.siteSettings.findUnique({ where: { id: "singleton" } })
@@ -49,6 +77,17 @@ export async function PUT(request: NextRequest) {
       upsellTabEnabled: s.upsellTabEnabled,
       upsellOpenOnAdd: s.upsellOpenOnAdd,
       globalUpsellProductIds: s.globalUpsellProductIds,
+      welcomePopupEnabled:    s.welcomePopupEnabled,
+      welcomePopupTitleBg:    s.welcomePopupTitleBg,
+      welcomePopupTitleEn:    s.welcomePopupTitleEn,
+      welcomePopupTitleEs:    s.welcomePopupTitleEs,
+      welcomePopupMessageBg:  s.welcomePopupMessageBg,
+      welcomePopupMessageEn:  s.welcomePopupMessageEn,
+      welcomePopupMessageEs:  s.welcomePopupMessageEs,
+      welcomePopupImage:      s.welcomePopupImage,
+      welcomePopupCouponCode: s.welcomePopupCouponCode,
+      welcomePopupDelay:      s.welcomePopupDelay,
+      welcomePopupLink:       s.welcomePopupLink,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
