@@ -626,7 +626,7 @@ export default function ProductsPage() {
             <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
           </button>
           {(item.onSale || parseTiers(item.bulkDiscountTiers || "").length > 0) && (
-            <Tag className="w-3.5 h-3.5 text-red-400" title={item.onSale ? "On Sale" : "Bulk Discount"} />
+            <span title={item.onSale ? "On Sale" : "Bulk Discount"}><Tag className="w-3.5 h-3.5 text-red-400" /></span>
           )}
         </div>
       ),
