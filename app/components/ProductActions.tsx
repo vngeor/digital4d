@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { ShoppingCart, MessageSquare, Loader2, Ticket, X, Check, Clock, Minus, Plus, Bell } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
-import { addToCart } from "@/lib/cart"
+import { addToCart, syncCartItemToServer } from "@/lib/cart"
 import { BulkTier, getActiveTier, applyBulkDiscount, parseTiers } from "@/lib/bulkDiscount"
 
 interface Product {
@@ -502,6 +502,9 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             bulkDiscountTiers: selectedPackage?.bulkDiscountTiers || product.bulkDiscountTiers || "",
         }, quantity)
         window.dispatchEvent(new Event("cart-updated"))
+        if (session) {
+            syncCartItemToServer(product.id, selectedPackage?.id ?? null, quantity)
+        }
         if (suppressCartDrawer) {
             toast.success(tc("addedToCart"))
         } else {

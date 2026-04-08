@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { X, ShoppingCart, Trash2, Minus, Plus, Loader2 } from "lucide-react"
-import { getCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, cartItemKey, CART_KEY, type CartItem } from "@/lib/cart"
+import { getCart, addToCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, cartItemKey, CART_KEY, fetchServerCart, mergeServerCartIntoLocal, syncCartToServer, syncCartItemToServer, deleteCartItemFromServer, type CartItem } from "@/lib/cart"
 import { parseTiers, getActiveTier, applyBulkDiscount, type BulkTier } from "@/lib/bulkDiscount"
 import { UpsellCard, type UpsellProduct } from "./UpsellCard"
 
@@ -18,6 +18,7 @@ interface CartDrawerProps {
 export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
   const t = useTranslations("cart")
   const { data: session, status } = useSession()
+  const prevStatusRef = useRef(status)
   const [items, setItems] = useState<CartItem[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<"cart" | "upsell">("cart")
@@ -144,9 +145,44 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     return () => window.removeEventListener("open-cart-upsell", handler)
   }, [upsellOpenOnAdd])
 
+  // Cart sync: restore sessionStorage backup and merge server cart on login
+  useEffect(() => {
+    const prevStatus = prevStatusRef.current
+    prevStatusRef.current = status
+
+    if (status !== "authenticated" || prevStatus === "authenticated") return
+
+    // 1. Restore pre-OAuth sessionStorage backup
+    try {
+      const backup = sessionStorage.getItem("d4d-cart-backup")
+      if (backup) {
+        const backupItems: CartItem[] = JSON.parse(backup)
+        for (const item of backupItems) {
+          addToCart({ ...item }, item.quantity)
+        }
+        sessionStorage.removeItem("d4d-cart-backup")
+        window.dispatchEvent(new Event("cart-updated"))
+      }
+    } catch {}
+
+    // 2. Fetch server cart and merge quantities into local cart
+    fetchServerCart().then((serverItems) => {
+      if (serverItems.length > 0) {
+        mergeServerCartIntoLocal(serverItems)
+        window.dispatchEvent(new Event("cart-updated"))
+      }
+      // 3. Push entire (merged) local cart to server
+      syncCartToServer(getCart()).catch(() => {})
+    })
+  }, [status])
+
   const handleRemove = (key: string) => {
+    const item = items?.find((i) => cartItemKey(i.productId, i.packageId) === key)
     removeFromCart(key)
     window.dispatchEvent(new Event("cart-updated"))
+    if (session && item) {
+      deleteCartItemFromServer(item.productId, item.packageId)
+    }
   }
 
   const handleQty = (key: string, delta: number) => {
@@ -158,6 +194,9 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     } else {
       updateQuantity(key, newQty)
       window.dispatchEvent(new Event("cart-updated"))
+      if (session) {
+        syncCartItemToServer(item.productId, item.packageId, newQty)
+      }
     }
   }
 

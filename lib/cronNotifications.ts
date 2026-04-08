@@ -140,7 +140,6 @@ export async function processTemplates(): Promise<{
   })
 
   const today = new Date()
-  const currentYear = today.getFullYear()
 
   for (const template of templates) {
     try {
@@ -150,6 +149,8 @@ export async function processTemplates(): Promise<{
       // If daysBefore = 7 and trigger = birthday, we look for birthdays 7 days from now
       const eventDate = new Date(today)
       eventDate.setDate(eventDate.getDate() + template.daysBefore)
+      // Use event year (not today's year) to handle daysBefore crossing year boundaries
+      const eventYear = eventDate.getFullYear()
 
       // Non-recurring custom_date templates: only fire in current year
       if (template.trigger === "custom_date" && !template.recurring) {
@@ -182,7 +183,7 @@ export async function processTemplates(): Promise<{
       const existingLogs = await prisma.templateSendLog.findMany({
         where: {
           templateId: template.id,
-          year: currentYear,
+          year: eventYear,
         },
         select: { userId: true },
       })
@@ -212,7 +213,7 @@ export async function processTemplates(): Promise<{
           if (template.couponEnabled && template.couponType && template.couponValue) {
             const prefix = COUPON_PREFIXES[template.trigger] || "TMPL"
             const userSuffix = user.id.slice(-6).toUpperCase()
-            couponCode = `${prefix}-${userSuffix}-${currentYear}`
+            couponCode = `${prefix}-${userSuffix}-${eventYear}`
 
             // Idempotent: check if coupon already exists
             const existingCoupon = await prisma.coupon.findUnique({
@@ -322,7 +323,7 @@ export async function processTemplates(): Promise<{
             data: {
               templateId: template.id,
               userId: user.id,
-              year: currentYear,
+              year: eventYear,
               couponId: couponId || null,
             },
           })
@@ -489,6 +490,165 @@ export async function testSendTemplate(
   })
 
   return { couponId, notificationId: notification.id }
+}
+
+/**
+ * Manually send a template to all eligible users now.
+ * Skips birthday templates (per-user date targeting makes bulk send meaningless).
+ * Respects the once-per-year dedup: users who already received it this year are skipped.
+ */
+export async function sendTemplateToAllUsers(templateId: string): Promise<{
+  sent: number
+  skipped: number
+  errors: string[]
+}> {
+  const result = { sent: 0, skipped: 0, errors: [] as string[] }
+
+  const template = await prisma.notificationTemplate.findUnique({
+    where: { id: templateId },
+  })
+
+  if (!template) throw new Error("Template not found")
+  if (template.trigger === "birthday") {
+    throw new Error("Birthday templates cannot be sent to all users — they are triggered by each user's birth date")
+  }
+
+  const currentYear = new Date().getFullYear()
+
+  // Get all users
+  const allUsers = await prisma.user.findMany({
+    select: { id: true, name: true },
+  })
+
+  // Get users who already received this template this year
+  const existingLogs = await prisma.templateSendLog.findMany({
+    where: { templateId: template.id, year: currentYear },
+    select: { userId: true },
+  })
+  const alreadySentUserIds = new Set(existingLogs.map((l) => l.userId))
+
+  const eligibleUsers = allUsers.filter((u) => !alreadySentUserIds.has(u.id))
+  result.skipped = allUsers.length - eligibleUsers.length
+
+  const notificationType = getNotificationType(template.trigger)
+
+  for (const user of eligibleUsers) {
+    try {
+      let couponId: string | undefined
+      let couponCode: string | undefined
+      let couponValueStr: string | undefined
+      let expiresAtStr: string | undefined
+
+      if (template.couponEnabled && template.couponType && template.couponValue) {
+        const prefix = COUPON_PREFIXES[template.trigger] || "TMPL"
+        const userSuffix = user.id.slice(-6).toUpperCase()
+        couponCode = `${prefix}-${userSuffix}-${currentYear}`
+
+        const existingCoupon = await prisma.coupon.findUnique({ where: { code: couponCode } })
+
+        if (existingCoupon) {
+          couponId = existingCoupon.id
+          const updatedExpiresAt = new Date()
+          if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+            updatedExpiresAt.setTime(new Date(template.couponExpiresAt).getTime())
+          } else {
+            updatedExpiresAt.setDate(updatedExpiresAt.getDate() + (template.couponDuration || 30))
+          }
+          await prisma.coupon.update({
+            where: { id: existingCoupon.id },
+            data: {
+              expiresAt: updatedExpiresAt,
+              type: template.couponType,
+              value: template.couponValue,
+              currency: template.couponCurrency,
+              minPurchase: template.couponMinPurchase,
+              perUserLimit: template.couponPerUser,
+              productIds: template.couponProductIds,
+              allowOnSale: template.couponAllowOnSale,
+            },
+          })
+        } else {
+          const expiresAt = new Date()
+          if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+            expiresAt.setTime(new Date(template.couponExpiresAt).getTime())
+          } else {
+            expiresAt.setDate(expiresAt.getDate() + (template.couponDuration || 30))
+          }
+          const coupon = await prisma.coupon.create({
+            data: {
+              code: couponCode,
+              type: template.couponType,
+              value: template.couponValue,
+              currency: template.couponCurrency,
+              minPurchase: template.couponMinPurchase,
+              maxUses: 1,
+              perUserLimit: template.couponPerUser,
+              productIds: template.couponProductIds,
+              allowOnSale: template.couponAllowOnSale,
+              showOnProduct: false,
+              active: true,
+              expiresAt,
+            },
+          })
+          couponId = coupon.id
+        }
+
+        couponValueStr = template.couponType === "percentage"
+          ? `${template.couponValue}%`
+          : `${template.couponValue} ${template.couponCurrency || "EUR"}`
+
+        let expDate: Date
+        if (template.couponExpiryMode === "date" && template.couponExpiresAt) {
+          expDate = new Date(template.couponExpiresAt)
+        } else {
+          expDate = new Date()
+          expDate.setDate(expDate.getDate() + (template.couponDuration || 30))
+        }
+        expiresAtStr = expDate.toLocaleDateString("en-GB")
+      }
+
+      const placeholderData = { name: user.name, couponCode, couponValue: couponValueStr, expiresAt: expiresAtStr }
+
+      const title = JSON.stringify({
+        bg: resolvePlaceholders(template.titleBg, placeholderData),
+        en: resolvePlaceholders(template.titleEn, placeholderData),
+        es: resolvePlaceholders(template.titleEs, placeholderData),
+      })
+      const message = JSON.stringify({
+        bg: resolvePlaceholders(template.messageBg, placeholderData),
+        en: resolvePlaceholders(template.messageEn, placeholderData),
+        es: resolvePlaceholders(template.messageEs, placeholderData),
+      })
+
+      await prisma.notification.create({
+        data: {
+          userId: user.id,
+          type: notificationType,
+          title,
+          message,
+          link: template.link,
+          couponId: couponId || null,
+        },
+      })
+
+      await prisma.templateSendLog.create({
+        data: {
+          templateId: template.id,
+          userId: user.id,
+          year: currentYear,
+          couponId: couponId || null,
+        },
+      })
+
+      result.sent++
+    } catch (userError) {
+      result.errors.push(
+        `User ${user.id}: ${userError instanceof Error ? userError.message : "Unknown error"}`
+      )
+    }
+  }
+
+  return result
 }
 
 /**
