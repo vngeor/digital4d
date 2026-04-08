@@ -16,7 +16,7 @@ npm run db:push      # Push schema changes to DB
 npm run db:studio    # Open Prisma Studio GUI
 npm run db:seed      # Seed database (npx tsx prisma/seed.ts)
 
-npm run deploy:clean     # Push to main → Vercel Git integration auto-deploys to production
+npm run deploy:clean     # Deploy to Vercel production (bypasses build cache, run by Claude on request)
 
 npm run blob:cleanup     # Delete orphaned Vercel Blob files
 npm run blob:cleanup:dry # Dry run of blob cleanup
