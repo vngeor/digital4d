@@ -23,6 +23,12 @@ export function formatTierBadge(tier: BulkTier, currency = "EUR"): string {
   return `${tier.minQty}+ units: ${discount}`
 }
 
+// Returns the entry-level tier (lowest minQty) for badge display
+export function getBestEntryTier(tiers: BulkTier[]): BulkTier | null {
+  if (!tiers.length) return null
+  return tiers.reduce((best, t) => t.minQty < best.minQty ? t : best)
+}
+
 export function parseTiers(json: string): BulkTier[] {
   try {
     const t = JSON.parse(json)
