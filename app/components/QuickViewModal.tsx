@@ -398,7 +398,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                                 )}
                             </div>
 
-                            {/* Actions — Bug 4 fix: spread sku/weightId; Bug 6+7 fix: productUrl prop; Bug A fix: suppressCartDrawer */}
+                            {/* Actions */}
                             <ProductActions
                                 product={product}
                                 selectedVariantStatus={effectiveVariantStatus}
@@ -408,8 +408,6 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                                 selectedPackage={selectedPackage ? { ...selectedPackage, sku: null, weightId: "" } : null}
                                 packages={packages}
                                 isWishlisted={isWishlisted}
-                                productUrl={productUrl}
-                                suppressCartDrawer={true}
                             />
 
                             {/* View full details link */}
