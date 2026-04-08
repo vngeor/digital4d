@@ -195,7 +195,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
       updateQuantity(key, newQty)
       window.dispatchEvent(new Event("cart-updated"))
       if (session) {
-        syncCartItemToServer(item.productId, item.packageId, newQty)
+        syncCartItemToServer({ ...item, quantity: newQty })
       }
     }
   }

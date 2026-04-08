@@ -105,18 +105,12 @@ export function getEffectivePrice(item: CartItem): number {
 
 // ─── Server cart sync helpers (for logged-in users) ────────────────────────
 
-export interface ServerCartItem {
-  productId: string
-  packageId: string | null
-  quantity: number
-  addedAt: string
-}
-
 /**
  * Fetch server cart for the current logged-in user.
+ * Returns fully hydrated CartItem[] — ready to merge into localStorage.
  * Returns empty array if not logged in or on error.
  */
-export async function fetchServerCart(): Promise<ServerCartItem[]> {
+export async function fetchServerCart(): Promise<CartItem[]> {
   try {
     const res = await fetch("/api/cart")
     if (!res.ok) return []
@@ -127,18 +121,19 @@ export async function fetchServerCart(): Promise<ServerCartItem[]> {
 }
 
 /**
- * Upsert a single item to the server cart (fire-and-forget safe).
+ * Upsert a single item to the server cart with full display data (fire-and-forget safe).
  */
-export async function syncCartItemToServer(
-  productId: string,
-  packageId: string | null | undefined,
-  quantity: number
-): Promise<void> {
+export async function syncCartItemToServer(item: CartItem): Promise<void> {
   try {
     await fetch("/api/cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId, packageId: packageId ?? null, quantity }),
+      body: JSON.stringify({
+        productId: item.productId,
+        packageId: item.packageId ?? null,
+        quantity: item.quantity,
+        data: item,
+      }),
     })
   } catch {
     // non-critical — local cart is the source of truth
@@ -165,35 +160,36 @@ export async function deleteCartItemFromServer(
  * Push the full local cart to the server (used after login merge).
  */
 export async function syncCartToServer(items: CartItem[]): Promise<void> {
-  await Promise.allSettled(
-    items.map((item) =>
-      syncCartItemToServer(item.productId, item.packageId, item.quantity)
-    )
-  )
+  await Promise.allSettled(items.map((item) => syncCartItemToServer(item)))
 }
 
 /**
  * Merge server cart into local localStorage cart on login.
  * For items already in local cart: keep the higher quantity.
- * For items only on server: skip (display data unavailable without full product fetch).
+ * For items only on server: ADD them (full display data is now available from server).
  * After merge, the caller should push the updated local cart to server.
  */
-export function mergeServerCartIntoLocal(serverItems: ServerCartItem[]): void {
+export function mergeServerCartIntoLocal(serverItems: CartItem[]): void {
   if (serverItems.length === 0) return
   try {
     const cart = getCart()
     let changed = false
     for (const serverItem of serverItems) {
+      if (!serverItem.productId || !serverItem.nameEn) continue // skip malformed items
       const key = cartItemKey(serverItem.productId, serverItem.packageId)
       const localIndex = cart.findIndex((i) => cartItemKey(i.productId, i.packageId) === key)
       if (localIndex >= 0) {
+        // Merge quantity — keep the higher of the two
         const merged = Math.min(99, Math.max(cart[localIndex].quantity, serverItem.quantity))
         if (merged !== cart[localIndex].quantity) {
           cart[localIndex].quantity = merged
           changed = true
         }
+      } else {
+        // Server-only item — add it with full display data from server
+        cart.push(serverItem)
+        changed = true
       }
-      // Server-only items are skipped — no display data available
     }
     if (changed) {
       localStorage.setItem(CART_KEY, JSON.stringify(cart))
