@@ -18,8 +18,9 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Loyalty / Bonus Program** *(roadmap)* - Points earned on every purchase, redeemable as store credit coupons. Bronze / Silver / Gold tiers with multipliers and perks. Customer rewards dashboard at `/profile/rewards`
 - **Wishlist** - Save products for later, price drop & coupon notifications
 - **Recently Viewed** - localStorage-based recently viewed products section on homepage (always-carousel with prev/next arrows; all 3 locale names stored; no login required). Each card has a Quick View button (mobile: pill with Eye icon beside category badge; desktop: hover bar) — opens full `QuickViewModal` with gallery, variants, packages. Extended localStorage entry stores `slug`, `createdAt`, `gallery`, `variants`, `packages` for modal; old entries degrade gracefully
+- **Cart Cross-Device Sync** - For logged-in users, cart is synced to a server-side `CartItem` model. Logging in on a second device merges the server cart with the local localStorage cart. Pre-login items (including OAuth redirect cart backup from `sessionStorage`) are restored and synced on login. Mutations (add/remove/qty) are mirrored to server in real-time
 - **Quote System** - File uploads (STL/OBJ/3MF), quote requests, admin-customer messaging
-- **Notifications** - Unified notification system with scheduling, smart recipient selection, coupon & wishlist alerts
+- **Notifications** - Unified notification system with scheduling, smart recipient selection, coupon & wishlist alerts. Admin can manually broadcast any non-birthday template to all users via "Send to All" button (skips users who already received it this year)
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content, show/hide from nav, title alignment
 - **Admin Dashboard** - Products, orders, quotes, users, content, banners, coupons, notifications, media, audit logs; quick field toggles (published/featured/bestSeller) with optimistic UI directly in the table; EUR-only currency throughout
 - **Role-Based Access Control** - 4 roles (Admin/Editor/Author/Subscriber) with per-role and per-user permission overrides
@@ -209,6 +210,7 @@ Key models:
 - **Notification** - User notifications (admin messages, coupons, wishlist alerts, auto-scheduled)
 - **NotificationTemplate** - Auto-scheduled notification templates (birthday, holidays, custom dates with optional auto-coupon)
 - **TemplateSendLog** - Tracks template sends per user per year (dedup)
+- **CartItem** - Server-side cart for logged-in users (productId, packageId, quantity) — synced from localStorage on login and on every mutation
 - **WishlistItem** - User wishlisted products
 - **WishlistNotification** - Prevents duplicate wishlist notifications
 - **MenuItem** - Dynamic navigation
@@ -233,6 +235,7 @@ Key models:
 - `GET /api/quotes/[id]/messages` - Quote messages
 - `GET /api/notifications` - User notifications
 - `GET/POST/DELETE /api/wishlist` - Wishlist management
+- `GET/POST/DELETE /api/cart` - Server-side cart sync for logged-in users
 
 ### Admin Only
 - `/api/admin/products` - CRUD products
@@ -243,6 +246,7 @@ Key models:
 - `/api/admin/coupons` - Manage coupons
 - `/api/admin/notifications` - Manage notifications
 - `/api/admin/notification-templates` - Manage auto-scheduled notification templates
+- `POST /api/admin/notification-templates/[id]/send-all` - Manually broadcast a template to all eligible users
 - `/api/cron/notifications` - Daily cron job for processing templates
 - `/api/admin/users` - Manage users
 - `/api/admin/users/permissions` - Per-user permission overrides
