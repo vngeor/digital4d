@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl"
 import { X, ExternalLink } from "lucide-react"
 import { ProductImageGallery } from "./ProductImageGallery"
 import { ProductActions } from "./ProductActions"
-import { parseTiers, getBestEntryTier } from "@/lib/bulkDiscount"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 interface Color { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
 interface ProductVariant { id: string; image: string | null; status: string; colorId: string; color: Color }
@@ -317,16 +317,11 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                                         ✓ {t("bestSeller")}
                                     </span>
                                 )}
-                                {(() => {
-                                    const tiers = parseTiers(product.bulkDiscountTiers || "")
-                                    const entry = getBestEntryTier(tiers)
-                                    if (!entry) return null
-                                    return (
-                                        <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-teal-600 text-white shadow-lg">
-                                            BULK{entry.type === "percentage" ? ` −${entry.value}%` : ""}
-                                        </span>
-                                    )
-                                })()}
+                                {!product.onSale && parseTiers(product.bulkDiscountTiers || "").length > 0 && (
+                                    <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-red-500 text-white shadow-lg">
+                                        {t("onSale")}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Description — expandable inline */}

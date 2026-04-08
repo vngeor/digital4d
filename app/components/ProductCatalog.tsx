@@ -1427,29 +1427,21 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
                                         {/* Top-right: Sale + Wishlist */}
                                         <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
-                                            {product.onSale && (
-                                                <div className="flex gap-1">
-                                                    <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
-                                                        {t("onSale")}
-                                                    </span>
-                                                    {discountPercent > 0 && (
-                                                        <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
-                                                            -{discountPercent}%
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
                                             {(() => {
-                                                const allTiers = [
-                                                    ...parseTiers(product.bulkDiscountTiers || ""),
-                                                    ...(product.packages?.flatMap(pkg => parseTiers(pkg.bulkDiscountTiers || "")) ?? [])
-                                                ]
-                                                const entry = getBestEntryTier(allTiers)
-                                                if (!entry) return null
+                                                const hasBulk = parseTiers(product.bulkDiscountTiers || "").length > 0 ||
+                                                    product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)
+                                                if (!product.onSale && !hasBulk) return null
                                                 return (
-                                                    <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-teal-600 text-white shadow-lg">
-                                                        BULK{entry.type === "percentage" ? ` −${entry.value}%` : ""}
-                                                    </span>
+                                                    <Link href="/products?sale=true" onClick={e => e.stopPropagation()} className="flex gap-1">
+                                                        <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
+                                                            {t("onSale")}
+                                                        </span>
+                                                        {product.onSale && discountPercent > 0 && (
+                                                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
+                                                                -{discountPercent}%
+                                                            </span>
+                                                        )}
+                                                    </Link>
                                                 )
                                             })()}
                                             <WishlistButton
