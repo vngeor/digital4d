@@ -57,6 +57,7 @@ model User {
   country          String?
   accounts         Account[]
   auditLogs        AuditLog[]
+  cartItems        CartItem[]
   createdContents  Content[]              @relation("ContentCreator")
   couponsCreated   Coupon[]               @relation("CouponCreator")
   mediaFiles       MediaFile[]
@@ -67,6 +68,19 @@ model User {
   sessions         Session[]
   permissions      UserPermission[]
   wishlistItems    WishlistItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  packageId String?
+  quantity  Int      @default(1)
+  addedAt   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId, packageId])
 }
 
 model Order {

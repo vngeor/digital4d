@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { ShoppingCart, MessageSquare, Loader2, Ticket, X, Check, Clock, Minus, Plus, Bell } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
-import { addToCart } from "@/lib/cart"
+import { addToCart, syncCartItemToServer } from "@/lib/cart"
 import { BulkTier, getActiveTier, applyBulkDiscount, parseTiers } from "@/lib/bulkDiscount"
 
 interface Product {
@@ -67,9 +67,10 @@ interface ProductActionsProps {
     selectedPackage?: SelectedPackage | null
     packages?: { id: string }[]
     isWishlisted?: boolean
+    suppressCartDrawer?: boolean
 }
 
-export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedVariantImage, selectedVariantColor, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedVariantImage, selectedVariantColor, selectedPackage, packages, isWishlisted = false, suppressCartDrawer = false }: ProductActionsProps) {
     const t = useTranslations("products")
     const tc = useTranslations("cart")
     const { data: session, status } = useSession()
@@ -501,7 +502,14 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             bulkDiscountTiers: selectedPackage?.bulkDiscountTiers || product.bulkDiscountTiers || "",
         }, quantity)
         window.dispatchEvent(new Event("cart-updated"))
-        window.dispatchEvent(new Event("open-cart-upsell"))
+        if (session) {
+            syncCartItemToServer(product.id, selectedPackage?.id ?? null, quantity)
+        }
+        if (suppressCartDrawer) {
+            toast.success(tc("addedToCart"))
+        } else {
+            window.dispatchEvent(new Event("open-cart-upsell"))
+        }
     }
 
     const canPurchase = ["in_stock", "pre_order"].includes(product.status)
@@ -645,7 +653,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 {canPurchase && quantitySelector}
 
                 {canPurchase ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <button
                             onClick={handleAddToCart}
                             className="flex-1 py-3 rounded-xl border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors font-semibold flex items-center justify-center gap-2 touch-manipulation"

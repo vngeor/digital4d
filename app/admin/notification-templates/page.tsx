@@ -25,6 +25,7 @@ import {
   ChevronDown,
   Check,
   Gift,
+  Users,
 } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
@@ -153,6 +154,11 @@ export default function NotificationTemplatesPage() {
   const [testSearching, setTestSearching] = useState(false)
   const [testSending, setTestSending] = useState(false)
   const testSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Send to all state
+  const [showSendAllModal, setShowSendAllModal] = useState(false)
+  const [sendAllTemplate, setSendAllTemplate] = useState<{ id: string; name: string } | null>(null)
+  const [sendAllSending, setSendAllSending] = useState(false)
 
   // Product picker state
   const [productSearch, setProductSearch] = useState("")
@@ -428,6 +434,27 @@ export default function NotificationTemplatesPage() {
     }
   }
 
+  // Send to all
+  const handleSendAll = async () => {
+    if (!sendAllTemplate) return
+    setSendAllSending(true)
+    try {
+      const res = await fetch(`/api/admin/notification-templates/${sendAllTemplate.id}/send-all`, {
+        method: "POST",
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed")
+      toast.success(`Sent to ${data.sent} user${data.sent !== 1 ? "s" : ""}${data.skipped > 0 ? ` (${data.skipped} already received it this year)` : ""}`)
+      setShowSendAllModal(false)
+      setSendAllTemplate(null)
+      fetchTemplates()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send")
+    } finally {
+      setSendAllSending(false)
+    }
+  }
+
   // Test send
   const handleTestSend = async () => {
     if (!testTemplateId || !testUserId) return
@@ -600,6 +627,18 @@ export default function NotificationTemplatesPage() {
               <Send className="w-4 h-4" />
             </button>
           )}
+          {can("notifications", "create") && item.trigger !== "birthday" && (
+            <button
+              onClick={() => {
+                setSendAllTemplate({ id: item.id, name: item.name })
+                setShowSendAllModal(true)
+              }}
+              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-violet-400 transition-colors"
+              title="Send to all users now"
+            >
+              <Users className="w-4 h-4" />
+            </button>
+          )}
           {can("notifications", "delete") && (
             <button
               onClick={() => setDeleteItem({ id: item.id, name: item.name })}
@@ -670,6 +709,17 @@ export default function NotificationTemplatesPage() {
               className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-emerald-400 transition-colors"
             >
               <Send className="w-3.5 h-3.5 inline mr-1" /> {t("testSend")}
+            </button>
+          )}
+          {can("notifications", "create") && item.trigger !== "birthday" && (
+            <button
+              onClick={() => {
+                setSendAllTemplate({ id: item.id, name: item.name })
+                setShowSendAllModal(true)
+              }}
+              className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-violet-400 transition-colors"
+            >
+              <Users className="w-3.5 h-3.5 inline mr-1" /> Send All
             </button>
           )}
           {can("notifications", "delete") && (
@@ -1308,6 +1358,47 @@ export default function NotificationTemplatesPage() {
                 {testSending && <Loader2 className="w-4 h-4 animate-spin" />}
                 <Send className="w-4 h-4" />
                 {t("testSend")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send to All Modal */}
+      {showSendAllModal && sendAllTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !sendAllSending && setShowSendAllModal(false)} />
+          <div className="relative bg-[#0d0d1a] border border-white/10 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-violet-400" />
+                Send to All Users
+              </h2>
+              <button onClick={() => setShowSendAllModal(false)} disabled={sendAllSending} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors disabled:opacity-50">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-300">
+              Send <span className="font-semibold text-white">{sendAllTemplate.name}</span> to all users now?
+            </p>
+            <p className="text-xs text-gray-500">
+              Users who already received this notification this year will be skipped automatically.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowSendAllModal(false)}
+                disabled={sendAllSending}
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm transition-colors disabled:opacity-50"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={handleSendAll}
+                disabled={sendAllSending}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50"
+              >
+                {sendAllSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                Send to All
               </button>
             </div>
           </div>
