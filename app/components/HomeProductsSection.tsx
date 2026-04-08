@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
-import { Check, Ticket } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Check, Ticket, Eye } from "lucide-react"
+import { QuickViewModal } from "./QuickViewModal"
 
 const COLOR_CLASSES: Record<string, string> = {
     cyan: "bg-cyan-500/20 text-cyan-400",
@@ -54,37 +56,66 @@ interface CouponBadge {
     currency: string | null
 }
 
+// Types for QuickViewModal compatibility
+interface QVColor { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
+interface QVVariant { id: string; image: string | null; status: string; colorId: string; color: QVColor }
+interface QVPackage { id: string; price: string; salePrice: string | null; status: string; weight: { label: string }; packageVariants: { variantId: string; status: string }[] }
+interface QVProduct {
+    id: string; slug: string; category: string
+    nameBg: string; nameEn: string; nameEs: string
+    descBg?: string | null; descEn?: string | null; descEs?: string | null
+    price: string | null; salePrice: string | null; onSale: boolean; currency: string
+    priceType: string; fileType: string | null; status: string
+    image: string | null; gallery: string[]
+    featured: boolean; bestSeller: boolean; createdAt: string
+    brand: { slug: string; nameBg: string; nameEn: string; nameEs: string } | null
+    variants: QVVariant[]
+    packages: QVPackage[]
+    bulkDiscountTiers?: string | null
+}
+interface QVCategory {
+    id: string; slug: string; parentId?: string | null
+    nameBg: string; nameEn: string; nameEs: string
+    children?: { id: string; slug: string }[]
+    parent?: { slug: string } | null
+}
+
 interface HomeProductsSectionProps {
     products: Product[]
     couponMap?: Record<string, CouponBadge>
     bestSellerIds?: string[]
+    locale?: string
+    quickViewProducts?: Record<string, QVProduct>
+    categories?: QVCategory[]
 }
 
-export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }: HomeProductsSectionProps) {
+export function HomeProductsSection({ products, couponMap, bestSellerIds = [], locale = "bg", quickViewProducts, categories }: HomeProductsSectionProps) {
     const t = useTranslations("homeProducts")
     const tProducts = useTranslations("products")
+    const router = useRouter()
+
+    const [quickViewQVProduct, setQuickViewQVProduct] = useState<QVProduct | null>(null)
 
     const [isMobile, setIsMobile] = useState(false)
+    const [itemsPerView, setItemsPerView] = useState(2)
     useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 1024)
-        check()
-        window.addEventListener("resize", check)
-        return () => window.removeEventListener("resize", check)
+        const update = () => {
+            const isNarrow = window.innerWidth < 1024
+            setIsMobile(isNarrow)
+            setItemsPerView(isNarrow ? 2 : 4)
+        }
+        update()
+        window.addEventListener("resize", update)
+        return () => window.removeEventListener("resize", update)
     }, [])
     const useCarousel = products.length > 4 && isMobile
     const scrollRef = useRef<HTMLDivElement>(null)
     const [activeSlide, setActiveSlide] = useState(0)
-    const [itemsPerView, setItemsPerView] = useState(2)
 
-    // Calculate items per view based on screen width
-    useEffect(() => {
-        const updateItemsPerView = () => setItemsPerView(window.innerWidth >= 1024 ? 4 : 2)
-        updateItemsPerView()
-        window.addEventListener("resize", updateItemsPerView)
-        return () => window.removeEventListener("resize", updateItemsPerView)
-    }, [])
+    // Reset slide position when switching between carousel and grid on resize
+    useEffect(() => { setActiveSlide(0) }, [useCarousel])
 
-    const totalPages = useCarousel ? Math.ceil(products.length / itemsPerView) : 0
+    const totalPages = useCarousel ? Math.ceil(products.length / (itemsPerView || 1)) : 0
 
     const scrollToPage = useCallback((page: number) => {
         if (!scrollRef.current) return
@@ -149,10 +180,10 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                             : 0
 
                         return (
-                            <Link
+                            <div
                                 key={product.id}
-                                href={product.productUrl}
-                                className={`group glass rounded-2xl overflow-hidden hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col h-full ${useCarousel ? "snap-start shrink-0 w-[calc(50%-4px)] sm:w-[calc(50%-6px)] lg:w-[calc(25%-15px)]" : ""}`}
+                                onClick={() => router.push(product.productUrl)}
+                                className={`group glass rounded-2xl overflow-hidden hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col h-full cursor-pointer ${useCarousel ? "snap-start shrink-0 w-[calc(50%-4px)] sm:w-[calc(50%-6px)] lg:w-[calc(25%-15px)]" : ""}`}
                             >
                                 {/* Image */}
                                 <div className="relative h-32 sm:h-40 overflow-hidden bg-white/5">
@@ -211,11 +242,11 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                     {(product.featured || product.isNew) && (
                                         <div className="absolute top-2 left-2 flex flex-wrap gap-1">
                                             {product.featured && (
-                                                <Link href="/products?featured=true" onClick={(e) => e.stopPropagation()} className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg hover:bg-violet-500 transition-colors touch-manipulation">
+                                                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/products?featured=true") }} className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg hover:bg-violet-500 transition-colors touch-manipulation">
                                                     <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                                     </svg>
-                                                </Link>
+                                                </button>
                                             )}
                                             {product.isNew && (
                                                 <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-cyan-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
@@ -227,17 +258,17 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
 
                                     {/* Bottom-right: Best Seller */}
                                     {bestSellerIds.includes(product.id) && (
-                                        <div className="absolute bottom-2 right-2">
-                                            <Link href="/products?bestSeller=true" onClick={(e) => e.stopPropagation()} className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg hover:bg-amber-400 transition-colors touch-manipulation">
+                                        <div className="absolute bottom-2 right-2 z-20">
+                                            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/products?bestSeller=true") }} className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg hover:bg-amber-400 transition-colors touch-manipulation">
                                                 <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                 {tProducts("bestSeller")}
-                                            </Link>
+                                            </button>
                                         </div>
                                     )}
 
                                     {/* Coupon Badge */}
                                     {couponMap?.[product.id] && (
-                                        <div className="absolute bottom-2 left-2">
+                                        <div className="absolute bottom-2 left-2 z-20">
                                             <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-orange-500 text-white shadow-lg">
                                                 <Ticket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                 -{couponMap[product.id].type === "percentage"
@@ -246,15 +277,35 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                             </span>
                                         </div>
                                     )}
+
+                                    {/* Quick View — desktop hover bar */}
+                                    {quickViewProducts?.[product.id] && (
+                                        <button
+                                            onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewQVProduct(quickViewProducts[product.id]) }}
+                                            className="hidden sm:block absolute bottom-0 inset-x-0 py-1.5 bg-slate-900/85 backdrop-blur-sm text-white text-[10px] sm:text-xs font-medium text-center z-30 touch-manipulation opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                        >
+                                            {tProducts("quickView")}
+                                        </button>
+                                    )}
                                 </div>
 
-                                {/* Category Badge */}
-                                <div className="px-3 sm:px-4 pt-2 -mt-4 relative z-10">
+                                {/* Category Badge + mobile Quick View */}
+                                <div className="px-3 sm:px-4 pt-2 -mt-4 relative z-10 flex items-center justify-between gap-2">
                                     <span
                                         className={`inline-block px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${COLOR_CLASSES[product.categoryColor] || COLOR_CLASSES.gray}`}
                                     >
                                         {product.categoryName}
                                     </span>
+                                    {quickViewProducts?.[product.id] && (
+                                        <button
+                                            onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewQVProduct(quickViewProducts[product.id]) }}
+                                            aria-label={tProducts("quickView")}
+                                            className="sm:hidden flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/15 bg-white/5 text-[10px] text-slate-300 hover:border-emerald-500/50 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all touch-manipulation shrink-0"
+                                        >
+                                            <Eye className="w-3 h-3" />
+                                            {tProducts("quickView")}
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Content */}
@@ -264,7 +315,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                     </h3>
                                     {product.brand && (
                                         <span
-                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/brands/${product.brand!.slug}` }}
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/brands/${product.brand!.slug}`) }}
                                             className="block text-[10px] sm:text-xs text-slate-500 font-medium mb-1 hover:text-emerald-400 transition-colors cursor-pointer"
                                         >
                                             {product.brand.name}
@@ -323,10 +374,23 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                                         )}
                                     </div>
                                 </div>
-                            </Link>
+                            </div>
                         )
                     })}
                 </div>
+
+                {/* Quick View Modal */}
+                {quickViewQVProduct && (
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    <QuickViewModal
+                        key={quickViewQVProduct.id}
+                        product={quickViewQVProduct as any}
+                        locale={locale}
+                        isWishlisted={false}
+                        categories={(categories ?? []) as any}
+                        onClose={() => setQuickViewQVProduct(null)}
+                    />
+                )}
 
                 {/* Carousel Dots */}
                 {useCarousel && totalPages > 1 && (
@@ -335,6 +399,8 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [] }:
                             <button
                                 key={i}
                                 onClick={() => { setActiveSlide(i); scrollToPage(i) }}
+                                aria-label={`Go to slide ${i + 1}`}
+                                aria-current={activeSlide === i ? "page" : undefined}
                                 className={`w-2 h-2 rounded-full transition-all ${
                                     activeSlide === i ? "bg-emerald-400 w-6" : "bg-white/20 hover:bg-white/40"
                                 }`}

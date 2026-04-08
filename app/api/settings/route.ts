@@ -10,9 +10,11 @@ export async function GET() {
       freeShippingCurrency: s?.freeShippingCurrency ?? "EUR",
       upsellTabEnabled: s?.upsellTabEnabled ?? true,
       upsellOpenOnAdd: s?.upsellOpenOnAdd ?? "upsell",
+      bulkDiscountEnabled: s?.bulkDiscountEnabled ?? false,
+      bulkDiscountTiers: s?.bulkDiscountTiers ?? "[]",
     })
   } catch {
     // Graceful degradation — progress bar simply won't show
-    return NextResponse.json({ freeShippingEnabled: false, freeShippingThreshold: null, freeShippingCurrency: "EUR", upsellTabEnabled: true, upsellOpenOnAdd: "upsell" })
+    return NextResponse.json({ freeShippingEnabled: false, freeShippingThreshold: null, freeShippingCurrency: "EUR", upsellTabEnabled: true, upsellOpenOnAdd: "upsell", bulkDiscountEnabled: false, bulkDiscountTiers: "[]" })
   }
 }

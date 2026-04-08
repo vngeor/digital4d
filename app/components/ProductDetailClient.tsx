@@ -11,7 +11,7 @@ interface Variant {
     image: string | null
     status: string
     colorId: string
-    color: { nameBg: string; nameEn: string; nameEs: string; hex: string }
+    color: { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
 }
 
 interface PackageVariantEntry {
@@ -28,6 +28,7 @@ interface PackageData {
     status: string
     order: number
     weightId: string
+    bulkDiscountTiers?: string | null
     weight: { label: string }
     packageVariants?: PackageVariantEntry[]
 }
@@ -49,6 +50,7 @@ interface Product {
     bestSeller?: boolean
     createdAt?: string
     brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
+    bulkDiscountTiers?: string | null
 }
 
 interface PromotedCoupon {

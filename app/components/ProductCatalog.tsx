@@ -4,14 +4,25 @@ import { useState, useMemo, useEffect, useRef, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Search, Star, Check, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell } from "lucide-react"
+import { Search, Check, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell, SlidersHorizontal, Eye } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
+import { QuickViewModal } from "./QuickViewModal"
 
 interface ProductVariant {
+    id: string
     image: string | null
     status: string
     colorId: string
-    color: { nameBg: string; nameEn: string; nameEs: string; hex: string }
+    color: { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
+}
+
+interface ProductPackage {
+    id: string
+    price: string
+    salePrice: string | null
+    status: string
+    weight: { label: string }
+    packageVariants?: { variantId: string; status: string }[]
 }
 
 interface Product {
@@ -37,6 +48,9 @@ interface Product {
     createdAt: string | Date
     brand: { slug: string; nameBg: string; nameEn: string; nameEs: string } | null
     variants?: ProductVariant[]
+    packages?: ProductPackage[]
+    gallery?: string[]
+    bulkDiscountTiers?: string | null
 }
 
 interface ProductCategory {
@@ -47,6 +61,8 @@ interface ProductCategory {
     nameEs: string
     color: string
     parentId?: string | null
+    children?: { id: string; slug: string }[]
+    parent?: { slug: string } | null
 }
 
 interface CouponBadge {
@@ -103,6 +119,23 @@ function getProductUrl(
     return segments.join("/")
 }
 
+function FilterSection({ title, isOpen, onToggle, children }: {
+    title: string; isOpen: boolean; onToggle: () => void; children: React.ReactNode
+}) {
+    return (
+        <div className="border-b border-white/10">
+            <button
+                onClick={onToggle}
+                className="flex items-center justify-between w-full py-3 text-sm font-semibold text-gray-200 hover:text-white transition-colors"
+            >
+                {title}
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isOpen && <div className="pb-4">{children}</div>}
+        </div>
+    )
+}
+
 export function ProductCatalog({ products, categories, locale, wishlistedProductIds = [], couponMap, subcategories, initialCategory, activeSubcategory }: ProductCatalogProps) {
     const t = useTranslations("products")
     const searchParams = useSearchParams()
@@ -121,6 +154,40 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
     const categoryDropdownRef = useRef<HTMLDivElement>(null)
     const categoryListRef = useRef<HTMLDivElement>(null)
+    const [brandDropdownOpen, setBrandDropdownOpen] = useState(false)
+    const brandDropdownRef = useRef<HTMLDivElement>(null)
+    const [selectedSizes, setSelectedSizes] = useState<string[]>([])
+    const [priceMin, setPriceMin] = useState<string>("")
+    const [priceMax, setPriceMax] = useState<string>("")
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
+    const [openSections, setOpenSections] = useState<Set<string>>(
+        new Set(["category", "subcategory", "color", "size", "price", "brand", "quickFilters"])
+    )
+    // Multi-select subcategory filter (desktop instant, mobile staged)
+    const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([])
+    const toggleSubcategory = (slug: string) =>
+        setSelectedSubcategories(prev => prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug])
+
+    // Mobile pending state — selections staged here, committed only when "Apply" is tapped
+    const [pendingSubcategories, setPendingSubcategories] = useState<string[]>([])
+    const [pendingColors, setPendingColors] = useState<string[]>([])
+    const [pendingSizes, setPendingSizes] = useState<string[]>([])
+    const [pendingPriceMin, setPendingPriceMin] = useState<string>("")
+    const [pendingPriceMax, setPendingPriceMax] = useState<string>("")
+    const [pendingBrand, setPendingBrand] = useState<string | null>(null)
+    const [pendingSale, setPendingSale] = useState(false)
+    const [pendingFeatured, setPendingFeatured] = useState(false)
+    const [pendingBestSeller, setPendingBestSeller] = useState(false)
+
+    // Clear selected brand when locale changes to avoid stale localized-name mismatch
+    const prevLocale = useRef(locale)
+    useEffect(() => {
+        if (prevLocale.current !== locale) {
+            prevLocale.current = locale
+            setSelectedBrand(null)
+        }
+    }, [locale])
 
     useEffect(() => {
         if (searchParams.get("sale") === "true") {
@@ -141,16 +208,38 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         if (activeCat) {
             const cat = categories.find(c => c.slug === activeCat)
             if (cat?.parentId) {
+                // On a child page — expand the parent in sidebar
                 setExpandedCategories(new Set([cat.parentId]))
             }
+            // On a parent category page: no need to reset expansion here —
+            // the sidebar suppresses children for the active parent when subcategory chips exist
         }
     }, [searchParams, categories, initialCategory])
+
+    // Close mobile sidebar on Escape key
+    useEffect(() => {
+        if (!sidebarOpen) return
+        const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSidebarOpen(false) }
+        window.addEventListener("keydown", handleKey)
+        return () => window.removeEventListener("keydown", handleKey)
+    }, [sidebarOpen])
 
     // Close category dropdown on click outside
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
                 setShowCategoryDropdown(false)
+            }
+        }
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
+    }, [])
+
+    // Close brand dropdown on click outside
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (brandDropdownRef.current && !brandDropdownRef.current.contains(e.target as Node)) {
+                setBrandDropdownOpen(false)
             }
         }
         document.addEventListener("mousedown", handler)
@@ -195,20 +284,20 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     }, [products, locale])
 
     const uniqueColors = useMemo(() => {
-        const colorMap = new Map<string, string>() // colorId → hex (first seen)
-        const colorNames = new Map<string, string>() // colorId → localized name
+        const colorMap = new Map<string, { hex: string; hex2?: string | null }>()
+        const colorNames = new Map<string, string>()
         for (const product of products) {
             for (const variant of product.variants || []) {
                 if (!variant.colorId || colorMap.has(variant.colorId)) continue
                 const name = locale === "bg" ? variant.color.nameBg
                     : locale === "es" ? variant.color.nameEs
                     : variant.color.nameEn
-                colorMap.set(variant.colorId, variant.color.hex)
+                colorMap.set(variant.colorId, { hex: variant.color.hex, hex2: variant.color.hex2 ?? null })
                 colorNames.set(variant.colorId, name)
             }
         }
         return Array.from(colorMap.entries())
-            .map(([id, hex]) => ({ id, hex, name: colorNames.get(id) || "" }))
+            .map(([id, { hex, hex2 }]) => ({ id, hex, hex2, name: colorNames.get(id) || "" }))
             .sort((a, b) => a.name.localeCompare(b.name))
     }, [products, locale])
 
@@ -218,9 +307,32 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         )
     }
 
+    const toggleSize = (label: string) =>
+        setSelectedSizes(prev => prev.includes(label) ? prev.filter(s => s !== label) : [...prev, label])
+
+    const toggleSection = (key: string) =>
+        setOpenSections(prev => {
+            const next = new Set(prev)
+            next.has(key) ? next.delete(key) : next.add(key)
+            return next
+        })
+
+    const uniqueSizes = useMemo(() => {
+        const labels = new Set<string>()
+        products.forEach(p => p.packages?.forEach(pkg => labels.add(pkg.weight.label)))
+        return [...labels].sort((a, b) => {
+            const parse = (s: string) => parseFloat(s.replace(",", ".")) * (s.toLowerCase().includes("kg") ? 1000 : 1)
+            return parse(a) - parse(b)
+        })
+    }, [products])
+
     const filteredProducts = useMemo(() => {
         return products.filter((product) => {
             const matchesCategory = !selectedCategory || (() => {
+                // Multi-select subcategory checkboxes take priority (OR logic)
+                if (selectedSubcategories.length > 0) {
+                    return selectedSubcategories.includes(product.category)
+                }
                 if (product.category === selectedCategory) return true
                 // If selected is a parent category, also match its children using O(1) map
                 const selectedCat = categoryMap.get(selectedCategory)
@@ -239,9 +351,18 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             const matchesBrand = !selectedBrand || (product.brand && getLocalizedName(product.brand) === selectedBrand)
             const matchesColor = selectedColors.length === 0 ||
                 (product.variants || []).some(v => v.colorId && selectedColors.includes(v.colorId))
-            return matchesCategory && matchesSearch && matchesSale && matchesFeatured && matchesBestSeller && matchesBrand && matchesColor
+            const matchesSize = selectedSizes.length === 0 ||
+                (product.packages?.some(pkg => selectedSizes.includes(pkg.weight.label)) ?? false)
+            const effectivePrice = product.onSale && product.salePrice
+                ? parseFloat(product.salePrice) : product.price ? parseFloat(product.price) : null
+            const minVal = priceMin !== "" ? parseFloat(priceMin) : null
+            const maxVal = priceMax !== "" ? parseFloat(priceMax) : null
+            const matchesPrice =
+                (minVal === null || (effectivePrice !== null && effectivePrice >= minVal)) &&
+                (maxVal === null || (effectivePrice !== null && effectivePrice <= maxVal))
+            return matchesCategory && matchesSearch && matchesSale && matchesFeatured && matchesBestSeller && matchesBrand && matchesColor && matchesSize && matchesPrice
         })
-    }, [products, selectedCategory, selectedBrand, searchQuery, saleFilter, featuredFilter, bestSellerFilter, selectedColors, categoryMap, categories, locale])
+    }, [products, selectedCategory, selectedSubcategories, selectedBrand, searchQuery, saleFilter, featuredFilter, bestSellerFilter, selectedColors, selectedSizes, priceMin, priceMax, categoryMap, categories, locale])
 
     const getEffectivePrice = (product: Product): number | null => {
         if (product.onSale && product.salePrice) return parseFloat(product.salePrice)
@@ -250,9 +371,120 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     }
 
     const getDiscountPercent = (product: Product): number => {
-        if (!product.onSale || !product.price || !product.salePrice) return 0
+        if (!product.onSale) return 0
+        // Use best discount across packages (for sort accuracy)
+        if (product.packages?.length) {
+            let best = 0
+            for (const pkg of product.packages) {
+                if (pkg.salePrice) {
+                    const d = Math.round((1 - parseFloat(pkg.salePrice) / parseFloat(pkg.price)) * 100)
+                    if (d > best) best = d
+                }
+            }
+            if (best > 0) return best
+        }
+        if (!product.price || !product.salePrice) return 0
         return Math.round((1 - parseFloat(product.salePrice) / parseFloat(product.price)) * 100)
     }
+
+    // Card badge shows the best (max) discount across all packages — same as sort logic
+    const getCardDiscountPercent = (product: Product): number => getDiscountPercent(product)
+
+    const { absoluteMin, absoluteMax } = useMemo(() => {
+        const prices = products.map(p => getEffectivePrice(p)).filter((v): v is number => v !== null)
+        return {
+            absoluteMin: prices.length ? Math.floor(Math.min(...prices)) : 0,
+            absoluteMax: prices.length ? Math.ceil(Math.max(...prices)) : 1000,
+        }
+    }, [products])
+
+    const activeFilterCount = selectedSubcategories.length + selectedColors.length + selectedSizes.length +
+        (priceMin !== "" ? 1 : 0) + (priceMax !== "" ? 1 : 0) +
+        // Don't count selectedCategory as a user filter when it's just the page's own category
+        (selectedCategory && selectedCategory !== initialCategory ? 1 : 0) + (selectedBrand ? 1 : 0) +
+        (saleFilter ? 1 : 0) + (featuredFilter ? 1 : 0) + (bestSellerFilter ? 1 : 0)
+
+    const clearAllFilters = () => {
+        // On a category page, restore the page's own category instead of clearing to null
+        setSelectedCategory(initialCategory || null)
+        setSelectedSubcategories([])
+        setSelectedBrand(null)
+        setSelectedColors([])
+        setSelectedSizes([])
+        setPriceMin("")
+        setPriceMax("")
+        setSaleFilter(false)
+        setFeaturedFilter(false)
+        setBestSellerFilter(false)
+        startTransition(() => setSearchQuery(""))
+    }
+
+    // Open mobile sidebar and pre-populate pending state with current active filters
+    const openMobileSidebar = () => {
+        setPendingSubcategories(selectedSubcategories)
+        setPendingColors(selectedColors)
+        setPendingSizes(selectedSizes)
+        setPendingPriceMin(priceMin)
+        setPendingPriceMax(priceMax)
+        setPendingBrand(selectedBrand)
+        setPendingSale(saleFilter)
+        setPendingFeatured(featuredFilter)
+        setPendingBestSeller(bestSellerFilter)
+        setSidebarOpen(true)
+    }
+
+    // Commit pending mobile filters to active state and close drawer
+    const applyMobileFilters = () => {
+        setSelectedSubcategories(pendingSubcategories)
+        setSelectedColors(pendingColors)
+        setSelectedSizes(pendingSizes)
+        setPriceMin(pendingPriceMin)
+        setPriceMax(pendingPriceMax)
+        setSelectedBrand(pendingBrand)
+        setSaleFilter(pendingSale)
+        setFeaturedFilter(pendingFeatured)
+        setBestSellerFilter(pendingBestSeller)
+        setSidebarOpen(false)
+    }
+
+    // Live product count based on pending selections (shown in Apply button)
+    const pendingFilteredCount = useMemo(() => {
+        if (!sidebarOpen) return 0
+        return products.filter(product => {
+            const matchesCategory = !selectedCategory || (() => {
+                if (pendingSubcategories.length > 0) return pendingSubcategories.includes(product.category)
+                if (product.category === selectedCategory) return true
+                const selectedCat = categoryMap.get(selectedCategory)
+                if (selectedCat && !selectedCat.parentId) {
+                    return categories.some(c => c.parentId === selectedCat.id && c.slug === product.category)
+                }
+                return false
+            })()
+            const matchesSearch = !searchQuery ||
+                getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (product.brand && getLocalizedName(product.brand).toLowerCase().includes(searchQuery.toLowerCase()))
+            const matchesSale = !pendingSale || product.onSale
+            const matchesFeatured = !pendingFeatured || product.featured
+            const matchesBestSeller = !pendingBestSeller || product.bestSeller
+            const matchesBrand = !pendingBrand || (product.brand && getLocalizedName(product.brand) === pendingBrand)
+            const matchesColor = pendingColors.length === 0 ||
+                (product.variants || []).some(v => v.colorId && pendingColors.includes(v.colorId))
+            const matchesSize = pendingSizes.length === 0 ||
+                (product.packages?.some(pkg => pendingSizes.includes(pkg.weight.label)) ?? false)
+            const effectivePrice = product.onSale && product.salePrice
+                ? parseFloat(product.salePrice) : product.price ? parseFloat(product.price) : null
+            const minVal = pendingPriceMin !== "" ? parseFloat(pendingPriceMin) : null
+            const maxVal = pendingPriceMax !== "" ? parseFloat(pendingPriceMax) : null
+            const matchesPrice =
+                (minVal === null || (effectivePrice !== null && effectivePrice >= minVal)) &&
+                (maxVal === null || (effectivePrice !== null && effectivePrice <= maxVal))
+            return matchesCategory && matchesSearch && matchesSale && matchesFeatured &&
+                matchesBestSeller && matchesBrand && matchesColor && matchesSize && matchesPrice
+        }).length
+    }, [sidebarOpen, products, selectedCategory, searchQuery, pendingSubcategories, pendingColors, pendingSizes,
+        pendingPriceMin, pendingPriceMax, pendingBrand, pendingSale, pendingFeatured, pendingBestSeller,
+        categoryMap, categories, locale])
 
     const sortedProducts = useMemo(() => {
         if (sortBy === "default") return filteredProducts
@@ -275,10 +507,13 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     return pb - pa
                 }
                 case "discount": {
+                    const available = (p: Product) => p.status === "in_stock" || p.status === "pre_order" ? 0 : 1
+                    const avDiff = available(a) - available(b)
+                    if (avDiff !== 0) return avDiff
                     return getDiscountPercent(b) - getDiscountPercent(a)
                 }
                 case "name-az":
-                    return getLocalizedName(a).localeCompare(getLocalizedName(b))
+                    return getLocalizedName(a).localeCompare(getLocalizedName(b), locale)
                 default:
                     return 0
             }
@@ -304,13 +539,16 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             const parentName = getLocalizedName(parent)
 
             const isParentActive = selectedCategory === parent.slug || initialCategory === parent.slug
+            // When subcategory chips exist for the active parent, don't duplicate them in sidebar
+            const hasSubcategoryChips = isParentActive && !!subcategories?.length
             const parentProductCount = children.length > 0
                 ? children.reduce((sum, c) => sum + (countBySlug[c.slug] || 0), 0) + (countBySlug[parent.slug] || 0)
                 : countBySlug[parent.slug] || 0
-            items.push({ id: parent.id, label: parentName, href: `/products/category/${parent.slug}`, isChild: false, isActive: isParentActive, childCount: children.length > 0 ? children.length : undefined, productCount: parentProductCount })
+            items.push({ id: parent.id, label: parentName, href: `/products/category/${parent.slug}`, isChild: false, isActive: isParentActive, childCount: children.length > 0 && !hasSubcategoryChips ? children.length : undefined, productCount: parentProductCount })
 
             const isExpanded = expandedCategories.has(parent.id)
-            if (children.length > 0 && isExpanded) {
+            // Don't render children in sidebar when chips already handle subcategory navigation
+            if (children.length > 0 && isExpanded && !hasSubcategoryChips) {
                 for (const child of children) {
                     const childName = getLocalizedName(child)
                     const isChildActive = selectedCategory === child.slug || initialCategory === child.slug
@@ -328,7 +566,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         }
 
         return items
-    }, [categories, expandedCategories, selectedCategory, initialCategory, t, locale, products])
+    }, [categories, expandedCategories, selectedCategory, initialCategory, t, locale, products, subcategories])
 
     // Cheap memo — just filters pre-built items on search keystrokes
     const categoryNavItems = useMemo(() => {
@@ -397,9 +635,437 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         return `${prefix}${price.toFixed(2)} ${product.currency}`
     }
 
+    // Product count per category slug (for subcategory checkbox labels)
+    const countBySlug = useMemo(() => {
+        const map: Record<string, number> = {}
+        for (const p of products) { map[p.category] = (map[p.category] || 0) + 1 }
+        return map
+    }, [products])
+
+    // Product count per brand name (for brand filter labels)
+    const countByBrand = useMemo(() => {
+        const map: Record<string, number> = {}
+        for (const p of products) {
+            if (p.brand) {
+                const name = getLocalizedName(p.brand)
+                map[name] = (map[name] || 0) + 1
+            }
+        }
+        return map
+    }, [products, locale])
+
+    // Whether to show subcategory checkboxes: only on the parent page (not on a child page)
+    const showSubcategoryCheckboxes = !!subcategories?.length && !activeSubcategory
+
+    // Sidebar content — shared between desktop aside and mobile drawer
+    const sidebarContent = (
+        <div>
+            {activeFilterCount > 0 && (
+                <button onClick={clearAllFilters}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 mb-4 transition-colors block">
+                    ✕ {t("clearAll")} ({activeFilterCount})
+                </button>
+            )}
+
+            {/* Category */}
+            <FilterSection title={t("category")} isOpen={openSections.has("category")} onToggle={() => toggleSection("category")}>
+                <div className="space-y-0.5 max-h-56 overflow-y-auto pr-1">
+                    {allCategoryNavItems.map((item) => (
+                        <div key={item.id} className={`flex items-center ${item.isChild ? "pl-4" : ""}`}>
+                            <button
+                                onClick={() => {
+                                    if (item.id === "_all") { setSelectedCategory(null); router.push("/products") }
+                                    else router.push(item.href)
+                                    setSidebarOpen(false)
+                                }}
+                                className={`flex-1 text-left py-1.5 text-sm transition-colors flex items-center gap-1.5
+                                    ${item.isActive ? "text-emerald-400 font-medium" : "text-gray-400 hover:text-white"}`}
+                            >
+                                {item.isChild && <span className="w-1 h-1 rounded-full bg-gray-600 shrink-0" />}
+                                <span className="truncate">{item.label}</span>
+                                {item.productCount !== undefined && !item.childCount && (
+                                    <span className="text-[10px] text-gray-600 ml-auto shrink-0">({item.productCount})</span>
+                                )}
+                            </button>
+                            {item.childCount && (
+                                <button
+                                    onClick={() => setExpandedCategories(prev => {
+                                        const n = new Set(prev)
+                                        n.has(item.id) ? n.delete(item.id) : n.add(item.id)
+                                        return n
+                                    })}
+                                    className="p-1 hover:bg-white/10 rounded transition-colors shrink-0"
+                                >
+                                    <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${expandedCategories.has(item.id) ? "rotate-180" : ""}`} />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </FilterSection>
+
+            {/* Subcategory checkboxes — multi-select, shown on parent category pages only */}
+            {showSubcategoryCheckboxes && (
+                <FilterSection title={t("categoryPage.subcategories")} isOpen={openSections.has("subcategory")} onToggle={() => toggleSection("subcategory")}>
+                    <div className="space-y-0.5 max-h-56 overflow-y-auto pr-1">
+                        {subcategories!.map(sub => {
+                            const subName = getLocalizedName(sub)
+                            const checked = selectedSubcategories.includes(sub.slug)
+                            return (
+                                <label key={sub.id} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                                    <input type="checkbox" checked={checked} onChange={() => toggleSubcategory(sub.slug)}
+                                        className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                                    <span className={`text-sm transition-colors flex-1 ${checked ? "text-emerald-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
+                                        {subName}
+                                    </span>
+                                    <span className="text-[10px] text-gray-600 shrink-0">({countBySlug[sub.slug] || 0})</span>
+                                </label>
+                            )
+                        })}
+                    </div>
+                    {selectedSubcategories.length > 0 && (
+                        <button onClick={() => setSelectedSubcategories([])}
+                            className="mt-1 text-xs text-gray-500 hover:text-white transition-colors">
+                            ✕ {t("clearSizes")}
+                        </button>
+                    )}
+                </FilterSection>
+            )}
+
+            {/* Color */}
+            {uniqueColors.length > 0 && (
+                <FilterSection title={t("color")} isOpen={openSections.has("color")} onToggle={() => toggleSection("color")}>
+                    <div className="flex flex-wrap gap-2">
+                        {uniqueColors.map(({ id, name, hex, hex2 }) => (
+                            <button key={id}
+                                onClick={() => toggleColor(id)}
+                                title={name.charAt(0).toUpperCase() + name.slice(1)}
+                                className={`w-8 h-8 rounded-full overflow-hidden transition-all touch-manipulation hover:scale-110 ${selectedColors.includes(id) ? "scale-110" : ""}`}
+                                style={{
+                                    ...(hex2 ? { background: `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)` } : { backgroundColor: hex }),
+                                    boxShadow: selectedColors.includes(id)
+                                        ? "0 0 0 2px #34d399, 0 0 0 4px rgba(52,211,153,0.25)"
+                                        : "0 0 0 2px rgba(15,23,42,0.7)"
+                                }}
+                            />
+                        ))}
+                    </div>
+                    {selectedColors.length > 0 && (
+                        <button onClick={() => setSelectedColors([])}
+                            className="mt-2 text-xs text-gray-500 hover:text-white transition-colors">
+                            ✕ {t("clearColors")}
+                        </button>
+                    )}
+                </FilterSection>
+            )}
+
+            {/* Size */}
+            {uniqueSizes.length > 0 && (
+                <FilterSection title={t("size")} isOpen={openSections.has("size")} onToggle={() => toggleSection("size")}>
+                    <div className="space-y-0.5">
+                        {uniqueSizes.map(label => (
+                            <label key={label} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                                <input type="checkbox" checked={selectedSizes.includes(label)}
+                                    onChange={() => toggleSize(label)}
+                                    className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                                <span className={`text-sm transition-colors ${
+                                    selectedSizes.includes(label)
+                                        ? "text-emerald-400 font-medium"
+                                        : "text-gray-400 group-hover:text-white"}`}>
+                                    {label}
+                                </span>
+                            </label>
+                        ))}
+                    </div>
+                    {selectedSizes.length > 0 && (
+                        <button onClick={() => setSelectedSizes([])}
+                            className="mt-1 text-xs text-gray-500 hover:text-white transition-colors">
+                            ✕ {t("clearSizes")}
+                        </button>
+                    )}
+                </FilterSection>
+            )}
+
+            {/* Price */}
+            <FilterSection title={`${t("price")} (€)`} isOpen={openSections.has("price")} onToggle={() => toggleSection("price")}>
+                <div className="flex items-center gap-2">
+                    <input type="number" min={0} step="0.01" placeholder={String(absoluteMin)}
+                        value={priceMin}
+                        onChange={e => { const v = e.target.value; if (v === "" || parseFloat(v) >= 0) startTransition(() => setPriceMin(v)) }}
+                        onKeyDown={e => { if (e.key === "-") e.preventDefault() }}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                    <span className="text-gray-500 shrink-0 text-sm">–</span>
+                    <input type="number" min={0} step="0.01" placeholder={String(absoluteMax)}
+                        value={priceMax}
+                        onChange={e => { const v = e.target.value; if (v === "" || parseFloat(v) >= 0) startTransition(() => setPriceMax(v)) }}
+                        onKeyDown={e => { if (e.key === "-") e.preventDefault() }}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                </div>
+                {priceMin !== "" && priceMax !== "" && parseFloat(priceMin) > parseFloat(priceMax) && (
+                    <p className="mt-1 text-xs text-red-400">{t("priceMinMaxError")}</p>
+                )}
+                {(priceMin !== "" || priceMax !== "") && (
+                    <button onClick={() => { setPriceMin(""); setPriceMax("") }}
+                        className="mt-2 text-xs text-gray-500 hover:text-white transition-colors">
+                        ✕ {t("clearPrice")}
+                    </button>
+                )}
+            </FilterSection>
+        </div>
+    )
+
+    // Mobile-only sidebar: uses pending state so selections are staged until "Apply" is tapped
+    const pendingActiveFilterCount = pendingSubcategories.length + pendingColors.length + pendingSizes.length +
+        (pendingPriceMin !== "" ? 1 : 0) + (pendingPriceMax !== "" ? 1 : 0) +
+        (pendingBrand ? 1 : 0) +
+        (pendingSale ? 1 : 0) + (pendingFeatured ? 1 : 0) + (pendingBestSeller ? 1 : 0)
+
+    const mobileSidebarContent = (
+        <div>
+            {pendingActiveFilterCount > 0 && (
+                <button onClick={() => {
+                    setPendingSubcategories([])
+                    setPendingColors([])
+                    setPendingSizes([])
+                    setPendingPriceMin("")
+                    setPendingPriceMax("")
+                    setPendingBrand(null)
+                    setPendingSale(false)
+                    setPendingFeatured(false)
+                    setPendingBestSeller(false)
+                }}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 mb-4 transition-colors block">
+                    ✕ {t("clearAll")} ({pendingActiveFilterCount})
+                </button>
+            )}
+
+            {/* Category — parent items navigate, child items are multi-select checkboxes */}
+            <FilterSection title={t("category")} isOpen={openSections.has("category")} onToggle={() => toggleSection("category")}>
+                <div className="space-y-0.5">
+                    {allCategoryNavItems.map((item) => {
+                        if (item.isChild) {
+                            const childSlug = item.href.split("/").pop() || ""
+                            const checked = pendingSubcategories.includes(childSlug)
+                            return (
+                                <label key={item.id} className="flex items-center gap-2 cursor-pointer py-1.5 pl-4 group">
+                                    <input type="checkbox" checked={checked}
+                                        onChange={() => setPendingSubcategories(prev =>
+                                            prev.includes(childSlug) ? prev.filter(s => s !== childSlug) : [...prev, childSlug]
+                                        )}
+                                        className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                                    <span className="w-1 h-1 rounded-full bg-gray-600 shrink-0" />
+                                    <span className={`text-sm transition-colors flex-1 ${checked ? "text-emerald-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
+                                        {item.label}
+                                    </span>
+                                    {item.productCount !== undefined && (
+                                        <span className="text-[10px] text-gray-600 shrink-0">({item.productCount})</span>
+                                    )}
+                                </label>
+                            )
+                        }
+                        return (
+                            <div key={item.id} className="flex items-center">
+                                <button
+                                    onClick={() => {
+                                        if (item.id === "_all") { setSelectedCategory(null); router.push("/products") }
+                                        else router.push(item.href)
+                                        setSidebarOpen(false)
+                                    }}
+                                    className={`flex-1 text-left py-1.5 text-sm transition-colors flex items-center gap-1.5
+                                        ${item.isActive ? "text-emerald-400 font-medium" : "text-gray-400 hover:text-white"}`}
+                                >
+                                    <span className="truncate">{item.label}</span>
+                                    {item.productCount !== undefined && !item.childCount && (
+                                        <span className="text-[10px] text-gray-600 ml-auto shrink-0">({item.productCount})</span>
+                                    )}
+                                </button>
+                                {item.childCount && (
+                                    <button
+                                        onClick={() => setExpandedCategories(prev => {
+                                            const n = new Set(prev)
+                                            n.has(item.id) ? n.delete(item.id) : n.add(item.id)
+                                            return n
+                                        })}
+                                        className="p-1 hover:bg-white/10 rounded transition-colors shrink-0"
+                                    >
+                                        <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${expandedCategories.has(item.id) ? "rotate-180" : ""}`} />
+                                    </button>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+            </FilterSection>
+
+            {/* Subcategory checkboxes — pending (mobile) */}
+            {showSubcategoryCheckboxes && (
+                <FilterSection title={t("categoryPage.subcategories")} isOpen={openSections.has("subcategory")} onToggle={() => toggleSection("subcategory")}>
+                    <div className="space-y-0.5 max-h-56 overflow-y-auto pr-1">
+                        {subcategories!.map(sub => {
+                            const subName = getLocalizedName(sub)
+                            const checked = pendingSubcategories.includes(sub.slug)
+                            return (
+                                <label key={sub.id} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                                    <input type="checkbox" checked={checked}
+                                        onChange={() => setPendingSubcategories(prev => prev.includes(sub.slug) ? prev.filter(s => s !== sub.slug) : [...prev, sub.slug])}
+                                        className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                                    <span className={`text-sm transition-colors flex-1 ${checked ? "text-emerald-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
+                                        {subName}
+                                    </span>
+                                    <span className="text-[10px] text-gray-600 shrink-0">({countBySlug[sub.slug] || 0})</span>
+                                </label>
+                            )
+                        })}
+                    </div>
+                    {pendingSubcategories.length > 0 && (
+                        <button onClick={() => setPendingSubcategories([])}
+                            className="mt-1 text-xs text-gray-500 hover:text-white transition-colors">
+                            ✕ {t("clearSizes")}
+                        </button>
+                    )}
+                </FilterSection>
+            )}
+
+            {/* Brand — pending, custom dropdown */}
+            {uniqueBrands.length > 0 && (
+                <FilterSection title={t("brand")} isOpen={openSections.has("brand")} onToggle={() => toggleSection("brand")}>
+                    <div className="space-y-0.5">
+                        <label className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                            <input type="radio" name="pendingBrand" checked={pendingBrand === null}
+                                onChange={() => setPendingBrand(null)}
+                                className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                            <span className={`text-sm transition-colors ${pendingBrand === null ? "text-emerald-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
+                                {t("allBrands")}
+                            </span>
+                        </label>
+                        {uniqueBrands.map(brand => (
+                            <label key={brand} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                                <input type="radio" name="pendingBrand" checked={pendingBrand === brand}
+                                    onChange={() => setPendingBrand(brand)}
+                                    className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                                <span className={`text-sm transition-colors flex-1 ${pendingBrand === brand ? "text-emerald-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
+                                    {brand}
+                                </span>
+                                <span className="text-[10px] text-gray-600 shrink-0">({countByBrand[brand] || 0})</span>
+                            </label>
+                        ))}
+                    </div>
+                </FilterSection>
+            )}
+
+            {/* Quick filters — pending */}
+            <FilterSection title={t("filters")} isOpen={openSections.has("quickFilters")} onToggle={() => toggleSection("quickFilters")}>
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                        <input type="checkbox" checked={pendingSale} onChange={() => setPendingSale(p => !p)}
+                            className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                        <span className={`text-sm transition-colors ${pendingSale ? "text-red-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
+                            <Tag className="w-3 h-3 inline mr-1" />{t("onSale")}
+                        </span>
+                    </label>
+                    <label className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                        <input type="checkbox" checked={pendingFeatured} onChange={() => setPendingFeatured(p => !p)}
+                            className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                        <span className={`text-sm transition-colors ${pendingFeatured ? "text-violet-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
+                            ⭐ {t("featured")}
+                        </span>
+                    </label>
+                    <label className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                        <input type="checkbox" checked={pendingBestSeller} onChange={() => setPendingBestSeller(p => !p)}
+                            className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                        <span className={`text-sm transition-colors ${pendingBestSeller ? "text-amber-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
+                            <Check className="w-3 h-3 inline mr-1" />{t("bestSeller")}
+                        </span>
+                    </label>
+                </div>
+            </FilterSection>
+
+            {/* Color — pending */}
+            {uniqueColors.length > 0 && (
+                <FilterSection title={t("color")} isOpen={openSections.has("color")} onToggle={() => toggleSection("color")}>
+                    <div className="flex flex-wrap gap-2">
+                        {uniqueColors.map(({ id, name, hex, hex2 }) => (
+                            <button key={id}
+                                onClick={() => setPendingColors(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])}
+                                title={name.charAt(0).toUpperCase() + name.slice(1)}
+                                className={`w-8 h-8 rounded-full overflow-hidden transition-all touch-manipulation hover:scale-110 ${pendingColors.includes(id) ? "scale-110" : ""}`}
+                                style={{
+                                    ...(hex2 ? { background: `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)` } : { backgroundColor: hex }),
+                                    boxShadow: pendingColors.includes(id)
+                                        ? "0 0 0 2px #34d399, 0 0 0 4px rgba(52,211,153,0.25)"
+                                        : "0 0 0 2px rgba(15,23,42,0.7)"
+                                }}
+                            />
+                        ))}
+                    </div>
+                    {pendingColors.length > 0 && (
+                        <button onClick={() => setPendingColors([])}
+                            className="mt-2 text-xs text-gray-500 hover:text-white transition-colors">
+                            ✕ {t("clearColors")}
+                        </button>
+                    )}
+                </FilterSection>
+            )}
+
+            {/* Size — pending */}
+            {uniqueSizes.length > 0 && (
+                <FilterSection title={t("size")} isOpen={openSections.has("size")} onToggle={() => toggleSection("size")}>
+                    <div className="space-y-0.5">
+                        {uniqueSizes.map(label => (
+                            <label key={label} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                                <input type="checkbox" checked={pendingSizes.includes(label)}
+                                    onChange={() => setPendingSizes(prev => prev.includes(label) ? prev.filter(s => s !== label) : [...prev, label])}
+                                    className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
+                                <span className={`text-sm transition-colors ${
+                                    pendingSizes.includes(label)
+                                        ? "text-emerald-400 font-medium"
+                                        : "text-gray-400 group-hover:text-white"}`}>
+                                    {label}
+                                </span>
+                            </label>
+                        ))}
+                    </div>
+                    {pendingSizes.length > 0 && (
+                        <button onClick={() => setPendingSizes([])}
+                            className="mt-1 text-xs text-gray-500 hover:text-white transition-colors">
+                            ✕ {t("clearSizes")}
+                        </button>
+                    )}
+                </FilterSection>
+            )}
+
+            {/* Price — pending */}
+            <FilterSection title={`${t("price")} (€)`} isOpen={openSections.has("price")} onToggle={() => toggleSection("price")}>
+                <div className="flex items-center gap-2">
+                    <input type="number" min={0} step="0.01" placeholder={String(absoluteMin)}
+                        value={pendingPriceMin}
+                        onChange={e => { const v = e.target.value; if (v === "" || parseFloat(v) >= 0) setPendingPriceMin(v) }}
+                        onKeyDown={e => { if (e.key === "-") e.preventDefault() }}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                    <span className="text-gray-500 shrink-0 text-sm">–</span>
+                    <input type="number" min={0} step="0.01" placeholder={String(absoluteMax)}
+                        value={pendingPriceMax}
+                        onChange={e => { const v = e.target.value; if (v === "" || parseFloat(v) >= 0) setPendingPriceMax(v) }}
+                        onKeyDown={e => { if (e.key === "-") e.preventDefault() }}
+                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                </div>
+                {pendingPriceMin !== "" && pendingPriceMax !== "" && parseFloat(pendingPriceMin) > parseFloat(pendingPriceMax) && (
+                    <p className="mt-1 text-xs text-red-400">{t("priceMinMaxError")}</p>
+                )}
+                {(pendingPriceMin !== "" || pendingPriceMax !== "") && (
+                    <button onClick={() => { setPendingPriceMin(""); setPendingPriceMax("") }}
+                        className="mt-2 text-xs text-gray-500 hover:text-white transition-colors">
+                        ✕ {t("clearPrice")}
+                    </button>
+                )}
+            </FilterSection>
+        </div>
+    )
+
     return (
+        <>
         <section className="relative py-8 px-4">
-            <div className="mx-auto max-w-6xl">
+            <div className="mx-auto max-w-7xl">
                 {/* Sale Banner */}
                 {saleFilter && (
                     <div className="mb-6 p-4 md:p-6 rounded-xl bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/20">
@@ -462,282 +1128,202 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                     </div>
                 )}
 
-                {/* Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                    {/* Search */}
-                    <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                        <input
-                            type="text"
-                            placeholder={t("search")}
-                            value={searchQuery}
-                            onChange={(e) => { const val = e.target.value; startTransition(() => setSearchQuery(val)) }}
-                            className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                        />
-                    </div>
-
-                    {/* Brand Filter */}
-                    {uniqueBrands.length > 0 && (
-                        <div className="relative">
-                            <select
-                                value={selectedBrand || ""}
-                                onChange={(e) => setSelectedBrand(e.target.value || null)}
-                                className="w-full appearance-none pl-4 pr-9 py-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50 transition-colors cursor-pointer"
-                            >
-                                <option value="">{t("allBrands")}</option>
-                                {uniqueBrands.map(brand => (
-                                    <option key={brand} value={brand}>{brand}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                        </div>
-                    )}
-
-                    {/* Sort By */}
+                {/* Mobile top bar: Filters button + Sort */}
+                <div className="flex items-center gap-3 mb-4 lg:hidden">
+                    <button onClick={openMobileSidebar}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass border border-white/10 text-sm text-gray-300 hover:text-white transition-colors touch-manipulation shrink-0">
+                        <SlidersHorizontal className="w-4 h-4" />
+                        {t("filters")}
+                        {activeFilterCount > 0 && (
+                            <span className="ml-0.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </button>
+                    <div className="flex-1" />
                     <div className="relative">
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as SortOption)}
-                            className="w-full appearance-none pl-4 pr-9 py-3 sm:py-2 bg-white/5 border border-white/10 rounded-xl text-white text-base sm:text-sm focus:outline-none focus:border-emerald-500/50 transition-colors cursor-pointer"
-                        >
+                        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}
+                            className="appearance-none pl-3 pr-8 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none transition-colors cursor-pointer">
                             <option value="default">{t("sortDefault")}</option>
                             <option value="price-asc">{t("sortPriceLow")}</option>
                             <option value="price-desc">{t("sortPriceHigh")}</option>
                             <option value="discount">{t("sortDiscount")}</option>
                             <option value="name-az">{t("sortNameAZ")}</option>
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
                     </div>
-
                 </div>
 
-                {/* Color Swatch Filter */}
-                {uniqueColors.length > 0 && (
-                    <div className="flex items-center gap-2 flex-wrap mb-4">
-                        <span className="text-xs text-gray-500 shrink-0">{t("color")}:</span>
-                        {uniqueColors.map(({ id, name, hex }) => {
-                            const isSelected = selectedColors.includes(id)
-                            return (
-                                <button
-                                    key={id}
-                                    onClick={() => toggleColor(id)}
-                                    title={name.charAt(0).toUpperCase() + name.slice(1)}
-                                    className={`w-9 h-9 rounded-full border-2 transition-all touch-manipulation hover:scale-110 ${
-                                        isSelected
-                                            ? "border-emerald-400 ring-2 ring-emerald-400/40 scale-110"
-                                            : "border-white/20 hover:border-white/50"
-                                    }`}
-                                    style={{ backgroundColor: hex }}
-                                />
-                            )
-                        })}
-                        {selectedColors.length > 0 && (
-                            <button
-                                onClick={() => setSelectedColors([])}
-                                className="py-1 px-2 text-xs text-gray-500 hover:text-white transition-colors touch-manipulation"
-                            >
-                                ✕ {t("clearColors")}
-                            </button>
-                        )}
+                {/* Mobile: Search + Brand */}
+                <div className="lg:hidden space-y-3 mb-4">
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <input type="text" placeholder={t("search")} value={searchQuery}
+                            onChange={(e) => { const val = e.target.value; startTransition(() => setSearchQuery(val)) }}
+                            className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
                     </div>
-                )}
+                    {uniqueBrands.length > 0 && (
+                        <div className="relative" ref={brandDropdownRef}>
+                            <button
+                                type="button"
+                                onClick={() => setBrandDropdownOpen(p => !p)}
+                                className="w-full flex items-center justify-between pl-4 pr-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base focus:outline-none transition-colors touch-manipulation"
+                            >
+                                <span className={selectedBrand ? "text-white" : "text-gray-400"}>
+                                    {selectedBrand || t("allBrands")}
+                                </span>
+                                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${brandDropdownOpen ? "rotate-180" : ""}`} />
+                            </button>
+                            {brandDropdownOpen && (
+                                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#0d0d1a] border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                                    <button type="button"
+                                        onClick={() => { setSelectedBrand(null); setBrandDropdownOpen(false) }}
+                                        className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${!selectedBrand ? "bg-emerald-500/20 text-emerald-400" : "text-gray-300 hover:bg-white/5"}`}>
+                                        {!selectedBrand && <Check className="w-3.5 h-3.5 shrink-0" />}
+                                        <span className={!selectedBrand ? "" : "pl-5"}>{t("allBrands")}</span>
+                                    </button>
+                                    {uniqueBrands.map(brand => (
+                                        <button type="button" key={brand}
+                                            onClick={() => { setSelectedBrand(brand); setBrandDropdownOpen(false) }}
+                                            className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${selectedBrand === brand ? "bg-emerald-500/20 text-emerald-400" : "text-gray-300 hover:bg-white/5"}`}>
+                                            {selectedBrand === brand && <Check className="w-3.5 h-3.5 shrink-0" />}
+                                            <span className={selectedBrand === brand ? "" : "pl-5"}>{brand}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
-                {/* Category Filter */}
-                <div className="flex gap-2 flex-wrap mb-6">
-                    {/* All Products / All in Category button */}
+                {/* Two-column layout */}
+                <div className="flex gap-8 items-start">
+
+                    {/* Desktop sidebar */}
+                    <aside className="hidden lg:block w-56 xl:w-64 shrink-0 sticky top-24">
+                        {sidebarContent}
+                    </aside>
+
+                    {/* Mobile drawer backdrop */}
+                    {sidebarOpen && (
+                        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+                            onClick={() => setSidebarOpen(false)} />
+                    )}
+
+                    {/* Mobile drawer */}
+                    <div className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[#0d0d1a] border-r border-white/10
+                        overflow-y-auto transition-transform duration-300 ease-in-out lg:hidden
+                        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+                        <div className="flex items-center justify-between px-4 py-4 border-b border-white/10 sticky top-0 bg-[#0d0d1a] z-10">
+                            <span className="font-semibold text-white">{t("filters")}</span>
+                            <button onClick={() => setSidebarOpen(false)}
+                                className="p-2 hover:text-white text-gray-400 touch-manipulation -mr-2">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-4">{mobileSidebarContent}</div>
+                        <div className="sticky bottom-0 p-4 bg-[#0d0d1a] border-t border-white/10">
+                            <button onClick={applyMobileFilters}
+                                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm hover:shadow-lg hover:shadow-emerald-500/30 transition-all touch-manipulation">
+                                {t("applyFilters")} ({pendingFilteredCount})
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Main content */}
+                    <div className="flex-1 min-w-0">
+
+                        {/* Desktop top bar: Search + Brand + Sort */}
+                        <div className="hidden lg:flex items-center gap-3 mb-6">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                                <input type="text" placeholder={t("search")} value={searchQuery}
+                                    onChange={(e) => { const val = e.target.value; startTransition(() => setSearchQuery(val)) }}
+                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                            </div>
+                            {uniqueBrands.length > 0 && (
+                                <div className="relative">
+                                    <select value={selectedBrand || ""} onChange={e => setSelectedBrand(e.target.value || null)}
+                                        className="appearance-none pl-4 pr-9 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none transition-colors cursor-pointer">
+                                        <option value="">{t("allBrands")}</option>
+                                        {uniqueBrands.map(brand => <option key={brand} value={brand}>{brand}</option>)}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                                </div>
+                            )}
+                            <div className="relative">
+                                <select value={sortBy} onChange={e => setSortBy(e.target.value as SortOption)}
+                                    className="appearance-none pl-4 pr-9 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none transition-colors cursor-pointer">
+                                    <option value="default">{t("sortDefault")}</option>
+                                    <option value="price-asc">{t("sortPriceLow")}</option>
+                                    <option value="price-desc">{t("sortPriceHigh")}</option>
+                                    <option value="discount">{t("sortDiscount")}</option>
+                                    <option value="name-az">{t("sortNameAZ")}</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        {/* Sale / Featured / BestSeller quick-filter buttons */}
+                        <div className="flex gap-2 flex-wrap mb-6">
                             <button
                                 onClick={() => {
                                     setSaleFilter(false)
                                     setFeaturedFilter(false)
                                     setBestSellerFilter(false)
-                                    if (subcategories && initialCategory) {
-                                        router.push(`/products/category/${initialCategory}`)
-                                    } else {
-                                        router.push('/products')
-                                    }
+                                    setSelectedSubcategories([])
+                                    if (!subcategories && !initialCategory) router.push('/products')
                                 }}
-                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${!activeSubcategory && !saleFilter && !featuredFilter && !bestSellerFilter
-                                        ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                                        : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
-                                    }`}
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${!saleFilter && !featuredFilter && !bestSellerFilter && !selectedSubcategories.length && !selectedCategory
+                                    ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"}`}
                             >
                                 {t("allProducts")}
                             </button>
-                            {/* Sale filter */}
                             <button
-                                onClick={() => { setSaleFilter(!saleFilter); setSelectedCategory(null) }}
-                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${saleFilter
-                                        ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
-                                        : "text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20"
-                                    }`}
+                                onClick={() => setSaleFilter(s => !s)}
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center gap-1.5 ${saleFilter
+                                    ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 border border-red-500/30"
+                                    : "text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20"}`}
                             >
                                 <Tag className="w-3.5 h-3.5" />
                                 {t("onSale")}
                             </button>
-                            {/* Featured filter */}
                             <button
-                                onClick={() => { setFeaturedFilter(!featuredFilter); setSelectedCategory(null) }}
-                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${featuredFilter
-                                        ? "bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-500/30"
-                                        : "text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 border border-violet-500/20"
-                                    }`}
+                                onClick={() => setFeaturedFilter(f => !f)}
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center gap-1.5 ${featuredFilter
+                                    ? "bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-500/30"
+                                    : "text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 border border-violet-500/20"}`}
                             >
                                 ⭐ {t("featured")}
                             </button>
-                            {/* Best Seller filter */}
                             <button
-                                onClick={() => { setBestSellerFilter(!bestSellerFilter); setSelectedCategory(null) }}
-                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${bestSellerFilter
-                                        ? "bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border border-amber-500/30"
-                                        : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/20"
-                                    }`}
+                                onClick={() => setBestSellerFilter(b => !b)}
+                                className={`px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center gap-1.5 ${bestSellerFilter
+                                    ? "bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border border-amber-500/30"
+                                    : "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/20"}`}
                             >
                                 <Check className="w-3.5 h-3.5" />
                                 {t("bestSeller")}
                             </button>
-                            {/* Subcategory tabs (on category pages) — dropdown on mobile, tabs on desktop */}
-                            {subcategories && subcategories.length > 0 ? (
-                                <>
-                                    {/* Mobile: dropdown */}
-                                    <div className="relative sm:hidden w-full">
-                                        <select
-                                            value={activeSubcategory || ""}
-                                            onChange={(e) => {
-                                                const slug = e.target.value
-                                                if (slug) {
-                                                    router.push(`/products/category/${initialCategory}/${slug}`)
-                                                } else {
-                                                    router.push(`/products/category/${initialCategory}`)
-                                                }
-                                            }}
-                                            className="w-full appearance-none pl-4 pr-9 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-base focus:outline-none focus:border-emerald-500/50 transition-colors cursor-pointer"
-                                        >
-                                            <option value="">{t("allProducts")}</option>
-                                            {subcategories.map(sub => (
-                                                <option key={sub.id} value={sub.slug}>{getLocalizedName(sub)}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                                    </div>
-                                    {/* Desktop: tabs */}
-                                    {subcategories.map(sub => (
-                                        <button
-                                            key={sub.id}
-                                            onClick={() => router.push(`/products/category/${initialCategory}/${sub.slug}`)}
-                                            className={`hidden sm:block px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeSubcategory === sub.slug
-                                                    ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                                                    : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
-                                                }`}
-                                        >
-                                            {getLocalizedName(sub)}
-                                        </button>
-                                    ))}
-                                </>
-                            ) : (
-                            <div ref={categoryDropdownRef} className="relative w-full sm:w-auto">
-                                <button
-                                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                                    className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap inline-flex items-center justify-center sm:justify-start gap-1.5 ${selectedCategory
-                                            ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400 border border-emerald-500/30"
-                                            : "text-gray-400 hover:text-white hover:bg-white/5 border border-white/10"
-                                        }`}
-                                >
-                                    {(() => {
-                                        const selectedCat = selectedCategory ? categories.find(c => c.slug === selectedCategory) : null
-                                        return selectedCat ? getLocalizedName(selectedCat) : t("allCategories")
-                                    })()}
-                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
-                                </button>
+                        </div>
 
-                                {showCategoryDropdown && (
-                                    <div className="absolute top-full mt-2 left-0 sm:left-auto sm:right-0 w-64 sm:w-72 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
-                                        {/* Search */}
-                                        <div className="p-2 border-b border-white/10">
-                                            <div className="relative">
-                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-                                                <input
-                                                    type="text"
-                                                    value={categoryDropdownSearch}
-                                                    onChange={(e) => setCategoryDropdownSearch(e.target.value)}
-                                                    onKeyDown={handleCategoryKeyDown}
-                                                    placeholder={t("searchCategory")}
-                                                    className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-base sm:text-sm placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
-                                                />
-                                            </div>
-                                        </div>
+                        {/* Product count */}
+                        <p className="text-xs text-gray-600 mb-4">{t("productCount", { count: sortedProducts.length })}</p>
 
-                                        <div ref={categoryListRef} className="max-h-72 overflow-y-auto py-1">
-                                            {categoryNavItems.length === 0 ? (
-                                                <div className="px-4 py-3 text-sm text-gray-500">{t("noCategoriesFound")}</div>
-                                            ) : (
-                                                categoryNavItems.map((item, i) => (
-                                                    <div
-                                                        key={item.id}
-                                                        data-nav-index={i}
-                                                        className={`flex items-center text-sm transition-colors ${
-                                                            item.isChild ? "pl-8 pr-4 py-2" : "px-4 py-2.5 font-medium"
-                                                        } ${
-                                                            categoryActiveIndex === i
-                                                                ? "bg-white/10 text-white"
-                                                                : item.isActive
-                                                                    ? "text-emerald-400 bg-emerald-500/10"
-                                                                    : item.isChild
-                                                                        ? "text-gray-400 hover:bg-white/5 hover:text-white"
-                                                                        : "text-gray-200 hover:bg-white/5 hover:text-white"
-                                                        }`}
-                                                    >
-                                                        <button
-                                                            className="flex-1 text-left flex items-center gap-2"
-                                                            onClick={() => {
-                                                                setShowCategoryDropdown(false)
-                                                                setCategoryDropdownSearch("")
-                                                                setCategoryActiveIndex(-1)
-                                                                router.push(item.href)
-                                                            }}
-                                                        >
-                                                            {item.isChild && <span className="w-1.5 h-1.5 rounded-full bg-gray-600 shrink-0" />}
-                                                            {item.label}
-                                                            {!item.childCount && item.productCount !== undefined && (
-                                                                <span className="text-[10px] text-gray-500 ml-1">({item.productCount})</span>
-                                                            )}
-                                                        </button>
-                                                        {item.childCount && (
-                                                            <>
-                                                                <span className="text-[10px] text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">{item.childCount}</span>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        setExpandedCategories(prev => {
-                                                                            const next = new Set(prev)
-                                                                            if (next.has(item.id)) next.delete(item.id)
-                                                                            else next.add(item.id)
-                                                                            return next
-                                                                        })
-                                                                    }}
-                                                                    className="p-1 hover:bg-white/10 rounded transition-colors ml-1"
-                                                                >
-                                                                    <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${expandedCategories.has(item.id) ? "rotate-180" : ""}`} />
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
+                        {/* Products Grid */}
+                        {sortedProducts.length === 0 ? (
+                            <div className="text-center py-12 text-slate-400">
+                                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                <p>{t("noProducts")}</p>
+                                {activeFilterCount > 0 && (
+                                    <button onClick={clearAllFilters} className="mt-4 text-sm text-emerald-400 hover:text-emerald-300 transition-colors underline underline-offset-4">
+                                        {t("clearAll")} ({activeFilterCount})
+                                    </button>
                                 )}
                             </div>
-                            )}
-                </div>
-
-                {/* Products Grid */}
-                {sortedProducts.length === 0 ? (
-                    <div className="text-center py-12 text-slate-400">
-                        <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p>{t("noProducts")}</p>
-                    </div>
-                ) : (
-                    <div className={`grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 ${isPending ? "opacity-60 transition-opacity" : ""}`}>
+                        ) : (
+                        <div className={`grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3 ${isPending ? "opacity-60 transition-opacity" : ""}`}>
                         {sortedProducts.map((product, productIndex) => {
                             const name = getLocalizedName(product)
                             const desc = getLocalizedDesc(product)
@@ -745,22 +1331,46 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             const categoryName = getCategoryName(product.category)
                             const price = formatPrice(product)
 
-                            // Calculate discount percentage
-                            const discountPercent = product.onSale && product.price && product.salePrice
-                                ? Math.round((1 - parseFloat(product.salePrice) / parseFloat(product.price)) * 100)
-                                : 0
+                            // Calculate discount % using first available package (matches detail page default)
+                            const discountPercent = getCardDiscountPercent(product)
+                            // Find the package with the highest discount (for price + image)
+                            const bestDiscountPkg = product.onSale && product.packages?.length
+                                ? product.packages.reduce((best, pkg) => {
+                                    if (!pkg.salePrice) return best
+                                    const d = Math.round((1 - parseFloat(pkg.salePrice) / parseFloat(pkg.price)) * 100)
+                                    if (!best || d > best.d) return { pkg, d }
+                                    return best
+                                }, null as { pkg: ProductPackage; d: number } | null)?.pkg ?? null
+                                : null
+                            // Show the first in_stock variant image for the best-discount package,
+                            // falling back to product.image
+                            let cardImage = product.image
+                            if (bestDiscountPkg?.packageVariants?.length && product.variants?.length) {
+                                const inStockIds = new Set(
+                                    bestDiscountPkg.packageVariants
+                                        .filter(pv => pv.status === "in_stock" || pv.status === "pre_order")
+                                        .map(pv => pv.variantId)
+                                )
+                                const matchedVariant = product.variants.find(v => inStockIds.has(v.id) && v.image)
+                                if (matchedVariant?.image) cardImage = matchedVariant.image
+                            }
+
+                            // Build card URL — pre-select best-discount package so detail page opens correctly
+                            const cardUrl = bestDiscountPkg
+                                ? `${getProductUrl(product, categories)}?weight=${encodeURIComponent(bestDiscountPkg.weight.label)}`
+                                : getProductUrl(product, categories)
 
                             return (
                                 <Link
                                     key={product.id}
-                                    href={getProductUrl(product, categories)}
+                                    href={cardUrl}
                                     className="group glass rounded-2xl overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all hover:shadow-lg hover:shadow-emerald-500/10"
                                 >
                                     {/* Image */}
                                     <div className="relative h-32 sm:h-48 overflow-hidden bg-white/5">
-                                        {product.image ? (
+                                        {cardImage ? (
                                             <img
-                                                src={product.image}
+                                                src={cardImage}
                                                 alt={name}
                                                 loading={productIndex < 6 ? "eager" : "lazy"}
                                                 className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
@@ -858,6 +1468,23 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 </span>
                                             </div>
                                         )}
+
+                                        {/* Quick View — Desktop: slide-up bar on hover */}
+                                        <button
+                                            onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product) }}
+                                            className="hidden sm:flex absolute bottom-0 inset-x-0 py-1.5 bg-slate-900/85 backdrop-blur-sm items-center justify-center gap-1.5 text-white text-xs font-medium z-10 touch-manipulation opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                        >
+                                            <Eye className="w-3.5 h-3.5" />
+                                            {t("quickView")}
+                                        </button>
+                                        {/* Quick View — Mobile: always-visible pill */}
+                                        <button
+                                            onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product) }}
+                                            className="sm:hidden absolute bottom-2 inset-x-2 py-1.5 bg-slate-900/75 backdrop-blur-sm rounded-lg flex items-center justify-center gap-1.5 text-white text-xs font-medium z-10 touch-manipulation"
+                                        >
+                                            <Eye className="w-3.5 h-3.5" />
+                                            {t("quickView")}
+                                        </button>
                                     </div>
 
                                     {/* Content */}
@@ -872,7 +1499,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                             </span>
                                             {product.brand && (
                                                 <span
-                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/brands/${product.brand!.slug}` }}
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/brands/${product.brand!.slug}`) }}
                                                     className="text-xs text-slate-500 font-medium hover:text-emerald-400 transition-colors cursor-pointer"
                                                 >
                                                     {getLocalizedName(product.brand)}
@@ -900,13 +1527,15 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                         <MessageSquare className="w-4 h-4" />
                                                         {t("getQuote")}
                                                     </span>
-                                                ) : product.onSale && product.salePrice ? (
+                                                ) : product.onSale && (bestDiscountPkg?.salePrice || product.salePrice) ? (
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-sm sm:text-xl font-bold text-red-400 whitespace-nowrap">
-                                                            {parseFloat(product.salePrice || "0").toFixed(2)} {product.currency}
+                                                            {parseFloat(bestDiscountPkg?.salePrice || product.salePrice || "0").toFixed(2)} {product.currency}
                                                         </span>
                                                         <span className="text-[10px] sm:text-sm text-gray-500 line-through whitespace-nowrap">
-                                                            {price}
+                                                            {bestDiscountPkg
+                                                                ? `${parseFloat(bestDiscountPkg.price).toFixed(2)} ${product.currency}`
+                                                                : price}
                                                         </span>
                                                     </div>
                                                 ) : (
@@ -936,9 +1565,37 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 </Link>
                             )
                         })}
-                    </div>
-                )}
+                        </div>
+                        )}
+                    </div>{/* end main content */}
+                </div>{/* end two-column flex */}
             </div>
         </section>
+
+        {/* Quick View Modal */}
+        {quickViewProduct && (
+            <QuickViewModal
+                key={quickViewProduct.id}
+                product={quickViewProduct}
+                locale={locale}
+                isWishlisted={wishlistedProductIds.includes(quickViewProduct.id)}
+                categories={categories}
+                initialPackageLabel={
+                    (() => {
+                        const bestPkg = quickViewProduct.onSale && quickViewProduct.packages?.length
+                            ? quickViewProduct.packages.reduce((best, pkg) => {
+                                if (!pkg.salePrice) return best
+                                const d = Math.round((1 - parseFloat(pkg.salePrice) / parseFloat(pkg.price)) * 100)
+                                if (!best || d > best.d) return { pkg, d }
+                                return best
+                            }, null as { pkg: typeof quickViewProduct.packages[0]; d: number } | null)?.pkg
+                            : null
+                        return bestPkg?.weight.label
+                    })()
+                }
+                onClose={() => setQuickViewProduct(null)}
+            />
+        )}
+        </>
     )
 }

@@ -73,10 +73,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product has no price" }, { status: 400 })
     }
 
+    // Capture original price BEFORE bulk discount for coupon metadata
+    let originalPrice = priceAmount
+
+    // Apply bulk discount server-side (effective price → bulk discount → coupon)
+    // Product-level tiers override global tiers when non-empty
+    if (quantity > 1) {
+      const { getActiveTier: getBulkTier, applyBulkDiscount: applyBulk, parseTiers: parseBulkTiers } = await import("@/lib/bulkDiscount")
+      const productTiers = parseBulkTiers((product as { bulkDiscountTiers?: string }).bulkDiscountTiers || "")
+      if (productTiers.length > 0) {
+        const tier = getBulkTier(quantity, productTiers)
+        if (tier) {
+          priceAmount = applyBulk(priceAmount, tier)
+          priceAmount = Math.max(priceAmount, 0.50)
+        }
+      } else {
+        const bulkSettings = await prisma.siteSettings.findUnique({ where: { id: "singleton" } })
+        if (bulkSettings?.bulkDiscountEnabled) {
+          const tiers = parseBulkTiers(bulkSettings.bulkDiscountTiers)
+          const tier = getBulkTier(quantity, tiers)
+          if (tier) {
+            priceAmount = applyBulk(priceAmount, tier)
+            priceAmount = Math.max(priceAmount, 0.50)
+          }
+        }
+      }
+    }
+
     // Handle coupon if provided
     let couponId: string | null = null
     let discountAmount = 0
-    let originalPrice = priceAmount
 
     if (couponCode) {
       const coupon = await prisma.coupon.findFirst({

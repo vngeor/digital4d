@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
+import { parseTiers, getActiveTier, applyBulkDiscount } from "@/lib/bulkDiscount"
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -49,6 +50,10 @@ export async function POST(request: NextRequest) {
     }> = []
 
     let sharedCurrency: string | null = null
+
+    // Fetch bulk discount settings once for all items
+    const bulkSettings = await prisma.siteSettings.findUnique({ where: { id: "singleton" } })
+    const bulkTiers = bulkSettings?.bulkDiscountEnabled ? parseTiers(bulkSettings.bulkDiscountTiers) : []
 
     for (const raw of rawItems as CartRequestItem[]) {
       const { productId, packageId, quantity: rawQty } = raw
@@ -99,6 +104,19 @@ export async function POST(request: NextRequest) {
 
       if (!effectivePrice || effectivePrice < 0.50) {
         return NextResponse.json({ error: `Product "${product.nameEn}" has no valid price` }, { status: 400 })
+      }
+
+      // Apply bulk discount server-side
+      // Product-level tiers override global tiers when non-empty
+      if (quantity > 1) {
+        const productTiers = parseTiers((product as { bulkDiscountTiers?: string }).bulkDiscountTiers || "")
+        const activeTiers = productTiers.length > 0 ? productTiers : bulkTiers
+        if (activeTiers.length > 0) {
+          const tier = getActiveTier(quantity, activeTiers)
+          if (tier) {
+            effectivePrice = Math.max(applyBulkDiscount(effectivePrice as number, tier), 0.50)
+          }
+        }
       }
 
       const currency = product.currency || "EUR"

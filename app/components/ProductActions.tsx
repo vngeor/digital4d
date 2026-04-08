@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { ShoppingCart, MessageSquare, Loader2, Ticket, X, Check, Clock, Minus, Plus, Bell } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
 import { addToCart } from "@/lib/cart"
+import { BulkTier, getActiveTier, applyBulkDiscount, parseTiers } from "@/lib/bulkDiscount"
 
 interface Product {
     id: string
@@ -22,6 +23,7 @@ interface Product {
     priceType: string
     status: string
     brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
+    bulkDiscountTiers?: string | null
 }
 
 interface CouponDiscount {
@@ -50,6 +52,7 @@ interface SelectedPackage {
     status: string
     sku: string | null
     weightId: string
+    bulkDiscountTiers?: string | null
     weight: { label: string }
 }
 
@@ -73,6 +76,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     const [loading, setLoading] = useState(false)
     const [quantity, setQuantity] = useState(1)
     const [notifySubscribed, setNotifySubscribed] = useState(isWishlisted)
+    const [bulkTiers, setBulkTiers] = useState<BulkTier[]>([])
+    const [bulkEnabled, setBulkEnabled] = useState(false)
     const [showQuoteForm, setShowQuoteForm] = useState(false)
     const [showContactForm, setShowContactForm] = useState(false)
     const [couponCode, setCouponCode] = useState("")
@@ -312,28 +317,108 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         }
     }, [initialCouponCode, product.id, product.fileType, t])
 
+    // Resolve bulk discount tiers: package > product > global
+    useEffect(() => {
+        const pkgTiers = parseTiers(selectedPackage?.bulkDiscountTiers || "")
+        if (pkgTiers.length > 0) {
+            setBulkEnabled(true)
+            setBulkTiers(pkgTiers)
+            return
+        }
+        const productTiers = parseTiers(product.bulkDiscountTiers || "")
+        if (productTiers.length > 0) {
+            setBulkEnabled(true)
+            setBulkTiers(productTiers)
+            return
+        }
+        setBulkEnabled(false)
+        setBulkTiers([])
+        const controller = new AbortController()
+        fetch("/api/settings", { signal: controller.signal })
+            .then(r => r.json())
+            .then(data => {
+                if (data.bulkDiscountEnabled) {
+                    setBulkEnabled(true)
+                    setBulkTiers(parseTiers(data.bulkDiscountTiers))
+                }
+            })
+            .catch(() => {})
+        return () => controller.abort()
+    }, [selectedPackage?.bulkDiscountTiers, product.bulkDiscountTiers])
+
+    // Compute active bulk tier and discounted price
+    const activeBulkTier = useMemo(() =>
+        bulkEnabled ? getActiveTier(quantity, bulkTiers) : null,
+        [quantity, bulkTiers, bulkEnabled]
+    )
+
+    const effectiveUnitPrice = useMemo(() => {
+        if (selectedPackage) {
+            const raw = selectedPackage.salePrice ?? selectedPackage.price
+            const val = parseFloat((raw ?? "0").toString())
+            return isNaN(val) ? 0 : val
+        }
+        const raw = (product.onSale && product.salePrice) ? product.salePrice : (product.price ?? "0")
+        const val = parseFloat(raw.toString())
+        return isNaN(val) ? 0 : val
+    }, [selectedPackage, product])
+
+    const bulkFinalPrice = useMemo(() =>
+        activeBulkTier ? applyBulkDiscount(effectiveUnitPrice, activeBulkTier) : null,
+        [activeBulkTier, effectiveUnitPrice]
+    )
+
     const quantitySelector = (
-        <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-400 whitespace-nowrap">{t("quantity")}</span>
-            <div className="flex items-center gap-0 bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-                <button
-                    type="button"
-                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    disabled={quantity <= 1}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
-                >
-                    <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-12 text-center text-white font-medium tabular-nums">{quantity}</span>
-                <button
-                    type="button"
-                    onClick={() => setQuantity(q => Math.min(99, q + 1))}
-                    disabled={quantity >= 99}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
-                >
-                    <Plus className="w-4 h-4" />
-                </button>
+        <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+                <span className="text-sm text-slate-400 whitespace-nowrap">{t("quantity")}</span>
+                <div className="flex items-center gap-0 bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    <button
+                        type="button"
+                        onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                        disabled={quantity <= 1}
+                        className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                    >
+                        <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-12 text-center text-white font-medium tabular-nums">{quantity}</span>
+                    <button
+                        type="button"
+                        onClick={() => setQuantity(q => Math.min(99, q + 1))}
+                        disabled={quantity >= 99}
+                        className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                    >
+                        <Plus className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
+            {bulkEnabled && bulkTiers.length > 0 && (
+                <div className="space-y-2">
+                    <p className="text-xs font-bold text-amber-400 uppercase tracking-wide">{t("bulkDiscountsLabel")}</p>
+                    <div className="flex flex-wrap gap-2">
+                        {[...bulkTiers].sort((a, b) => a.minQty - b.minQty).map((tier, i) => {
+                            const isActive = activeBulkTier?.minQty === tier.minQty
+                            const discount = tier.type === "percentage"
+                                ? `${tier.value}%`
+                                : `${tier.value.toFixed(2)} EUR`
+                            return (
+                                <span key={i} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                                    isActive
+                                        ? "bg-gradient-to-r from-orange-500 to-amber-400 text-white shadow-md shadow-orange-500/40"
+                                        : "bg-amber-500/10 text-amber-400/60 border border-amber-500/20"
+                                }`}>
+                                    🏷️ {tier.minQty}+ {t("bulkTierUnits")} −{discount}
+                                </span>
+                            )
+                        })}
+                    </div>
+                    {activeBulkTier && bulkFinalPrice !== null && (
+                        <p className="text-sm font-semibold text-orange-400">
+                            = {(bulkFinalPrice * quantity).toFixed(2)} {product.currency} {t("bulkTierTotalSuffix")}
+                        </p>
+                    )}
+                </div>
+            )}
         </div>
     )
 
@@ -355,6 +440,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     ...(appliedCoupon ? { couponCode: appliedCoupon.couponCode } : {}),
                     packageId: selectedPackage?.id ?? null,
                     variantId: selectedVariantId ?? null,
+                    ...(bulkFinalPrice !== null ? { bulkDiscountedUnitPrice: bulkFinalPrice } : {}),
                 }),
             })
 
@@ -387,7 +473,6 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         const effectiveOnSale = selectedPackage ? !!selectedPackage.salePrice : (product.onSale || false)
         // Use selected variant image if available, else product main image
         const effectiveImage = selectedVariantImage || (product as unknown as { image?: string }).image || ""
-
         addToCart({
             productId: product.id,
             packageId: selectedPackage?.id ?? null,
@@ -405,13 +490,15 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             nameBg: product.nameBg,
             nameEs: product.nameEs,
             image: effectiveImage,
-            price: effectivePrice,
-            salePrice: effectiveSalePrice,
-            onSale: effectiveOnSale,
+            price: effectivePrice,                     // Always store original base price
+            salePrice: effectiveSalePrice ?? null,     // Always store original sale price
+            onSale: effectiveOnSale,                   // Always store original onSale flag
             currency: product.currency || "EUR",
             fileType: product.fileType || "physical",
             priceType: product.priceType,
             status: product.status,
+            // Package tiers override product tiers; CartDrawer recalculates dynamically
+            bulkDiscountTiers: selectedPackage?.bulkDiscountTiers || product.bulkDiscountTiers || "",
         }, quantity)
         window.dispatchEvent(new Event("cart-updated"))
         window.dispatchEvent(new Event("open-cart-upsell"))

@@ -8,6 +8,33 @@ import { buildProductUrlFromDb } from "@/lib/productUrl"
 
 const PRODUCT_STATUSES = ["in_stock", "out_of_stock", "coming_soon", "pre_order", "sold_out"]
 
+function sanitizeBulkTiers(raw: unknown): string {
+  try {
+    const tiers = JSON.parse(String(raw ?? ""))
+    if (!Array.isArray(tiers) || tiers.length === 0) return ""
+    const sorted = tiers
+      .filter((t: { minQty: unknown; type: unknown; value: unknown }) =>
+        typeof t.minQty === "number" && t.minQty >= 2 &&
+        (t.type === "percentage" || t.type === "fixed") &&
+        typeof t.value === "number" && t.value > 0
+      )
+      .map((t: { minQty: number; type: "percentage" | "fixed"; value: number }) => ({
+        minQty: Math.round(t.minQty),
+        type: t.type,
+        value: t.type === "percentage" ? Math.min(100, Number(t.value.toFixed(2))) : Number(t.value.toFixed(2)),
+      }))
+      .sort((a: { minQty: number }, b: { minQty: number }) => a.minQty - b.minQty)
+    // Deduplicate by minQty (keep first after sort)
+    const seen = new Set<number>()
+    const deduped = sorted.filter((t: { minQty: number }) => {
+      if (seen.has(t.minQty)) return false
+      seen.add(t.minQty)
+      return true
+    })
+    return deduped.length > 0 ? JSON.stringify(deduped) : ""
+  } catch { return "" }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { session, error } = await requirePermissionApi("products", "view")
@@ -151,6 +178,7 @@ export async function POST(request: NextRequest) {
         published: data.published || false,
         status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
+        bulkDiscountTiers: sanitizeBulkTiers(data.bulkDiscountTiers),
       },
     })
 
@@ -190,6 +218,7 @@ export async function POST(request: NextRequest) {
             sku: pkg.sku || null,
             status: PRODUCT_STATUSES.includes(pkg.status) ? pkg.status : "in_stock",
             order: pkg.order ?? 0,
+            bulkDiscountTiers: sanitizeBulkTiers(pkg.bulkDiscountTiers),
           },
         })
         if (Array.isArray(pkg.packageVariants)) {
@@ -308,6 +337,7 @@ export async function PUT(request: NextRequest) {
         published: data.published || false,
         status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
+        bulkDiscountTiers: sanitizeBulkTiers(data.bulkDiscountTiers),
       },
     })
 
@@ -388,6 +418,7 @@ export async function PUT(request: NextRequest) {
             sku: pkg.sku || null,
             status: PRODUCT_STATUSES.includes(pkg.status) ? pkg.status : "in_stock",
             order: pkg.order ?? 0,
+            bulkDiscountTiers: sanitizeBulkTiers(pkg.bulkDiscountTiers),
           },
         })
         // Create packageVariants (SIZE × COLOR matrix entries)
