@@ -125,7 +125,7 @@ export async function fetchServerCart(): Promise<CartItem[]> {
  */
 export async function syncCartItemToServer(item: CartItem): Promise<void> {
   try {
-    await fetch("/api/cart", {
+    const res = await fetch("/api/cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -135,6 +135,7 @@ export async function syncCartItemToServer(item: CartItem): Promise<void> {
         data: item,
       }),
     })
+    if (!res.ok) console.warn("[cart sync] POST /api/cart →", res.status)
   } catch {
     // non-critical — local cart is the source of truth
   }
@@ -175,7 +176,7 @@ export function mergeServerCartIntoLocal(serverItems: CartItem[]): void {
     const cart = getCart()
     let changed = false
     for (const serverItem of serverItems) {
-      if (!serverItem.productId || !serverItem.nameEn) continue // skip malformed items
+      if (!serverItem.productId) continue // skip malformed items
       const key = cartItemKey(serverItem.productId, serverItem.packageId)
       const localIndex = cart.findIndex((i) => cartItemKey(i.productId, i.packageId) === key)
       if (localIndex >= 0) {

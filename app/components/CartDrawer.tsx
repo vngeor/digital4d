@@ -176,13 +176,16 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     })
   }, [status])
 
-  // Re-sync server cart whenever the drawer is opened (catches items added on another device)
+  // Re-sync server cart whenever the drawer is opened (bi-directional: push local first, then pull server)
   useEffect(() => {
     if (!open || status !== "authenticated") return
-    fetchServerCart().then((serverItems) => {
-      if (serverItems.length === 0) return
-      mergeServerCartIntoLocal(serverItems)
-      window.dispatchEvent(new Event("cart-updated"))
+    // Push local items first so items added on this device (even during past failures) reach the server
+    syncCartToServer(getCart()).finally(() => {
+      fetchServerCart().then((serverItems) => {
+        if (serverItems.length === 0) return
+        mergeServerCartIntoLocal(serverItems)
+        window.dispatchEvent(new Event("cart-updated"))
+      })
     })
   }, [open, status])
 

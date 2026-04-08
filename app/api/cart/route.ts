@@ -40,26 +40,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
   }
 
-  await prisma.cartItem.upsert({
-    where: {
-      userId_productId_packageId: {
-        userId: session.user.id,
-        productId,
-        packageId: packageId ?? null,
-      },
-    },
-    update: {
-      quantity: Math.min(quantity, 99),
-      ...(data ? { data } : {}),
-    },
-    create: {
-      userId: session.user.id,
-      productId,
-      packageId: packageId ?? null,
-      quantity: Math.min(quantity, 99),
-      data: data ?? {},
-    },
+  // Prisma's compound-unique `where` rejects null values — use findFirst + update/create instead.
+  // updateMany also requires transactions (not supported on Neon HTTP adapter).
+  const existing = await prisma.cartItem.findFirst({
+    where: { userId: session.user.id, productId, packageId: packageId ?? null },
+    select: { id: true },
   })
+
+  if (existing) {
+    await prisma.cartItem.update({
+      where: { id: existing.id },
+      data: { quantity: Math.min(quantity, 99), ...(data ? { data } : {}) },
+    })
+  } else {
+    try {
+      await prisma.cartItem.create({
+        data: {
+          userId: session.user.id,
+          productId,
+          packageId: packageId ?? null,
+          quantity: Math.min(quantity, 99),
+          data: data ?? {},
+        },
+      })
+    } catch {
+      // Rare race condition — row was created by a concurrent request; ignore
+    }
+  }
 
   return NextResponse.json({ ok: true })
 }
