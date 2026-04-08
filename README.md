@@ -17,7 +17,7 @@ A multilingual e-commerce platform for 3D printing services, built with Next.js 
 - **Coupons & Discounts** - Percentage/fixed coupons, product-specific or global, promotional badges on product cards, live countdown timers
 - **Loyalty / Bonus Program** *(roadmap)* - Points earned on every purchase, redeemable as store credit coupons. Bronze / Silver / Gold tiers with multipliers and perks. Customer rewards dashboard at `/profile/rewards`
 - **Wishlist** - Save products for later, price drop & coupon notifications
-- **Recently Viewed** - localStorage-based recently viewed products section on homepage (always-carousel with prev/next arrows; all 3 locale names stored; no login required)
+- **Recently Viewed** - localStorage-based recently viewed products section on homepage (always-carousel with prev/next arrows; all 3 locale names stored; no login required). Each card has a Quick View button (mobile: pill with Eye icon beside category badge; desktop: hover bar) — opens full `QuickViewModal` with gallery, variants, packages. Extended localStorage entry stores `slug`, `createdAt`, `gallery`, `variants`, `packages` for modal; old entries degrade gracefully
 - **Quote System** - File uploads (STL/OBJ/3MF), quote requests, admin-customer messaging
 - **Notifications** - Unified notification system with scheduling, smart recipient selection, coupon & wishlist alerts
 - **CMS** - Dynamic pages, rich text editor, banners, news/services content, show/hide from nav, title alignment
