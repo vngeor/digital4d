@@ -1316,7 +1316,14 @@
       "globalUpsellLabel": "Productos globales \u2014 se muestran cuando un producto no tiene recomendaciones propias:",
       "searchUpsellPlaceholder": "Buscar productos para recomendar...",
       "noProductsFound": "No se encontraron productos",
-      "globalUpsellHint": "Si está vacío, se muestran automáticamente productos de la misma categoría como alternativa."
+      "globalUpsellHint": "Si está vacío, se muestran automáticamente productos de la misma categoría como alternativa.",
+      "bulkDiscountSection": "Descuentos por volumen",
+      "bulkDiscountSectionDesc": "Descuentos automáticos cuando los clientes compran en cantidad",
+      "enableBulkDiscount": "Activar descuentos por volumen",
+      "bulkBuy": "Compra",
+      "bulkUnitsArrow": "+ uds. →",
+      "bulkAddTier": "+ Añadir nivel",
+      "bulkTierHint": "Los niveles se aplican sobre el precio efectivo (precio de oferta si está en promoción). A mayor cantidad, se aplica el nivel más alto."
     }
   },
   "brandsPage": {

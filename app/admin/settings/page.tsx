@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Loader2, Truck, Sparkles, Search, X, Check, Gift } from "lucide-react"
+import { Loader2, Truck, Sparkles, Search, X, Check, Gift, Tag } from "lucide-react"
+import { BulkTier, parseTiers } from "@/lib/bulkDiscount"
 
 interface Settings {
   freeShippingEnabled: boolean
@@ -23,6 +24,8 @@ interface Settings {
   welcomePopupCouponCode: string
   welcomePopupDelay:      number
   welcomePopupLink:       string
+  bulkDiscountEnabled:    boolean
+  bulkDiscountTiers:      string
 }
 
 type ProductOption = { id: string; nameEn: string; nameBg: string; image: string | null }
@@ -47,10 +50,13 @@ export default function SettingsPage() {
     welcomePopupCouponCode: "",
     welcomePopupDelay:      2,
     welcomePopupLink:       "",
+    bulkDiscountEnabled:    false,
+    bulkDiscountTiers:      "[]",
   })
   const [thresholdInput, setThresholdInput] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [bulkTiers, setBulkTiers] = useState<BulkTier[]>([])
 
   // Upsell global product picker state
   const [selectedGlobalUpsell, setSelectedGlobalUpsell] = useState<ProductOption[]>([])
@@ -90,7 +96,10 @@ export default function SettingsPage() {
           welcomePopupCouponCode: data.welcomePopupCouponCode ?? "",
           welcomePopupDelay:      data.welcomePopupDelay      ?? 2,
           welcomePopupLink:       data.welcomePopupLink       ?? "",
+          bulkDiscountEnabled:    Boolean(data.bulkDiscountEnabled),
+          bulkDiscountTiers:      data.bulkDiscountTiers       ?? "[]",
         })
+        setBulkTiers(parseTiers(data.bulkDiscountTiers ?? "[]"))
         setThresholdInput(data.freeShippingThreshold?.toString() ?? "")
         // Load display objects for saved globalUpsellProductIds
         if (data.globalUpsellProductIds?.length > 0) {
@@ -228,6 +237,8 @@ export default function SettingsPage() {
           welcomePopupCouponCode: settings.welcomePopupCouponCode,
           welcomePopupDelay:      settings.welcomePopupDelay,
           welcomePopupLink:       settings.welcomePopupLink,
+          bulkDiscountEnabled:    settings.bulkDiscountEnabled,
+          bulkDiscountTiers:      JSON.stringify(bulkTiers),
         }),
       })
       if (!res.ok) throw new Error()
@@ -600,6 +611,76 @@ export default function SettingsPage() {
           </div>
         )
       })()}
+
+      {/* Bulk Discounts Card */}
+      <div className="glass rounded-2xl p-5 sm:p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+            <Tag className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div>
+            <h2 className="text-white font-semibold">{t("bulkDiscountSection")}</h2>
+            <p className="text-slate-400 text-sm">{t("bulkDiscountSectionDesc")}</p>
+          </div>
+        </div>
+
+        <label className="flex items-center justify-between gap-4 cursor-pointer p-3 rounded-xl bg-white/5 hover:bg-white/[0.08] transition-colors">
+          <span className="text-sm text-slate-300">{t("enableBulkDiscount")}</span>
+          <input
+            type="checkbox"
+            checked={Boolean(settings.bulkDiscountEnabled)}
+            onChange={e => setSettings(s => ({ ...s, bulkDiscountEnabled: e.target.checked }))}
+            className="w-4 h-4 rounded accent-emerald-500"
+          />
+        </label>
+
+        {settings.bulkDiscountEnabled && (
+          <div className="space-y-3 border-t border-white/10 pt-4">
+            {bulkTiers.map((tier, i) => (
+              <div key={i} className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-500 shrink-0">{t("bulkBuy")}</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={tier.minQty}
+                  onChange={e => setBulkTiers(ts => ts.map((t, j) => j === i ? { ...t, minQty: parseInt(e.target.value) || 1 } : t))}
+                  className="w-16 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm text-center focus:outline-none focus:border-emerald-500/50"
+                />
+                <span className="text-xs text-slate-500 shrink-0">{t("bulkUnitsArrow")}</span>
+                <select
+                  value={tier.type}
+                  onChange={e => setBulkTiers(ts => ts.map((t, j) => j === i ? { ...t, type: e.target.value as "percentage" | "fixed" } : t))}
+                  className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                >
+                  <option value="percentage">%</option>
+                  <option value="fixed">€</option>
+                </select>
+                <input
+                  type="number"
+                  min={0.01}
+                  step={0.01}
+                  value={tier.value}
+                  onChange={e => setBulkTiers(ts => ts.map((t, j) => j === i ? { ...t, value: parseFloat(e.target.value) || 0 } : t))}
+                  className="w-20 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm text-center focus:outline-none focus:border-emerald-500/50"
+                />
+                <button
+                  onClick={() => setBulkTiers(ts => ts.filter((_, j) => j !== i))}
+                  className="w-7 h-7 rounded-lg bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-3.5 h-3.5 text-red-400" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setBulkTiers(ts => [...ts, { minQty: 2, type: "percentage", value: 5 }])}
+              className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              {t("bulkAddTier")}
+            </button>
+            <p className="text-xs text-slate-500">{t("bulkTierHint")}</p>
+          </div>
+        )}
+      </div>
 
       {/* Save button */}
       <button

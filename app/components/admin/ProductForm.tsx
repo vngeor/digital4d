@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
-import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search, Plus, Trash2, Palette, Link2, Check } from "lucide-react"
+import { X, Save, Loader2, Upload, Sparkles, ChevronDown, Search, Plus, Trash2, Palette, Link2, Check, Tag } from "lucide-react"
 import { useKeyboardSave } from "./useKeyboardSave"
 import { RichTextEditor } from "./RichTextEditor"
+import { type BulkTier, parseTiers } from "@/lib/bulkDiscount"
 
 interface ColorOption {
   id: string
@@ -77,6 +78,7 @@ interface ProductFormData {
   order: number
   variants: ProductVariantData[]
   packages: ProductPackageData[]
+  bulkDiscountTiers: string
 }
 
 interface ProductCategory {
@@ -136,6 +138,7 @@ interface ProductFormProps {
       order: number
       packageVariants?: Array<{ variantId: string; status: string }>
     }>
+    bulkDiscountTiers?: string | null
   }
   categories: ProductCategory[]
   brands: Array<{ id: string; slug: string; nameBg: string; nameEn: string; nameEs: string }>
@@ -233,6 +236,7 @@ export function ProductForm({
   const upsellSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const [autoSlug, setAutoSlug] = useState(!initialData?.id)
+  const [productBulkTiers, setProductBulkTiers] = useState<BulkTier[]>(() => parseTiers(initialData?.bulkDiscountTiers || ""))
   const [formData, setFormData] = useState<ProductFormData>({
     id: initialData?.id,
     slug: initialData?.slug ?? "",
@@ -283,6 +287,7 @@ export function ProductForm({
         status: pv.status,
       })).filter(pv => pv.variantIndex >= 0) || [],
     })) || [],
+    bulkDiscountTiers: initialData?.bulkDiscountTiers || "",
   })
 
   useEffect(() => {
@@ -559,7 +564,7 @@ export function ProductForm({
 
     setLoading(true)
     try {
-      await onSubmit(formData)
+      await onSubmit({ ...formData, bulkDiscountTiers: JSON.stringify(productBulkTiers) })
     } finally {
       setLoading(false)
     }
@@ -1659,6 +1664,61 @@ export function ProductForm({
             </div>
 
             <p className="text-xs text-gray-500">{t("upsellHelp")}</p>
+          </div>
+
+          {/* Per-product Bulk Discounts */}
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                <Tag className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-white">Bulk Discounts</h3>
+                <p className="text-xs text-gray-500">Override global tiers for this product (leave empty to use global)</p>
+              </div>
+            </div>
+            {productBulkTiers.length > 0 && (
+              <div className="space-y-2">
+                {productBulkTiers.map((tier, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500 shrink-0">Buy</span>
+                    <input
+                      type="number" min={1} value={tier.minQty}
+                      onChange={e => setProductBulkTiers(ts => ts.map((t, j) => j === i ? { ...t, minQty: parseInt(e.target.value) || 1 } : t))}
+                      className="w-14 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm text-center focus:outline-none focus:border-emerald-500/50"
+                    />
+                    <span className="text-xs text-slate-500 shrink-0">+ →</span>
+                    <select
+                      value={tier.type}
+                      onChange={e => setProductBulkTiers(ts => ts.map((t, j) => j === i ? { ...t, type: e.target.value as "percentage" | "fixed" } : t))}
+                      className="px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                    >
+                      <option value="percentage">%</option>
+                      <option value="fixed">€</option>
+                    </select>
+                    <input
+                      type="number" min={0.01} step={0.01} value={tier.value}
+                      onChange={e => setProductBulkTiers(ts => ts.map((t, j) => j === i ? { ...t, value: parseFloat(e.target.value) || 0 } : t))}
+                      className="w-20 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm text-center focus:outline-none focus:border-emerald-500/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setProductBulkTiers(ts => ts.filter((_, j) => j !== i))}
+                      className="w-7 h-7 rounded-lg bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5 text-red-400" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setProductBulkTiers(ts => [...ts, { minQty: 2, type: "percentage", value: 5 }])}
+              className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              + Add tier
+            </button>
           </div>
 
           {/* Settings */}

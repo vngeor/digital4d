@@ -8,6 +8,26 @@ import { buildProductUrlFromDb } from "@/lib/productUrl"
 
 const PRODUCT_STATUSES = ["in_stock", "out_of_stock", "coming_soon", "pre_order", "sold_out"]
 
+function sanitizeBulkTiers(raw: unknown): string {
+  try {
+    const tiers = JSON.parse(String(raw ?? ""))
+    if (!Array.isArray(tiers) || tiers.length === 0) return ""
+    const valid = tiers
+      .filter((t: { minQty: unknown; type: unknown; value: unknown }) =>
+        typeof t.minQty === "number" && t.minQty >= 1 &&
+        (t.type === "percentage" || t.type === "fixed") &&
+        typeof t.value === "number" && t.value > 0
+      )
+      .map((t: { minQty: number; type: "percentage" | "fixed"; value: number }) => ({
+        minQty: Math.round(t.minQty),
+        type: t.type,
+        value: t.type === "percentage" ? Math.min(100, Number(t.value.toFixed(2))) : Number(t.value.toFixed(2)),
+      }))
+      .sort((a: { minQty: number }, b: { minQty: number }) => a.minQty - b.minQty)
+    return valid.length > 0 ? JSON.stringify(valid) : ""
+  } catch { return "" }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { session, error } = await requirePermissionApi("products", "view")
@@ -151,6 +171,7 @@ export async function POST(request: NextRequest) {
         published: data.published || false,
         status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
+        bulkDiscountTiers: sanitizeBulkTiers(data.bulkDiscountTiers),
       },
     })
 
@@ -308,6 +329,7 @@ export async function PUT(request: NextRequest) {
         published: data.published || false,
         status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
+        bulkDiscountTiers: sanitizeBulkTiers(data.bulkDiscountTiers),
       },
     })
 

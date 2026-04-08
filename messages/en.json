@@ -1316,7 +1316,14 @@
       "globalUpsellLabel": "Global upsell products \u2014 shown when a product has no per-product upsell picks:",
       "searchUpsellPlaceholder": "Search products to upsell globally...",
       "noProductsFound": "No products found",
-      "globalUpsellHint": "If empty, same-category products are shown automatically as fallback."
+      "globalUpsellHint": "If empty, same-category products are shown automatically as fallback.",
+      "bulkDiscountSection": "Bulk Discounts",
+      "bulkDiscountSectionDesc": "Automatic discounts when customers buy in quantity",
+      "enableBulkDiscount": "Enable bulk discounts",
+      "bulkBuy": "Buy",
+      "bulkUnitsArrow": "+ units →",
+      "bulkAddTier": "+ Add tier",
+      "bulkTierHint": "Tiers stack on the effective price (sale price if on sale). Higher quantity = higher tier applies."
     }
   },
   "brandsPage": {

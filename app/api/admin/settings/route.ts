@@ -25,6 +25,8 @@ export async function GET() {
       welcomePopupCouponCode: s?.welcomePopupCouponCode ?? "",
       welcomePopupDelay:      s?.welcomePopupDelay      ?? 2,
       welcomePopupLink:       s?.welcomePopupLink       ?? "",
+      bulkDiscountEnabled:    s?.bulkDiscountEnabled    ?? false,
+      bulkDiscountTiers:      s?.bulkDiscountTiers      ?? "[]",
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
@@ -44,6 +46,7 @@ export async function PUT(request: NextRequest) {
       welcomePopupEnabled, welcomePopupTitleBg, welcomePopupTitleEn, welcomePopupTitleEs,
       welcomePopupMessageBg, welcomePopupMessageEn, welcomePopupMessageEs,
       welcomePopupImage, welcomePopupCouponCode, welcomePopupDelay, welcomePopupLink,
+      bulkDiscountEnabled, bulkDiscountTiers,
     } = body
     const data = {
       freeShippingEnabled: Boolean(freeShippingEnabled),
@@ -63,6 +66,27 @@ export async function PUT(request: NextRequest) {
       welcomePopupCouponCode: String(welcomePopupCouponCode ?? "").toUpperCase().trim(),
       welcomePopupDelay:      Math.max(0, Math.min(30, parseInt(String(welcomePopupDelay ?? 2)) || 2)),
       welcomePopupLink:       String(welcomePopupLink ?? "").trim(),
+      bulkDiscountEnabled: Boolean(bulkDiscountEnabled),
+      bulkDiscountTiers: (() => {
+        try {
+          const tiers = JSON.parse(String(bulkDiscountTiers ?? "[]"))
+          if (!Array.isArray(tiers)) return "[]"
+          return JSON.stringify(
+            tiers
+              .filter((t: { minQty: unknown; type: unknown; value: unknown }) =>
+                typeof t.minQty === "number" && t.minQty >= 1 &&
+                (t.type === "percentage" || t.type === "fixed") &&
+                typeof t.value === "number" && t.value > 0
+              )
+              .map((t: { minQty: number; type: "percentage" | "fixed"; value: number }) => ({
+                minQty: Math.round(t.minQty),
+                type: t.type,
+                value: t.type === "percentage" ? Math.min(100, Number(t.value.toFixed(2))) : Number(t.value.toFixed(2)),
+              }))
+              .sort((a: { minQty: number }, b: { minQty: number }) => a.minQty - b.minQty)
+          )
+        } catch { return "[]" }
+      })(),
     }
 
     const existing = await prisma.siteSettings.findUnique({ where: { id: "singleton" } })
@@ -88,6 +112,8 @@ export async function PUT(request: NextRequest) {
       welcomePopupCouponCode: s.welcomePopupCouponCode,
       welcomePopupDelay:      s.welcomePopupDelay,
       welcomePopupLink:       s.welcomePopupLink,
+      bulkDiscountEnabled:    s.bulkDiscountEnabled,
+      bulkDiscountTiers:      s.bulkDiscountTiers,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

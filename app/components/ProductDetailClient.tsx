@@ -49,6 +49,7 @@ interface Product {
     bestSeller?: boolean
     createdAt?: string
     brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
+    bulkDiscountTiers?: string | null
 }
 
 interface PromotedCoupon {

@@ -63,6 +63,7 @@ interface Product {
     status: string
     order: number
   }[]
+  bulkDiscountTiers: string
   createdAt: string
   updatedAt: string
 }

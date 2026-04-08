@@ -21,6 +21,8 @@ export async function GET() {
       welcomePopupCouponCode: s?.welcomePopupCouponCode ?? "",
       welcomePopupDelay:      s?.welcomePopupDelay      ?? 2,
       welcomePopupLink:       s?.welcomePopupLink       ?? "",
+      bulkDiscountEnabled:    s?.bulkDiscountEnabled    ?? false,
+      bulkDiscountTiers:      s?.bulkDiscountTiers      ?? "[]",
     })
   } catch {
     // Graceful degradation — progress bar simply won't show
@@ -30,6 +32,7 @@ export async function GET() {
       welcomePopupEnabled: false, welcomePopupTitleBg: "", welcomePopupTitleEn: "", welcomePopupTitleEs: "",
       welcomePopupMessageBg: "", welcomePopupMessageEn: "", welcomePopupMessageEs: "",
       welcomePopupImage: "", welcomePopupCouponCode: "", welcomePopupDelay: 2, welcomePopupLink: "",
+      bulkDiscountEnabled: false, bulkDiscountTiers: "[]",
     })
   }
 }

@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { ShoppingCart, MessageSquare, Loader2, Ticket, X, Check, Clock, Minus, Plus, Bell } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
 import { addToCart } from "@/lib/cart"
+import { BulkTier, getActiveTier, applyBulkDiscount, formatTierBadge, parseTiers } from "@/lib/bulkDiscount"
 
 interface Product {
     id: string
@@ -22,6 +23,7 @@ interface Product {
     priceType: string
     status: string
     brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
+    bulkDiscountTiers?: string | null
 }
 
 interface CouponDiscount {
@@ -60,21 +62,21 @@ interface ProductActionsProps {
     selectedVariantStatus?: string
     selectedVariantId?: string
     selectedVariantImage?: string | null
-    selectedVariantColor?: { nameEn: string; nameBg: string; nameEs: string; hex: string; hex2?: string | null } | null
+    selectedVariantColor?: { nameEn: string; nameBg: string; nameEs: string; hex: string } | null
     selectedPackage?: SelectedPackage | null
     packages?: { id: string }[]
     isWishlisted?: boolean
-    productUrl?: string
-    suppressCartDrawer?: boolean
 }
 
-export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedVariantImage, selectedVariantColor, selectedPackage, packages, isWishlisted = false, productUrl, suppressCartDrawer }: ProductActionsProps) {
+export function ProductActions({ product, initialCouponCode, promotedCoupons, selectedVariantStatus, selectedVariantId, selectedVariantImage, selectedVariantColor, selectedPackage, packages, isWishlisted = false }: ProductActionsProps) {
     const t = useTranslations("products")
     const tc = useTranslations("cart")
     const { data: session, status } = useSession()
     const [loading, setLoading] = useState(false)
     const [quantity, setQuantity] = useState(1)
     const [notifySubscribed, setNotifySubscribed] = useState(isWishlisted)
+    const [bulkTiers, setBulkTiers] = useState<BulkTier[]>([])
+    const [bulkEnabled, setBulkEnabled] = useState(false)
     const [showQuoteForm, setShowQuoteForm] = useState(false)
     const [showContactForm, setShowContactForm] = useState(false)
     const [couponCode, setCouponCode] = useState("")
@@ -129,37 +131,40 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     const handlePromotedCouponClick = (code: string) => {
         setCouponCode(code)
         setCouponError("")
-        // Auto-apply — uses `code` param directly so no need to wait for state update
-        void (async () => {
-            setCouponLoading(true)
-            try {
-                const res = await fetch("/api/coupons/validate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ code, productId: product.id }),
-                })
-                const data = await res.json()
-                if (data.valid) {
-                    setAppliedCoupon({
-                        couponId: data.coupon.id,
-                        couponCode: data.coupon.code,
-                        original: data.discount.original,
-                        discountAmount: data.discount.discountAmount,
-                        final: data.discount.final,
-                        productCurrency: data.discount.productCurrency,
-                        type: data.coupon.type,
-                        value: data.coupon.value,
+        // Auto-apply after setting state
+        setTimeout(() => {
+            const applyPromoted = async () => {
+                setCouponLoading(true)
+                try {
+                    const res = await fetch("/api/coupons/validate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ code, productId: product.id }),
                     })
-                    toast.success(t("couponApplied"))
-                } else {
+                    const data = await res.json()
+                    if (data.valid) {
+                        setAppliedCoupon({
+                            couponId: data.coupon.id,
+                            couponCode: data.coupon.code,
+                            original: data.discount.original,
+                            discountAmount: data.discount.discountAmount,
+                            final: data.discount.final,
+                            productCurrency: data.discount.productCurrency,
+                            type: data.coupon.type,
+                            value: data.coupon.value,
+                        })
+                        toast.success(t("couponApplied"))
+                    } else {
+                        setCouponError(t("invalidCoupon"))
+                    }
+                } catch {
                     setCouponError(t("invalidCoupon"))
+                } finally {
+                    setCouponLoading(false)
                 }
-            } catch {
-                setCouponError(t("invalidCoupon"))
-            } finally {
-                setCouponLoading(false)
             }
-        })()
+            applyPromoted()
+        }, 0)
     }
 
     // Promoted coupon banners (shown when admin enables showOnProduct)
@@ -311,35 +316,83 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         }
     }, [initialCouponCode, product.id, product.fileType, t])
 
+    // Fetch bulk discount settings once on mount
+    // Product-level tiers (non-empty) override global tiers
+    useEffect(() => {
+        const productTiers = parseTiers(product.bulkDiscountTiers || "")
+        if (productTiers.length > 0) {
+            setBulkEnabled(true)
+            setBulkTiers(productTiers)
+            return
+        }
+        fetch("/api/settings")
+            .then(r => r.json())
+            .then(data => {
+                if (data.bulkDiscountEnabled) {
+                    setBulkEnabled(true)
+                    setBulkTiers(parseTiers(data.bulkDiscountTiers))
+                }
+            })
+            .catch(() => {})
+    }, [product.bulkDiscountTiers])
+
+    // Compute active bulk tier and discounted price
+    const activeBulkTier = useMemo(() =>
+        bulkEnabled ? getActiveTier(quantity, bulkTiers) : null,
+        [quantity, bulkTiers, bulkEnabled]
+    )
+
+    const effectiveUnitPrice = useMemo(() => {
+        if (selectedPackage) return parseFloat((selectedPackage.salePrice ?? selectedPackage.price).toString())
+        return parseFloat(((product.onSale && product.salePrice) ? product.salePrice : (product.price ?? "0")).toString())
+    }, [selectedPackage, product])
+
+    const bulkFinalPrice = useMemo(() =>
+        activeBulkTier ? applyBulkDiscount(effectiveUnitPrice, activeBulkTier) : null,
+        [activeBulkTier, effectiveUnitPrice]
+    )
+
     const quantitySelector = (
-        <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-400 whitespace-nowrap">{t("quantity")}</span>
-            <div className="flex items-center gap-0 bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-                <button
-                    type="button"
-                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    disabled={quantity <= 1}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
-                >
-                    <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-12 text-center text-white font-medium tabular-nums">{quantity}</span>
-                <button
-                    type="button"
-                    onClick={() => setQuantity(q => Math.min(99, q + 1))}
-                    disabled={quantity >= 99}
-                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
-                >
-                    <Plus className="w-4 h-4" />
-                </button>
+        <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+                <span className="text-sm text-slate-400 whitespace-nowrap">{t("quantity")}</span>
+                <div className="flex items-center gap-0 bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    <button
+                        type="button"
+                        onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                        disabled={quantity <= 1}
+                        className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                    >
+                        <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-12 text-center text-white font-medium tabular-nums">{quantity}</span>
+                    <button
+                        type="button"
+                        onClick={() => setQuantity(q => Math.min(99, q + 1))}
+                        disabled={quantity >= 99}
+                        className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                    >
+                        <Plus className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
+            {activeBulkTier && (
+                <div className="flex items-center gap-2 pl-1">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                        {formatTierBadge(activeBulkTier, product.currency)}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                        = {(bulkFinalPrice! * quantity).toFixed(2)} {product.currency} total
+                    </span>
+                </div>
+            )}
         </div>
     )
 
     const handleBuyNow = async () => {
         if (status === "loading") return  // Wait until session resolves
         if (!session) {
-            const callbackUrl = encodeURIComponent(productUrl ?? window.location.pathname)
+            const callbackUrl = encodeURIComponent(window.location.pathname)
             window.location.href = `/login?callbackUrl=${callbackUrl}`
             return
         }
@@ -354,6 +407,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     ...(appliedCoupon ? { couponCode: appliedCoupon.couponCode } : {}),
                     packageId: selectedPackage?.id ?? null,
                     variantId: selectedVariantId ?? null,
+                    ...(bulkFinalPrice !== null ? { bulkDiscountedUnitPrice: bulkFinalPrice } : {}),
                 }),
             })
 
@@ -386,6 +440,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         const effectiveOnSale = selectedPackage ? !!selectedPackage.salePrice : (product.onSale || false)
         // Use selected variant image if available, else product main image
         const effectiveImage = selectedVariantImage || (product as unknown as { image?: string }).image || ""
+        // Apply bulk discount to cart item pricing
+        const cartUnitPrice = bulkFinalPrice !== null ? bulkFinalPrice.toFixed(2) : null
 
         addToCart({
             productId: product.id,
@@ -395,30 +451,25 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             colorNameBg: selectedVariantColor?.nameBg ?? null,
             colorNameEs: selectedVariantColor?.nameEs ?? null,
             colorHex: selectedVariantColor?.hex ?? null,
-            colorHex2: selectedVariantColor?.hex2 ?? null,
             brandNameEn: product.brand?.nameEn ?? null,
             brandNameBg: product.brand?.nameBg ?? null,
             brandNameEs: product.brand?.nameEs ?? null,
             productSlug: product.slug,
-            productUrl: productUrl ?? window.location.pathname,
+            productUrl: window.location.pathname,
             nameEn: product.nameEn,
             nameBg: product.nameBg,
             nameEs: product.nameEs,
             image: effectiveImage,
-            price: effectivePrice,
-            salePrice: effectiveSalePrice,
-            onSale: effectiveOnSale,
+            price: cartUnitPrice ?? effectivePrice,
+            salePrice: cartUnitPrice !== null ? cartUnitPrice : (effectiveSalePrice ?? null),
+            onSale: cartUnitPrice !== null ? true : effectiveOnSale,
             currency: product.currency || "EUR",
             fileType: product.fileType || "physical",
             priceType: product.priceType,
             status: product.status,
         }, quantity)
         window.dispatchEvent(new Event("cart-updated"))
-        if (suppressCartDrawer) {
-            toast.success(tc("addedToCart"))
-        } else {
-            window.dispatchEvent(new Event("open-cart-upsell"))
-        }
+        window.dispatchEvent(new Event("open-cart-upsell"))
     }
 
     const canPurchase = ["in_stock", "pre_order"].includes(product.status)
@@ -427,7 +478,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
 
     const handleNotifyMe = async () => {
         if (!session) {
-            const callbackUrl = encodeURIComponent(productUrl ?? window.location.pathname)
+            const callbackUrl = encodeURIComponent(window.location.pathname)
             window.location.href = `/login?callbackUrl=${callbackUrl}`
             return
         }
@@ -562,7 +613,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 {canPurchase && quantitySelector}
 
                 {canPurchase ? (
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex gap-2">
                         <button
                             onClick={handleAddToCart}
                             className="flex-1 py-3 rounded-xl border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors font-semibold flex items-center justify-center gap-2 touch-manipulation"
