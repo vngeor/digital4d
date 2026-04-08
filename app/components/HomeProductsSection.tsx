@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check, Ticket } from "lucide-react"
+import { Check, Ticket, Eye } from "lucide-react"
 import { QuickViewModal } from "./QuickViewModal"
 
 const COLOR_CLASSES: Record<string, string> = {
@@ -254,7 +254,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
 
                                     {/* Bottom-right: Best Seller */}
                                     {bestSellerIds.includes(product.id) && (
-                                        <div className="absolute bottom-2 right-2">
+                                        <div className="absolute bottom-2 right-2 z-20">
                                             <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/products?bestSeller=true") }} className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg hover:bg-amber-400 transition-colors touch-manipulation">
                                                 <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                 {tProducts("bestSeller")}
@@ -264,7 +264,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
 
                                     {/* Coupon Badge */}
                                     {couponMap?.[product.id] && (
-                                        <div className="absolute bottom-2 left-2">
+                                        <div className="absolute bottom-2 left-2 z-20">
                                             <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-orange-500 text-white shadow-lg">
                                                 <Ticket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                                 -{couponMap[product.id].type === "percentage"
@@ -283,12 +283,13 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                                             {tProducts("quickView")}
                                         </button>
                                     )}
-                                    {/* Quick View — mobile always-visible pill */}
+                                    {/* Quick View — mobile compact centered pill */}
                                     {quickViewProducts?.[product.id] && (
                                         <button
                                             onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewQVProduct(quickViewProducts[product.id]) }}
-                                            className="sm:hidden absolute bottom-2 inset-x-2 py-1 bg-slate-900/75 backdrop-blur-sm rounded-lg text-white text-[10px] font-medium text-center z-10 touch-manipulation"
+                                            className="sm:hidden absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-slate-900/80 backdrop-blur-sm rounded-full text-white text-[10px] font-medium z-10 touch-manipulation whitespace-nowrap"
                                         >
+                                            <Eye className="w-3 h-3 shrink-0" />
                                             {tProducts("quickView")}
                                         </button>
                                     )}

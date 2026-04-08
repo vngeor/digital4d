@@ -256,20 +256,22 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
             onClick={onClose}
         >
             <div
-                ref={backdropRef}
-                className="relative w-full max-w-4xl max-h-[88svh] overflow-y-auto overscroll-y-contain bg-[#0d0d1a] border border-white/10 rounded-2xl shadow-2xl"
+                className="relative w-full max-w-4xl max-h-[88svh] flex flex-col bg-[#0d0d1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
-                {/* Close button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors touch-manipulation"
-                    aria-label="Close"
-                >
-                    <X className="w-4 h-4 text-white" />
-                </button>
+                {/* Close button row — always visible, never scrolls away */}
+                <div className="shrink-0 flex justify-end p-3 pb-0">
+                    <button
+                        onClick={onClose}
+                        className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors touch-manipulation"
+                        aria-label="Close"
+                    >
+                        <X className="w-4 h-4 text-white" />
+                    </button>
+                </div>
 
-                <div className="p-4 sm:p-6">
+                {/* Scrollable content */}
+                <div ref={backdropRef} className="overflow-y-auto overscroll-y-contain flex-1 p-4 pt-2 sm:p-6 sm:pt-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:items-start">
                         {/* LEFT: Image gallery */}
                         <ProductImageGallery
@@ -420,7 +422,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                             </Link>
                         </div>
                     </div>
-                </div>
+                </div>{/* end scrollable content */}
             </div>
         </div>
     )
