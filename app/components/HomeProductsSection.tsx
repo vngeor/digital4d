@@ -281,7 +281,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                                     {quickViewProducts?.[product.id] && (
                                         <button
                                             onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewQVProduct(quickViewProducts[product.id]) }}
-                                            className="hidden sm:block absolute bottom-0 inset-x-0 py-1.5 bg-slate-900/85 backdrop-blur-sm text-white text-[10px] sm:text-xs font-medium text-center z-10 touch-manipulation opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                            className="hidden sm:block absolute bottom-0 inset-x-0 py-1.5 bg-slate-900/85 backdrop-blur-sm text-white text-[10px] sm:text-xs font-medium text-center z-30 touch-manipulation opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                         >
                                             {tProducts("quickView")}
                                         </button>
@@ -299,7 +299,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                                         <button
                                             onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewQVProduct(quickViewProducts[product.id]) }}
                                             aria-label={tProducts("quickView")}
-                                            className="sm:hidden flex items-center gap-1 text-[10px] text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation shrink-0"
+                                            className="sm:hidden flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/15 bg-white/5 text-[10px] text-slate-300 hover:border-emerald-500/50 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all touch-manipulation shrink-0"
                                         >
                                             <Eye className="w-3 h-3" />
                                             {tProducts("quickView")}
