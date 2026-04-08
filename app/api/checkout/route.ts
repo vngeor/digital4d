@@ -73,6 +73,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product has no price" }, { status: 400 })
     }
 
+    // Capture original price BEFORE bulk discount for coupon metadata
+    let originalPrice = priceAmount
+
     // Apply bulk discount server-side (effective price → bulk discount → coupon)
     // Product-level tiers override global tiers when non-empty
     if (quantity > 1) {
@@ -100,7 +103,6 @@ export async function POST(request: NextRequest) {
     // Handle coupon if provided
     let couponId: string | null = null
     let discountAmount = 0
-    let originalPrice = priceAmount
 
     if (couponCode) {
       const coupon = await prisma.coupon.findFirst({

@@ -1428,7 +1428,10 @@
     "quickView": "Quick View",
     "viewFullDetails": "View full details",
     "readMore": "Read more",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "bulkDiscountsLabel": "Bulk discounts:",
+    "bulkTierUnits": "units",
+    "bulkTierTotalSuffix": "total"
   },
   "quotes": {
     "title": "Request a Quote",

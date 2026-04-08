@@ -12,9 +12,9 @@ function sanitizeBulkTiers(raw: unknown): string {
   try {
     const tiers = JSON.parse(String(raw ?? ""))
     if (!Array.isArray(tiers) || tiers.length === 0) return ""
-    const valid = tiers
+    const sorted = tiers
       .filter((t: { minQty: unknown; type: unknown; value: unknown }) =>
-        typeof t.minQty === "number" && t.minQty >= 1 &&
+        typeof t.minQty === "number" && t.minQty >= 2 &&
         (t.type === "percentage" || t.type === "fixed") &&
         typeof t.value === "number" && t.value > 0
       )
@@ -24,7 +24,14 @@ function sanitizeBulkTiers(raw: unknown): string {
         value: t.type === "percentage" ? Math.min(100, Number(t.value.toFixed(2))) : Number(t.value.toFixed(2)),
       }))
       .sort((a: { minQty: number }, b: { minQty: number }) => a.minQty - b.minQty)
-    return valid.length > 0 ? JSON.stringify(valid) : ""
+    // Deduplicate by minQty (keep first after sort)
+    const seen = new Set<number>()
+    const deduped = sorted.filter((t: { minQty: number }) => {
+      if (seen.has(t.minQty)) return false
+      seen.add(t.minQty)
+      return true
+    })
+    return deduped.length > 0 ? JSON.stringify(deduped) : ""
   } catch { return "" }
 }
 

@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         if (activeTiers.length > 0) {
           const tier = getActiveTier(quantity, activeTiers)
           if (tier) {
-            effectivePrice = Math.max(applyBulkDiscount(effectivePrice, tier), 0.50)
+            effectivePrice = Math.max(applyBulkDiscount(effectivePrice as number, tier), 0.50)
           }
         }
       }

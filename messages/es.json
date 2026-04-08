@@ -1428,7 +1428,10 @@
     "quickView": "Vista rápida",
     "viewFullDetails": "Ver detalles completos",
     "readMore": "Leer más",
-    "showLess": "Ver menos"
+    "showLess": "Ver menos",
+    "bulkDiscountsLabel": "Descuentos:",
+    "bulkTierUnits": "uds.",
+    "bulkTierTotalSuffix": "total"
   },
   "quotes": {
     "title": "Solicitar Cotización",

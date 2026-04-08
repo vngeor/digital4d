@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { ShoppingCart, MessageSquare, Loader2, Ticket, X, Check, Clock, Minus, Plus, Bell } from "lucide-react"
 import { QuoteForm } from "./QuoteForm"
 import { addToCart } from "@/lib/cart"
-import { BulkTier, getActiveTier, applyBulkDiscount, formatTierBadge, parseTiers } from "@/lib/bulkDiscount"
+import { BulkTier, getActiveTier, applyBulkDiscount, parseTiers } from "@/lib/bulkDiscount"
 
 interface Product {
     id: string
@@ -325,7 +325,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             setBulkTiers(productTiers)
             return
         }
-        fetch("/api/settings")
+        const controller = new AbortController()
+        fetch("/api/settings", { signal: controller.signal })
             .then(r => r.json())
             .then(data => {
                 if (data.bulkDiscountEnabled) {
@@ -334,6 +335,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 }
             })
             .catch(() => {})
+        return () => controller.abort()
     }, [product.bulkDiscountTiers])
 
     // Compute active bulk tier and discounted price
@@ -343,8 +345,14 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     )
 
     const effectiveUnitPrice = useMemo(() => {
-        if (selectedPackage) return parseFloat((selectedPackage.salePrice ?? selectedPackage.price).toString())
-        return parseFloat(((product.onSale && product.salePrice) ? product.salePrice : (product.price ?? "0")).toString())
+        if (selectedPackage) {
+            const raw = selectedPackage.salePrice ?? selectedPackage.price
+            const val = parseFloat((raw ?? "0").toString())
+            return isNaN(val) ? 0 : val
+        }
+        const raw = (product.onSale && product.salePrice) ? product.salePrice : (product.price ?? "0")
+        const val = parseFloat(raw.toString())
+        return isNaN(val) ? 0 : val
     }, [selectedPackage, product])
 
     const bulkFinalPrice = useMemo(() =>
@@ -376,14 +384,31 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     </button>
                 </div>
             </div>
-            {activeBulkTier && (
-                <div className="flex items-center gap-2 pl-1">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">
-                        {formatTierBadge(activeBulkTier, product.currency)}
-                    </span>
-                    <span className="text-xs text-slate-400">
-                        = {(bulkFinalPrice! * quantity).toFixed(2)} {product.currency} total
-                    </span>
+            {bulkEnabled && bulkTiers.length > 0 && (
+                <div className="pl-1 space-y-1.5">
+                    <p className="text-xs text-slate-500">{t("bulkDiscountsLabel")}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                        {[...bulkTiers].sort((a, b) => a.minQty - b.minQty).map((tier, i) => {
+                            const isActive = activeBulkTier?.minQty === tier.minQty
+                            const discount = tier.type === "percentage"
+                                ? `-${tier.value}%`
+                                : `-${tier.value.toFixed(2)} EUR`
+                            return (
+                                <span key={i} className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
+                                    isActive
+                                        ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/40"
+                                        : "bg-white/5 text-slate-400"
+                                }`}>
+                                    {tier.minQty}+ {t("bulkTierUnits")} → {discount}
+                                </span>
+                            )
+                        })}
+                    </div>
+                    {activeBulkTier && bulkFinalPrice !== null && (
+                        <p className="text-xs text-slate-400 pl-0.5">
+                            = {(bulkFinalPrice * quantity).toFixed(2)} {product.currency} {t("bulkTierTotalSuffix")}
+                        </p>
+                    )}
                 </div>
             )}
         </div>

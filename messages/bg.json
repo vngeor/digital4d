@@ -1428,7 +1428,10 @@
     "quickView": "Бърз преглед",
     "viewFullDetails": "Виж пълните детайли",
     "readMore": "Прочети повече",
-    "showLess": "Покажи по-малко"
+    "showLess": "Покажи по-малко",
+    "bulkDiscountsLabel": "Групови отстъпки:",
+    "bulkTierUnits": "бр.",
+    "bulkTierTotalSuffix": "общо"
   },
   "quotes": {
     "title": "Заявка за оферта",
