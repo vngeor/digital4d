@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { X, ExternalLink } from "lucide-react"
 import { ProductImageGallery } from "./ProductImageGallery"
 import { ProductActions } from "./ProductActions"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 interface Color { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
 interface ProductVariant { id: string; image: string | null; status: string; colorId: string; color: Color }
@@ -15,6 +16,7 @@ interface ProductPackage {
     price: string
     salePrice: string | null
     status: string
+    bulkDiscountTiers?: string | null
     weight: { label: string }
     packageVariants?: PackageVariant[]
 }
@@ -313,6 +315,11 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                                 {product.bestSeller && (
                                     <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500 text-white shadow-lg">
                                         ✓ {t("bestSeller")}
+                                    </span>
+                                )}
+                                {(product.onSale || parseTiers(product.bulkDiscountTiers || "").length > 0 || product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)) && (
+                                    <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-red-500 text-white shadow-lg">
+                                        {t("onSale")}
                                     </span>
                                 )}
                             </div>

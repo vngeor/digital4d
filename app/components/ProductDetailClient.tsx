@@ -28,6 +28,7 @@ interface PackageData {
     status: string
     order: number
     weightId: string
+    bulkDiscountTiers?: string | null
     weight: { label: string }
     packageVariants?: PackageVariantEntry[]
 }

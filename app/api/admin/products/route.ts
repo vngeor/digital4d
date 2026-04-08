@@ -218,6 +218,7 @@ export async function POST(request: NextRequest) {
             sku: pkg.sku || null,
             status: PRODUCT_STATUSES.includes(pkg.status) ? pkg.status : "in_stock",
             order: pkg.order ?? 0,
+            bulkDiscountTiers: sanitizeBulkTiers(pkg.bulkDiscountTiers),
           },
         })
         if (Array.isArray(pkg.packageVariants)) {
@@ -417,6 +418,7 @@ export async function PUT(request: NextRequest) {
             sku: pkg.sku || null,
             status: PRODUCT_STATUSES.includes(pkg.status) ? pkg.status : "in_stock",
             order: pkg.order ?? 0,
+            bulkDiscountTiers: sanitizeBulkTiers(pkg.bulkDiscountTiers),
           },
         })
         // Create packageVariants (SIZE × COLOR matrix entries)

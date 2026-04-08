@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Check, Ticket, Eye } from "lucide-react"
 import { QuickViewModal } from "./QuickViewModal"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 const COLOR_CLASSES: Record<string, string> = {
     cyan: "bg-cyan-500/20 text-cyan-400",
@@ -48,6 +49,7 @@ interface Product {
     isNew?: boolean
     brand: { name: string; slug: string } | null
     productUrl: string
+    bulkDiscountTiers?: string | null
 }
 
 interface CouponBadge {
@@ -59,7 +61,7 @@ interface CouponBadge {
 // Types for QuickViewModal compatibility
 interface QVColor { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
 interface QVVariant { id: string; image: string | null; status: string; colorId: string; color: QVColor }
-interface QVPackage { id: string; price: string; salePrice: string | null; status: string; weight: { label: string }; packageVariants: { variantId: string; status: string }[] }
+interface QVPackage { id: string; price: string; salePrice: string | null; status: string; weight: { label: string }; packageVariants: { variantId: string; status: string }[]; bulkDiscountTiers?: string | null }
 interface QVProduct {
     id: string; slug: string; category: string
     nameBg: string; nameEn: string; nameEs: string
@@ -224,13 +226,13 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                                         </div>
                                     )}
 
-                                    {/* Sale Badge */}
-                                    {product.onSale && (
+                                    {/* Top-right badge: Sale (for onSale products or products with bulk tiers) */}
+                                    {(product.onSale || parseTiers(product.bulkDiscountTiers || "").length > 0) && (
                                         <div className="absolute top-2 right-2 flex gap-1">
                                             <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
                                                 {tProducts("onSale")}
                                             </span>
-                                            {discountPercent > 0 && (
+                                            {product.onSale && discountPercent > 0 && (
                                                 <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
                                                     -{discountPercent}%
                                                 </span>

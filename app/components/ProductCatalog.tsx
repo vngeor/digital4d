@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Search, Check, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell, SlidersHorizontal, Eye } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 import { QuickViewModal } from "./QuickViewModal"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 interface ProductVariant {
     id: string
@@ -23,6 +24,7 @@ interface ProductPackage {
     status: string
     weight: { label: string }
     packageVariants?: { variantId: string; status: string }[]
+    bulkDiscountTiers?: string | null
 }
 
 interface Product {
@@ -345,7 +347,10 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (product.brand && getLocalizedName(product.brand).toLowerCase().includes(searchQuery.toLowerCase()))
-            const matchesSale = !saleFilter || product.onSale
+            const hasBulkTiers =
+                parseTiers(product.bulkDiscountTiers || "").length > 0 ||
+                product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)
+            const matchesSale = !saleFilter || product.onSale || hasBulkTiers
             const matchesFeatured = !featuredFilter || product.featured
             const matchesBestSeller = !bestSellerFilter || product.bestSeller
             const matchesBrand = !selectedBrand || (product.brand && getLocalizedName(product.brand) === selectedBrand)
@@ -464,7 +469,10 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (product.brand && getLocalizedName(product.brand).toLowerCase().includes(searchQuery.toLowerCase()))
-            const matchesSale = !pendingSale || product.onSale
+            const hasBulkTiers =
+                parseTiers(product.bulkDiscountTiers || "").length > 0 ||
+                product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)
+            const matchesSale = !pendingSale || product.onSale || hasBulkTiers
             const matchesFeatured = !pendingFeatured || product.featured
             const matchesBestSeller = !pendingBestSeller || product.bestSeller
             const matchesBrand = !pendingBrand || (product.brand && getLocalizedName(product.brand) === pendingBrand)
@@ -1419,18 +1427,23 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
                                         {/* Top-right: Sale + Wishlist */}
                                         <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
-                                            {product.onSale && (
-                                                <div className="flex gap-1">
-                                                    <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
-                                                        {t("onSale")}
-                                                    </span>
-                                                    {discountPercent > 0 && (
+                                            {(() => {
+                                                const hasBulk = parseTiers(product.bulkDiscountTiers || "").length > 0 ||
+                                                    product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)
+                                                if (!product.onSale && !hasBulk) return null
+                                                return (
+                                                    <div onClick={e => { e.preventDefault(); e.stopPropagation(); router.push("/products?sale=true") }} className="flex gap-1 cursor-pointer">
                                                         <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
-                                                            -{discountPercent}%
+                                                            {t("onSale")}
                                                         </span>
-                                                    )}
-                                                </div>
-                                            )}
+                                                        {product.onSale && discountPercent > 0 && (
+                                                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
+                                                                -{discountPercent}%
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )
+                                            })()}
                                             <WishlistButton
                                                 productId={product.id}
                                                 initialWishlisted={wishlistedProductIds.includes(product.id)}

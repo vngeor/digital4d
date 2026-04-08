@@ -30,6 +30,7 @@ export interface RecentlyViewedProduct {
   brandNameBg: string | null
   brandNameEs: string | null
   brandSlug: string | null
+  bulkDiscountTiers?: string | null
   viewedAt: number
 }
 

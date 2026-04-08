@@ -177,6 +177,8 @@ export default async function Home() {
                 product.brand?.slug,
                 category?.parent?.slug
             ),
+            bulkDiscountTiers: (product as { bulkDiscountTiers?: string }).bulkDiscountTiers ||
+                product.packages?.find((pkg: { bulkDiscountTiers?: string }) => pkg.bulkDiscountTiers)?.bulkDiscountTiers || "",
         }
     })
 
@@ -251,6 +253,7 @@ export default async function Home() {
                 status: pkg.status,
                 weight: { label: pkg.weight.label },
                 packageVariants: pkg.packageVariants,
+                bulkDiscountTiers: (pkg as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",
             })),
             category: p.category,
             bulkDiscountTiers: (p as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",

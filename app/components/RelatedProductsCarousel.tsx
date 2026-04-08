@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Check } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 export interface RelatedCard {
   id: string
@@ -23,6 +24,7 @@ export interface RelatedCard {
   isNew: boolean
   url: string
   coupon: { type: string; value: string; currency: string | null } | null
+  bulkDiscountTiers?: string | null
 }
 
 export function RelatedProductsCarousel({ cards }: { cards: RelatedCard[] }) {
@@ -151,10 +153,10 @@ export function RelatedProductsCarousel({ cards }: { cards: RelatedCard[] }) {
                   )}
 
                   {/* Sale badges */}
-                  {card.onSale && (
+                  {(card.onSale || parseTiers(card.bulkDiscountTiers || "").length > 0) && (
                     <div className="absolute top-2 right-2 flex gap-1">
                       <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">{t("onSale")}</span>
-                      {discountPercent > 0 && (
+                      {card.onSale && discountPercent > 0 && (
                         <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">-{discountPercent}%</span>
                       )}
                     </div>

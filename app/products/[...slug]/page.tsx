@@ -325,6 +325,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         isNew: (Date.now() - new Date(r.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000,
         url: relatedProductUrls[r.id] || `/products/${r.slug}`,
         coupon: relatedCouponMap[r.id] ?? null,
+        bulkDiscountTiers: (r as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",
     }))
 
     const productName = getLocalizedName(product)
@@ -444,6 +445,8 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         brandNameBg: product.brand?.nameBg || null,
         brandNameEs: product.brand?.nameEs || null,
         brandSlug: product.brand?.slug || null,
+        bulkDiscountTiers: product.bulkDiscountTiers ||
+            product.packages?.find((pkg: { bulkDiscountTiers?: string | null }) => pkg.bulkDiscountTiers)?.bulkDiscountTiers || "",
     }
 
     return (

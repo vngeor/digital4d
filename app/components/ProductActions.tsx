@@ -52,6 +52,7 @@ interface SelectedPackage {
     status: string
     sku: string | null
     weightId: string
+    bulkDiscountTiers?: string | null
     weight: { label: string }
 }
 
@@ -316,15 +317,22 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         }
     }, [initialCouponCode, product.id, product.fileType, t])
 
-    // Fetch bulk discount settings once on mount
-    // Product-level tiers (non-empty) override global tiers
+    // Resolve bulk discount tiers: package > product > global
     useEffect(() => {
+        const pkgTiers = parseTiers(selectedPackage?.bulkDiscountTiers || "")
+        if (pkgTiers.length > 0) {
+            setBulkEnabled(true)
+            setBulkTiers(pkgTiers)
+            return
+        }
         const productTiers = parseTiers(product.bulkDiscountTiers || "")
         if (productTiers.length > 0) {
             setBulkEnabled(true)
             setBulkTiers(productTiers)
             return
         }
+        setBulkEnabled(false)
+        setBulkTiers([])
         const controller = new AbortController()
         fetch("/api/settings", { signal: controller.signal })
             .then(r => r.json())
@@ -336,7 +344,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             })
             .catch(() => {})
         return () => controller.abort()
-    }, [product.bulkDiscountTiers])
+    }, [selectedPackage?.bulkDiscountTiers, product.bulkDiscountTiers])
 
     // Compute active bulk tier and discounted price
     const activeBulkTier = useMemo(() =>
@@ -489,7 +497,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             fileType: product.fileType || "physical",
             priceType: product.priceType,
             status: product.status,
-            bulkDiscountTiers: product.bulkDiscountTiers || "",  // CartDrawer recalculates dynamically
+            // Package tiers override product tiers; CartDrawer recalculates dynamically
+            bulkDiscountTiers: selectedPackage?.bulkDiscountTiers || product.bulkDiscountTiers || "",
         }, quantity)
         window.dispatchEvent(new Event("cart-updated"))
         window.dispatchEvent(new Event("open-cart-upsell"))

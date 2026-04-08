@@ -271,14 +271,15 @@ model ProductPackage {
   price           Decimal                 @db.Decimal(10, 2)
   salePrice       Decimal?                @db.Decimal(10, 2)
   sku             String?
-  status          String                  @default("in_stock")
-  order           Int                     @default(0)
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
-  weightId        String
-  product         Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
-  weight          Weight                  @relation(fields: [weightId], references: [id])
-  packageVariants ProductPackageVariant[]
+  status            String                  @default("in_stock")
+  order             Int                     @default(0)
+  bulkDiscountTiers String                  @default("")
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  weightId          String
+  product           Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  weight            Weight                  @relation(fields: [weightId], references: [id])
+  packageVariants   ProductPackageVariant[]
 
   @@index([productId])
   @@index([weightId])

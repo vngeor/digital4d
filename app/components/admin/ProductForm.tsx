@@ -44,6 +44,7 @@ interface ProductPackageData {
   sku: string
   status: string
   order: number
+  bulkDiscountTiers: string
   packageVariants: PackageVariantEntry[]
 }
 
@@ -136,6 +137,7 @@ interface ProductFormProps {
       sku?: string | null
       status?: string
       order: number
+      bulkDiscountTiers?: string | null
       packageVariants?: Array<{ variantId: string; status: string }>
     }>
     bulkDiscountTiers?: string | null
@@ -282,6 +284,7 @@ export function ProductForm({
       sku: p.sku || "",
       status: p.status || "in_stock",
       order: p.order ?? i,
+      bulkDiscountTiers: p.bulkDiscountTiers || "",
       packageVariants: p.packageVariants?.map(pv => ({
         variantIndex: initialData.variants?.findIndex(v => v.id === pv.variantId) ?? -1,
         status: pv.status,
@@ -706,7 +709,7 @@ export function ProductForm({
       ...prev,
       packages: [...prev.packages, {
         weightId: weights[0]?.id || "", slug: "", price: "", salePrice: "", sku: "",
-        status: "in_stock", order: prev.packages.length, packageVariants: [],
+        status: "in_stock", order: prev.packages.length, bulkDiscountTiers: "", packageVariants: [],
       }],
     }))
   }
@@ -1068,17 +1071,6 @@ export function ProductForm({
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
-              <div className="flex items-center pt-6">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.onSale}
-                    onChange={(e) => updateField("onSale", e.target.checked)}
-                    className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30"
-                  />
-                  <span className="text-sm text-gray-300">{t("onSale")}</span>
-                </label>
-              </div>
             </div>
           </div>
 
@@ -1352,6 +1344,67 @@ export function ProductForm({
                         </div>
                       </div>
                     )}
+
+                    {/* Per-package bulk discount tiers */}
+                    {(() => {
+                      const pkgTiers = parseTiers(pkg.bulkDiscountTiers)
+                      const setPkgTiers = (updater: (prev: BulkTier[]) => BulkTier[]) => {
+                        const next = updater(pkgTiers)
+                        updatePackage(index, "bulkDiscountTiers", next.length > 0 ? JSON.stringify(next) : "")
+                      }
+                      return (
+                        <div className="pt-2 border-t border-white/5 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-gray-500">{t("bulkDiscountTiersLabel")} <span className="text-gray-600">({t("packageOverride")})</span></p>
+                            <button
+                              type="button"
+                              onClick={() => setPkgTiers(ts => [...ts, { minQty: 2, type: "percentage", value: 5 }])}
+                              className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                              {t("addTier")}
+                            </button>
+                          </div>
+                          {pkgTiers.length > 0 && (
+                            <div className="space-y-1.5">
+                              {pkgTiers.map((tier, ti) => (
+                                <div key={ti} className="grid grid-cols-[1fr_auto] items-center gap-1.5">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                  <input
+                                    type="number" min="2" value={tier.minQty}
+                                    onChange={e => setPkgTiers(ts => ts.map((t, j) => j === ti ? { ...t, minQty: parseInt(e.target.value) || 2 } : t))}
+                                    className="w-12 min-w-0 px-2 py-1 bg-white/5 border border-white/10 rounded text-white text-xs focus:outline-none focus:border-amber-500/50"
+                                    placeholder="qty"
+                                  />
+                                  <select
+                                    value={tier.type}
+                                    onChange={e => setPkgTiers(ts => ts.map((t, j) => j === ti ? { ...t, type: e.target.value as "percentage" | "fixed" } : t))}
+                                    className="px-1.5 py-1 bg-[#0d0d1a] border border-white/10 rounded text-white text-xs focus:outline-none focus:border-amber-500/50"
+                                  >
+                                    <option value="percentage">%</option>
+                                    <option value="fixed">€</option>
+                                  </select>
+                                  <input
+                                    type="number" min="0" step="0.01" value={tier.value}
+                                    onChange={e => setPkgTiers(ts => ts.map((t, j) => j === ti ? { ...t, value: parseFloat(e.target.value) || 0 } : t))}
+                                    className="flex-1 min-w-0 px-2 py-1 bg-white/5 border border-white/10 rounded text-white text-xs focus:outline-none focus:border-amber-500/50"
+                                    placeholder="value"
+                                  />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPkgTiers(ts => ts.filter((_, j) => j !== ti))}
+                                    className="p-1 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>
@@ -1768,6 +1821,15 @@ export function ProductForm({
                     className="w-5 h-5 rounded border-white/20 bg-white/5 text-amber-500 focus:ring-amber-500/30"
                   />
                   <span className="text-sm text-gray-300">🏆 Best Seller</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.onSale}
+                    onChange={(e) => updateField("onSale", e.target.checked)}
+                    className="w-5 h-5 rounded border-white/20 bg-white/5 text-red-500 focus:ring-red-500/30"
+                  />
+                  <span className="text-sm text-gray-300">🏷️ {t("onSale")}</span>
                 </label>
               </div>
               <div>
