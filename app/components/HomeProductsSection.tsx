@@ -111,7 +111,10 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
     const scrollRef = useRef<HTMLDivElement>(null)
     const [activeSlide, setActiveSlide] = useState(0)
 
-    const totalPages = useCarousel ? Math.ceil(products.length / itemsPerView) : 0
+    // Reset slide position when switching between carousel and grid on resize
+    useEffect(() => { setActiveSlide(0) }, [useCarousel])
+
+    const totalPages = useCarousel ? Math.ceil(products.length / (itemsPerView || 1)) : 0
 
     const scrollToPage = useCallback((page: number) => {
         if (!scrollRef.current) return
@@ -283,25 +286,25 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                                             {tProducts("quickView")}
                                         </button>
                                     )}
-                                    {/* Quick View — mobile compact centered pill */}
-                                    {quickViewProducts?.[product.id] && (
-                                        <button
-                                            onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewQVProduct(quickViewProducts[product.id]) }}
-                                            className="sm:hidden absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-slate-900/80 backdrop-blur-sm rounded-full text-white text-[10px] font-medium z-10 touch-manipulation whitespace-nowrap"
-                                        >
-                                            <Eye className="w-3 h-3 shrink-0" />
-                                            {tProducts("quickView")}
-                                        </button>
-                                    )}
                                 </div>
 
-                                {/* Category Badge */}
-                                <div className="px-3 sm:px-4 pt-2 -mt-4 relative z-10">
+                                {/* Category Badge + mobile Quick View */}
+                                <div className="px-3 sm:px-4 pt-2 -mt-4 relative z-10 flex items-center justify-between gap-2">
                                     <span
                                         className={`inline-block px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${COLOR_CLASSES[product.categoryColor] || COLOR_CLASSES.gray}`}
                                     >
                                         {product.categoryName}
                                     </span>
+                                    {quickViewProducts?.[product.id] && (
+                                        <button
+                                            onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewQVProduct(quickViewProducts[product.id]) }}
+                                            aria-label={tProducts("quickView")}
+                                            className="sm:hidden flex items-center gap-1 text-[10px] text-slate-400 hover:text-emerald-400 transition-colors touch-manipulation shrink-0"
+                                        >
+                                            <Eye className="w-3 h-3" />
+                                            {tProducts("quickView")}
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Content */}
@@ -395,6 +398,8 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                             <button
                                 key={i}
                                 onClick={() => { setActiveSlide(i); scrollToPage(i) }}
+                                aria-label={`Go to slide ${i + 1}`}
+                                aria-current={activeSlide === i ? "page" : undefined}
                                 className={`w-2 h-2 rounded-full transition-all ${
                                     activeSlide === i ? "bg-emerald-400 w-6" : "bg-white/20 hover:bg-white/40"
                                 }`}
