@@ -18,7 +18,7 @@ export interface CartItem {
   nameBg: string
   nameEs: string
   image: string
-  price: string           // base price as numeric string
+  price: string           // base price as numeric string (pre-bulk-discount)
   salePrice: string | null
   onSale: boolean
   currency: string        // "EUR" | "USD" | "BGN"
@@ -27,6 +27,7 @@ export interface CartItem {
   status: string
   quantity: number
   addedAt: number
+  bulkDiscountTiers?: string  // product-level tier JSON; empty = use global
 }
 
 /** Unique key for a cart item — combines productId + packageId so different packages are distinct */

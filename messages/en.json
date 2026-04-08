@@ -1049,7 +1049,10 @@
       "availableColors": "Available colors",
       "colorLabel": "Color",
       "noColors": "No colors defined yet — add colors in Admin › Colors first.",
-      "selectColor": "— Select Color —"
+      "selectColor": "— Select Color —",
+      "bulkDiscountTiersLabel": "Bulk discounts",
+      "addTier": "Add tier",
+      "packageOverride": "overrides product tiers"
     },
     "brands": {
       "title": "Brand Management",

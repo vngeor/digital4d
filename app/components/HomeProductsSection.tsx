@@ -71,6 +71,7 @@ interface QVProduct {
     brand: { slug: string; nameBg: string; nameEn: string; nameEs: string } | null
     variants: QVVariant[]
     packages: QVPackage[]
+    bulkDiscountTiers?: string | null
 }
 interface QVCategory {
     id: string; slug: string; parentId?: string | null

@@ -1049,7 +1049,10 @@
       "availableColors": "Colores disponibles",
       "colorLabel": "Color",
       "noColors": "Sin colores definidos — agrega colores en Admin › Colores primero.",
-      "selectColor": "— Seleccionar color —"
+      "selectColor": "— Seleccionar color —",
+      "bulkDiscountTiersLabel": "Descuentos por volumen",
+      "addTier": "Añadir nivel",
+      "packageOverride": "anula los niveles del producto"
     },
     "brands": {
       "title": "Gestión de Marcas",

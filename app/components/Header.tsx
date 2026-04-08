@@ -11,7 +11,7 @@ import { GlobalSearch } from "./GlobalSearch"
 import { locales, localeFlags, type Locale } from "@/i18n/config"
 import { NotificationBell } from "./NotificationBell"
 import { ChevronDown, X, Heart, Cake, ShoppingCart } from "lucide-react"
-import { getCartCount } from "@/lib/cart"
+import { getCartCount, CART_KEY } from "@/lib/cart"
 import { CartDrawer } from "./CartDrawer"
 import { GlobalPromoStrip } from "./GlobalPromoStrip"
 
@@ -101,6 +101,28 @@ export function Header() {
         window.addEventListener("cart-updated", update)
         return () => window.removeEventListener("cart-updated", update)
     }, [])
+
+    // After login: restore cart from sessionStorage backup (saved before OAuth redirect)
+    // and auto-open CartDrawer if redirected from a checkout attempt
+    useEffect(() => {
+        if (status !== "authenticated") return
+        try {
+            const backup = sessionStorage.getItem("d4d-cart-backup")
+            if (backup && backup !== "[]") {
+                const existing = localStorage.getItem(CART_KEY)
+                if (!existing || existing === "[]") {
+                    localStorage.setItem(CART_KEY, backup)
+                    window.dispatchEvent(new Event("cart-updated"))
+                }
+                sessionStorage.removeItem("d4d-cart-backup")
+            }
+        } catch {}
+        // Auto-open CartDrawer if user was redirected from cart checkout
+        if (window.location.search.includes("openCart=1")) {
+            setCartOpen(true)
+            window.history.replaceState({}, "", window.location.pathname)
+        }
+    }, [status])
 
     // Cart open/close via window events
     useEffect(() => {

@@ -31,6 +31,7 @@ interface Product {
     salePrice: string | null
     onSale: boolean
     currency: string
+    bulkDiscountTiers?: string | null
     priceType: string
     fileType: string | null
     status: string

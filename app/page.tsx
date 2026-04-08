@@ -253,6 +253,7 @@ export default async function Home() {
                 packageVariants: pkg.packageVariants,
             })),
             category: p.category,
+            bulkDiscountTiers: (p as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",
         }
     }
     // Serialize categories for client component

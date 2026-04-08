@@ -1049,7 +1049,10 @@
       "availableColors": "Налични цветове",
       "colorLabel": "Цвят",
       "noColors": "Няма дефинирани цветове — добавете в Admin › Цветове.",
-      "selectColor": "— Изберете цвят —"
+      "selectColor": "— Изберете цвят —",
+      "bulkDiscountTiersLabel": "Групови отстъпки",
+      "addTier": "Добави ниво",
+      "packageOverride": "замества нивата на продукта"
     },
     "brands": {
       "title": "Управление на марки",

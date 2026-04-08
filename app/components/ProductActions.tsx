@@ -385,27 +385,27 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 </div>
             </div>
             {bulkEnabled && bulkTiers.length > 0 && (
-                <div className="pl-1 space-y-1.5">
-                    <p className="text-xs text-slate-500">{t("bulkDiscountsLabel")}</p>
-                    <div className="flex flex-wrap gap-1.5">
+                <div className="space-y-2">
+                    <p className="text-xs font-bold text-amber-400 uppercase tracking-wide">{t("bulkDiscountsLabel")}</p>
+                    <div className="flex flex-wrap gap-2">
                         {[...bulkTiers].sort((a, b) => a.minQty - b.minQty).map((tier, i) => {
                             const isActive = activeBulkTier?.minQty === tier.minQty
                             const discount = tier.type === "percentage"
-                                ? `-${tier.value}%`
-                                : `-${tier.value.toFixed(2)} EUR`
+                                ? `${tier.value}%`
+                                : `${tier.value.toFixed(2)} EUR`
                             return (
-                                <span key={i} className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
+                                <span key={i} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
                                     isActive
-                                        ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/40"
-                                        : "bg-white/5 text-slate-400"
+                                        ? "bg-gradient-to-r from-orange-500 to-amber-400 text-white shadow-md shadow-orange-500/40"
+                                        : "bg-amber-500/10 text-amber-400/60 border border-amber-500/20"
                                 }`}>
-                                    {tier.minQty}+ {t("bulkTierUnits")} → {discount}
+                                    🏷️ {tier.minQty}+ {t("bulkTierUnits")} −{discount}
                                 </span>
                             )
                         })}
                     </div>
                     {activeBulkTier && bulkFinalPrice !== null && (
-                        <p className="text-xs text-slate-400 pl-0.5">
+                        <p className="text-sm font-semibold text-orange-400">
                             = {(bulkFinalPrice * quantity).toFixed(2)} {product.currency} {t("bulkTierTotalSuffix")}
                         </p>
                     )}
@@ -465,9 +465,6 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         const effectiveOnSale = selectedPackage ? !!selectedPackage.salePrice : (product.onSale || false)
         // Use selected variant image if available, else product main image
         const effectiveImage = selectedVariantImage || (product as unknown as { image?: string }).image || ""
-        // Apply bulk discount to cart item pricing
-        const cartUnitPrice = bulkFinalPrice !== null ? bulkFinalPrice.toFixed(2) : null
-
         addToCart({
             productId: product.id,
             packageId: selectedPackage?.id ?? null,
@@ -485,13 +482,14 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             nameBg: product.nameBg,
             nameEs: product.nameEs,
             image: effectiveImage,
-            price: cartUnitPrice ?? effectivePrice,
-            salePrice: cartUnitPrice !== null ? cartUnitPrice : (effectiveSalePrice ?? null),
-            onSale: cartUnitPrice !== null ? true : effectiveOnSale,
+            price: effectivePrice,                     // Always store original base price
+            salePrice: effectiveSalePrice ?? null,     // Always store original sale price
+            onSale: effectiveOnSale,                   // Always store original onSale flag
             currency: product.currency || "EUR",
             fileType: product.fileType || "physical",
             priceType: product.priceType,
             status: product.status,
+            bulkDiscountTiers: product.bulkDiscountTiers || "",  // CartDrawer recalculates dynamically
         }, quantity)
         window.dispatchEvent(new Event("cart-updated"))
         window.dispatchEvent(new Event("open-cart-upsell"))

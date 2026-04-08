@@ -50,6 +50,7 @@ interface Product {
     variants?: ProductVariant[]
     packages?: ProductPackage[]
     gallery?: string[]
+    bulkDiscountTiers?: string | null
 }
 
 interface ProductCategory {
