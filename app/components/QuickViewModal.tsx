@@ -416,6 +416,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                                 selectedPackage={selectedPackage ? { ...selectedPackage, sku: null, weightId: "" } : null}
                                 packages={packages}
                                 isWishlisted={isWishlisted}
+                                suppressCartDrawer={true}
                             />
 
                             {/* View full details link */}

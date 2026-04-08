@@ -447,6 +447,25 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         brandSlug: product.brand?.slug || null,
         bulkDiscountTiers: product.bulkDiscountTiers ||
             product.packages?.find((pkg: { bulkDiscountTiers?: string | null }) => pkg.bulkDiscountTiers)?.bulkDiscountTiers || "",
+        slug: product.slug,
+        createdAt: product.createdAt.toISOString(),
+        gallery: product.gallery || [],
+        variants: product.variants.map(v => ({
+            id: v.id,
+            image: v.image,
+            status: v.status,
+            colorId: v.colorId,
+            color: { nameBg: v.color.nameBg, nameEn: v.color.nameEn, nameEs: v.color.nameEs, hex: v.color.hex, hex2: v.color.hex2 ?? null },
+        })),
+        packages: product.packages.map(pkg => ({
+            id: pkg.id,
+            price: pkg.price.toString(),
+            salePrice: pkg.salePrice?.toString() || null,
+            status: pkg.status,
+            weight: { label: pkg.weight.label },
+            packageVariants: pkg.packageVariants.map((pv: { variantId: string; status: string }) => ({ variantId: pv.variantId, status: pv.status })),
+            bulkDiscountTiers: (pkg as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",
+        })),
     }
 
     return (

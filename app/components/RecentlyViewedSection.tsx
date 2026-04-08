@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { useLocale } from "next-intl"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Check } from "lucide-react"
+import { ChevronLeft, ChevronRight, Check, Eye } from "lucide-react"
 import { getRecentlyViewed, type RecentlyViewedProduct } from "@/lib/recentlyViewed"
 import { parseTiers } from "@/lib/bulkDiscount"
+import { QuickViewModal } from "./QuickViewModal"
 
 const COLOR_CLASSES: Record<string, string> = {
     cyan: "bg-cyan-500/20 text-cyan-400",
@@ -29,7 +30,13 @@ const COLOR_CLASSES: Record<string, string> = {
     gray: "bg-gray-500/20 text-gray-400",
 }
 
-export function RecentlyViewedSection() {
+interface QVColor { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
+interface QVVariant { id: string; image: string | null; status: string; colorId: string; color: QVColor }
+interface QVPackage { id: string; price: string; salePrice: string | null; status: string; weight: { label: string }; packageVariants: { variantId: string; status: string }[]; bulkDiscountTiers?: string | null }
+interface QVProduct { id: string; slug: string; category: string; nameBg: string; nameEn: string; nameEs: string; descBg?: string | null; descEn?: string | null; descEs?: string | null; price: string | null; salePrice: string | null; onSale: boolean; currency: string; priceType: string; fileType: string | null; status: string; image: string | null; gallery: string[]; featured: boolean; bestSeller: boolean; createdAt: string; brand: { slug: string; nameBg: string; nameEn: string; nameEs: string } | null; variants: QVVariant[]; packages: QVPackage[]; bulkDiscountTiers?: string | null }
+interface QVCategory { id: string; slug: string; parentId?: string | null; nameBg: string; nameEn: string; nameEs: string; children?: { id: string; slug: string }[]; parent?: { slug: string } | null }
+
+export function RecentlyViewedSection({ categories = [] }: { categories?: QVCategory[] } = {}) {
     const t = useTranslations("homeProducts")
     const tProducts = useTranslations("products")
     const locale = useLocale()
@@ -42,6 +49,26 @@ export function RecentlyViewedSection() {
     const [itemsPerView, setItemsPerView] = useState(2)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
+    const [quickViewProduct, setQuickViewProduct] = useState<QVProduct | null>(null)
+
+    function toQVProduct(p: RecentlyViewedProduct): QVProduct {
+        return {
+            id: p.id, slug: p.slug || "", category: p.category,
+            nameBg: p.nameBg, nameEn: p.nameEn, nameEs: p.nameEs,
+            descBg: p.descBg, descEn: p.descEn, descEs: p.descEs,
+            price: p.price, salePrice: p.salePrice, onSale: p.onSale,
+            currency: p.currency, priceType: p.priceType, fileType: p.fileType,
+            status: p.status, image: p.image, gallery: p.gallery || [],
+            featured: p.featured, bestSeller: p.bestSeller,
+            createdAt: p.createdAt || new Date(0).toISOString(),
+            brand: p.brandSlug
+                ? { slug: p.brandSlug, nameBg: p.brandNameBg || "", nameEn: p.brandNameEn || "", nameEs: p.brandNameEs || "" }
+                : null,
+            variants: p.variants || [],
+            packages: p.packages || [],
+            bulkDiscountTiers: p.bulkDiscountTiers || "",
+        }
+    }
 
     useEffect(() => {
         setProducts(getRecentlyViewed().slice(0, 8))
@@ -117,6 +144,7 @@ export function RecentlyViewedSection() {
     const localeKey = locale.charAt(0).toUpperCase() + locale.slice(1) as "En" | "Bg" | "Es"
 
     return (
+        <>
         <section className="relative py-10 sm:py-12 px-4">
             <div className="mx-auto max-w-4xl">
                 <div className="text-center mb-6 sm:mb-8">
@@ -256,13 +284,29 @@ export function RecentlyViewedSection() {
                                             </span>
                                         </div>
                                     )}
+
+                                    {/* Desktop Quick View hover bar */}
+                                    <button
+                                        onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(toQVProduct(product)) }}
+                                        className="hidden sm:block absolute bottom-0 inset-x-0 py-1.5 bg-slate-900/85 backdrop-blur-sm text-white text-xs font-medium text-center z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 touch-manipulation"
+                                    >
+                                        {tProducts("quickView")}
+                                    </button>
                                 </div>
 
-                                {/* Category badge */}
-                                <div className="px-3 sm:px-4 pt-2 -mt-4 relative z-10">
+                                {/* Category badge + mobile Quick View pill */}
+                                <div className="px-3 sm:px-4 pt-2 -mt-4 relative z-10 flex items-center justify-between gap-2">
                                     <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${COLOR_CLASSES[product.categoryColor] || COLOR_CLASSES.gray}`}>
                                         {categoryName}
                                     </span>
+                                    <button
+                                        onClick={e => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(toQVProduct(product)) }}
+                                        aria-label={tProducts("quickView")}
+                                        className="sm:hidden flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/15 bg-white/5 text-[10px] text-slate-300 hover:border-emerald-500/50 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all touch-manipulation shrink-0"
+                                    >
+                                        <Eye className="w-3 h-3" />
+                                        {tProducts("quickView")}
+                                    </button>
                                 </div>
 
                                 {/* Content */}
@@ -354,5 +398,19 @@ export function RecentlyViewedSection() {
                 )}
             </div>
         </section>
+
+        {quickViewProduct && (
+            <QuickViewModal
+                key={quickViewProduct.id}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                product={quickViewProduct as any}
+                locale={locale}
+                isWishlisted={false}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                categories={categories as any}
+                onClose={() => setQuickViewProduct(null)}
+            />
+        )}
+        </>
     )
 }
