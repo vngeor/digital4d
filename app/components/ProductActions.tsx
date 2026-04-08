@@ -474,7 +474,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         const effectiveOnSale = selectedPackage ? !!selectedPackage.salePrice : (product.onSale || false)
         // Use selected variant image if available, else product main image
         const effectiveImage = selectedVariantImage || (product as unknown as { image?: string }).image || ""
-        addToCart({
+        const cartItem = {
             productId: product.id,
             packageId: selectedPackage?.id ?? null,
             packageLabel: selectedPackage?.weight?.label ?? null,
@@ -482,6 +482,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             colorNameBg: selectedVariantColor?.nameBg ?? null,
             colorNameEs: selectedVariantColor?.nameEs ?? null,
             colorHex: selectedVariantColor?.hex ?? null,
+            colorHex2: null,
             brandNameEn: product.brand?.nameEn ?? null,
             brandNameBg: product.brand?.nameBg ?? null,
             brandNameEs: product.brand?.nameEs ?? null,
@@ -500,10 +501,11 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             status: product.status,
             // Package tiers override product tiers; CartDrawer recalculates dynamically
             bulkDiscountTiers: selectedPackage?.bulkDiscountTiers || product.bulkDiscountTiers || "",
-        }, quantity)
+        }
+        addToCart(cartItem, quantity)
         window.dispatchEvent(new Event("cart-updated"))
         if (session) {
-            syncCartItemToServer(product.id, selectedPackage?.id ?? null, quantity)
+            syncCartItemToServer({ ...cartItem, quantity, addedAt: Date.now() })
         }
         if (suppressCartDrawer) {
             toast.success(tc("addedToCart"))

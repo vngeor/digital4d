@@ -76,6 +76,7 @@ model CartItem {
   productId String
   packageId String?
   quantity  Int      @default(1)
+  data      Json     @default("{}")
   addedAt   DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
