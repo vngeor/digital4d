@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Trophy, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck, Download } from "lucide-react"
+import { Plus, Edit2, Trash2, Package, FolderOpen, Star, Trophy, Eye, EyeOff, Link as LinkIcon, ExternalLink, Home, BadgeCheck, Download, Tag } from "lucide-react"
+import { parseTiers } from "@/lib/bulkDiscount"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
 import Link from "next/link"
 import { SortableDataTable } from "@/app/components/admin/SortableDataTable"
@@ -63,6 +64,7 @@ interface Product {
     status: string
     order: number
   }[]
+  bulkDiscountTiers: string
   createdAt: string
   updatedAt: string
 }
@@ -568,14 +570,14 @@ export default function ProductsPage() {
           sold_out: "bg-red-500/20 text-red-400",
         }
         const statusLabels: Record<string, string> = {
-          in_stock: "In Stock",
-          out_of_stock: "Out of Stock",
-          coming_soon: "Coming Soon",
-          pre_order: "Pre-Order",
-          sold_out: "Sold Out",
+          in_stock: t("inStock"),
+          out_of_stock: t("outOfStock"),
+          coming_soon: t("comingSoon"),
+          pre_order: t("preOrder"),
+          sold_out: t("soldOut"),
         }
         return (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={(e) => { e.stopPropagation(); handleToggleField(item.id, "featured", !item.featured) }}
               className={`p-1 rounded transition-colors ${item.featured ? "text-amber-400 hover:bg-amber-500/10" : "text-gray-600 hover:bg-white/5"}`}
@@ -590,6 +592,12 @@ export default function ProductsPage() {
             >
               <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
             </button>
+            {(item.onSale || parseTiers(item.bulkDiscountTiers || "").length > 0) && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400" title={item.onSale ? "On Sale" : "Bulk Discount"}>
+                <Tag className="w-2.5 h-2.5" />
+                {item.onSale ? "Sale" : "Bulk"}
+              </span>
+            )}
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[item.status] || "bg-gray-500/20 text-gray-400"}`}>
               {statusLabels[item.status] || item.status}
             </span>
@@ -617,6 +625,9 @@ export default function ProductsPage() {
           >
             <Trophy className={`w-3.5 h-3.5 ${item.bestSeller ? "fill-amber-400" : ""}`} />
           </button>
+          {(item.onSale || parseTiers(item.bulkDiscountTiers || "").length > 0) && (
+            <Tag className="w-3.5 h-3.5 text-red-400" title={item.onSale ? "On Sale" : "Bulk Discount"} />
+          )}
         </div>
       ),
     },

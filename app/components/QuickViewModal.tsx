@@ -317,7 +317,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                                         ✓ {t("bestSeller")}
                                     </span>
                                 )}
-                                {!product.onSale && parseTiers(product.bulkDiscountTiers || "").length > 0 && (
+                                {(product.onSale || parseTiers(product.bulkDiscountTiers || "").length > 0 || product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)) && (
                                     <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-red-500 text-white shadow-lg">
                                         {t("onSale")}
                                     </span>

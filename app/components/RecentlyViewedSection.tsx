@@ -6,6 +6,7 @@ import { useLocale } from "next-intl"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Check } from "lucide-react"
 import { getRecentlyViewed, type RecentlyViewedProduct } from "@/lib/recentlyViewed"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 const COLOR_CLASSES: Record<string, string> = {
     cyan: "bg-cyan-500/20 text-cyan-400",
@@ -215,12 +216,12 @@ export function RecentlyViewedSection() {
                                     )}
 
                                     {/* Sale badge */}
-                                    {product.onSale && (
+                                    {(product.onSale || parseTiers(product.bulkDiscountTiers || "").length > 0) && (
                                         <div className="absolute top-2 right-2 flex gap-1">
                                             <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
                                                 {tProducts("onSale")}
                                             </span>
-                                            {discountPercent > 0 && (
+                                            {product.onSale && discountPercent > 0 && (
                                                 <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
                                                     -{discountPercent}%
                                                 </span>

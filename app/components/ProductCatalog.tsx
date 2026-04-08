@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Search, Check, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell, SlidersHorizontal, Eye } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 import { QuickViewModal } from "./QuickViewModal"
-import { parseTiers, getBestEntryTier } from "@/lib/bulkDiscount"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 interface ProductVariant {
     id: string
@@ -1432,7 +1432,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                     product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)
                                                 if (!product.onSale && !hasBulk) return null
                                                 return (
-                                                    <Link href="/products?sale=true" onClick={e => e.stopPropagation()} className="flex gap-1">
+                                                    <div onClick={e => { e.preventDefault(); e.stopPropagation(); router.push("/products?sale=true") }} className="flex gap-1 cursor-pointer">
                                                         <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
                                                             {t("onSale")}
                                                         </span>
@@ -1441,7 +1441,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                                 -{discountPercent}%
                                                             </span>
                                                         )}
-                                                    </Link>
+                                                    </div>
                                                 )
                                             })()}
                                             <WishlistButton

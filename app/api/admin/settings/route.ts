@@ -14,6 +14,8 @@ export async function GET() {
       upsellTabEnabled: s?.upsellTabEnabled ?? true,
       upsellOpenOnAdd: s?.upsellOpenOnAdd ?? "upsell",
       globalUpsellProductIds: s?.globalUpsellProductIds ?? [],
+      bulkDiscountEnabled: s?.bulkDiscountEnabled ?? false,
+      bulkDiscountTiers: s?.bulkDiscountTiers ?? "[]",
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
@@ -27,7 +29,7 @@ export async function PUT(request: NextRequest) {
     const { error } = await requirePermissionApi("settings", "edit")
     if (error) return error
     const body = await request.json()
-    const { freeShippingEnabled, freeShippingThreshold, freeShippingCurrency, upsellTabEnabled, upsellOpenOnAdd, globalUpsellProductIds } = body
+    const { freeShippingEnabled, freeShippingThreshold, freeShippingCurrency, upsellTabEnabled, upsellOpenOnAdd, globalUpsellProductIds, bulkDiscountEnabled, bulkDiscountTiers } = body
     const data = {
       freeShippingEnabled: Boolean(freeShippingEnabled),
       freeShippingThreshold: freeShippingThreshold != null ? parseFloat(String(freeShippingThreshold)) : null,
@@ -35,6 +37,27 @@ export async function PUT(request: NextRequest) {
       upsellTabEnabled: Boolean(upsellTabEnabled),
       upsellOpenOnAdd: upsellOpenOnAdd === "cart" ? "cart" : "upsell",
       globalUpsellProductIds: Array.isArray(globalUpsellProductIds) ? globalUpsellProductIds : [],
+      bulkDiscountEnabled: Boolean(bulkDiscountEnabled),
+      bulkDiscountTiers: (() => {
+        try {
+          const tiers = JSON.parse(String(bulkDiscountTiers ?? "[]"))
+          if (!Array.isArray(tiers)) return "[]"
+          return JSON.stringify(
+            tiers
+              .filter((t: { minQty: unknown; type: unknown; value: unknown }) =>
+                typeof t.minQty === "number" && t.minQty >= 1 &&
+                (t.type === "percentage" || t.type === "fixed") &&
+                typeof t.value === "number" && t.value > 0
+              )
+              .map((t: { minQty: number; type: "percentage" | "fixed"; value: number }) => ({
+                minQty: Math.round(t.minQty),
+                type: t.type,
+                value: t.type === "percentage" ? Math.min(100, Number(t.value.toFixed(2))) : Number(t.value.toFixed(2)),
+              }))
+              .sort((a: { minQty: number }, b: { minQty: number }) => a.minQty - b.minQty)
+          )
+        } catch { return "[]" }
+      })(),
     }
 
     const existing = await prisma.siteSettings.findUnique({ where: { id: "singleton" } })
@@ -49,6 +72,8 @@ export async function PUT(request: NextRequest) {
       upsellTabEnabled: s.upsellTabEnabled,
       upsellOpenOnAdd: s.upsellOpenOnAdd,
       globalUpsellProductIds: s.globalUpsellProductIds,
+      bulkDiscountEnabled: s.bulkDiscountEnabled,
+      bulkDiscountTiers: s.bulkDiscountTiers,
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

@@ -49,6 +49,7 @@ interface Product {
     isNew?: boolean
     brand: { name: string; slug: string } | null
     productUrl: string
+    bulkDiscountTiers?: string | null
 }
 
 interface CouponBadge {
@@ -60,7 +61,7 @@ interface CouponBadge {
 // Types for QuickViewModal compatibility
 interface QVColor { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
 interface QVVariant { id: string; image: string | null; status: string; colorId: string; color: QVColor }
-interface QVPackage { id: string; price: string; salePrice: string | null; status: string; weight: { label: string }; packageVariants: { variantId: string; status: string }[] }
+interface QVPackage { id: string; price: string; salePrice: string | null; status: string; weight: { label: string }; packageVariants: { variantId: string; status: string }[]; bulkDiscountTiers?: string | null }
 interface QVProduct {
     id: string; slug: string; category: string
     nameBg: string; nameEn: string; nameEs: string

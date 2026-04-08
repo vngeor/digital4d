@@ -5,7 +5,8 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { X, ShoppingCart, Trash2, Minus, Plus, Loader2 } from "lucide-react"
-import { getCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, cartItemKey, type CartItem } from "@/lib/cart"
+import { getCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, cartItemKey, CART_KEY, type CartItem } from "@/lib/cart"
+import { parseTiers, getActiveTier, applyBulkDiscount, type BulkTier } from "@/lib/bulkDiscount"
 import { UpsellCard, type UpsellProduct } from "./UpsellCard"
 
 interface CartDrawerProps {
@@ -41,9 +42,16 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
         })
         setUpsellEnabled(data.upsellTabEnabled ?? true)
         setUpsellOpenOnAdd(data.upsellOpenOnAdd ?? "upsell")
+        if (data.bulkDiscountEnabled) {
+          setBulkEnabled(true)
+          setGlobalBulkTiers(parseTiers(data.bulkDiscountTiers ?? "[]"))
+        }
       })
       .catch(() => {}) // Silently fail — bar simply won't show
   }, [])
+
+  const [bulkEnabled, setBulkEnabled] = useState(false)
+  const [globalBulkTiers, setGlobalBulkTiers] = useState<BulkTier[]>([])
 
   const [upsellProducts, setUpsellProducts] = useState<UpsellProduct[]>([])
 
@@ -64,6 +72,49 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
   const refresh = useCallback(() => {
     setItems(getCart())
+  }, [])
+
+  // Refresh prices for stale cart items (added with old code that baked bulk discount into price)
+  useEffect(() => {
+    const currentItems = getCart()
+    if (currentItems.length === 0) return
+
+    // Detect stale items: missing bulkDiscountTiers field (old format) OR salePrice === price (old bulk-discount fingerprint)
+    const stale = currentItems.filter(
+      (i) =>
+        i.bulkDiscountTiers === undefined ||
+        (i.onSale && i.salePrice != null && i.salePrice === i.price)
+    )
+    if (stale.length === 0) return
+
+    const ids = stale
+      .map((i) => (i.packageId ? `${i.productId}:${i.packageId}` : i.productId))
+      .join(",")
+
+    fetch(`/api/cart/prices?items=${encodeURIComponent(ids)}`)
+      .then((r) => r.json())
+      .then((fresh: Array<{ productId: string; packageId: string | null; price: string | null; salePrice: string | null; onSale: boolean; bulkDiscountTiers: string }>) => {
+        const cart = getCart()
+        let updated = false
+        for (const f of fresh) {
+          if (!f.price) continue
+          const idx = cart.findIndex(
+            (i) => i.productId === f.productId && (i.packageId ?? null) === f.packageId
+          )
+          if (idx < 0) continue
+          cart[idx].price = f.price
+          cart[idx].salePrice = f.salePrice
+          cart[idx].onSale = f.onSale
+          cart[idx].bulkDiscountTiers = f.bulkDiscountTiers
+          updated = true
+        }
+        if (updated) {
+          localStorage.setItem(CART_KEY, JSON.stringify(cart))
+          window.dispatchEvent(new Event("cart-updated"))
+        }
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Hydration-safe: load cart only on client
@@ -114,8 +165,12 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     if (!items || items.length === 0) return
     if (status === "loading") return  // Wait until session resolves
     if (!session) {
-      // Cart persists in localStorage — survives redirect automatically
-      const callbackUrl = encodeURIComponent(window.location.pathname)
+      // Back up cart to sessionStorage — survives OAuth external redirects
+      try {
+        const cart = localStorage.getItem(CART_KEY)
+        if (cart && cart !== "[]") sessionStorage.setItem("d4d-cart-backup", cart)
+      } catch {}
+      const callbackUrl = encodeURIComponent(window.location.pathname + "?openCart=1")
       window.location.href = `/login?callbackUrl=${callbackUrl}`
       return
     }
@@ -130,21 +185,33 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
       })
       const data = await res.json()
       if (!res.ok) {
-        alert(data.error || "Checkout failed")
+        alert(data.error || t("checkoutFailed"))
         return
       }
       clearCart()
       window.dispatchEvent(new Event("cart-updated"))
       window.location.href = data.url
     } catch {
-      alert("Something went wrong. Please try again.")
+      alert(t("checkoutError"))
     } finally {
       setLoading(false)
     }
   }
 
+  // Compute the bulk-aware effective unit price for a cart item.
+  // Product-level tiers always apply if set; global tiers only if bulkEnabled.
+  const getBulkUnitPrice = (item: CartItem): number => {
+    const base = getEffectivePrice(item)  // sale price if on sale, else regular price
+    if (item.quantity <= 1) return base
+    const productTiers = parseTiers(item.bulkDiscountTiers || "")
+    const activeTiers = productTiers.length > 0 ? productTiers : (bulkEnabled ? globalBulkTiers : [])
+    if (activeTiers.length === 0) return base
+    const tier = getActiveTier(item.quantity, activeTiers)
+    return tier ? Math.max(applyBulkDiscount(base, tier), 0.01) : base
+  }
+
   const subtotal = items
-    ? items.reduce((sum, item) => sum + getEffectivePrice(item) * item.quantity, 0)
+    ? items.reduce((sum, item) => sum + getBulkUnitPrice(item) * item.quantity, 0)
     : 0
 
   const currency = items?.[0]?.currency || "EUR"
@@ -171,7 +238,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[54] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[57] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
@@ -179,7 +246,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
       {/* Drawer panel */}
       <div
-        className={`fixed right-0 top-0 bottom-0 z-[55] w-full max-w-sm flex flex-col bg-slate-950 border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out ${
+        className={`fixed right-0 top-0 bottom-0 z-[58] w-full max-w-sm flex flex-col bg-slate-950 border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -281,8 +348,13 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
             // Cart items
             <ul className="divide-y divide-white/5 px-5">
               {items.map((item) => {
-                const effectivePrice = getEffectivePrice(item)
-                const isOnSale = item.onSale && item.salePrice !== null
+                const baseUnitPrice = getEffectivePrice(item)   // pre-bulk price
+                const effectivePrice = getBulkUnitPrice(item)   // bulk-adjusted price
+                const hasBulkDiscount = effectivePrice < baseUnitPrice
+                // Only show as "on sale" if there's an actual price reduction visible
+                const isOnSale = hasBulkDiscount ||
+                  (item.onSale && item.salePrice != null &&
+                    parseFloat(item.salePrice) < parseFloat(item.price))
                 const itemKey = cartItemKey(item.productId, item.packageId)
                 return (
                   <li key={itemKey} className="py-4 flex gap-3">
@@ -326,7 +398,9 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                           {item.colorHex && (
                             <span
                               className="w-3 h-3 rounded-full inline-block border border-white/20 shrink-0"
-                              style={{ backgroundColor: item.colorHex }}
+                              style={item.colorHex2
+                                ? { background: `linear-gradient(135deg, ${item.colorHex} 50%, ${item.colorHex2} 50%)` }
+                                : { backgroundColor: item.colorHex }}
                             />
                           )}
                           {item.colorNameEn && (
@@ -337,16 +411,31 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                         </div>
                       )}
 
-                      {/* Price */}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`text-sm font-semibold ${isOnSale ? "text-red-400" : "text-emerald-400"}`}>
-                          {effectivePrice.toFixed(2)} {item.currency}
+                      {/* Price + item total */}
+                      <div className="flex items-start justify-between gap-2 mt-1">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-sm font-semibold ${isOnSale ? "text-red-400" : "text-emerald-400"}`}>
+                              {effectivePrice.toFixed(2)} {item.currency}
+                            </span>
+                            {hasBulkDiscount ? (
+                              <span className="text-xs text-slate-500 line-through">
+                                {baseUnitPrice.toFixed(2)}
+                              </span>
+                            ) : item.onSale && item.salePrice != null &&
+                              parseFloat(item.salePrice) < parseFloat(item.price) ? (
+                              <span className="text-xs text-slate-500 line-through">
+                                {parseFloat(item.price).toFixed(2)}
+                              </span>
+                            ) : null}
+                          </div>
+                          {item.quantity > 1 && (
+                            <span className="text-xs text-slate-500">× {item.quantity}</span>
+                          )}
+                        </div>
+                        <span className="text-sm font-bold text-white shrink-0">
+                          {(effectivePrice * item.quantity).toFixed(2)} {item.currency}
                         </span>
-                        {isOnSale && item.price && (
-                          <span className="text-xs text-slate-500 line-through">
-                            {parseFloat(item.price).toFixed(2)}
-                          </span>
-                        )}
                       </div>
 
                       {/* Qty + Remove */}

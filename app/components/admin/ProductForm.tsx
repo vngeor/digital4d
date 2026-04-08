@@ -1071,17 +1071,6 @@ export function ProductForm({
                   className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
-              <div className="flex items-center pt-6">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.onSale}
-                    onChange={(e) => updateField("onSale", e.target.checked)}
-                    className="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30"
-                  />
-                  <span className="text-sm text-gray-300">{t("onSale")}</span>
-                </label>
-              </div>
             </div>
           </div>
 
@@ -1832,6 +1821,15 @@ export function ProductForm({
                     className="w-5 h-5 rounded border-white/20 bg-white/5 text-amber-500 focus:ring-amber-500/30"
                   />
                   <span className="text-sm text-gray-300">🏆 Best Seller</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.onSale}
+                    onChange={(e) => updateField("onSale", e.target.checked)}
+                    className="w-5 h-5 rounded border-white/20 bg-white/5 text-red-500 focus:ring-red-500/30"
+                  />
+                  <span className="text-sm text-gray-300">🏷️ {t("onSale")}</span>
                 </label>
               </div>
               <div>
