@@ -176,6 +176,31 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     })
   }, [status])
 
+  // Re-sync server cart whenever the drawer is opened (catches items added on another device)
+  useEffect(() => {
+    if (!open || status !== "authenticated") return
+    fetchServerCart().then((serverItems) => {
+      if (serverItems.length === 0) return
+      mergeServerCartIntoLocal(serverItems)
+      window.dispatchEvent(new Event("cart-updated"))
+    })
+  }, [open, status])
+
+  // Re-sync when tab/app becomes visible again (e.g. switching from Mac to phone)
+  useEffect(() => {
+    if (status !== "authenticated") return
+    const handleVisibility = () => {
+      if (document.visibilityState !== "visible") return
+      fetchServerCart().then((serverItems) => {
+        if (serverItems.length === 0) return
+        mergeServerCartIntoLocal(serverItems)
+        window.dispatchEvent(new Event("cart-updated"))
+      })
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
+    return () => document.removeEventListener("visibilitychange", handleVisibility)
+  }, [status])
+
   const handleRemove = (key: string) => {
     const item = items?.find((i) => cartItemKey(i.productId, i.packageId) === key)
     removeFromCart(key)
