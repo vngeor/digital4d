@@ -127,7 +127,7 @@ function resolvePlaceholders(
  * Process all active notification templates.
  * Called by the daily cron job.
  */
-export async function processTemplates(): Promise<{
+export async function processTemplates(overrideDate?: Date): Promise<{
   processed: number
   sent: number
   couponsCreated: number
@@ -139,7 +139,7 @@ export async function processTemplates(): Promise<{
     where: { active: true },
   })
 
-  const today = new Date()
+  const today = overrideDate ?? new Date()
 
   for (const template of templates) {
     try {
