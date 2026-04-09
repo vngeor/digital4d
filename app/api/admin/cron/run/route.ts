@@ -8,8 +8,8 @@ import { processTemplates, processReminderNotifications } from "@/lib/cronNotifi
  * Accepts optional { date } body to simulate a specific date.
  */
 export async function POST(request: NextRequest) {
-  const permError = await requirePermissionApi("notifications", "create")
-  if (permError) return permError
+  const { error } = await requirePermissionApi("notifications", "create")
+  if (error) return error
 
   try {
     const body = await request.json().catch(() => ({}))
@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 })
     }
 
-    const result = await processTemplates(overrideDate)
+    const templateId = body.templateId || undefined
+
+    const result = await processTemplates(overrideDate, templateId)
     const reminderResult = await processReminderNotifications()
 
     return NextResponse.json({

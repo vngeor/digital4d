@@ -165,6 +165,7 @@ export default function NotificationTemplatesPage() {
   // Run cron state
   const [showCronModal, setShowCronModal] = useState(false)
   const [cronDate, setCronDate] = useState("")
+  const [cronTemplateId, setCronTemplateId] = useState("")
   const [cronRunning, setCronRunning] = useState(false)
   const [cronResult, setCronResult] = useState<{
     processed: number
@@ -475,7 +476,9 @@ export default function NotificationTemplatesPage() {
     setCronRunning(true)
     setCronResult(null)
     try {
-      const body = cronDate ? { date: cronDate } : {}
+      const body: Record<string, string> = {}
+      if (cronDate) body.date = cronDate
+      if (cronTemplateId) body.templateId = cronTemplateId
       const res = await fetch("/api/admin/cron/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -798,11 +801,11 @@ export default function NotificationTemplatesPage() {
         <div className="flex items-center gap-3">
           {can("notifications", "create") && (
             <button
-              onClick={() => { setShowCronModal(true); setCronResult(null); setCronDate("") }}
+              onClick={() => { setShowCronModal(true); setCronResult(null); setCronDate(""); setCronTemplateId("") }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 font-medium hover:bg-white/10 hover:text-white transition-all"
             >
               <Play className="w-4 h-4 text-emerald-400" />
-              Run Cron Now
+              {t("runCron")}
             </button>
           )}
           {can("notifications", "create") && (
@@ -1461,7 +1464,7 @@ export default function NotificationTemplatesPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Play className="w-5 h-5 text-emerald-400" />
-                Run Notification Cron
+                {t("runCronTitle")}
               </h2>
               <button onClick={() => setShowCronModal(false)} disabled={cronRunning} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors disabled:opacity-50">
                 <X className="w-5 h-5" />
@@ -1470,11 +1473,25 @@ export default function NotificationTemplatesPage() {
 
             {!cronResult ? (
               <>
-                <p className="text-sm text-gray-300">
-                  Runs all active templates exactly as the Vercel cron does — with full date-matching logic and dedup checks.
-                </p>
+                <p className="text-sm text-gray-300">{t("runCronDescription")}</p>
                 <div className="space-y-2">
-                  <label className="text-xs text-gray-400 font-medium">Simulate date <span className="text-gray-600">(optional — defaults to today)</span></label>
+                  <label className="text-xs text-gray-400 font-medium">{t("runCronTemplate")}</label>
+                  <select
+                    value={cronTemplateId}
+                    onChange={(e) => setCronTemplateId(e.target.value)}
+                    disabled={cronRunning}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-50"
+                  >
+                    <option value="">{t("runCronAllTemplates")}</option>
+                    {templates.map((tpl) => (
+                      <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-gray-400 font-medium">
+                    {t("runCronSimulateDate")} <span className="text-gray-600">{t("runCronSimulateDateOptional")}</span>
+                  </label>
                   <input
                     type="date"
                     value={cronDate}
@@ -1482,9 +1499,7 @@ export default function NotificationTemplatesPage() {
                     disabled={cronRunning}
                     className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-50"
                   />
-                  <p className="text-xs text-gray-500">
-                    e.g. enter Easter date (2026-04-12) to test Easter templates, or Christmas (2026-12-25)
-                  </p>
+                  <p className="text-xs text-gray-500">{t("runCronDateHint")}</p>
                 </div>
                 <div className="flex justify-end gap-3 pt-2">
                   <button
@@ -1492,7 +1507,7 @@ export default function NotificationTemplatesPage() {
                     disabled={cronRunning}
                     className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm transition-colors disabled:opacity-50"
                   >
-                    Cancel
+                    {t("cancel")}
                   </button>
                   <button
                     onClick={handleRunCron}
@@ -1500,7 +1515,7 @@ export default function NotificationTemplatesPage() {
                     className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all disabled:opacity-50"
                   >
                     {cronRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                    {cronRunning ? "Running..." : "Run"}
+                    {cronRunning ? t("runCronRunning") : t("runCronRun")}
                   </button>
                 </div>
               </>
@@ -1509,30 +1524,30 @@ export default function NotificationTemplatesPage() {
                 <div className="space-y-2">
                   {cronResult.simulatedDate && (
                     <p className="text-xs text-amber-400/80 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-                      Simulated date: {new Date(cronResult.simulatedDate).toDateString()}
+                      {t("runCronSimulatedDate")} {new Date(cronResult.simulatedDate).toDateString()}
                     </p>
                   )}
                   <div className="bg-white/5 rounded-xl p-4 space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-gray-300">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>Processed <span className="text-white font-semibold">{cronResult.processed}</span> template{cronResult.processed !== 1 ? "s" : ""}</span>
+                      <span>{t("runCronProcessed", { count: cronResult.processed })}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-300">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>Sent <span className="text-white font-semibold">{cronResult.sent}</span> notification{cronResult.sent !== 1 ? "s" : ""}</span>
+                      <span>{t("runCronSent", { count: cronResult.sent })}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-300">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>Created <span className="text-white font-semibold">{cronResult.couponsCreated}</span> coupon{cronResult.couponsCreated !== 1 ? "s" : ""}</span>
+                      <span>{t("runCronCoupons", { count: cronResult.couponsCreated })}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-300">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>Reminders sent <span className="text-white font-semibold">{cronResult.reminders.sent}</span></span>
+                      <span>{t("runCronReminders", { count: cronResult.reminders.sent })}</span>
                     </div>
                   </div>
                   {(cronResult.errors.length > 0 || cronResult.reminders.errors.length > 0) && (
                     <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-1">
-                      <p className="text-xs font-semibold text-red-400">Errors:</p>
+                      <p className="text-xs font-semibold text-red-400">{t("runCronErrors")}</p>
                       {[...cronResult.errors, ...cronResult.reminders.errors].map((e, i) => (
                         <p key={i} className="text-xs text-red-300">{e}</p>
                       ))}
@@ -1541,16 +1556,16 @@ export default function NotificationTemplatesPage() {
                 </div>
                 <div className="flex justify-end gap-3 pt-2">
                   <button
-                    onClick={() => { setCronResult(null); setCronDate("") }}
+                    onClick={() => { setCronResult(null); setCronDate(""); setCronTemplateId("") }}
                     className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm transition-colors"
                   >
-                    Run Again
+                    {t("runCronRunAgain")}
                   </button>
                   <button
                     onClick={() => setShowCronModal(false)}
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-medium transition-all hover:shadow-lg hover:shadow-emerald-500/25"
                   >
-                    Done
+                    {t("runCronDone")}
                   </button>
                 </div>
               </>
