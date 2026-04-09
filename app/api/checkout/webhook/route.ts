@@ -120,6 +120,48 @@ export async function POST(request: NextRequest) {
             console.log(`Physical order created for product ${item.productId}`)
           }
         }
+
+        // Record coupon usage for cart checkout
+        const cartCouponId = session.metadata?.couponId
+        if (cartCouponId) {
+          try {
+            const existing = await prisma.couponUsage.findFirst({ where: { stripeSession: session.id } })
+            if (!existing) {
+              const originalPrice = (session.amount_subtotal ?? 0) / 100
+              const discountAmount = ((session.amount_subtotal ?? 0) - (session.amount_total ?? 0)) / 100
+              const finalPrice = Math.max((session.amount_total ?? 0) / 100, 0.50)
+
+              await prisma.couponUsage.create({
+                data: {
+                  couponId: cartCouponId,
+                  email: customerEmail,
+                  originalPrice,
+                  discountAmount: Math.max(discountAmount, 0),
+                  finalPrice,
+                  stripeSession: session.id,
+                },
+              })
+
+              const coupon = await prisma.coupon.findUnique({ where: { id: cartCouponId }, select: { maxUses: true } })
+              if (coupon) {
+                if (coupon.maxUses !== null) {
+                  await prisma.coupon.updateMany({
+                    where: { id: cartCouponId, usedCount: { lt: coupon.maxUses } },
+                    data: { usedCount: { increment: 1 } },
+                  })
+                } else {
+                  await prisma.coupon.update({
+                    where: { id: cartCouponId },
+                    data: { usedCount: { increment: 1 } },
+                  })
+                }
+              }
+              console.log(`Cart coupon usage recorded, coupon ${cartCouponId}`)
+            }
+          } catch (couponError) {
+            console.error("Error recording cart coupon usage:", couponError instanceof Error ? couponError.message : "Unknown")
+          }
+        }
       } else {
         // ── Single-product flow ───────────────────────────────────────────────
         const productId = session.metadata?.productId

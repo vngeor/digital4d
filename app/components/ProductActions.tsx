@@ -178,12 +178,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 return (
                     <button
                         key={coupon.code}
-                        onClick={() => isDigital ? handlePromotedCouponClick(coupon.code) : undefined}
-                        className={`w-full p-3 rounded-xl border flex items-center gap-3 transition-all text-left ${
-                            isDigital
-                                ? "bg-gradient-to-r from-orange-500/15 to-amber-500/15 border-orange-500/30 hover:from-orange-500/25 hover:to-amber-500/25 hover:border-orange-500/50 cursor-pointer"
-                                : "bg-gradient-to-r from-orange-500/15 to-amber-500/15 border-orange-500/30 cursor-default"
-                        }`}
+                        onClick={() => handlePromotedCouponClick(coupon.code)}
+                        className="w-full p-3 rounded-xl border flex items-center gap-3 transition-all text-left bg-gradient-to-r from-orange-500/15 to-amber-500/15 border-orange-500/30 hover:from-orange-500/25 hover:to-amber-500/25 hover:border-orange-500/50 cursor-pointer"
                     >
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/30 to-amber-500/30 flex items-center justify-center shrink-0">
                             <Ticket className="w-5 h-5 text-orange-300" />
@@ -198,11 +194,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                                 </span>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
-                                {isDigital ? (
-                                    <span className="text-[11px] text-orange-400/70">{t("clickToApply")}</span>
-                                ) : (
-                                    <span className="text-[11px] text-orange-400/70">{t("couponMentionInQuote")}</span>
-                                )}
+                                <span className="text-[11px] text-orange-400/70">{t("clickToApply")}</span>
                                 {expiryText && (
                                     <span className="text-sm text-red-400 flex items-center gap-1 font-mono font-bold animate-sale-blink">
                                         <Clock className="w-4 h-4" />
@@ -510,7 +502,9 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         if (suppressCartDrawer) {
             toast.success(tc("addedToCart"))
         } else {
-            window.dispatchEvent(new Event("open-cart-upsell"))
+            window.dispatchEvent(new CustomEvent("open-cart-upsell", {
+                detail: appliedCoupon ? { couponCode: appliedCoupon.couponCode } : undefined,
+            }))
         }
     }
 
@@ -593,8 +587,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 {/* Promoted Coupon Banners */}
                 {promotedBanners}
 
-                {/* Coupon Section — only for digital in v1 */}
-                {isDigital && (!appliedCoupon ? (
+                {/* Coupon Section */}
+                {(!appliedCoupon ? (
                     <div className="p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
                         <div className="flex items-center gap-2 mb-2">
                             <Ticket className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -641,7 +635,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                 ))}
 
                 {/* Discount Preview */}
-                {isDigital && appliedCoupon && (
+                {appliedCoupon && (
                     <div className="flex items-center justify-between text-sm px-1">
                         <span className="text-slate-400 line-through">
                             {appliedCoupon.original} {appliedCoupon.productCurrency}

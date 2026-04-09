@@ -23,6 +23,7 @@ interface ProductImageGalleryProps {
     packageVariantStatusMap?: Map<string, string> | null
     isNew?: boolean
     discountPercent?: number | null
+    hasBulkDiscount?: boolean
     selectedVariantIndex?: number // parent-controlled: synced when package changes
 }
 
@@ -38,7 +39,7 @@ const STATUS_OVERLAY_TEXT: Record<string, Record<string, string>> = {
     coming_soon: { bg: "ОЧАКВАЙТЕ СКОРО", en: "COMING SOON", es: "PRÓXIMAMENTE" },
 }
 
-export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange, availableVariantIndices, packageVariantStatusMap, isNew, discountPercent, selectedVariantIndex: controlledVariantIndex }: ProductImageGalleryProps) {
+export function ProductImageGallery({ mainImage, productName, variants, locale, gallery = [], productStatus, onVariantChange, availableVariantIndices, packageVariantStatusMap, isNew, discountPercent, hasBulkDiscount, selectedVariantIndex: controlledVariantIndex }: ProductImageGalleryProps) {
     const t = useTranslations("products")
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const firstAvailableVariant = variants.findIndex(v => ["in_stock", "pre_order"].includes(v.status))
@@ -195,14 +196,20 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                         </div>
                     )}
 
-                    {/* Top-right: Discount badge */}
-                    {discountPercent && discountPercent > 0 && (
+                    {/* Top-right: Discount / Sale badge */}
+                    {discountPercent && discountPercent > 0 ? (
                         <div className="absolute top-3 right-3 pointer-events-none z-10">
                             <span className="-rotate-6 inline-block px-4 py-2 rounded-xl text-base font-black bg-red-500 text-white shadow-xl tracking-wide">
                                 -{discountPercent}%
                             </span>
                         </div>
-                    )}
+                    ) : hasBulkDiscount ? (
+                        <div className="absolute top-3 right-3 pointer-events-none z-10">
+                            <span className="-rotate-6 inline-block px-3 py-1.5 rounded-xl text-sm font-black bg-red-500 text-white shadow-xl tracking-wide">
+                                SALE
+                            </span>
+                        </div>
+                    ) : null}
 
                 </div>
 

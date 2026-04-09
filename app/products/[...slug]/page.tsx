@@ -192,6 +192,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             include: {
                 brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } },
                 variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+                packages: { select: { bulkDiscountTiers: true } },
             },
             take: 6,
         })
@@ -218,6 +219,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             include: {
                 brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } },
                 variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+                packages: { select: { bulkDiscountTiers: true } },
             },
         })
     }
@@ -325,7 +327,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         isNew: (Date.now() - new Date(r.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000,
         url: relatedProductUrls[r.id] || `/products/${r.slug}`,
         coupon: relatedCouponMap[r.id] ?? null,
-        bulkDiscountTiers: (r as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",
+        bulkDiscountTiers:
+            (r as { bulkDiscountTiers?: string | null }).bulkDiscountTiers ||
+            (r as { packages?: Array<{ bulkDiscountTiers?: string | null }> }).packages?.find(pkg => pkg.bulkDiscountTiers)?.bulkDiscountTiers ||
+            "",
     }))
 
     const productName = getLocalizedName(product)

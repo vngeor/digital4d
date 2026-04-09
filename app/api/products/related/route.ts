@@ -32,12 +32,16 @@ export async function GET(request: NextRequest) {
 
     let related: Awaited<ReturnType<typeof prisma.product.findMany<{ include: typeof include }>>> = []
 
+    // Only show products that are purchasable in the upsell section
+    const availableStatus = { in: ["in_stock", "pre_order"] }
+
     // Tier 1: per-product manual picks
     if (product.upsellProductIds.length > 0) {
       related = await prisma.product.findMany({
         where: {
           id: { in: product.upsellProductIds.filter((id) => !excludeSet.has(id)) },
           published: true,
+          status: availableStatus,
         },
         include,
         take: 4,
@@ -56,6 +60,7 @@ export async function GET(request: NextRequest) {
           where: {
             id: { in: globalIds.filter((id) => !excludeSet.has(id)) },
             published: true,
+            status: availableStatus,
           },
           include,
           take: 4,
@@ -69,6 +74,7 @@ export async function GET(request: NextRequest) {
         where: {
           category: product.category,
           published: true,
+          status: availableStatus,
           id: { notIn: [...excludeSet] },
         },
         orderBy: [{ featured: "desc" }, { order: "asc" }],
@@ -80,7 +86,24 @@ export async function GET(request: NextRequest) {
     // 3. Build URLs in batch
     const urlMap = await buildProductUrlsBatch(related)
 
-    // 4. Map response — Decimal → string, pick variant image
+    // 4. Coupon badge lookup for upsell cards
+    const now = new Date()
+    const activeCoupons = await prisma.coupon.findMany({
+      where: {
+        active: true,
+        showOnProduct: true,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      select: { type: true, value: true, currency: true, productIds: true },
+    })
+    const relatedIds = related.map(p => p.id)
+    const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
+    for (const id of relatedIds) {
+      const c = activeCoupons.find(c => c.productIds.length === 0 || c.productIds.includes(id))
+      if (c) couponMap[id] = { type: c.type, value: c.value.toString(), currency: c.currency }
+    }
+
+    // 5. Map response — Decimal → string, pick variant image
     return NextResponse.json(
       related.map((p) => ({
         id: p.id,
@@ -107,6 +130,9 @@ export async function GET(request: NextRequest) {
         brandNameEn: p.brand?.nameEn ?? null,
         brandNameBg: p.brand?.nameBg ?? null,
         brandNameEs: p.brand?.nameEs ?? null,
+        createdAt: p.createdAt.toISOString(),
+        coupon: couponMap[p.id] ?? null,
+        bulkDiscountTiers: p.bulkDiscountTiers ?? null,
       }))
     )
   } catch {

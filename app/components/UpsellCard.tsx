@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Check, ShoppingCart } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { addToCart } from "@/lib/cart"
+import { useSession } from "next-auth/react"
+import { addToCart, syncCartItemToServer, getCart, cartItemKey } from "@/lib/cart"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 export interface UpsellProduct {
   id: string
@@ -26,6 +28,9 @@ export interface UpsellProduct {
   brandNameEn?: string | null
   brandNameBg?: string | null
   brandNameEs?: string | null
+  createdAt?: string
+  coupon?: { type: string; value: string; currency: string | null } | null
+  bulkDiscountTiers?: string | null
 }
 
 interface UpsellCardProps {
@@ -36,6 +41,7 @@ interface UpsellCardProps {
 
 export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
   const t = useTranslations("cart")
+  const { data: session } = useSession()
   const [added, setAdded] = useState(false)
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -56,6 +62,9 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
       : parseFloat(p.price || "0")
 
   const isUnavailable = ["sold_out", "coming_soon"].includes(p.status)
+  const isNew = p.createdAt
+    ? Date.now() - new Date(p.createdAt).getTime() < 30 * 24 * 60 * 60 * 1000
+    : false
 
   const handleAdd = () => {
     if (p.priceType !== "fixed" || isUnavailable) return
@@ -79,6 +88,12 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
       status: p.status,
     })
     window.dispatchEvent(new Event("cart-updated"))
+    // Sync to server so other devices see the new item
+    if (session) {
+      const key = cartItemKey(p.id, null)
+      const item = getCart().find((i) => cartItemKey(i.productId, i.packageId) === key)
+      if (item) syncCartItemToServer(item)
+    }
     setAdded(true)
     addedTimerRef.current = setTimeout(() => setAdded(false), 1500)
   }
@@ -102,9 +117,33 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
             <ShoppingCart className="w-6 h-6 text-slate-600" />
           </div>
         )}
-        {/* Badges */}
-        {(p.bestSeller || p.featured) && (
-          <div className="absolute top-1.5 left-1.5 flex flex-col gap-1">
+        {/* Sale badge — top right */}
+        {(() => {
+          if (p.onSale && p.salePrice) {
+            const orig = parseFloat(p.price)
+            const pct = orig > 0 ? Math.round((1 - parseFloat(p.salePrice) / orig) * 100) : 0
+            if (pct > 0) return (
+              <span className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded bg-red-500/90 text-white leading-none z-10">
+                -{pct}%
+              </span>
+            )
+          }
+          if (parseTiers(p.bulkDiscountTiers || "").length > 0) return (
+            <span className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded bg-red-500/90 text-white leading-none z-10">
+              SALE
+            </span>
+          )
+          return null
+        })()}
+
+        {/* Badges — top left: NEW + Best Seller + Featured */}
+        {(p.bestSeller || p.featured || isNew) && (
+          <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 z-10">
+            {isNew && (
+              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/90 text-white leading-none">
+                NEW
+              </span>
+            )}
             {p.bestSeller && (
               <span className="flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/90 text-white leading-none">
                 <Check className="w-2 h-2" />
@@ -116,6 +155,18 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
                 ⭐ Featured
               </span>
             )}
+          </div>
+        )}
+
+        {/* Coupon badge — bottom left */}
+        {p.coupon && (
+          <div className="absolute bottom-1.5 left-1.5 z-10">
+            <span className="flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded bg-orange-500/90 text-white leading-none">
+              🎟{" "}
+              {p.coupon.type === "percentage"
+                ? `${p.coupon.value}%`
+                : `${parseFloat(p.coupon.value).toFixed(0)}${p.coupon.currency ?? "€"}`}
+            </span>
           </div>
         )}
       </Link>

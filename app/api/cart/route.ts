@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
-/** DELETE /api/cart?productId=X&packageId=Y — remove a cart item */
+/** DELETE /api/cart — remove one item (?productId=X&packageId=Y) or clear all (no params) */
 export async function DELETE(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -80,11 +80,14 @@ export async function DELETE(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const productId = searchParams.get("productId")
-  const packageId = searchParams.get("packageId") ?? null
 
   if (!productId) {
-    return NextResponse.json({ error: "productId required" }, { status: 400 })
+    // No productId = clear all cart items for this user (called after checkout)
+    await prisma.cartItem.deleteMany({ where: { userId: session.user.id } })
+    return NextResponse.json({ ok: true })
   }
+
+  const packageId = searchParams.get("packageId") ?? null
 
   await prisma.cartItem.deleteMany({
     where: {

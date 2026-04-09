@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { ProductImageGallery } from "./ProductImageGallery"
 import { ProductActions } from "./ProductActions"
+import { parseTiers } from "@/lib/bulkDiscount"
 
 interface Variant {
     id: string
@@ -218,6 +219,10 @@ export function ProductDetailClient({
         ? Math.round((1 - displaySalePrice / displayPrice) * 100)
         : null
 
+    const hasBulkDiscount =
+        parseTiers(product.bulkDiscountTiers || "").length > 0 ||
+        (packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0) ?? false)
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
             {/* Image + Color Variants */}
@@ -234,6 +239,7 @@ export function ProductDetailClient({
                 packageVariantStatusMap={packageVariantStatusMap}
                 isNew={!!product.createdAt && (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000}
                 discountPercent={discountPercent}
+                hasBulkDiscount={hasBulkDiscount}
             />
 
             {/* Details */}

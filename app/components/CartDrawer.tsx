@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
-import { X, ShoppingCart, Trash2, Minus, Plus, Loader2 } from "lucide-react"
-import { getCart, addToCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, cartItemKey, CART_KEY, fetchServerCart, mergeServerCartIntoLocal, syncCartToServer, syncCartItemToServer, deleteCartItemFromServer, type CartItem } from "@/lib/cart"
+import { X, ShoppingCart, Trash2, Minus, Plus, Loader2, CheckCircle2 } from "lucide-react"
+import { toast } from "sonner"
+import { getCart, addToCart, removeFromCart, updateQuantity, clearCart, clearCartOnServer, getEffectivePrice, cartItemKey, CART_KEY, fetchServerCart, mergeServerCartIntoLocal, syncCartToServer, syncCartItemToServer, deleteCartItemFromServer, type CartItem } from "@/lib/cart"
 import { parseTiers, getActiveTier, applyBulkDiscount, type BulkTier } from "@/lib/bulkDiscount"
 import { UpsellCard, type UpsellProduct } from "./UpsellCard"
 
@@ -53,6 +54,13 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
   const [bulkEnabled, setBulkEnabled] = useState(false)
   const [globalBulkTiers, setGlobalBulkTiers] = useState<BulkTier[]>([])
+
+  const [couponInput, setCouponInput] = useState("")
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    couponId: string; code: string; type: string; value: string; discountAmount: number; currency: string; eligibleProductIds: string[]
+  } | null>(null)
+  const [couponError, setCouponError] = useState("")
+  const [couponLoading, setCouponLoading] = useState(false)
 
   const [upsellProducts, setUpsellProducts] = useState<UpsellProduct[]>([])
 
@@ -136,10 +144,41 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     if (!open) setActiveTab("cart")
   }, [open])
 
-  // open-cart-upsell: switch to upsell tab based on admin setting
+  // open-cart-upsell: switch to upsell tab + optionally pre-apply a coupon
   useEffect(() => {
-    const handler = () => {
+    const handler = (e: Event) => {
       if (upsellOpenOnAdd === "upsell") setActiveTab("upsell")
+      const couponCode = (e as CustomEvent).detail?.couponCode as string | undefined
+      if (couponCode) {
+        setCouponInput(couponCode)
+        setTimeout(() => {
+          const currentItems = getCart()
+          if (!currentItems.length) return
+          fetch("/api/cart/coupon/validate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code: couponCode.toUpperCase(),
+              items: currentItems.map(i => ({
+                productId: i.productId,
+                packageId: i.packageId ?? null,
+                onSale: !!i.onSale,
+                currency: i.currency,
+                quantity: i.quantity,
+              })),
+            }),
+          })
+            .then(r => r.json())
+            .then(data => {
+              if (data.valid) {
+                setAppliedCoupon(data)
+                setCouponInput(data.code)
+                setCouponError("")
+              }
+            })
+            .catch(() => {})
+        }, 300)
+      }
     }
     window.addEventListener("open-cart-upsell", handler)
     return () => window.removeEventListener("open-cart-upsell", handler)
@@ -167,53 +206,95 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
     // 2. Fetch server cart and merge quantities into local cart
     fetchServerCart().then((serverItems) => {
+      if (serverItems === null) return  // network error / 401 — skip entirely
       if (serverItems.length > 0) {
         mergeServerCartIntoLocal(serverItems)
         window.dispatchEvent(new Event("cart-updated"))
       }
-      // 3. Push entire (merged) local cart to server
-      syncCartToServer(getCart()).catch(() => {})
+      // 3. Smart push — only send items that are genuinely new to the server.
+      //    Pushing ALL local items re-creates items deleted on other devices.
+      //    Rules:
+      //      • Local item NOT on server + _synced=false/undefined → never confirmed; push it
+      //      • Local item NOT on server + _synced=true → was on server before; deleted elsewhere; skip
+      //      • Local item ON server with higher local qty → push the quantity update
+      const serverMap = new Map(
+        serverItems.map((s) => [cartItemKey(s.productId, s.packageId), s.quantity])
+      )
+      const toPush = getCart().filter((i) => {
+        const key = cartItemKey(i.productId, i.packageId)
+        const serverQty = serverMap.get(key)
+        if (serverQty === undefined) return !i._synced  // only push if never confirmed by server
+        return i.quantity > serverQty
+      })
+      if (toPush.length > 0) syncCartToServer(toPush).catch(() => {})
     })
   }, [status])
 
-  // Re-sync server cart whenever the drawer is opened (bi-directional: push local first, then pull server)
+  // Pull server cart whenever the drawer is opened — pull + smart push.
+  // Smart push retries any per-action syncs that failed (network glitch, iOS suspension, etc.)
+  // and is safe: it only pushes items the server doesn't know about yet (_synced: undefined)
+  // or items where local qty exceeds server qty. Items deleted on another device have already
+  // been removed from local by Pass 2 and won't be in getCart(), so they can't be re-pushed.
   useEffect(() => {
     if (!open || status !== "authenticated") return
-    // Push local items first so items added on this device (even during past failures) reach the server
-    syncCartToServer(getCart()).finally(() => {
-      fetchServerCart().then((serverItems) => {
-        if (serverItems.length === 0) return
-        mergeServerCartIntoLocal(serverItems)
-        window.dispatchEvent(new Event("cart-updated"))
+    fetchServerCart().then((serverItems) => {
+      if (serverItems === null) return  // error — skip
+      mergeServerCartIntoLocal(serverItems)  // additive — no Pass 2 (per-add race risk)
+      window.dispatchEvent(new Event("cart-updated"))
+      // Retry any per-action syncs that failed before the drawer was opened
+      const serverMap = new Map(serverItems.map((s) => [cartItemKey(s.productId, s.packageId), s.quantity]))
+      const toPush = getCart().filter((i) => {
+        const key = cartItemKey(i.productId, i.packageId)
+        const serverQty = serverMap.get(key)
+        if (serverQty === undefined) return !i._synced  // server doesn't have it + unconfirmed → push
+        return i.quantity > serverQty                   // server has lower qty → push update
       })
+      if (toPush.length > 0) syncCartToServer(toPush).catch(() => {})
     })
   }, [open, status])
 
-  // Retroactive push + periodic 60s pull + instant visibilitychange pull
+  // Periodic 15s pull (deletion-aware) + instant visibilitychange pull + smart push retry
   useEffect(() => {
     if (status !== "authenticated") return
 
-    // Push local items immediately — retroactive sync for items that failed to reach server
-    // (e.g. before Round 4 fix, all syncs silently 500'd due to Prisma null-upsert bug)
-    // Fire-and-forget; login trigger handles the pull side
-    syncCartToServer(getCart()).catch(() => {})
+    // After each pull+merge, also push local items the server doesn't know about yet.
+    // This retries per-action syncs that failed (e.g., phone network glitch, iOS suspended
+    // the in-flight fetch when user backgrounded the app). Safe because:
+    //   • Pass 2 already removed items deleted elsewhere (they're gone from getCart())
+    //   • Only pushes _synced:undefined items (never confirmed) or items with higher local qty
+    //   • Confirmed items (_synced:true) that are absent from server were deleted elsewhere
+    //     and are removed by Pass 2 before this runs — they won't be re-pushed
+    const smartPush = (serverItems: CartItem[]) => {
+      const serverMap = new Map(serverItems.map((s) => [cartItemKey(s.productId, s.packageId), s.quantity]))
+      const toPush = getCart().filter((i) => {
+        const key = cartItemKey(i.productId, i.packageId)
+        const serverQty = serverMap.get(key)
+        if (serverQty === undefined) return !i._synced  // server doesn't have it + unconfirmed → push
+        return i.quantity > serverQty                   // server has lower qty → push update
+      })
+      if (toPush.length > 0) syncCartToServer(toPush).catch(() => {})
+    }
 
-    // Poll every 60s — phone picks up items added on Mac without any user action required
+    // Poll every 15s with propagateDeletions=true — fast enough that users see deletions
+    // from other devices within ~15s without needing any action.
+    // null return = error → skip; [] return = confirmed empty → clears local cart
     const interval = setInterval(() => {
       fetchServerCart().then((serverItems) => {
-        if (serverItems.length === 0) return
-        mergeServerCartIntoLocal(serverItems)
+        if (serverItems === null) return  // error — skip
+        mergeServerCartIntoLocal(serverItems, true)  // propagateDeletions: true
         window.dispatchEvent(new Event("cart-updated"))
+        smartPush(serverItems)  // retry any failed per-action syncs
       })
-    }, 60000)
+    }, 15000)
 
-    // Instant sync when switching back to the tab/app
+    // Instant sync on tab/app switch — also deletion-aware + smart push.
     const handleVisibility = () => {
       if (document.visibilityState !== "visible") return
       fetchServerCart().then((serverItems) => {
-        if (serverItems.length === 0) return
-        mergeServerCartIntoLocal(serverItems)
+        if (serverItems === null) return  // error — skip
+        mergeServerCartIntoLocal(serverItems, true)  // propagateDeletions: true
         window.dispatchEvent(new Event("cart-updated"))
+        smartPush(serverItems)  // retry any failed per-action syncs
       })
     }
     document.addEventListener("visibilitychange", handleVisibility)
@@ -224,7 +305,52 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     }
   }, [status])
 
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return
+    setCouponLoading(true)
+    setCouponError("")
+    try {
+      const currentItems = getCart()
+      if (!currentItems.length) return
+      const res = await fetch("/api/cart/coupon/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponInput.trim().toUpperCase(),
+          items: currentItems.map(i => ({
+            productId: i.productId,
+            packageId: i.packageId ?? null,
+            onSale: !!i.onSale,
+            currency: i.currency,
+            quantity: i.quantity,
+          })),
+        }),
+      })
+      const data = await res.json()
+      if (data.valid) {
+        setAppliedCoupon(data)
+        setCouponInput(data.code)
+        setCouponError("")
+      } else {
+        if (data.error === "EXPIRED") setCouponError(t("couponExpired"))
+        else if (data.error === "WRONG_PRODUCT" || data.error === "ON_SALE") setCouponError(t("couponNotApplicable"))
+        else if (data.error === "CURRENCY_MISMATCH") setCouponError(t("couponCurrencyMismatch"))
+        else if (data.error === "MIN_PURCHASE") setCouponError(t("couponMinPurchase", { amount: `${(data.minPurchase as number).toFixed(2)} ${currentItems[0]?.currency ?? ""}` }))
+        else setCouponError(t("couponInvalid"))
+      }
+    } catch {
+      setCouponError(t("couponInvalid"))
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
   const handleRemove = (key: string) => {
+    if (appliedCoupon) {
+      setAppliedCoupon(null)
+      setCouponInput("")
+      toast.info(t("couponRemoved"))
+    }
     const item = items?.find((i) => cartItemKey(i.productId, i.packageId) === key)
     removeFromCart(key)
     window.dispatchEvent(new Event("cart-updated"))
@@ -234,6 +360,11 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
   }
 
   const handleQty = (key: string, delta: number) => {
+    if (appliedCoupon) {
+      setAppliedCoupon(null)
+      setCouponInput("")
+      toast.info(t("couponRemoved"))
+    }
     const item = items?.find((i) => cartItemKey(i.productId, i.packageId) === key)
     if (!item) return
     const newQty = item.quantity + delta
@@ -268,6 +399,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((i) => ({ productId: i.productId, packageId: i.packageId ?? null, quantity: i.quantity })),
+          ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
         }),
       })
       const data = await res.json()
@@ -276,6 +408,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
         return
       }
       clearCart()
+      if (session) clearCartOnServer().catch(() => {})  // fire-and-forget — clears server cart before Stripe redirect
       window.dispatchEvent(new Event("cart-updated"))
       window.location.href = data.url
     } catch {
@@ -571,6 +704,62 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                 {subtotal.toFixed(2)} {currency}
               </span>
             </div>
+
+            {/* Coupon input / applied badge */}
+            {!appliedCoupon ? (
+              <div className="space-y-1.5">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === "Enter" && handleApplyCoupon()}
+                    placeholder={t("couponCode")}
+                    className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm font-mono placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 touch-manipulation"
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponInput.trim()}
+                    className="shrink-0 px-3 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-medium disabled:opacity-50 touch-manipulation whitespace-nowrap"
+                  >
+                    {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("applyCoupon")}
+                  </button>
+                </div>
+                {couponError && <p className="text-xs text-red-400">{couponError}</p>}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between text-sm bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="font-mono text-emerald-300 text-xs">{appliedCoupon.code}</span>
+                </div>
+                <button
+                  onClick={() => { setAppliedCoupon(null); setCouponInput("") }}
+                  className="text-slate-400 hover:text-white touch-manipulation"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+            {appliedCoupon && (
+              <>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-400">
+                    {t("discount")}
+                    <span className="ml-1.5 text-xs text-emerald-500 font-mono">
+                      ({appliedCoupon.type === "percentage"
+                        ? `${appliedCoupon.value}%`
+                        : `${Number(appliedCoupon.value).toFixed(2)} ${appliedCoupon.currency}`})
+                    </span>
+                  </span>
+                  <span className="text-emerald-400 font-semibold">−{appliedCoupon.discountAmount.toFixed(2)} {appliedCoupon.currency}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-white/10 pt-2">
+                  <span className="text-white font-semibold text-sm">{t("total")}</span>
+                  <span className="text-white font-bold text-base">{Math.max(subtotal - appliedCoupon.discountAmount, 0).toFixed(2)} {currency}</span>
+                </div>
+              </>
+            )}
 
             {/* Free shipping progress bar */}
             {showFreeShipping && (
