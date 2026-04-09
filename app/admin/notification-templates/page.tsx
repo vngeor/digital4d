@@ -26,6 +26,8 @@ import {
   Check,
   Gift,
   Users,
+  Play,
+  CheckCircle2,
 } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
@@ -159,6 +161,19 @@ export default function NotificationTemplatesPage() {
   const [showSendAllModal, setShowSendAllModal] = useState(false)
   const [sendAllTemplate, setSendAllTemplate] = useState<{ id: string; name: string } | null>(null)
   const [sendAllSending, setSendAllSending] = useState(false)
+
+  // Run cron state
+  const [showCronModal, setShowCronModal] = useState(false)
+  const [cronDate, setCronDate] = useState("")
+  const [cronRunning, setCronRunning] = useState(false)
+  const [cronResult, setCronResult] = useState<{
+    processed: number
+    sent: number
+    couponsCreated: number
+    reminders: { sent: number; errors: string[] }
+    errors: string[]
+    simulatedDate: string | null
+  } | null>(null)
 
   // Product picker state
   const [productSearch, setProductSearch] = useState("")
@@ -452,6 +467,28 @@ export default function NotificationTemplatesPage() {
       toast.error(err instanceof Error ? err.message : "Failed to send")
     } finally {
       setSendAllSending(false)
+    }
+  }
+
+  // Run cron manually
+  const handleRunCron = async () => {
+    setCronRunning(true)
+    setCronResult(null)
+    try {
+      const body = cronDate ? { date: cronDate } : {}
+      const res = await fetch("/api/admin/cron/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed")
+      setCronResult(data)
+      fetchTemplates()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to run cron")
+    } finally {
+      setCronRunning(false)
     }
   }
 
@@ -758,15 +795,26 @@ export default function NotificationTemplatesPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white">{t("title")}</h1>
           <p className="text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
-        {can("notifications", "create") && (
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            {t("createTemplate")}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {can("notifications", "create") && (
+            <button
+              onClick={() => { setShowCronModal(true); setCronResult(null); setCronDate("") }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 font-medium hover:bg-white/10 hover:text-white transition-all"
+            >
+              <Play className="w-4 h-4 text-emerald-400" />
+              Run Cron Now
+            </button>
+          )}
+          {can("notifications", "create") && (
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
+            >
+              <Plus className="w-5 h-5" />
+              {t("createTemplate")}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -1401,6 +1449,112 @@ export default function NotificationTemplatesPage() {
                 Send to All
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Run Cron Modal */}
+      {showCronModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !cronRunning && setShowCronModal(false)} />
+          <div className="relative bg-[#0d0d1a] border border-white/10 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Play className="w-5 h-5 text-emerald-400" />
+                Run Notification Cron
+              </h2>
+              <button onClick={() => setShowCronModal(false)} disabled={cronRunning} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors disabled:opacity-50">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {!cronResult ? (
+              <>
+                <p className="text-sm text-gray-300">
+                  Runs all active templates exactly as the Vercel cron does — with full date-matching logic and dedup checks.
+                </p>
+                <div className="space-y-2">
+                  <label className="text-xs text-gray-400 font-medium">Simulate date <span className="text-gray-600">(optional — defaults to today)</span></label>
+                  <input
+                    type="date"
+                    value={cronDate}
+                    onChange={(e) => setCronDate(e.target.value)}
+                    disabled={cronRunning}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-50"
+                  />
+                  <p className="text-xs text-gray-500">
+                    e.g. enter Easter date (2026-04-12) to test Easter templates, or Christmas (2026-12-25)
+                  </p>
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setShowCronModal(false)}
+                    disabled={cronRunning}
+                    className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRunCron}
+                    disabled={cronRunning}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium hover:shadow-lg hover:shadow-emerald-500/25 transition-all disabled:opacity-50"
+                  >
+                    {cronRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                    {cronRunning ? "Running..." : "Run"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  {cronResult.simulatedDate && (
+                    <p className="text-xs text-amber-400/80 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                      Simulated date: {new Date(cronResult.simulatedDate).toDateString()}
+                    </p>
+                  )}
+                  <div className="bg-white/5 rounded-xl p-4 space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Processed <span className="text-white font-semibold">{cronResult.processed}</span> template{cronResult.processed !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Sent <span className="text-white font-semibold">{cronResult.sent}</span> notification{cronResult.sent !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Created <span className="text-white font-semibold">{cronResult.couponsCreated}</span> coupon{cronResult.couponsCreated !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Reminders sent <span className="text-white font-semibold">{cronResult.reminders.sent}</span></span>
+                    </div>
+                  </div>
+                  {(cronResult.errors.length > 0 || cronResult.reminders.errors.length > 0) && (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-1">
+                      <p className="text-xs font-semibold text-red-400">Errors:</p>
+                      {[...cronResult.errors, ...cronResult.reminders.errors].map((e, i) => (
+                        <p key={i} className="text-xs text-red-300">{e}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => { setCronResult(null); setCronDate("") }}
+                    className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-sm transition-colors"
+                  >
+                    Run Again
+                  </button>
+                  <button
+                    onClick={() => setShowCronModal(false)}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-medium transition-all hover:shadow-lg hover:shadow-emerald-500/25"
+                  >
+                    Done
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

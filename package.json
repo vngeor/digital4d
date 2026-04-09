@@ -16,6 +16,7 @@
     "blob:cleanup": "npx tsx scripts/cleanup-orphaned-blobs.ts",
     "blob:cleanup:dry": "npx tsx scripts/cleanup-orphaned-blobs.ts --dry-run",
     "media:backfill": "npx tsx --env-file=.env scripts/backfill-media.ts",
+    "test:cron": "npx tsx --env-file=.env.local scripts/test-cron.ts",
     "dev:start": "./dev.sh start",
     "dev:stop": "./dev.sh stop",
     "dev:restart": "./dev.sh restart"
