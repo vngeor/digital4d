@@ -189,9 +189,25 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     })
   }, [open, status])
 
-  // Re-sync when tab/app becomes visible again (e.g. switching from Mac to phone)
+  // Retroactive push + periodic 60s pull + instant visibilitychange pull
   useEffect(() => {
     if (status !== "authenticated") return
+
+    // Push local items immediately — retroactive sync for items that failed to reach server
+    // (e.g. before Round 4 fix, all syncs silently 500'd due to Prisma null-upsert bug)
+    // Fire-and-forget; login trigger handles the pull side
+    syncCartToServer(getCart()).catch(() => {})
+
+    // Poll every 60s — phone picks up items added on Mac without any user action required
+    const interval = setInterval(() => {
+      fetchServerCart().then((serverItems) => {
+        if (serverItems.length === 0) return
+        mergeServerCartIntoLocal(serverItems)
+        window.dispatchEvent(new Event("cart-updated"))
+      })
+    }, 60000)
+
+    // Instant sync when switching back to the tab/app
     const handleVisibility = () => {
       if (document.visibilityState !== "visible") return
       fetchServerCart().then((serverItems) => {
@@ -201,7 +217,11 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
       })
     }
     document.addEventListener("visibilitychange", handleVisibility)
-    return () => document.removeEventListener("visibilitychange", handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", handleVisibility)
+    }
   }, [status])
 
   const handleRemove = (key: string) => {
