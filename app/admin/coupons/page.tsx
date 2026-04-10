@@ -893,6 +893,13 @@ function CouponForm({
     } catch { /* ignore */ }
   }, [brandsLoaded])
 
+  // Auto-load brands/categories when editing a coupon that already has selections
+  useEffect(() => {
+    if (formData.brandIds.length > 0) loadBrands()
+    if (formData.categoryIds.length > 0) loadCategories()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const toggleExpandParent = (slug: string) => {
     setExpandedParents(prev => {
       const next = new Set(prev)

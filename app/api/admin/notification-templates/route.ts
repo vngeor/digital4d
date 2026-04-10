@@ -111,6 +111,8 @@ export async function POST(request: NextRequest) {
         couponDuration: data.couponEnabled ? (data.couponDuration || 30) : null,
         couponPerUser: data.couponEnabled ? (data.couponPerUser || 1) : 1,
         couponProductIds: data.couponEnabled ? (data.couponProductIds || []) : [],
+        couponCategoryIds: data.couponEnabled ? (data.couponCategoryIds || []) : [],
+        couponBrandIds: data.couponEnabled ? (data.couponBrandIds || []) : [],
         couponAllowOnSale: data.couponEnabled ? (data.couponAllowOnSale || false) : false,
         couponMinPurchase: isNaN(couponMinPurchase as number) ? null : couponMinPurchase,
         couponExpiryMode: data.couponEnabled ? (data.couponExpiryMode || "duration") : null,
@@ -224,6 +226,8 @@ export async function PUT(request: NextRequest) {
       if (data.couponDuration !== undefined) updateData.couponDuration = data.couponDuration
       if (data.couponPerUser !== undefined) updateData.couponPerUser = data.couponPerUser
       if (data.couponProductIds !== undefined) updateData.couponProductIds = data.couponProductIds
+      if (data.couponCategoryIds !== undefined) updateData.couponCategoryIds = data.couponCategoryIds
+      if (data.couponBrandIds !== undefined) updateData.couponBrandIds = data.couponBrandIds
       if (data.couponAllowOnSale !== undefined) updateData.couponAllowOnSale = data.couponAllowOnSale
       if (data.couponMinPurchase !== undefined) updateData.couponMinPurchase = data.couponMinPurchase
       if (data.couponExpiryMode !== undefined) updateData.couponExpiryMode = data.couponExpiryMode
@@ -235,6 +239,8 @@ export async function PUT(request: NextRequest) {
       updateData.couponDuration = null
       updateData.couponPerUser = 1
       updateData.couponProductIds = []
+      updateData.couponCategoryIds = []
+      updateData.couponBrandIds = []
       updateData.couponAllowOnSale = false
       updateData.couponMinPurchase = null
       updateData.couponExpiryMode = null

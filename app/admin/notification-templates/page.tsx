@@ -23,11 +23,14 @@ import {
   Ticket,
   ShieldOff,
   ChevronDown,
+  ChevronRight,
   Check,
   Gift,
   Users,
   Play,
   CheckCircle2,
+  FolderOpen,
+  Store,
 } from "lucide-react"
 import { DataTable } from "@/app/components/admin/DataTable"
 import { SkeletonDataTable } from "@/app/components/admin/SkeletonDataTable"
@@ -59,6 +62,8 @@ interface Template {
   couponDuration: number | null
   couponPerUser: number
   couponProductIds: string[]
+  couponCategoryIds: string[]
+  couponBrandIds: string[]
   couponAllowOnSale: boolean
   couponMinPurchase: number | null
   couponExpiryMode: string | null
@@ -72,6 +77,21 @@ interface Template {
 }
 
 interface ProductOption {
+  id: string
+  nameEn: string
+  nameBg: string
+  image: string | null
+}
+
+interface CategoryOption {
+  id: string
+  slug: string
+  nameEn: string
+  nameBg: string
+  children?: { id: string; slug: string; nameEn: string; nameBg: string }[]
+}
+
+interface BrandOption {
   id: string
   nameEn: string
   nameBg: string
@@ -121,6 +141,8 @@ const emptyForm = {
   couponExpiresAt: "",
   couponPerUser: 1,
   couponProductIds: [] as string[],
+  couponCategoryIds: [] as string[],
+  couponBrandIds: [] as string[],
   couponAllowOnSale: false,
   couponMinPurchase: "",
   active: true,
@@ -130,6 +152,7 @@ export default function NotificationTemplatesPage() {
   const t = useTranslations("admin.notificationTemplates")
   const tNotif = useTranslations("admin.notifications")
   const tAdmin = useTranslations("admin")
+  const tCoupons = useTranslations("admin.coupons")
   const locale = useLocale() as Locale
   const { can } = useAdminPermissions()
 
@@ -184,6 +207,22 @@ export default function NotificationTemplatesPage() {
   const [allProducts, setAllProducts] = useState<ProductOption[]>([])
   const allProductsLoadedRef = useRef(false)
   const productSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const productDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Category picker state
+  const [allCategoriesData, setAllCategoriesData] = useState<CategoryOption[]>([])
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+  const [categorySearch, setCategorySearch] = useState("")
+  const [expandedParentSlugs, setExpandedParentSlugs] = useState<Set<string>>(new Set())
+  const categoryDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Brand picker state
+  const [allBrandsData, setAllBrandsData] = useState<BrandOption[]>([])
+  const [brandsLoaded, setBrandsLoaded] = useState(false)
+  const [showBrandDropdown, setShowBrandDropdown] = useState(false)
+  const [brandSearch, setBrandSearch] = useState("")
+  const brandDropdownRef = useRef<HTMLDivElement>(null)
 
   // Test user picker cache
   const [allTestUsers, setAllTestUsers] = useState<SearchUser[]>([])
@@ -231,6 +270,93 @@ export default function NotificationTemplatesPage() {
     } finally {
       setSearchingProducts(false)
     }
+  }, [])
+
+  // Load categories for picker
+  const loadCategories = useCallback(async () => {
+    if (categoriesLoaded) return
+    try {
+      const res = await fetch("/api/categories")
+      if (res.ok) {
+        const data = await res.json()
+        setAllCategoriesData(Array.isArray(data) ? data : [])
+        setCategoriesLoaded(true)
+      }
+    } catch { /* ignore */ }
+  }, [categoriesLoaded])
+
+  // Load brands for picker
+  const loadBrands = useCallback(async () => {
+    if (brandsLoaded) return
+    try {
+      const res = await fetch("/api/admin/brands")
+      if (res.ok) {
+        const data = await res.json()
+        setAllBrandsData(Array.isArray(data) ? data : [])
+        setBrandsLoaded(true)
+      }
+    } catch { /* ignore */ }
+  }, [brandsLoaded])
+
+  // Category/brand toggle helpers
+  const toggleExpandParentSlug = (slug: string) => {
+    setExpandedParentSlugs(prev => {
+      const next = new Set(prev)
+      next.has(slug) ? next.delete(slug) : next.add(slug)
+      return next
+    })
+  }
+
+  const toggleCategory = (slug: string) => {
+    const parent = allCategoriesData.find(c => c.slug === slug)
+    const childSlugs = parent?.children?.map(c => c.slug) ?? []
+    const isSelecting = !form.couponCategoryIds.includes(slug)
+    setForm(prev => {
+      if (isSelecting) {
+        const toAdd = [slug, ...childSlugs].filter(s => !prev.couponCategoryIds.includes(s))
+        return { ...prev, couponCategoryIds: [...prev.couponCategoryIds, ...toAdd] }
+      } else {
+        const toRemove = new Set([slug, ...childSlugs])
+        return { ...prev, couponCategoryIds: prev.couponCategoryIds.filter(s => !toRemove.has(s)) }
+      }
+    })
+    if (isSelecting && childSlugs.length > 0) {
+      setExpandedParentSlugs(prev => new Set([...prev, slug]))
+    }
+  }
+
+  const removeCategory = (slug: string) => {
+    const parent = allCategoriesData.find(c => c.slug === slug)
+    const childSlugs = parent?.children?.map(c => c.slug) ?? []
+    const toRemove = new Set([slug, ...childSlugs])
+    setForm(prev => ({ ...prev, couponCategoryIds: prev.couponCategoryIds.filter(s => !toRemove.has(s)) }))
+  }
+
+  const toggleBrand = (id: string) => {
+    setForm(prev => ({
+      ...prev,
+      couponBrandIds: prev.couponBrandIds.includes(id)
+        ? prev.couponBrandIds.filter(i => i !== id)
+        : [...prev.couponBrandIds, id],
+    }))
+  }
+
+  const removeBrand = (id: string) => {
+    setForm(prev => ({ ...prev, couponBrandIds: prev.couponBrandIds.filter(i => i !== id) }))
+  }
+
+  // Outside-click to close dropdowns
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (productDropdownRef.current && !productDropdownRef.current.contains(e.target as Node))
+        setShowProductDropdown(false)
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node))
+        setShowCategoryDropdown(false)
+      if (brandDropdownRef.current && !brandDropdownRef.current.contains(e.target as Node))
+        setShowBrandDropdown(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
   }, [])
 
   // Search products
@@ -359,12 +485,16 @@ export default function NotificationTemplatesPage() {
       couponExpiresAt: template.couponExpiresAt ? new Date(template.couponExpiresAt).toISOString().slice(0, 16) : "",
       couponPerUser: template.couponPerUser,
       couponProductIds: template.couponProductIds || [],
+      couponCategoryIds: template.couponCategoryIds || [],
+      couponBrandIds: template.couponBrandIds || [],
       couponAllowOnSale: template.couponAllowOnSale,
       couponMinPurchase: template.couponMinPurchase != null ? String(template.couponMinPurchase) : "",
       active: template.active,
     })
     setActiveTab("en")
     setShowModal(true)
+    if (template.couponCategoryIds?.length > 0) loadCategories()
+    if (template.couponBrandIds?.length > 0) loadBrands()
   }
 
   // Save template
@@ -404,6 +534,8 @@ export default function NotificationTemplatesPage() {
           ? new Date(form.couponExpiresAt).toISOString() : null,
         couponPerUser: form.couponEnabled ? form.couponPerUser : 1,
         couponProductIds: form.couponEnabled ? form.couponProductIds : [],
+        couponCategoryIds: form.couponEnabled ? form.couponCategoryIds : [],
+        couponBrandIds: form.couponEnabled ? form.couponBrandIds : [],
         couponAllowOnSale: form.couponEnabled ? form.couponAllowOnSale : false,
         couponMinPurchase: form.couponEnabled && form.couponMinPurchase ? parseFloat(form.couponMinPurchase) : null,
         active: form.active,
@@ -1133,7 +1265,7 @@ export default function NotificationTemplatesPage() {
                   {/* Product picker */}
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">{t("couponProducts")}</label>
-                    <div className="relative">
+                    <div className="relative" ref={productDropdownRef}>
                       <div className="flex items-center gap-2 mb-2">
                         <button
                           type="button"
@@ -1160,8 +1292,8 @@ export default function NotificationTemplatesPage() {
                       </div>
 
                       {showProductDropdown && (
-                        <div className="absolute z-20 w-full glass-strong rounded-xl border border-white/10 shadow-2xl max-h-64 overflow-y-auto">
-                          <div className="sticky top-0 bg-slate-800/95 backdrop-blur-sm p-2 border-b border-white/10">
+                        <div className="absolute z-20 w-full bg-[#0d0d1a] rounded-xl border border-white/10 shadow-2xl max-h-64 overflow-y-auto">
+                          <div className="sticky top-0 bg-[#0d0d1a] p-2 border-b border-white/10">
                             <div className="relative">
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                               <input
@@ -1173,7 +1305,7 @@ export default function NotificationTemplatesPage() {
                                 onFocus={() => {
                                   if (!allProductsLoadedRef.current) loadAllProducts()
                                 }}
-                                placeholder={tAdmin("searchPlaceholder")}
+                                placeholder={tCoupons("searchPlaceholder")}
                                 className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                               />
                             </div>
@@ -1243,6 +1375,195 @@ export default function NotificationTemplatesPage() {
                                 </span>
                               </button>
                             ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Category picker */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">{t("couponCategories")}</label>
+                    <p className="text-xs text-gray-500 mb-3">{tCoupons("categoriesHint")}</p>
+
+                    {form.couponCategoryIds.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {form.couponCategoryIds.map((slug) => {
+                          const flat = allCategoriesData.flatMap(c => [c, ...(c.children ?? [])])
+                          const cat = flat.find(c => c.slug === slug)
+                          return (
+                            <span key={slug} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/20">
+                              <FolderOpen className="w-3 h-3" />
+                              {cat ? (locale === "bg" ? cat.nameBg : cat.nameEn) : slug}
+                              <button type="button" onClick={() => removeCategory(slug)} className="hover:text-white transition-colors">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    <div className="relative" ref={categoryDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => { setShowCategoryDropdown(v => !v); loadCategories() }}
+                        className="w-full flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-400 hover:text-white hover:border-white/20 transition-colors text-left"
+                      >
+                        <FolderOpen className="w-4 h-4 shrink-0" />
+                        {form.couponCategoryIds.length > 0
+                          ? tCoupons("selectedCategories", { count: form.couponCategoryIds.length })
+                          : tCoupons("searchCategories")}
+                      </button>
+                      {showCategoryDropdown && (
+                        <div className="absolute z-10 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0d0d1a] shadow-xl">
+                          <div className="p-2 border-b border-white/10">
+                            <input
+                              type="text"
+                              value={categorySearch}
+                              onChange={e => setCategorySearch(e.target.value)}
+                              placeholder={tCoupons("searchCategories")}
+                              className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500/50"
+                              autoFocus
+                            />
+                          </div>
+                          {allCategoriesData
+                            .filter(cat =>
+                              !categorySearch ||
+                              cat.nameEn.toLowerCase().includes(categorySearch.toLowerCase()) ||
+                              cat.nameBg.toLowerCase().includes(categorySearch.toLowerCase()) ||
+                              cat.children?.some(c =>
+                                c.nameEn.toLowerCase().includes(categorySearch.toLowerCase()) ||
+                                c.nameBg.toLowerCase().includes(categorySearch.toLowerCase())
+                              )
+                            )
+                            .map(cat => (
+                              <div key={cat.slug}>
+                                <div
+                                  onClick={() => { if (cat.children?.length) toggleExpandParentSlug(cat.slug) }}
+                                  className={`flex items-center gap-3 px-3 py-2 text-sm transition-colors ${cat.children?.length ? "cursor-pointer hover:bg-white/5" : ""} ${form.couponCategoryIds.includes(cat.slug) ? "bg-purple-500/10" : ""}`}
+                                >
+                                  <div
+                                    role="checkbox"
+                                    aria-checked={form.couponCategoryIds.includes(cat.slug)}
+                                    onClick={e => { e.stopPropagation(); toggleCategory(cat.slug) }}
+                                    className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 cursor-pointer ${form.couponCategoryIds.includes(cat.slug) ? "bg-purple-500 border-purple-500" : "border-white/20"}`}
+                                  >
+                                    {form.couponCategoryIds.includes(cat.slug) && <Check className="w-3 h-3 text-white" />}
+                                  </div>
+                                  <FolderOpen className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                  <span className="text-gray-200 font-medium truncate flex-1">{locale === "bg" ? cat.nameBg : cat.nameEn}</span>
+                                  {cat.children && cat.children.length > 0 && (
+                                    <>
+                                      <span className="text-xs text-gray-500 shrink-0">({cat.children.length})</span>
+                                      {expandedParentSlugs.has(cat.slug)
+                                        ? <ChevronDown className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                                        : <ChevronRight className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                                      }
+                                    </>
+                                  )}
+                                </div>
+                                {(expandedParentSlugs.has(cat.slug) || !!categorySearch) && cat.children?.filter(c =>
+                                  !categorySearch ||
+                                  c.nameEn.toLowerCase().includes(categorySearch.toLowerCase()) ||
+                                  c.nameBg.toLowerCase().includes(categorySearch.toLowerCase())
+                                ).map(child => (
+                                  <button
+                                    key={child.slug}
+                                    type="button"
+                                    onClick={() => toggleCategory(child.slug)}
+                                    className={`w-full flex items-center gap-3 pl-7 pr-3 py-2 text-left text-sm hover:bg-white/5 transition-colors ${form.couponCategoryIds.includes(child.slug) ? "bg-purple-500/10" : ""}`}
+                                  >
+                                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${form.couponCategoryIds.includes(child.slug) ? "bg-purple-500 border-purple-500" : "border-white/20"}`}>
+                                      {form.couponCategoryIds.includes(child.slug) && <Check className="w-3 h-3 text-white" />}
+                                    </div>
+                                    <span className="text-gray-300 truncate">{locale === "bg" ? child.nameBg : child.nameEn}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Brand picker */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">{t("couponBrands")}</label>
+                    <p className="text-xs text-gray-500 mb-3">{tCoupons("brandsHint")}</p>
+
+                    {form.couponBrandIds.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {form.couponBrandIds.map((id) => {
+                          const brand = allBrandsData.find(b => b.id === id)
+                          return (
+                            <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/20">
+                              {brand?.image ? (
+                                <img src={brand.image} alt="" className="w-3 h-3 rounded-full object-cover" />
+                              ) : (
+                                <Store className="w-3 h-3" />
+                              )}
+                              {brand ? (locale === "bg" ? brand.nameBg : brand.nameEn) : id}
+                              <button type="button" onClick={() => removeBrand(id)} className="hover:text-white transition-colors">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    <div className="relative" ref={brandDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => { setShowBrandDropdown(v => !v); loadBrands() }}
+                        className="w-full flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-400 hover:text-white hover:border-white/20 transition-colors text-left"
+                      >
+                        <Store className="w-4 h-4 shrink-0" />
+                        {form.couponBrandIds.length > 0
+                          ? tCoupons("selectedBrands", { count: form.couponBrandIds.length })
+                          : tCoupons("searchBrands")}
+                      </button>
+                      {showBrandDropdown && (
+                        <div className="absolute z-10 mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-[#0d0d1a] shadow-xl">
+                          <div className="p-2 border-b border-white/10">
+                            <input
+                              type="text"
+                              value={brandSearch}
+                              onChange={e => setBrandSearch(e.target.value)}
+                              placeholder={tCoupons("searchBrands")}
+                              className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-500/50"
+                              autoFocus
+                            />
+                          </div>
+                          {allBrandsData
+                            .filter(b =>
+                              !brandSearch ||
+                              b.nameEn.toLowerCase().includes(brandSearch.toLowerCase()) ||
+                              b.nameBg.toLowerCase().includes(brandSearch.toLowerCase())
+                            )
+                            .map(brand => (
+                              <button
+                                key={brand.id}
+                                type="button"
+                                onClick={() => toggleBrand(brand.id)}
+                                className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm hover:bg-white/5 transition-colors ${form.couponBrandIds.includes(brand.id) ? "bg-teal-500/10" : ""}`}
+                              >
+                                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${form.couponBrandIds.includes(brand.id) ? "bg-teal-500 border-teal-500" : "border-white/20"}`}>
+                                  {form.couponBrandIds.includes(brand.id) && <Check className="w-3 h-3 text-white" />}
+                                </div>
+                                {brand.image ? (
+                                  <img src={brand.image} alt="" className="w-6 h-6 rounded object-cover shrink-0" />
+                                ) : (
+                                  <Store className="w-5 h-5 text-gray-500 shrink-0" />
+                                )}
+                                <span className="text-gray-300 truncate">{locale === "bg" ? brand.nameBg : brand.nameEn}</span>
+                              </button>
+                            ))}
+                          {!brandsLoaded && (
+                            <div className="px-3 py-4 text-center text-gray-500 text-sm">
+                              <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                            </div>
                           )}
                         </div>
                       )}

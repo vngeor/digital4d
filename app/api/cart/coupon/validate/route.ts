@@ -85,24 +85,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // allowOnSale filter
-    if (!coupon.allowOnSale) {
-      eligibleItems = eligibleItems.filter((item: { onSale?: boolean }) => !item.onSale)
-      if (eligibleItems.length === 0) {
-        return NextResponse.json({ valid: false, error: "ON_SALE" })
-      }
-    }
-
-    // Fetch real prices from DB
-    const eligibleProductIds: string[] = []
-    let eligibleSubtotal = 0
+    // Fetch real prices from DB and track onSale status (Bug 1: never trust client-sent onSale)
+    type ItemPriceData = { effectivePrice: number; isOnSale: boolean }
+    const itemPriceCache = new Map<string, ItemPriceData>()
 
     for (const item of eligibleItems) {
       const { productId, packageId, quantity = 1 } = item as {
         productId: string; packageId?: string | null; quantity?: number
       }
-
-      let effectivePrice = 0
+      const cacheKey = packageId ? `pkg:${packageId}` : `prod:${productId}`
+      if (itemPriceCache.has(cacheKey)) continue
 
       if (packageId) {
         const pkg = await prisma.productPackage.findUnique({
@@ -110,19 +102,48 @@ export async function POST(request: NextRequest) {
           select: { price: true, salePrice: true },
         })
         if (pkg) {
-          effectivePrice = pkg.salePrice ? Number(pkg.salePrice) : Number(pkg.price)
+          itemPriceCache.set(cacheKey, {
+            effectivePrice: pkg.salePrice ? Number(pkg.salePrice) : Number(pkg.price),
+            isOnSale: pkg.salePrice != null,
+          })
         }
       } else {
         const product = await prisma.product.findUnique({
           where: { id: productId },
-          select: { price: true, salePrice: true },
+          select: { price: true, salePrice: true, onSale: true },
         })
         if (product) {
-          effectivePrice = product.salePrice ? Number(product.salePrice) : Number(product.price)
+          itemPriceCache.set(cacheKey, {
+            effectivePrice: product.salePrice ? Number(product.salePrice) : Number(product.price),
+            isOnSale: !!product.onSale,
+          })
         }
       }
 
-      eligibleSubtotal += effectivePrice * quantity
+    }
+
+    // allowOnSale filter — uses DB-fetched status (not client-provided onSale)
+    if (!coupon.allowOnSale) {
+      eligibleItems = eligibleItems.filter((item: { productId: string; packageId?: string | null }) => {
+        const cacheKey = item.packageId ? `pkg:${item.packageId}` : `prod:${item.productId}`
+        return !itemPriceCache.get(cacheKey)?.isOnSale
+      })
+      if (eligibleItems.length === 0) {
+        return NextResponse.json({ valid: false, error: "ON_SALE" })
+      }
+    }
+
+    // Compute eligible subtotal and product IDs from final eligible items
+    let eligibleSubtotal = 0
+    const eligibleProductIds: string[] = []
+
+    for (const item of eligibleItems) {
+      const { productId, packageId, quantity = 1 } = item as {
+        productId: string; packageId?: string | null; quantity?: number
+      }
+      const cacheKey = packageId ? `pkg:${packageId}` : `prod:${productId}`
+      const priceData = itemPriceCache.get(cacheKey)
+      if (priceData) eligibleSubtotal += priceData.effectivePrice * quantity
       eligibleProductIds.push(productId)
     }
 
@@ -135,17 +156,18 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Discount calculation
+    // Discount calculation — total must never drop to €0 (min €0.50 remaining)
     let discountAmount = 0
     if (coupon.type === "percentage") {
-      discountAmount = Math.round(eligibleSubtotal * (Number(coupon.value) / 100) * 100) / 100
+      const raw = Math.round(eligibleSubtotal * (Number(coupon.value) / 100) * 100) / 100
+      discountAmount = Math.round(Math.min(raw, eligibleSubtotal - 0.50) * 100) / 100
     } else {
-      // fixed — never reduce below €0.50
+      // fixed — round first, then check (Bug 2 fix: rounding before the zero check)
       discountAmount = Math.min(Number(coupon.value), eligibleSubtotal - 0.5)
+      discountAmount = Math.round(discountAmount * 100) / 100
       if (discountAmount <= 0) {
         return NextResponse.json({ valid: false, error: "WRONG_PRODUCT" })
       }
-      discountAmount = Math.round(discountAmount * 100) / 100
     }
 
     return NextResponse.json({

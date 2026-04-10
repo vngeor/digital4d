@@ -436,15 +436,20 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
   const currency = items?.[0]?.currency || "EUR"
 
-  // Free shipping progress — only show when enabled, threshold > 0, and currencies match
+  // Effective total after coupon discount (used for free shipping and total display)
+  const effectiveTotal = appliedCoupon
+    ? Math.max(subtotal - appliedCoupon.discountAmount, 0.50)
+    : subtotal
+
+  // Free shipping progress — based on post-discount total, only when enabled, threshold > 0, currencies match
   const threshold = shippingSettings?.freeShippingThreshold ?? 0
   const showFreeShipping =
     !!shippingSettings?.freeShippingEnabled &&
-    threshold > 0 &&                                       // Guard against division by zero
-    shippingSettings.freeShippingCurrency === currency     // Guard against currency mismatch
-  const progress = showFreeShipping ? Math.min(subtotal / threshold, 1) : 0
-  const amountLeft = showFreeShipping ? Math.max(threshold - subtotal, 0) : 0
-  const qualifies = showFreeShipping && subtotal >= threshold
+    threshold > 0 &&
+    shippingSettings.freeShippingCurrency === currency
+  const progress = showFreeShipping ? Math.min(effectiveTotal / threshold, 1) : 0
+  const amountLeft = showFreeShipping ? Math.max(threshold - effectiveTotal, 0) : 0
+  const qualifies = showFreeShipping && effectiveTotal >= threshold
 
   const totalCount = items ? items.reduce((sum, i) => sum + i.quantity, 0) : 0
 
@@ -756,7 +761,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                 </div>
                 <div className="flex items-center justify-between border-t border-white/10 pt-2">
                   <span className="text-white font-semibold text-sm">{t("total")}</span>
-                  <span className="text-white font-bold text-base">{Math.max(subtotal - appliedCoupon.discountAmount, 0).toFixed(2)} {currency}</span>
+                  <span className="text-white font-bold text-base">{effectiveTotal.toFixed(2)} {currency}</span>
                 </div>
               </>
             )}

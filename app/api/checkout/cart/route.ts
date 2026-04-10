@@ -254,7 +254,8 @@ export async function POST(request: NextRequest) {
               if (!coupon.minPurchase || eligibleSubtotal >= Number(coupon.minPurchase)) {
                 let discountAmount = 0
                 if (coupon.type === "percentage") {
-                  discountAmount = Math.round(eligibleSubtotal * (Number(coupon.value) / 100) * 100) / 100
+                  const raw = Math.round(eligibleSubtotal * (Number(coupon.value) / 100) * 100) / 100
+                  discountAmount = Math.round(Math.min(raw, eligibleSubtotal - 0.50) * 100) / 100
                 } else {
                   discountAmount = Math.min(Number(coupon.value), eligibleSubtotal - 0.5)
                   discountAmount = Math.round(discountAmount * 100) / 100
@@ -281,21 +282,30 @@ export async function POST(request: NextRequest) {
         // Non-critical — proceed without coupon
       }
     }
-    const stripeSession = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      mode: "payment",
-      ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
-      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/checkout/cancel`,
-      customer_email: session.user.email || undefined,
-      metadata: {
-        type: "cart",
-        userId: session.user.id,
-        items: JSON.stringify(metaItems),
-        ...(validatedCouponId ? { couponId: validatedCouponId, couponCode: validatedCouponCode ?? "" } : {}),
-      },
-    })
+    let stripeSession
+    try {
+      stripeSession = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: lineItems,
+        mode: "payment",
+        ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
+        success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/checkout/cancel`,
+        customer_email: session.user.email || undefined,
+        metadata: {
+          type: "cart",
+          userId: session.user.id,
+          items: JSON.stringify(metaItems),
+          ...(validatedCouponId ? { couponId: validatedCouponId, couponCode: validatedCouponCode ?? "" } : {}),
+        },
+      })
+    } catch (sessionError) {
+      // Clean up orphaned Stripe coupon if session creation failed
+      if (stripeCouponId) {
+        try { await stripe.coupons.del(stripeCouponId) } catch { /* ignore cleanup errors */ }
+      }
+      throw sessionError
+    }
 
     return NextResponse.json({ sessionId: stripeSession.id, url: stripeSession.url })
   } catch (error) {

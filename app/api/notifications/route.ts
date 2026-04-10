@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const all = request.nextUrl.searchParams.get("all") === "true"
   try {
     const session = await auth()
     if (!session?.user?.email) {
@@ -44,14 +45,17 @@ export async function GET() {
               { scheduledAt: null },
               { scheduledAt: { lte: now } },
             ],
-            AND: [
-              {
-                OR: [
-                  { read: false },
-                  { readAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }, // Also show recently read (last 7 days)
-                ],
-              },
-            ],
+            // When fetching all, show every notification; otherwise only unread + recently read (7 days)
+            ...(all ? {} : {
+              AND: [
+                {
+                  OR: [
+                    { read: false },
+                    { readAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+                  ],
+                },
+              ],
+            }),
           },
           include: {
             coupon: {
@@ -59,7 +63,7 @@ export async function GET() {
             },
           },
           orderBy: { createdAt: "desc" },
-          take: 20,
+          ...(all ? {} : { take: 20 }),
         })
       : []
 

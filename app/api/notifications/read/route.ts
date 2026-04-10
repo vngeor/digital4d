@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 
+export async function PUT() {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    await prisma.notification.updateMany({
+      where: { userId: session.user.id, read: false },
+      data: { read: true, readAt: new Date() },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error marking all notifications as read:", error instanceof Error ? error.message : "Unknown")
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()

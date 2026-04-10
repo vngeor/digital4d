@@ -145,33 +145,78 @@ export async function processTemplates(overrideDate?: Date, templateId?: string)
     try {
       result.processed++
 
-      // Calculate the event date: today + daysBefore
-      // If daysBefore = 7 and trigger = birthday, we look for birthdays 7 days from now
-      const eventDate = new Date(today)
-      eventDate.setDate(eventDate.getDate() + template.daysBefore)
-      // Use event year (not today's year) to handle daysBefore crossing year boundaries
-      const eventYear = eventDate.getFullYear()
+      // Window scan: check all days from today+1 to today+daysBefore.
+      // This catches missed crons, late-registering users, and newly created templates.
+      const maxDays = Math.max(template.daysBefore, 1)
 
-      // Non-recurring custom_date templates: only fire in current year
+      type UserWithEvent = { id: string; name: string | null; eventDate: Date }
+      const usersWithEventDates: UserWithEvent[] = []
+      const seenIds = new Set<string>()
+
+      // Non-recurring custom_date guard: fire at most once ever
       if (template.trigger === "custom_date" && !template.recurring) {
-        // Check if this template has ever been sent (any year)
         const existingLog = await prisma.templateSendLog.findFirst({
           where: { templateId: template.id },
         })
-        if (existingLog) continue // Already fired once
+        if (existingLog) {
+          await prisma.notificationTemplate.update({
+            where: { id: template.id },
+            data: { lastRunAt: new Date(), lastRunCount: 0 },
+          })
+          continue
+        }
       }
 
-      // Find matching users
-      const users = await findMatchingUsers(
-        template.trigger,
-        eventDate,
-        template.customMonth,
-        template.customDay,
-        template.recurring
-      )
+      if (template.trigger === "birthday") {
+        // Birthday: scan full window — different users may have birthdays on different days
+        const allBirthdayUsers = await prisma.user.findMany({
+          where: { birthDate: { not: null } },
+          select: { id: true, name: true, birthDate: true },
+        })
 
-      if (users.length === 0) {
-        // Update lastRunAt even if no matches
+        for (let daysAhead = 1; daysAhead <= maxDays; daysAhead++) {
+          const candDate = new Date(today)
+          candDate.setDate(candDate.getDate() + daysAhead)
+          const candMonth = candDate.getMonth()
+          const candDay = candDate.getDate()
+          const candYear = candDate.getFullYear()
+
+          for (const u of allBirthdayUsers) {
+            if (seenIds.has(u.id) || !u.birthDate) continue
+            const bd = new Date(u.birthDate)
+            const bdMonth = bd.getMonth()
+            const bdDay = bd.getDate()
+
+            const matches =
+              (bdMonth === candMonth && bdDay === candDay) ||
+              (!isLeapYear(candYear) && candMonth === 1 && candDay === 28 && bdMonth === 1 && bdDay === 29)
+
+            if (matches) {
+              seenIds.add(u.id)
+              usersWithEventDates.push({ id: u.id, name: u.name, eventDate: candDate })
+            }
+          }
+        }
+      } else {
+        // Non-birthday: scan window until the target date is found, then stop
+        for (let daysAhead = 1; daysAhead <= maxDays; daysAhead++) {
+          const candDate = new Date(today)
+          candDate.setDate(candDate.getDate() + daysAhead)
+          const rawUsers = await findMatchingUsers(
+            template.trigger,
+            candDate,
+            template.customMonth,
+            template.customDay,
+            template.recurring
+          )
+          if (rawUsers.length > 0) {
+            usersWithEventDates.push(...rawUsers.map(u => ({ ...u, eventDate: candDate })))
+            break // Only one target date possible per non-birthday trigger
+          }
+        }
+      }
+
+      if (usersWithEventDates.length === 0) {
         await prisma.notificationTemplate.update({
           where: { id: template.id },
           data: { lastRunAt: new Date(), lastRunCount: 0 },
@@ -179,17 +224,20 @@ export async function processTemplates(overrideDate?: Date, templateId?: string)
         continue
       }
 
-      // Get existing send logs for this template + year to filter out already-sent users
+      // Dedup — query all event years in the window (usually 1, max 2 at year boundary)
+      const yearsInWindow = Array.from(new Set(usersWithEventDates.map(u => u.eventDate.getFullYear())))
       const existingLogs = await prisma.templateSendLog.findMany({
         where: {
           templateId: template.id,
-          year: eventYear,
+          year: { in: yearsInWindow },
         },
-        select: { userId: true },
+        select: { userId: true, year: true },
       })
-      const alreadySentUserIds = new Set(existingLogs.map((l) => l.userId))
+      const alreadySentKey = new Set(existingLogs.map(l => `${l.userId}:${l.year}`))
 
-      const eligibleUsers = users.filter((u) => !alreadySentUserIds.has(u.id))
+      const eligibleUsers = usersWithEventDates.filter(
+        u => !alreadySentKey.has(`${u.id}:${u.eventDate.getFullYear()}`)
+      )
 
       if (eligibleUsers.length === 0) {
         await prisma.notificationTemplate.update({
@@ -204,6 +252,8 @@ export async function processTemplates(overrideDate?: Date, templateId?: string)
 
       for (const user of eligibleUsers) {
         try {
+          const eventYear = user.eventDate.getFullYear()
+
           let couponId: string | undefined
           let couponCode: string | undefined
           let couponValueStr: string | undefined
@@ -240,6 +290,8 @@ export async function processTemplates(overrideDate?: Date, templateId?: string)
                   minPurchase: template.couponMinPurchase,
                   perUserLimit: template.couponPerUser,
                   productIds: template.couponProductIds,
+                  categoryIds: template.couponCategoryIds || [],
+                  brandIds: template.couponBrandIds || [],
                   allowOnSale: template.couponAllowOnSale,
                 },
               })
@@ -261,6 +313,8 @@ export async function processTemplates(overrideDate?: Date, templateId?: string)
                   maxUses: 1,
                   perUserLimit: template.couponPerUser,
                   productIds: template.couponProductIds,
+                  categoryIds: template.couponCategoryIds || [],
+                  brandIds: template.couponBrandIds || [],
                   allowOnSale: template.couponAllowOnSale,
                   showOnProduct: false, // Auto-generated coupons don't show on product pages
                   active: true,
@@ -412,6 +466,8 @@ export async function testSendTemplate(
           minPurchase: template.couponMinPurchase,
           perUserLimit: template.couponPerUser,
           productIds: template.couponProductIds,
+          categoryIds: template.couponCategoryIds || [],
+          brandIds: template.couponBrandIds || [],
           allowOnSale: template.couponAllowOnSale,
         },
       })
@@ -433,6 +489,8 @@ export async function testSendTemplate(
           maxUses: 1,
           perUserLimit: template.couponPerUser,
           productIds: template.couponProductIds,
+          categoryIds: template.couponCategoryIds || [],
+          brandIds: template.couponBrandIds || [],
           allowOnSale: template.couponAllowOnSale,
           showOnProduct: false,
           active: true,
@@ -513,7 +571,11 @@ export async function sendTemplateToAllUsers(templateId: string): Promise<{
     throw new Error("Birthday templates cannot be sent to all users — they are triggered by each user's birth date")
   }
 
-  const currentYear = new Date().getFullYear()
+  // Bug 4 fix: compute event year the same way as processTemplates (today + daysBefore)
+  // so that dedup year matches between manual send and cron — critical at year boundaries
+  const eventDate = new Date()
+  eventDate.setDate(eventDate.getDate() + template.daysBefore)
+  const currentYear = eventDate.getFullYear()
 
   // Get all users
   const allUsers = await prisma.user.findMany({
@@ -564,6 +626,8 @@ export async function sendTemplateToAllUsers(templateId: string): Promise<{
               minPurchase: template.couponMinPurchase,
               perUserLimit: template.couponPerUser,
               productIds: template.couponProductIds,
+              categoryIds: template.couponCategoryIds || [],
+              brandIds: template.couponBrandIds || [],
               allowOnSale: template.couponAllowOnSale,
             },
           })
@@ -584,6 +648,8 @@ export async function sendTemplateToAllUsers(templateId: string): Promise<{
               maxUses: 1,
               perUserLimit: template.couponPerUser,
               productIds: template.couponProductIds,
+              categoryIds: template.couponCategoryIds || [],
+              brandIds: template.couponBrandIds || [],
               allowOnSale: template.couponAllowOnSale,
               showOnProduct: false,
               active: true,
