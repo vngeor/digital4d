@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     // Rate limit: 20 searches per IP per minute
     const ip = getClientIp(request)
-    const { success } = rateLimit(`search:${ip}`, { limit: 20, windowMs: 60_000 })
+    const { success } = await rateLimit(`search:${ip}`, { limit: 20, windowMs: 60_000 })
     if (!success) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }

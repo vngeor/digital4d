@@ -6,7 +6,8 @@ import { Check, ShoppingCart } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { addToCart, syncCartItemToServer, getCart, cartItemKey } from "@/lib/cart"
-import { parseTiers } from "@/lib/bulkDiscount"
+import { ProductImageBadges } from "./ProductBadges"
+import { computeDiscountPercent, computeHasBulkDiscount, computeIsNew } from "@/lib/badgeHelpers"
 
 export interface UpsellProduct {
   id: string
@@ -61,10 +62,11 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
       ? parseFloat(p.salePrice)
       : parseFloat(p.price || "0")
 
-  const isUnavailable = ["sold_out", "coming_soon"].includes(p.status)
   const isNew = p.createdAt
     ? Date.now() - new Date(p.createdAt).getTime() < 30 * 24 * 60 * 60 * 1000
     : false
+
+  const isUnavailable = ["sold_out", "coming_soon"].includes(p.status)
 
   const handleAdd = () => {
     if (p.priceType !== "fixed" || isUnavailable) return
@@ -117,58 +119,17 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
             <ShoppingCart className="w-6 h-6 text-slate-600" />
           </div>
         )}
-        {/* Sale badge — top right */}
-        {(() => {
-          if (p.onSale && p.salePrice) {
-            const orig = parseFloat(p.price)
-            const pct = orig > 0 ? Math.round((1 - parseFloat(p.salePrice) / orig) * 100) : 0
-            if (pct > 0) return (
-              <span className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded bg-red-500/90 text-white leading-none z-10">
-                -{pct}%
-              </span>
-            )
-          }
-          if (parseTiers(p.bulkDiscountTiers || "").length > 0) return (
-            <span className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded bg-red-500/90 text-white leading-none z-10">
-              SALE
-            </span>
-          )
-          return null
-        })()}
 
-        {/* Badges — top left: NEW + Best Seller + Featured */}
-        {(p.bestSeller || p.featured || isNew) && (
-          <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 z-10">
-            {isNew && (
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/90 text-white leading-none">
-                NEW
-              </span>
-            )}
-            {p.bestSeller && (
-              <span className="flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded bg-amber-500/90 text-white leading-none">
-                <Check className="w-2 h-2" />
-                Best Seller
-              </span>
-            )}
-            {p.featured && (
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-violet-500/90 text-white leading-none">
-                ⭐ Featured
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Coupon badge — bottom left */}
-        {p.coupon && (
-          <div className="absolute bottom-1.5 left-1.5 z-10">
-            <span className="flex items-center gap-0.5 text-[8px] font-bold px-1.5 py-0.5 rounded bg-orange-500/90 text-white leading-none">
-              🎟{" "}
-              {p.coupon.type === "percentage"
-                ? `${p.coupon.value}%`
-                : `${parseFloat(p.coupon.value).toFixed(0)}${p.coupon.currency ?? "€"}`}
-            </span>
-          </div>
-        )}
+        <ProductImageBadges
+          size="xs"
+          isNew={computeIsNew(p.createdAt)}
+          featured={p.featured}
+          bestSeller={p.bestSeller}
+          onSale={p.onSale}
+          discountPercent={computeDiscountPercent(p.price, p.salePrice)}
+          hasBulkDiscount={computeHasBulkDiscount(p.bulkDiscountTiers)}
+          coupon={p.coupon ?? null}
+        />
       </Link>
 
       {/* Info */}

@@ -65,6 +65,7 @@ model User {
   templatesCreated NotificationTemplate[] @relation("TemplateCreator")
   orders           Order[]
   createdProducts  Product[]              @relation("ProductCreator")
+  quoteRequests    QuoteRequest[]
   sessions         Session[]
   permissions      UserPermission[]
   wishlistItems    WishlistItem[]
@@ -355,12 +356,15 @@ model QuoteRequest {
   quotedAt     DateTime?
   viewedAt     DateTime?
   quoteNumber  String         @unique @default("")
+  userId       String?
   messages     QuoteMessage[]
   product      Product?       @relation(fields: [productId], references: [id])
+  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([email])
   @@index([productId])
+  @@index([userId])
 }
 
 model QuoteMessage {
@@ -487,6 +491,8 @@ model Coupon {
   usedCount     Int            @default(0)
   perUserLimit  Int            @default(1)
   productIds    String[]
+  categoryIds   String[]
+  brandIds      String[]
   allowOnSale   Boolean        @default(false)
   active        Boolean        @default(true)
   startsAt      DateTime?

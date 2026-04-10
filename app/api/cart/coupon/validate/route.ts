@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { rateLimit, getClientIp } from "@/lib/rateLimit"
+import prisma from "@/lib/prisma"
+import { rateLimit } from "@/lib/rateLimit"
+import { isProductEligibleForCoupon } from "@/lib/couponHelpers"
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIp(request)
-  const { success } = rateLimit(`coupon-cart:${ip}`, { limit: 10, windowMs: 60 * 1000 })
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+  const { success } = await rateLimit(`coupon-cart:${ip}`, { limit: 10, windowMs: 60 * 1000 })
   if (!success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 })
   }
@@ -39,33 +40,68 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ valid: false, error: "INVALID" })
     }
 
-    const cartCurrency = items[0]?.currency as string
+    // Currency check
+    const cartCurrency = items[0]?.currency
     if (coupon.currency && coupon.currency !== cartCurrency) {
       return NextResponse.json({ valid: false, error: "CURRENCY_MISMATCH" })
     }
 
-    type InputItem = { productId: string; packageId?: string | null; onSale?: boolean; currency: string; quantity: number }
-    let eligibleItems: InputItem[] = [...items] as InputItem[]
+    // Eligible items — support productIds, categoryIds, and brandIds targeting
+    const productInfoMap = new Map<string, { category: string; brandId: string | null }>()
+    let allCategories: { id: string; slug: string; parentId: string | null }[] = []
 
-    if (coupon.productIds && coupon.productIds.length > 0) {
-      eligibleItems = eligibleItems.filter(item => coupon.productIds.includes(item.productId))
+    const needsProductInfo = (coupon.categoryIds?.length ?? 0) > 0 || (coupon.brandIds?.length ?? 0) > 0
+    if (needsProductInfo) {
+      const pids = items.map((i: { productId: string }) => i.productId)
+      const [productRecords, cats] = await Promise.all([
+        prisma.product.findMany({ where: { id: { in: pids } }, select: { id: true, category: true, brandId: true } }),
+        prisma.productCategory.findMany({ select: { id: true, slug: true, parentId: true } }),
+      ])
+      for (const p of productRecords) productInfoMap.set(p.id, { category: p.category, brandId: p.brandId })
+      allCategories = cats
+    }
+
+    const hasRestrictions =
+      (coupon.productIds?.length ?? 0) > 0 ||
+      (coupon.categoryIds?.length ?? 0) > 0 ||
+      (coupon.brandIds?.length ?? 0) > 0
+
+    let eligibleItems = items
+    if (hasRestrictions) {
+      eligibleItems = items.filter((item: { productId: string }) => {
+        const info = productInfoMap.get(item.productId)
+        return isProductEligibleForCoupon(
+          item.productId,
+          info?.category ?? "",
+          info?.brandId ?? null,
+          coupon.productIds ?? [],
+          coupon.categoryIds ?? [],
+          coupon.brandIds ?? [],
+          allCategories
+        )
+      })
       if (eligibleItems.length === 0) {
         return NextResponse.json({ valid: false, error: "WRONG_PRODUCT" })
       }
     }
 
+    // allowOnSale filter
     if (!coupon.allowOnSale) {
-      eligibleItems = eligibleItems.filter(item => !item.onSale)
+      eligibleItems = eligibleItems.filter((item: { onSale?: boolean }) => !item.onSale)
       if (eligibleItems.length === 0) {
         return NextResponse.json({ valid: false, error: "ON_SALE" })
       }
     }
 
+    // Fetch real prices from DB
     const eligibleProductIds: string[] = []
     let eligibleSubtotal = 0
 
     for (const item of eligibleItems) {
-      const { productId, packageId, quantity = 1 } = item
+      const { productId, packageId, quantity = 1 } = item as {
+        productId: string; packageId?: string | null; quantity?: number
+      }
+
       let effectivePrice = 0
 
       if (packageId) {
@@ -73,19 +109,24 @@ export async function POST(request: NextRequest) {
           where: { id: packageId },
           select: { price: true, salePrice: true },
         })
-        if (pkg) effectivePrice = pkg.salePrice ? Number(pkg.salePrice) : Number(pkg.price)
+        if (pkg) {
+          effectivePrice = pkg.salePrice ? Number(pkg.salePrice) : Number(pkg.price)
+        }
       } else {
         const product = await prisma.product.findUnique({
           where: { id: productId },
           select: { price: true, salePrice: true },
         })
-        if (product) effectivePrice = product.salePrice ? Number(product.salePrice) : Number(product.price)
+        if (product) {
+          effectivePrice = product.salePrice ? Number(product.salePrice) : Number(product.price)
+        }
       }
 
       eligibleSubtotal += effectivePrice * quantity
       eligibleProductIds.push(productId)
     }
 
+    // minPurchase check
     if (coupon.minPurchase && eligibleSubtotal < Number(coupon.minPurchase)) {
       return NextResponse.json({
         valid: false,
@@ -94,10 +135,12 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Discount calculation
     let discountAmount = 0
     if (coupon.type === "percentage") {
       discountAmount = Math.round(eligibleSubtotal * (Number(coupon.value) / 100) * 100) / 100
     } else {
+      // fixed — never reduce below €0.50
       discountAmount = Math.min(Number(coupon.value), eligibleSubtotal - 0.5)
       if (discountAmount <= 0) {
         return NextResponse.json({ valid: false, error: "WRONG_PRODUCT" })

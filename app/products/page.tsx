@@ -4,6 +4,7 @@ import { Header } from "../components/Header"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 import { ProductCatalog } from "../components/ProductCatalog"
+import { isCategoryMatch } from "@/lib/couponHelpers"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { ArrowLeft } from "lucide-react"
 import type { Metadata } from "next"
@@ -55,29 +56,46 @@ export default async function ProductsPage() {
                     { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
                 ],
             },
-            select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
+            select: { code: true, type: true, value: true, currency: true, productIds: true, categoryIds: true, brandIds: true, allowOnSale: true, expiresAt: true },
         }),
         auth(),
     ])
 
     // Build coupon map: productId → best coupon badge info
-    const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
-    const globalCoupons = promotedCouponsRaw.filter(c => c.productIds.length === 0)
-    const specificCoupons = promotedCouponsRaw.filter(c => c.productIds.length > 0)
+    const allCategories = await prisma.productCategory.findMany({ select: { id: true, slug: true, parentId: true } })
+    const couponMap: Record<string, { code: string; type: string; value: string; currency: string | null; expiresAt: string | null }> = {}
+
+    const toCouponBadge = (c: typeof promotedCouponsRaw[0]) => ({
+        code: c.code, type: c.type, value: c.value.toString(), currency: c.currency, expiresAt: c.expiresAt?.toISOString() ?? null
+    })
 
     for (const product of products) {
         const isOnSale = product.onSale && product.salePrice
-        const specific = specificCoupons.find(c =>
-            c.productIds.includes(product.id) && !(isOnSale && !c.allowOnSale)
+        // 1. Product match
+        const direct = promotedCouponsRaw.find(c =>
+            c.productIds.length > 0 && c.productIds.includes(product.id) && !(isOnSale && !c.allowOnSale)
         )
-        if (specific) {
-            couponMap[product.id] = { type: specific.type, value: specific.value.toString(), currency: specific.currency }
-            continue
-        }
-        const global = globalCoupons.find(c => !(isOnSale && !c.allowOnSale))
-        if (global) {
-            couponMap[product.id] = { type: global.type, value: global.value.toString(), currency: global.currency }
-        }
+        if (direct) { couponMap[product.id] = toCouponBadge(direct); continue }
+        // 2. Category match
+        const byCategory = promotedCouponsRaw.find(c =>
+            c.productIds.length === 0 && (c.categoryIds?.length ?? 0) > 0 &&
+            !(isOnSale && !c.allowOnSale) &&
+            isCategoryMatch(product.category, c.categoryIds ?? [], allCategories)
+        )
+        if (byCategory) { couponMap[product.id] = toCouponBadge(byCategory); continue }
+        // 3. Brand match
+        const byBrand = promotedCouponsRaw.find(c =>
+            c.productIds.length === 0 && (c.categoryIds?.length ?? 0) === 0 &&
+            (c.brandIds?.length ?? 0) > 0 && product.brand?.id &&
+            (c.brandIds ?? []).includes(product.brand.id) && !(isOnSale && !c.allowOnSale)
+        )
+        if (byBrand) { couponMap[product.id] = toCouponBadge(byBrand); continue }
+        // 4. Global
+        const global = promotedCouponsRaw.find(c =>
+            c.productIds.length === 0 && (c.categoryIds?.length ?? 0) === 0 &&
+            (c.brandIds?.length ?? 0) === 0 && !(isOnSale && !c.allowOnSale)
+        )
+        if (global) { couponMap[product.id] = toCouponBadge(global) }
     }
 
     // Compute display image: first available (in_stock/pre_order) variant image, or main product image

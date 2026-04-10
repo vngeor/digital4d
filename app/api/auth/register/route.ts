@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit: 3 registrations per IP per hour
     const ip = getClientIp(request)
-    const { success, resetAt } = rateLimit(`register:${ip}`, {
+    const { success, resetAt } = await rateLimit(`register:${ip}`, {
       limit: 3,
       windowMs: 60 * 60 * 1000,
     })

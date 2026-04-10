@@ -61,6 +61,7 @@ interface PromotedCoupon {
     currency: string | null
     expiresAt: string | null
     allowOnSale?: boolean
+    minPurchase?: number | null
 }
 
 interface ProductDetailClientProps {

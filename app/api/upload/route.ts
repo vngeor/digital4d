@@ -7,6 +7,26 @@ import path from "path"
 import sharp from "sharp"
 import { prisma } from "@/lib/prisma"
 
+/**
+ * Detect image type from magic bytes.
+ * Prevents Content-Type spoofing — a malicious file with a fake MIME header
+ * will not match its actual bytes and will be rejected.
+ */
+function detectImageMagicBytes(buf: Buffer): string | null {
+  if (buf.length < 12) return null
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return "image/jpeg"
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47 &&
+      buf[4] === 0x0D && buf[5] === 0x0A && buf[6] === 0x1A && buf[7] === 0x0A) return "image/png"
+  // GIF: 47 49 46 38 (GIF8)
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return "image/gif"
+  // WebP: 52 49 46 46 ?? ?? ?? ?? 57 45 42 50 (RIFF????WEBP)
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+      buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return "image/webp"
+  return null
+}
+
 // Check if we should use local storage
 const useLocalStorage = !process.env.BLOB_READ_WRITE_TOKEN || process.env.USE_LOCAL_UPLOADS === "true"
 
@@ -100,6 +120,25 @@ export async function POST(request: NextRequest) {
   // Get original file buffer
   const originalBuffer = Buffer.from(await file.arrayBuffer())
   const originalSize = originalBuffer.length
+
+  // Validate magic bytes — reject files whose content doesn't match their MIME type
+  const detectedMime = detectImageMagicBytes(originalBuffer)
+  if (!detectedMime) {
+    return NextResponse.json(
+      { error: "File content is not a recognised image format." },
+      { status: 400 }
+    )
+  }
+  // Allow jpeg/jpg variants together; otherwise MIME must match
+  const mimeMatches =
+    detectedMime === file.type ||
+    (detectedMime === "image/jpeg" && file.type === "image/jpg")
+  if (!mimeMatches) {
+    return NextResponse.json(
+      { error: "File content does not match its declared type." },
+      { status: 400 }
+    )
+  }
 
   // Compress the image
   const { data: compressedBuffer, extension } = await compressImage(originalBuffer, file.type)

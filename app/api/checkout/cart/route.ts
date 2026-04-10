@@ -3,6 +3,7 @@ import Stripe from "stripe"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 import { parseTiers, getActiveTier, applyBulkDiscount } from "@/lib/bulkDiscount"
+import { isProductEligibleForCoupon } from "@/lib/couponHelpers"
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { items: rawItems, couponCode: rawCouponCode } = body
+    const { items: rawItems, couponCode } = body
 
     if (!Array.isArray(rawItems) || rawItems.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 })
@@ -48,6 +49,8 @@ export async function POST(request: NextRequest) {
       currency: string
       fileType: string
       quantity: number
+      category: string
+      brandId: string | null
     }> = []
 
     let sharedCurrency: string | null = null
@@ -143,6 +146,8 @@ export async function POST(request: NextRequest) {
         currency,
         fileType: product.fileType || "physical",
         quantity,
+        category: product.category,
+        brandId: product.brandId,
       })
     }
 
@@ -195,66 +200,6 @@ export async function POST(request: NextRequest) {
       Object.assign(metaItems, compactItems)
     }
 
-    // Validate coupon if provided
-    let stripeCouponId: string | undefined
-    let couponDbId: string | undefined
-    let couponDbCode: string | undefined
-
-    if (rawCouponCode && typeof rawCouponCode === "string") {
-      try {
-        const couponCode = rawCouponCode.trim().toUpperCase()
-        const coupon = await prisma.coupon.findFirst({
-          where: { code: couponCode, active: true },
-        })
-        if (coupon) {
-          const now = new Date()
-          const isValid =
-            (!coupon.startsAt || coupon.startsAt <= now) &&
-            (!coupon.expiresAt || coupon.expiresAt > now) &&
-            (!coupon.maxUses || coupon.usedCount < coupon.maxUses)
-
-          if (isValid) {
-            type ValidatedItemLite = { productId: string; effectivePrice: number; quantity: number }
-            let eligibleItems: ValidatedItemLite[] = validatedItems
-            if (coupon.productIds.length > 0) {
-              eligibleItems = validatedItems.filter(item => coupon.productIds.includes(item.productId))
-            }
-
-            if (eligibleItems.length > 0) {
-              const eligibleSubtotal = eligibleItems.reduce(
-                (sum, item) => sum + item.effectivePrice * item.quantity, 0
-              )
-
-              let discountAmount = 0
-              if (coupon.type === "percentage") {
-                discountAmount = Math.round(eligibleSubtotal * (Number(coupon.value) / 100) * 100) / 100
-              } else {
-                discountAmount = Math.min(Number(coupon.value), eligibleSubtotal - 0.5)
-                discountAmount = Math.round(discountAmount * 100) / 100
-              }
-
-              if (discountAmount > 0) {
-                const discountCents = Math.round(discountAmount * 100)
-                const stripeSdk = getStripe()
-              const sc = await stripeSdk.coupons.create({
-                  amount_off: discountCents,
-                  currency: stripeCurrency,
-                  duration: "once",
-                  max_redemptions: 1,
-                })
-                stripeCouponId = sc.id
-                couponDbId = coupon.id
-                couponDbCode = coupon.code
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Cart coupon error:", err instanceof Error ? err.message : "error")
-        // Don't block checkout if coupon fails
-      }
-    }
-
     // Get base URL
     const ALLOWED_ORIGINS = ["https://www.digital4d.eu", "https://digital4d.eu", "http://localhost:3000"]
     const origin = request.headers.get("origin") || ""
@@ -262,19 +207,93 @@ export async function POST(request: NextRequest) {
       || (ALLOWED_ORIGINS.includes(origin) ? origin : "https://www.digital4d.eu")
 
     const stripe = getStripe()
+
+    // Server-side coupon validation (if couponCode provided)
+    let stripeCouponId: string | null = null
+    let validatedCouponId: string | null = null
+    let validatedCouponCode: string | null = null
+
+    if (couponCode && typeof couponCode === "string") {
+      try {
+        const coupon = await prisma.coupon.findFirst({
+          where: { code: couponCode.trim().toUpperCase(), active: true },
+        })
+
+        if (coupon) {
+          const now = new Date()
+          const isValid =
+            (!coupon.startsAt || coupon.startsAt <= now) &&
+            (!coupon.expiresAt || coupon.expiresAt >= now) &&
+            (!coupon.maxUses || coupon.usedCount < coupon.maxUses) &&
+            (!coupon.currency || coupon.currency === sharedCurrency)
+
+          if (isValid) {
+            // Filter eligible items by productIds, categoryIds, or brandIds
+            let allCategories: { id: string; slug: string; parentId: string | null }[] = []
+            if ((coupon.categoryIds?.length ?? 0) > 0) {
+              allCategories = await prisma.productCategory.findMany({ select: { id: true, slug: true, parentId: true } })
+            }
+            const hasRestrictions =
+              (coupon.productIds?.length ?? 0) > 0 ||
+              (coupon.categoryIds?.length ?? 0) > 0 ||
+              (coupon.brandIds?.length ?? 0) > 0
+
+            let eligibleItems = validatedItems
+            if (hasRestrictions) {
+              eligibleItems = validatedItems.filter(i =>
+                isProductEligibleForCoupon(
+                  i.productId, i.category ?? "", i.brandId ?? null,
+                  coupon.productIds ?? [], coupon.categoryIds ?? [], coupon.brandIds ?? [],
+                  allCategories
+                )
+              )
+            }
+            if (eligibleItems.length > 0) {
+              const eligibleSubtotal = eligibleItems.reduce((sum, i) => sum + i.effectivePrice * i.quantity, 0)
+
+              if (!coupon.minPurchase || eligibleSubtotal >= Number(coupon.minPurchase)) {
+                let discountAmount = 0
+                if (coupon.type === "percentage") {
+                  discountAmount = Math.round(eligibleSubtotal * (Number(coupon.value) / 100) * 100) / 100
+                } else {
+                  discountAmount = Math.min(Number(coupon.value), eligibleSubtotal - 0.5)
+                  discountAmount = Math.round(discountAmount * 100) / 100
+                }
+
+                if (discountAmount > 0) {
+                  const discountCents = Math.round(discountAmount * 100)
+                  const sc = await stripe.coupons.create({
+                    amount_off: discountCents,
+                    currency: stripeCurrency,
+                    duration: "once",
+                    max_redemptions: 1,
+                  })
+                  stripeCouponId = sc.id
+                  validatedCouponId = coupon.id
+                  validatedCouponCode = coupon.code
+                }
+              }
+            }
+          }
+        }
+      } catch (couponError) {
+        console.error("Coupon validation error at checkout:", couponError instanceof Error ? couponError.message : "Unknown")
+        // Non-critical — proceed without coupon
+      }
+    }
     const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
+      ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/checkout/cancel`,
       customer_email: session.user.email || undefined,
-      ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
       metadata: {
         type: "cart",
         userId: session.user.id,
         items: JSON.stringify(metaItems),
-        ...(couponDbId ? { couponId: couponDbId, couponCode: couponDbCode ?? "" } : {}),
+        ...(validatedCouponId ? { couponId: validatedCouponId, couponCode: validatedCouponCode ?? "" } : {}),
       },
     })
 

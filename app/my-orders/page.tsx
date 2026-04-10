@@ -23,7 +23,7 @@ export default async function MyOrdersPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { email: true },
+    select: { id: true, email: true },
   })
 
   if (!user) {
@@ -43,7 +43,13 @@ export default async function MyOrdersPage() {
   })
 
   const quotes = await prisma.quoteRequest.findMany({
-    where: { email: user.email },
+    where: {
+      // userId preferred; email fallback for legacy quotes created before userId was added
+      OR: [
+        { userId: user.id },
+        { email: user.email },
+      ],
+    },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

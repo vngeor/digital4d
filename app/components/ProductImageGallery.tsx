@@ -196,7 +196,7 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                         </div>
                     )}
 
-                    {/* Top-right: Discount / Sale badge */}
+                    {/* Top-right: Discount badge */}
                     {discountPercent && discountPercent > 0 ? (
                         <div className="absolute top-3 right-3 pointer-events-none z-10">
                             <span className="-rotate-6 inline-block px-4 py-2 rounded-xl text-base font-black bg-red-500 text-white shadow-xl tracking-wide">
@@ -206,7 +206,7 @@ export function ProductImageGallery({ mainImage, productName, variants, locale, 
                     ) : hasBulkDiscount ? (
                         <div className="absolute top-3 right-3 pointer-events-none z-10">
                             <span className="-rotate-6 inline-block px-3 py-1.5 rounded-xl text-sm font-black bg-red-500 text-white shadow-xl tracking-wide">
-                                SALE
+                                {t("onSale")}
                             </span>
                         </div>
                     ) : null}

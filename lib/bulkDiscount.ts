@@ -12,8 +12,13 @@ export function getActiveTier(qty: number, tiers: BulkTier[]): BulkTier | null {
 }
 
 // Applies tier discount to effective unit price (already sale-price-aware)
+// Percentage capped at MAX_BULK_DISCOUNT_PCT to prevent free/negative prices
+const MAX_BULK_DISCOUNT_PCT = 95
 export function applyBulkDiscount(effectiveUnitPrice: number, tier: BulkTier): number {
-  if (tier.type === "percentage") return effectiveUnitPrice * (1 - tier.value / 100)
+  if (tier.type === "percentage") {
+    const pct = Math.min(tier.value, MAX_BULK_DISCOUNT_PCT)
+    return effectiveUnitPrice * (1 - pct / 100)
+  }
   return Math.max(0, effectiveUnitPrice - tier.value)
 }
 

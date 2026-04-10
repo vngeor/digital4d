@@ -580,7 +580,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                   <li key={itemKey} className="py-4 flex gap-3">
                     {/* Product image */}
                     {item.image ? (
-                      <Link href={item.productUrl} onClick={onClose} className="shrink-0">
+                      <Link href={item.productUrl || `/products/${item.productSlug}`} onClick={onClose} className="shrink-0">
                         <img
                           src={item.image}
                           alt={item.nameEn}
@@ -596,7 +596,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <Link
-                        href={item.productUrl}
+                        href={item.productUrl || `/products/${item.productSlug}`}
                         onClick={onClose}
                         className="text-sm font-medium text-white line-clamp-2 hover:text-emerald-400 transition-colors"
                       >

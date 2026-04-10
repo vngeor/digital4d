@@ -12,7 +12,7 @@ async function wouldCreateCircle(startId: string, targetId: string): Promise<boo
 
 export async function GET() {
   try {
-    const { session, error } = await requirePermissionApi("categories", "view")
+    const { error } = await requirePermissionApi("categories", "view")
     if (error) return error
 
     const categories = await prisma.productCategory.findMany({
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { session, error } = await requirePermissionApi("categories", "edit")
+    const { error } = await requirePermissionApi("categories", "edit")
     if (error) return error
 
     const data = await request.json()

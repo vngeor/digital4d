@@ -2,9 +2,10 @@
 
 import { useRef, useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Check } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { parseTiers } from "@/lib/bulkDiscount"
+import { ProductImageBadges } from "./ProductBadges"
+import { computeDiscountPercent, computeHasBulkDiscount } from "@/lib/badgeHelpers"
 
 export interface RelatedCard {
   id: string
@@ -119,71 +120,18 @@ export function RelatedProductsCarousel({ cards }: { cards: RelatedCard[] }) {
                     </div>
                   )}
 
-                  {/* Status overlay */}
-                  {["sold_out", "out_of_stock", "coming_soon"].includes(card.status) && (
-                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                      <div className={`px-3 py-1 -rotate-12 shadow-lg ${
-                        card.status === "sold_out" ? "bg-red-600/80"
-                        : card.status === "coming_soon" ? "bg-blue-600/80"
-                        : "bg-gray-600/80"
-                      }`}>
-                        <span className="text-white font-bold text-[10px] tracking-wider uppercase">
-                          {card.status === "sold_out" ? t("soldOut")
-                          : card.status === "coming_soon" ? t("comingSoon")
-                          : t("outOfStock")}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Top-left: Featured + NEW */}
-                  {(card.featured || card.isNew) && (
-                    <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-                      {card.featured && (
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg">
-                          <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
-                        </div>
-                      )}
-                      {card.isNew && (
-                        <span className="px-1.5 py-0.5 bg-cyan-500 rounded-md text-[10px] font-bold text-white shadow-lg">NEW</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Sale badges */}
-                  {(card.onSale || parseTiers(card.bulkDiscountTiers || "").length > 0) && (
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">{t("onSale")}</span>
-                      {card.onSale && discountPercent > 0 && (
-                        <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">-{discountPercent}%</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Best Seller */}
-                  {card.bestSeller && (
-                    <div className="absolute bottom-2 right-2">
-                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-lg">
-                        <Check className="w-2.5 h-2.5" />{t("bestSeller")}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Coupon badge */}
-                  {card.coupon && (
-                    <div className="absolute bottom-1.5 left-1.5 md:bottom-2 md:left-2">
-                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-orange-500 text-white shadow-lg">
-                        <svg className="w-2.5 h-2.5 md:w-3 md:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                        </svg>
-                        -{card.coupon.type === "percentage"
-                          ? `${card.coupon.value}%`
-                          : `${card.coupon.value} ${card.coupon.currency || "EUR"}`}
-                      </span>
-                    </div>
-                  )}
+                  <ProductImageBadges
+                    size="sm"
+                    isNew={card.isNew}
+                    featured={card.featured}
+                    bestSeller={card.bestSeller}
+                    onSale={card.onSale}
+                    discountPercent={computeDiscountPercent(card.price, card.salePrice)}
+                    hasBulkDiscount={computeHasBulkDiscount(card.bulkDiscountTiers)}
+                    status={card.status}
+                    showStatusOverlay
+                    coupon={card.coupon ?? null}
+                  />
                 </div>
 
                 {/* Card body */}

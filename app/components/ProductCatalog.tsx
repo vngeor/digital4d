@@ -4,10 +4,12 @@ import { useState, useMemo, useEffect, useRef, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Search, Check, Package, ShoppingCart, MessageSquare, Tag, X, Ticket, ChevronDown, Bell, SlidersHorizontal, Eye } from "lucide-react"
+import { Search, Check, Package, ShoppingCart, MessageSquare, Tag, X, ChevronDown, Bell, SlidersHorizontal, Eye } from "lucide-react"
 import { WishlistButton } from "./WishlistButton"
 import { QuickViewModal } from "./QuickViewModal"
 import { parseTiers } from "@/lib/bulkDiscount"
+import { ProductImageBadges } from "./ProductBadges"
+import { computeDiscountPercent, computeHasBulkDiscount, computeIsNew } from "@/lib/badgeHelpers"
 
 interface ProductVariant {
     id: string
@@ -68,9 +70,11 @@ interface ProductCategory {
 }
 
 interface CouponBadge {
+    code: string
     type: string
     value: string
     currency: string | null
+    expiresAt: string | null
 }
 
 type SortOption = "default" | "price-asc" | "price-desc" | "discount" | "name-az"
@@ -1390,60 +1394,37 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         )}
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
 
-                                        {/* Status overlay */}
-                                        {(product.status === "sold_out" || product.status === "out_of_stock" || product.status === "coming_soon") && (
-                                            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                                                <div className={`px-3 py-1 sm:px-4 sm:py-1.5 -rotate-12 shadow-lg ${
-                                                    product.status === "sold_out" ? "bg-red-600/80"
-                                                    : product.status === "coming_soon" ? "bg-blue-600/80"
-                                                    : "bg-gray-600/80"
-                                                }`}>
-                                                    <span className="text-white font-bold text-[10px] sm:text-xs tracking-wider uppercase">
-                                                        {product.status === "sold_out" ? t("soldOut")
-                                                        : product.status === "coming_soon" ? t("comingSoon")
-                                                        : t("outOfStock")}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Top-left: Featured + NEW */}
-                                        {(product.featured || (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000) && (
-                                            <div className="absolute top-3 left-3 flex flex-wrap gap-1">
-                                                {product.featured && (
-                                                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg">
-                                                        <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                        </svg>
-                                                    </div>
-                                                )}
-                                                {(Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 && (
-                                                    <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-cyan-500 text-white shadow-lg">
-                                                        NEW
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
+                                        <ProductImageBadges
+                                            size="sm"
+                                            hideTopRight
+                                            isNew={computeIsNew(product.createdAt)}
+                                            featured={product.featured}
+                                            bestSeller={product.bestSeller}
+                                            onSale={product.onSale}
+                                            discountPercent={computeDiscountPercent(
+                                                bestDiscountPkg?.price ?? product.price,
+                                                bestDiscountPkg?.salePrice ?? product.salePrice,
+                                            )}
+                                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)}
+                                            status={product.status}
+                                            showStatusOverlay
+                                            coupon={couponMap?.[product.id] ?? null}
+                                        />
 
                                         {/* Top-right: Sale + Wishlist */}
                                         <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
-                                            {(() => {
-                                                const hasBulk = parseTiers(product.bulkDiscountTiers || "").length > 0 ||
-                                                    product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)
-                                                if (!product.onSale && !hasBulk) return null
-                                                return (
-                                                    <div onClick={e => { e.preventDefault(); e.stopPropagation(); router.push("/products?sale=true") }} className="flex gap-1 cursor-pointer">
+                                            {(product.onSale || computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)) && (
+                                                <div onClick={e => { e.preventDefault(); e.stopPropagation(); router.push("/products?sale=true") }} className="flex gap-1 cursor-pointer">
+                                                    <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
+                                                        {t("onSale")}
+                                                    </span>
+                                                    {product.onSale && discountPercent > 0 && (
                                                         <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
-                                                            {t("onSale")}
+                                                            -{discountPercent}%
                                                         </span>
-                                                        {product.onSale && discountPercent > 0 && (
-                                                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
-                                                                -{discountPercent}%
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )
-                                            })()}
+                                                    )}
+                                                </div>
+                                            )}
                                             <WishlistButton
                                                 productId={product.id}
                                                 initialWishlisted={wishlistedProductIds.includes(product.id)}
@@ -1460,27 +1441,6 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 </span>
                                             )}
                                         </div>
-
-                                        {/* Coupon Badge */}
-                                        {couponMap?.[product.id] && (
-                                            <div className="absolute bottom-3 left-3">
-                                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-orange-500 text-white shadow-lg">
-                                                    <Ticket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                    -{couponMap[product.id].type === "percentage"
-                                                        ? `${couponMap[product.id].value}%`
-                                                        : `${couponMap[product.id].value} ${couponMap[product.id].currency || "EUR"}`}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {/* Best Seller Badge */}
-                                        {product.bestSeller && (
-                                            <div className="absolute bottom-3 right-3">
-                                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                                    <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                    {t("bestSeller")}
-                                                </span>
-                                            </div>
-                                        )}
 
                                         {/* Quick View — Desktop: slide-up bar on hover */}
                                         <button
@@ -1606,6 +1566,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                         return bestPkg?.weight.label
                     })()
                 }
+                promotedCoupon={couponMap?.[quickViewProduct.id] ?? null}
                 onClose={() => setQuickViewProduct(null)}
             />
         )}

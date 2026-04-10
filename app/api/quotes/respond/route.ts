@@ -23,11 +23,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: lengthError }, { status: 400 })
     }
 
-    // Verify the quote belongs to this user
+    // Verify the quote belongs to this user (userId preferred; email fallback for legacy quotes)
+    // and is in the correct state to be responded to
     const quote = await prisma.quoteRequest.findFirst({
       where: {
         id: quoteId,
-        email: session.user.email,
+        OR: [
+          { userId: session.user.id },
+          { email: session.user.email },
+        ],
         status: "quoted", // Can only respond to quoted status
       },
     })

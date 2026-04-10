@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { rateLimit, getClientIp } from "@/lib/rateLimit"
+import { isProductEligibleForCoupon } from "@/lib/couponHelpers"
 
 export async function POST(request: NextRequest) {
   try {
     // Rate limit: 10 validations per IP per minute (prevents coupon brute-force)
     const ip = getClientIp(request)
-    const { success } = rateLimit(`coupon:${ip}`, { limit: 10, windowMs: 60_000 })
+    const { success } = await rateLimit(`coupon:${ip}`, { limit: 10, windowMs: 60_000 })
     if (!success) {
       return NextResponse.json({ valid: false, error: "TOO_MANY_REQUESTS" }, { status: 429 })
     }
@@ -55,19 +56,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Product match
-    if (coupon.productIds.length > 0 && !coupon.productIds.includes(productId)) {
+    // 6. Fast exit for pure productIds restriction (avoids DB call when unnecessary)
+    if (
+      coupon.productIds.length > 0 &&
+      !(coupon.categoryIds?.length ?? 0) &&
+      !(coupon.brandIds?.length ?? 0) &&
+      !coupon.productIds.includes(productId)
+    ) {
       return NextResponse.json({ valid: false, error: "WRONG_PRODUCT" })
     }
 
-    // Fetch product for price calculation
+    // Fetch product for price calculation + eligibility
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      select: { price: true, salePrice: true, onSale: true, currency: true },
+      select: { price: true, salePrice: true, onSale: true, currency: true, category: true, brandId: true },
     })
 
     if (!product || !product.price) {
       return NextResponse.json({ valid: false, error: "PRODUCT_NOT_FOUND" })
+    }
+
+    // Category/brand eligibility check (only when those targeting types are used)
+    if ((coupon.categoryIds?.length ?? 0) > 0 || (coupon.brandIds?.length ?? 0) > 0) {
+      let allCategories: { id: string; slug: string; parentId: string | null }[] = []
+      if ((coupon.categoryIds?.length ?? 0) > 0) {
+        allCategories = await prisma.productCategory.findMany({ select: { id: true, slug: true, parentId: true } })
+      }
+      if (!isProductEligibleForCoupon(
+        productId, product.category, product.brandId,
+        coupon.productIds, coupon.categoryIds ?? [], coupon.brandIds ?? [],
+        allCategories
+      )) {
+        return NextResponse.json({ valid: false, error: "WRONG_PRODUCT" })
+      }
     }
 
     // 7. Sale check

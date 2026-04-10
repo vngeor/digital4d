@@ -49,7 +49,7 @@ No test framework is configured.
 - **3-tier permission resolution** (`lib/permissions.ts`): User override → Role override → Code defaults. Resources: dashboard, products, categories, brands, content, types, banners, menu, orders, quotes, media, coupons, notifications, users, roles, audit. Actions: view, create, edit, delete
 - **Admin idle timeout**: `AdminIdleGuard` component auto-logs out after 5 minutes of inactivity with 1-minute warning countdown
 - **Neon cold start handling**: Three-layer defense: (1) `warmupDb()` in auth route handler with 3 attempts and graduated delays (1s/2s/3s); (2) `withRetry()` wrapper around PrismaAdapter with 500ms/1s delays as safety net; (3) client-side auto-retry on Configuration error in login page
-- **Rate limiting** (`lib/rateLimit.ts`): in-memory Map-based per-IP rate limiter. Applied to: login (5/15min), register (3/hr), search (20/min), coupon validate (10/min), quotes (5/hr)
+- **Rate limiting** (`lib/rateLimit.ts`): **async** per-IP rate limiter. Uses Upstash Redis sliding window (cross-instance, production) when `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` env vars are set; falls back to in-memory Map (per-instance, dev/fallback). Always `await rateLimit(key, { limit, windowMs })`. Applied to: login (5/15min), register (3/hr), search (20/min), coupon validate (10/min), quotes (5/hr), cart coupon validate (10/min), download token (20/min)
 - **Input validation** (`lib/validation.ts`): max length checks on all public API routes — name (100), email (254), password (128), phone (20), message (5000), address (500). Birth date validation (valid date, not future, not before 1900)
 - **OAuth config**: `allowDangerousEmailAccountLinking: true` for Google & GitHub; Google has `access_type: "offline"`; GitHub requests `"read:user user:email"` scope
 - **Password**: bcryptjs hashing, min 6 chars + at least one special character
@@ -127,7 +127,7 @@ No test framework is configured.
 - **News** (`app/news/`): listing and detail pages with modal view
 - **Services** (`app/services/`): listing and detail pages
 - **Dynamic CMS** (`app/[menuSlug]/`): menu-driven pages with nested content. Menu items have `showInNav` (hide from nav but keep page accessible) and `titleAlign` (left/center/right)
-- **Profile** (`app/profile/`): user profile management with birthday banner (shown when birthDate missing) that opens edit modal
+- **Profile** (`app/profile/`): user profile management with birthday banner (shown when birthDate missing) that opens edit modal. **Secret Deals section**: amber glassmorphic coupon cards below Personal Info — shows active personal coupons from `Notification` records with `couponId` (birthday 🎂, holiday 🎄/🐣/🎆, admin-sent 🎁). Cards show: source emoji badge, large amber discount value, monospace code + copy button (navigator.clipboard + execCommand fallback), always-red blinking countdown timer (`animate-sale-blink`) with individual digit boxes (days/hours/mins/secs), expiry date, min purchase, "Shop Now" link. Used coupon cards shown grayed out with "Използван ✓"; expired coupons excluded entirely. Section hidden if empty. `nowMs` computed via `useMemo` to satisfy react-hooks/purity
 - **My Orders** (`app/my-orders/`): order history, quote conversations with auto-scroll from notifications
 - **Wishlist** (`app/wishlist/`): saved products with price drop tracking
 - **Search** (`app/search/`): dedicated search results page with URL-driven query (`/search?q=...`), full results across products/content/menu with category badges, sale labels, discount percentages
@@ -215,6 +215,7 @@ No test framework is configured.
   - **Product card badges**: small orange badge (bottom-left) on all product cards — homepage, catalog, wishlist, and related products. Uses coupon map pattern: single DB query → `Record<productId, CouponBadge>` for O(1) lookup. Global coupons (empty `productIds`) apply to all products; specific coupons apply only to matching. Skips badge if product is on sale and coupon has `allowOnSale: false`
 - **Quote integration**: admin can attach coupon when sending quote offer, customer sees coupon badge on My Orders page
 - **Quote conversation messages**: admin offers stored as multi-line text (notes + 💰 price + 🎟️ coupon). User responses (accept/decline/counter) stored as JSON with i18n keys, localized at display time via `localizeMessage()` in MyOrdersClient
+- **Bulk discount cap**: `applyBulkDiscount()` in `lib/bulkDiscount.ts` caps percentage tiers at `MAX_BULK_DISCOUNT_PCT = 95` to prevent 100% (free) or negative prices from malformed tier data
 
 ### Notifications
 
@@ -304,6 +305,10 @@ NEXT_PUBLIC_SITE_URL=            # Public site URL (e.g., https://www.digital4d.
 
 # Cron
 CRON_SECRET=                     # Secret for Vercel Cron job authentication (generate random 32-byte hex)
+
+# Rate limiting (Upstash Redis — optional, cross-instance rate limiting on Vercel)
+UPSTASH_REDIS_REST_URL=          # Upstash Redis REST URL (e.g., https://pet-scorpion-xxxxx.upstash.io)
+UPSTASH_REDIS_REST_TOKEN=        # Upstash Redis REST token
 ```
 
 ## Security
@@ -312,11 +317,15 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 - **XSS sanitization** (`lib/sanitize.ts`): `sanitize-html` library applied to all 7 `dangerouslySetInnerHTML` locations (NotificationBell, NewsModal, news/services/menu pages). Allows TipTap-produced tags, strips `<script>`, `<iframe>`, event handlers, `javascript:` URLs
 - **Checkout origin validation**: Stripe success/cancel URLs validated against domain whitelist (prevents open redirect)
 - **Error logging**: all `console.error()` across 30 API route files sanitized to only log `error.message`, not raw error objects (prevents stack trace/DB detail leakage)
-- **Query parameter validation**: news API type whitelisted (`news`/`service`), limit capped at 50; admin coupons list capped at 100 results
+- **Query parameter validation**: news API type whitelisted (`news`/`service`), limit capped at 50; admin coupons list capped at 100 results. Search query max length: `/api/search` returns empty results immediately for queries > 100 chars — no DB hit
 - **Enum whitelisting**: all admin API routes validate status/role inputs against strict whitelists — products/variants/packages (`in_stock|out_of_stock|coming_soon|pre_order|sold_out`), orders (`PENDING|IN_PROGRESS|COMPLETED|CANCELLED`), quotes (`pending|quoted|accepted|user_declined|rejected`), users (`ADMIN|EDITOR|AUTHOR|SUBSCRIBER`). Invalid values return 400 or fall back to safe defaults
 - **Category slug sanitization**: `^[a-z0-9-]+$` regex enforced before DB write; prevents path traversal or special characters in slugs
+- **Category delete cascade** (application-level): category DELETE handler fetches the slug first, deletes the category, then runs `product.updateMany({ category: "" })` for all orphaned products — `Product.category` is a plain String (not FK), so there is no DB-level cascade
 - **Stripe webhook idempotency**: checks for existing `DigitalPurchase` or `Order` with matching session ID before processing — duplicate Stripe event deliveries are silently skipped
-- **Coupon race condition**: `usedCount` increment uses conditional `updateMany(where: { usedCount: { lt: maxUses } })` to prevent over-redemption when `maxUses` is set
+- **Coupon race condition**: `CouponUsage` record is created first, then `coupon.updateMany(where: { usedCount: { lt: maxUses } })` atomically increments only if under limit; if `count === 0` (race lost), the `CouponUsage` record is immediately deleted (rolled back). Applies in both single-product and cart webhook flows
+- **Quote spoofing prevention**: `POST /api/quotes` calls `auth()`; for logged-in users the email field is locked to `session.user.email` (client-supplied email ignored) and `userId` is saved to `QuoteRequest.userId`
+- **QuoteRequest.userId access control**: all access checks use `(quote.userId && quote.userId === session.user.id) || quote.email === session.user.email` — `userId` preferred, `email` as legacy fallback. Applies in: messages, view, respond routes, and my-orders page
+- **Magic bytes validation**: `detectImageMagicBytes(buf: Buffer)` in `app/api/upload/route.ts` verifies JPEG/PNG/GIF/WebP magic. `validate3DMagicBytes(buf, ext)` in `app/api/quotes/route.ts` validates STL/OBJ/3MF content independently of filename extension
 
 ## Key Constraints
 
@@ -336,7 +345,6 @@ CRON_SECRET=                     # Secret for Vercel Cron job authentication (ge
 - **Email verification**: verify email addresses on registration before allowing full account access
 - **Email notifications (orders, quotes)**: transactional emails for order confirmations, quote updates
 - **Newsletter registration**: subscriber model, footer signup form, email campaigns
-- **Upgrade rate limiting to Redis**: current in-memory rate limiter is per-instance on Vercel serverless. Upgrade to Upstash Redis for cross-instance rate limiting
 - **OAuth email linking review**: `allowDangerousEmailAccountLinking: true` is intentional but could be replaced with explicit email verification flow
 
 ### No Blockers

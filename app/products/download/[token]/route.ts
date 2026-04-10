@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma"
 import { isVercelBlobUrl } from "@/lib/blob"
 import { readFile } from "fs/promises"
 import path from "path"
+import { rateLimit, getClientIp } from "@/lib/rateLimit"
 
 interface RouteContext {
   params: Promise<{ token: string }>
@@ -45,6 +46,13 @@ export async function GET(
 
     if (!token) {
       return NextResponse.json({ error: "Token required" }, { status: 400 })
+    }
+
+    // Rate limit: 20 download attempts per IP per minute (prevents DB hammering)
+    const ip = getClientIp(request)
+    const { success } = await rateLimit(`download:${ip}`, { limit: 20, windowMs: 60_000 })
+    if (!success) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
     }
 
     // Find the purchase by download token

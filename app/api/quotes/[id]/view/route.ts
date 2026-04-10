@@ -15,15 +15,18 @@ export async function POST(
     const { id } = await params
 
     // Find the quote and verify it belongs to this user
+    // (userId preferred; email fallback for legacy quotes without userId)
     const quote = await prisma.quoteRequest.findUnique({
       where: { id },
+      select: { email: true, userId: true, status: true, viewedAt: true },
     })
 
     if (!quote) {
       return NextResponse.json({ error: "Quote not found" }, { status: 404 })
     }
 
-    if (quote.email !== session.user.email) {
+    const isOwner = (quote.userId && quote.userId === session.user.id) || quote.email === session.user.email
+    if (!isOwner) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
