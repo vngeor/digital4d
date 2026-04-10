@@ -39,7 +39,7 @@ export default async function ProfilePage() {
     redirect("/login")
   }
 
-  // Fetch ALL personal coupon notifications (active + expired + used) for Secret Deals
+  // Count active personal coupon deals for the teaser badge
   const now = new Date()
   const notificationsWithCoupons = await prisma.notification.findMany({
     where: {
@@ -50,34 +50,34 @@ export default async function ProfilePage() {
     include: {
       coupon: {
         select: {
-          id: true, code: true, type: true, value: true,
-          currency: true, minPurchase: true, expiresAt: true,
-          maxUses: true, usedCount: true, perUserLimit: true,
-          productIds: true, active: true, startsAt: true,
+          id: true, active: true, expiresAt: true, maxUses: true,
+          usedCount: true, perUserLimit: true, startsAt: true,
         },
       },
     },
     orderBy: { createdAt: "desc" },
   })
 
-  // Deduplicate by couponId (original + reminder both reference same coupon)
+  // Deduplicate by couponId
   const seenCouponIds = new Set<string>()
   const uniqueCoupons = notificationsWithCoupons.filter(n => {
-    if (!n.coupon) return false                          // deleted coupon — skip entirely
+    if (!n.coupon) return false
     if (seenCouponIds.has(n.couponId!)) return false
     seenCouponIds.add(n.couponId!)
     return true
   })
 
-  // Skip coupons that haven't started yet (no point showing them)
-  const deliveredCoupons = uniqueCoupons.filter(n => {
-    const c = n.coupon!
-    if (c.startsAt && c.startsAt > now) return false
-    return true
-  })
+  // Count only non-expired, non-exhausted deals
+  const allCouponIds = uniqueCoupons
+    .filter(n => {
+      const c = n.coupon!
+      if (c.startsAt && c.startsAt > now) return false
+      const globalExhausted = c.maxUses !== null && c.usedCount >= c.maxUses
+      const isExpired = !c.active || (c.expiresAt && c.expiresAt <= now) || globalExhausted
+      return !isExpired
+    })
+    .map(n => n.couponId!)
 
-  // Check per-user usage for ALL coupons via CouponUsage.email
-  const allCouponIds = deliveredCoupons.map(n => n.couponId!)
   const userUsages = allCouponIds.length > 0
     ? await prisma.couponUsage.findMany({
         where: { email: user.email!, couponId: { in: allCouponIds } },
@@ -87,35 +87,16 @@ export default async function ProfilePage() {
   const usageMap: Record<string, number> = {}
   for (const u of userUsages) usageMap[u.couponId] = (usageMap[u.couponId] || 0) + 1
 
-  // Compute status: "active" | "used" — expired coupons are excluded entirely
-  const secretDeals = deliveredCoupons.flatMap(n => {
-    const c = n.coupon!
-    const usedByUser = usageMap[n.couponId!] || 0
+  const activeDealsCount = uniqueCoupons.filter(n => {
+    if (!n.coupon) return false
+    const c = n.coupon
+    if (c.startsAt && c.startsAt > now) return false
     const globalExhausted = c.maxUses !== null && c.usedCount >= c.maxUses
     const isExpired = !c.active || (c.expiresAt && c.expiresAt <= now) || globalExhausted
-
-    // Drop expired coupons entirely
-    if (isExpired) return []
-
-    const status: "active" | "used" =
-      (c.perUserLimit !== null && usedByUser >= c.perUserLimit) ? "used" : "active"
-
-    return [{
-      code: c.code,
-      type: c.type,
-      value: c.value.toString(),
-      minPurchase: c.minPurchase?.toString() || null,
-      expiresAt: c.expiresAt?.toISOString() || null,
-      productIds: c.productIds,
-      notificationType: n.type,
-      status,
-    }]
-  }).sort((a, b) => {
-    // Active first, then used
-    if (a.status === "active" && b.status !== "active") return -1
-    if (b.status === "active" && a.status !== "active") return 1
-    return 0
-  })
+    if (isExpired) return false
+    const usedByUser = usageMap[n.couponId!] || 0
+    return c.perUserLimit === null || usedByUser < c.perUserLimit
+  }).length
 
   const translations = {
     title: t("title"),
@@ -152,29 +133,15 @@ export default async function ProfilePage() {
     addBirthdayButton: t("addBirthdayButton"),
     secretDealsTitle: t("secretDealsTitle"),
     secretDealsSubtitle: t("secretDealsSubtitle"),
-    secretDealsExpires: t("secretDealsExpires"),
-    secretDealsNoExpiry: t("secretDealsNoExpiry"),
-    secretDealsExpiresSoon: t("secretDealsExpiresSoon"),
-    secretDealsActive: t("secretDealsActive"),
-    secretDealsMinPurchase: t("secretDealsMinPurchase"),
-    secretDealsCopy: t("secretDealsCopy"),
-    secretDealsCopied: t("secretDealsCopied"),
-    secretDealsShopNow: t("secretDealsShopNow"),
-    secretDealsUsed: t("secretDealsUsed"),
-    secretDealsExpired: t("secretDealsExpired"),
-    sourceBirthday: t("sourceBirthday"),
-    sourceChristmas: t("sourceChristmas"),
-    sourceNewYear: t("sourceNewYear"),
-    sourceEaster: t("sourceEaster"),
-    sourceCustom: t("sourceCustom"),
-    sourceSpecial: t("sourceSpecial"),
+    secretDealsView: t("secretDealsView"),
+    secretDealsCount: t("secretDealsCount"),
   }
 
   return (
     <ProfileClient
       user={JSON.parse(JSON.stringify(user))}
       translations={translations}
-      secretDeals={secretDeals}
+      activeDealsCount={activeDealsCount}
     />
   )
 }
