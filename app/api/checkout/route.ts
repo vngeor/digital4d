@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
+import { isProductEligibleForCoupon } from "@/lib/couponHelpers"
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product ID required" }, { status: 400 })
     }
 
-    // Fetch the product
+    // Fetch the product (include category + brandId for coupon eligibility)
     const product = await prisma.product.findUnique({
       where: { id: productId }
     })
@@ -140,9 +141,29 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Product restriction
-      if (coupon.productIds.length > 0 && !coupon.productIds.includes(productId)) {
+      // Product restriction — fast exit for pure productIds restriction
+      if (
+        coupon.productIds.length > 0 &&
+        !(coupon.categoryIds?.length ?? 0) &&
+        !(coupon.brandIds?.length ?? 0) &&
+        !coupon.productIds.includes(productId)
+      ) {
         return NextResponse.json({ error: "Coupon is not valid for this product" }, { status: 400 })
+      }
+
+      // Category/brand eligibility check
+      if ((coupon.categoryIds?.length ?? 0) > 0 || (coupon.brandIds?.length ?? 0) > 0) {
+        let allCategories: { id: string; slug: string; parentId: string | null }[] = []
+        if ((coupon.categoryIds?.length ?? 0) > 0) {
+          allCategories = await prisma.productCategory.findMany({ select: { id: true, slug: true, parentId: true } })
+        }
+        if (!isProductEligibleForCoupon(
+          productId, product.category, product.brandId,
+          coupon.productIds, coupon.categoryIds ?? [], coupon.brandIds ?? [],
+          allCategories
+        )) {
+          return NextResponse.json({ error: "Coupon is not valid for this product" }, { status: 400 })
+        }
       }
 
       // Sale check

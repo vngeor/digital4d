@@ -4,6 +4,7 @@ import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { buildProductUrl } from "@/lib/productUrl"
 import { WishlistClient } from "./WishlistClient"
+import { isCategoryMatch } from "@/lib/couponHelpers"
 import type { Metadata } from "next"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,31 +46,10 @@ export default async function WishlistPage() {
                 { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
             ],
         },
-        select: { type: true, value: true, currency: true, productIds: true, allowOnSale: true },
+        select: { type: true, value: true, currency: true, productIds: true, categoryIds: true, brandIds: true, allowOnSale: true },
     })
 
-    // Build coupon map: productId → best coupon badge info
-    const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
-    const globalCoupons = promotedCouponsRaw.filter(c => c.productIds.length === 0)
-    const specificCoupons = promotedCouponsRaw.filter(c => c.productIds.length > 0)
-
-    for (const item of items) {
-        const product = item.product
-        const isOnSale = product.onSale && product.salePrice
-        const specific = specificCoupons.find(c =>
-            c.productIds.includes(product.id) && !(isOnSale && !c.allowOnSale)
-        )
-        if (specific) {
-            couponMap[product.id] = { type: specific.type, value: specific.value.toString(), currency: specific.currency }
-            continue
-        }
-        const global = globalCoupons.find(c => !(isOnSale && !c.allowOnSale))
-        if (global) {
-            couponMap[product.id] = { type: global.type, value: global.value.toString(), currency: global.currency }
-        }
-    }
-
-    // Fetch categories for display
+    // Fetch categories for display and coupon resolution
     const categoryIds = [...new Set(items.map((w) => w.product.category))]
     const categories = categoryIds.length > 0
         ? await prisma.productCategory.findMany({
@@ -77,6 +57,44 @@ export default async function WishlistPage() {
             include: { parent: { select: { slug: true } } },
         })
         : []
+
+    // Fetch all categories for coupon category matching
+    const allCats = await prisma.productCategory.findMany({ select: { id: true, slug: true, parentId: true } })
+
+    // Build coupon map: productId → best coupon badge info
+    const couponMap: Record<string, { type: string; value: string; currency: string | null }> = {}
+
+    const toCouponBadge = (c: typeof promotedCouponsRaw[0]) => ({ type: c.type, value: c.value.toString(), currency: c.currency })
+
+    for (const item of items) {
+        const product = item.product
+        const isOnSale = product.onSale && product.salePrice
+        // 1. Product match
+        const direct = promotedCouponsRaw.find(c =>
+            c.productIds.length > 0 && c.productIds.includes(product.id) && !(isOnSale && !c.allowOnSale)
+        )
+        if (direct) { couponMap[product.id] = toCouponBadge(direct); continue }
+        // 2. Category match
+        const byCategory = promotedCouponsRaw.find(c =>
+            c.productIds.length === 0 && (c.categoryIds?.length ?? 0) > 0 &&
+            !(isOnSale && !c.allowOnSale) &&
+            isCategoryMatch(product.category, c.categoryIds ?? [], allCats)
+        )
+        if (byCategory) { couponMap[product.id] = toCouponBadge(byCategory); continue }
+        // 3. Brand match
+        const byBrand = promotedCouponsRaw.find(c =>
+            c.productIds.length === 0 && (c.categoryIds?.length ?? 0) === 0 &&
+            (c.brandIds?.length ?? 0) > 0 && product.brandId &&
+            (c.brandIds ?? []).includes(product.brandId) && !(isOnSale && !c.allowOnSale)
+        )
+        if (byBrand) { couponMap[product.id] = toCouponBadge(byBrand); continue }
+        // 4. Global
+        const global = promotedCouponsRaw.find(c =>
+            c.productIds.length === 0 && (c.categoryIds?.length ?? 0) === 0 &&
+            (c.brandIds?.length ?? 0) === 0 && !(isOnSale && !c.allowOnSale)
+        )
+        if (global) { couponMap[product.id] = toCouponBadge(global) }
+    }
 
     // Build product URL map
     const categoryParentMap = new Map<string, string | null>()

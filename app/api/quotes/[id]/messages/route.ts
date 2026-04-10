@@ -17,7 +17,7 @@ export async function GET(
     // Find the quote and verify access
     const quote = await prisma.quoteRequest.findUnique({
       where: { id },
-      select: { email: true },
+      select: { email: true, userId: true },
     })
 
     if (!quote) {
@@ -26,7 +26,7 @@ export async function GET(
 
     // Allow access if user owns the quote or is admin/editor
     const isStaff = session.user.role === "ADMIN" || session.user.role === "EDITOR"
-    const isOwner = quote.email === session.user.email
+    const isOwner = (quote.userId && quote.userId === session.user.id) || quote.email === session.user.email
 
     if (!isStaff && !isOwner) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

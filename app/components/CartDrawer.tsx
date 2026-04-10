@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
-import { X, ShoppingCart, Trash2, Minus, Plus, Loader2 } from "lucide-react"
+import { X, ShoppingCart, Trash2, Minus, Plus, Loader2, CheckCircle2 } from "lucide-react"
+import { toast } from "sonner"
 import { getCart, addToCart, removeFromCart, updateQuantity, clearCart, getEffectivePrice, cartItemKey, CART_KEY, fetchServerCart, mergeServerCartIntoLocal, syncCartToServer, syncCartItemToServer, deleteCartItemFromServer, type CartItem } from "@/lib/cart"
 import { parseTiers, getActiveTier, applyBulkDiscount, type BulkTier } from "@/lib/bulkDiscount"
 import { UpsellCard, type UpsellProduct } from "./UpsellCard"
@@ -53,6 +54,13 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
   const [bulkEnabled, setBulkEnabled] = useState(false)
   const [globalBulkTiers, setGlobalBulkTiers] = useState<BulkTier[]>([])
+
+  const [couponInput, setCouponInput] = useState("")
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    couponId: string; code: string; type: string; value: string; discountAmount: number; currency: string; eligibleProductIds: string[]
+  } | null>(null)
+  const [couponError, setCouponError] = useState("")
+  const [couponLoading, setCouponLoading] = useState(false)
 
   const [upsellProducts, setUpsellProducts] = useState<UpsellProduct[]>([])
 
@@ -231,6 +239,11 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     if (session && item) {
       deleteCartItemFromServer(item.productId, item.packageId)
     }
+    if (appliedCoupon) {
+      setAppliedCoupon(null)
+      setCouponInput("")
+      toast.info(t("couponRemoved"))
+    }
   }
 
   const handleQty = (key: string, delta: number) => {
@@ -245,6 +258,50 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
       if (session) {
         syncCartItemToServer({ ...item, quantity: newQty })
       }
+      if (appliedCoupon) {
+        setAppliedCoupon(null)
+        setCouponInput("")
+        toast.info(t("couponRemoved"))
+      }
+    }
+  }
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return
+    setCouponLoading(true)
+    setCouponError("")
+    try {
+      const res = await fetch("/api/cart/coupon/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponInput.trim().toUpperCase(),
+          items: (items ?? []).map(i => ({
+            productId: i.productId,
+            packageId: i.packageId ?? null,
+            onSale: !!i.onSale,
+            currency: i.currency,
+            quantity: i.quantity,
+          })),
+        }),
+      })
+      const data = await res.json()
+      if (data.valid) {
+        setAppliedCoupon(data)
+        setCouponError("")
+      } else {
+        const errorKey = data.error
+        if (errorKey === "EXPIRED") setCouponError(t("couponExpired"))
+        else if (errorKey === "WRONG_PRODUCT") setCouponError(t("couponNotApplicable"))
+        else if (errorKey === "ON_SALE") setCouponError(t("couponNotApplicable"))
+        else if (errorKey === "CURRENCY_MISMATCH") setCouponError(t("couponCurrencyMismatch"))
+        else if (errorKey === "MIN_PURCHASE") setCouponError(t("couponMinPurchase", { amount: `${data.minPurchase?.toFixed(2)} ${items?.[0]?.currency ?? ""}` }))
+        else setCouponError(t("couponInvalid"))
+      }
+    } catch {
+      setCouponError(t("couponInvalid"))
+    } finally {
+      setCouponLoading(false)
     }
   }
 
@@ -268,6 +325,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((i) => ({ productId: i.productId, packageId: i.packageId ?? null, quantity: i.quantity })),
+          couponCode: appliedCoupon?.code,
         }),
       })
       const data = await res.json()
@@ -447,7 +505,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                   <li key={itemKey} className="py-4 flex gap-3">
                     {/* Product image */}
                     {item.image ? (
-                      <Link href={item.productUrl} onClick={onClose} className="shrink-0">
+                      <Link href={item.productUrl || `/products/${item.productSlug}`} onClick={onClose} className="shrink-0">
                         <img
                           src={item.image}
                           alt={item.nameEn}
@@ -463,7 +521,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <Link
-                        href={item.productUrl}
+                        href={item.productUrl || `/products/${item.productSlug}`}
                         onClick={onClose}
                         className="text-sm font-medium text-white line-clamp-2 hover:text-emerald-400 transition-colors"
                       >
@@ -572,6 +630,67 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
               </span>
             </div>
 
+            {/* Coupon input / applied badge */}
+            {!appliedCoupon ? (
+              <div className="space-y-1.5">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === "Enter" && handleApplyCoupon()}
+                    placeholder={t("couponCode")}
+                    className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-base sm:text-sm font-mono placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 touch-manipulation"
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponInput.trim()}
+                    className="shrink-0 px-3 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-medium disabled:opacity-50 touch-manipulation whitespace-nowrap"
+                  >
+                    {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("applyCoupon")}
+                  </button>
+                </div>
+                {couponError && <p className="text-xs text-red-400">{couponError}</p>}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between text-sm bg-orange-500/10 border border-orange-500/20 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                  <span className="font-mono text-orange-300 text-xs">{appliedCoupon.code}</span>
+                  <span className="text-xs text-orange-400/70 font-semibold">
+                    -{appliedCoupon.type === "percentage"
+                      ? `${appliedCoupon.value}%`
+                      : `${Number(appliedCoupon.value).toFixed(2)} ${appliedCoupon.currency}`}
+                  </span>
+                </div>
+                <button
+                  onClick={() => { setAppliedCoupon(null); setCouponInput("") }}
+                  className="text-slate-400 hover:text-white touch-manipulation"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+            {/* Discount row */}
+            {appliedCoupon && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-orange-400">{t("discount")}</span>
+                  <span className="text-orange-400 font-semibold">−{appliedCoupon.discountAmount.toFixed(2)} {appliedCoupon.currency}</span>
+                </div>
+                {appliedCoupon.eligibleProductIds.length > 0 &&
+                  appliedCoupon.eligibleProductIds.length < (items?.length ?? 0) && (
+                  <p className="text-xs text-slate-500">
+                    {t("couponAppliesTo")}:{" "}
+                    {appliedCoupon.eligibleProductIds.map(pid => {
+                      const item = items?.find(i => i.productId === pid)
+                      return item ? (locale === "bg" ? item.nameBg : item.nameEn) : pid
+                    }).join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Free shipping progress bar */}
             {showFreeShipping && (
               <div className="space-y-1.5">
@@ -617,7 +736,22 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
         {/* Footer — upsell tab */}
         {activeTab === "upsell" && items && items.length > 0 && (
-          <div className="border-t border-white/10 px-5 py-4 shrink-0">
+          <div className="border-t border-white/10 px-5 py-4 shrink-0 space-y-3">
+            {/* Applied coupon badge in upsell tab */}
+            {appliedCoupon && (
+              <div className="flex items-center justify-between text-sm bg-orange-500/10 border border-orange-500/20 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                  <span className="font-mono text-orange-300 text-xs">{appliedCoupon.code}</span>
+                  <span className="text-xs text-orange-400/70 font-semibold">
+                    -{appliedCoupon.type === "percentage"
+                      ? `${appliedCoupon.value}%`
+                      : `${Number(appliedCoupon.value).toFixed(2)} ${appliedCoupon.currency}`}
+                  </span>
+                </div>
+                <span className="text-orange-400 text-xs font-semibold">−{appliedCoupon.discountAmount.toFixed(2)} {appliedCoupon.currency}</span>
+              </div>
+            )}
             <button
               onClick={() => setActiveTab("cart")}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold hover:opacity-90 transition-opacity touch-manipulation"

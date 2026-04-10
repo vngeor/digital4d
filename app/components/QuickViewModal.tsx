@@ -6,7 +6,8 @@ import { useTranslations } from "next-intl"
 import { X, ExternalLink } from "lucide-react"
 import { ProductImageGallery } from "./ProductImageGallery"
 import { ProductActions } from "./ProductActions"
-import { parseTiers } from "@/lib/bulkDiscount"
+import { ProductPanelBadges } from "./ProductBadges"
+import { computeHasBulkDiscount, computeIsNew } from "@/lib/badgeHelpers"
 
 interface Color { nameBg: string; nameEn: string; nameEs: string; hex: string; hex2?: string | null }
 interface ProductVariant { id: string; image: string | null; status: string; colorId: string; color: Color }
@@ -63,10 +64,11 @@ interface QuickViewModalProps {
     isWishlisted: boolean
     categories: ProductCategory[]
     initialPackageLabel?: string
+    promotedCoupon?: { code: string; type: string; value: string; currency: string | null; expiresAt: string | null; minPurchase?: number | null } | null
     onClose: () => void
 }
 
-export function QuickViewModal({ product, locale, isWishlisted, categories, initialPackageLabel, onClose }: QuickViewModalProps) {
+export function QuickViewModal({ product, locale, isWishlisted, categories, initialPackageLabel, promotedCoupon, onClose }: QuickViewModalProps) {
     const t = useTranslations("products")
     const [descExpanded, setDescExpanded] = useState(false)
     const backdropRef = useRef<HTMLDivElement>(null)
@@ -290,6 +292,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                             packageVariantStatusMap={packageVariantStatusMap}
                             isNew={isNew}
                             discountPercent={discountPercent}
+                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)}
                         />
 
                         {/* RIGHT: Details */}
@@ -307,21 +310,13 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                             {/* Status badge + badges row */}
                             <div className="flex flex-wrap items-center gap-2">
                                 {statusBadge}
-                                {isNew && (
-                                    <span className="px-2 py-0.5 rounded-md text-xs font-black bg-cyan-500 text-white shadow-lg tracking-wider uppercase">
-                                        NEW
-                                    </span>
-                                )}
-                                {product.bestSeller && (
-                                    <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500 text-white shadow-lg">
-                                        ✓ {t("bestSeller")}
-                                    </span>
-                                )}
-                                {(product.onSale || parseTiers(product.bulkDiscountTiers || "").length > 0 || product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)) && (
-                                    <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-red-500 text-white shadow-lg">
-                                        {t("onSale")}
-                                    </span>
-                                )}
+                                <ProductPanelBadges
+                                    isNew={computeIsNew(product.createdAt)}
+                                    featured={product.featured}
+                                    bestSeller={product.bestSeller}
+                                    onSale={product.onSale}
+                                    hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)}
+                                />
                             </div>
 
                             {/* Description — expandable inline */}
@@ -417,6 +412,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                                 packages={packages}
                                 isWishlisted={isWishlisted}
                                 suppressCartDrawer={true}
+                                promotedCoupons={promotedCoupon ? [{ code: promotedCoupon.code, type: promotedCoupon.type, value: promotedCoupon.value, currency: promotedCoupon.currency, expiresAt: promotedCoupon.expiresAt ?? null, minPurchase: promotedCoupon.minPurchase ?? null }] : undefined}
                             />
 
                             {/* View full details link */}

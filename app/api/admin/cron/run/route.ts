@@ -8,8 +8,8 @@ import { processTemplates, processReminderNotifications } from "@/lib/cronNotifi
  * Accepts optional { date } body to simulate a specific date.
  */
 export async function POST(request: NextRequest) {
-  const permError = await requirePermissionApi("notifications", "create")
-  if (permError) return permError
+  const { error } = await requirePermissionApi("notifications", "create")
+  if (error) return error
 
   try {
     const body = await request.json().catch(() => ({}))

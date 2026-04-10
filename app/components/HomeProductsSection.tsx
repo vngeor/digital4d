@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check, Ticket, Eye } from "lucide-react"
+import { Eye } from "lucide-react"
 import { QuickViewModal } from "./QuickViewModal"
-import { parseTiers } from "@/lib/bulkDiscount"
+import { ProductImageBadges } from "./ProductBadges"
+import { computeDiscountPercent, computeHasBulkDiscount } from "@/lib/badgeHelpers"
 
 const COLOR_CLASSES: Record<string, string> = {
     cyan: "bg-cyan-500/20 text-cyan-400",
@@ -53,9 +54,11 @@ interface Product {
 }
 
 interface CouponBadge {
+    code: string
     type: string
     value: string
     currency: string | null
+    expiresAt: string | null
 }
 
 // Types for QuickViewModal compatibility
@@ -177,10 +180,6 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                     }
                 >
                     {products.map((product) => {
-                        const discountPercent = product.onSale && product.price && product.salePrice
-                            ? Math.round((1 - parseFloat(product.salePrice) / parseFloat(product.price)) * 100)
-                            : 0
-
                         return (
                             <div
                                 key={product.id}
@@ -209,76 +208,17 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                                         </div>
                                     )}
 
-                                    {/* Status overlay */}
-                                    {(product.status === "sold_out" || product.status === "out_of_stock" || product.status === "coming_soon") && (
-                                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                                            <div className={`px-3 py-1 -rotate-12 shadow-lg ${
-                                                product.status === "sold_out" ? "bg-red-600/80"
-                                                : product.status === "coming_soon" ? "bg-blue-600/80"
-                                                : "bg-gray-600/80"
-                                            }`}>
-                                                <span className="text-white font-bold text-[10px] sm:text-xs tracking-wider uppercase">
-                                                    {product.status === "sold_out" ? tProducts("soldOut")
-                                                    : product.status === "coming_soon" ? tProducts("comingSoon")
-                                                    : tProducts("outOfStock")}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Top-right badge: Sale (for onSale products or products with bulk tiers) */}
-                                    {(product.onSale || parseTiers(product.bulkDiscountTiers || "").length > 0) && (
-                                        <div className="absolute top-2 right-2 flex gap-1">
-                                            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                                                {tProducts("onSale")}
-                                            </span>
-                                            {product.onSale && discountPercent > 0 && (
-                                                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-red-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                                                    -{discountPercent}%
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Top-left badges: Featured + New */}
-                                    {(product.featured || product.isNew) && (
-                                        <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-                                            {product.featured && (
-                                                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/products?featured=true") }} className="w-5 h-5 sm:w-6 sm:h-6 bg-violet-500/90 rounded-full flex items-center justify-center shadow-lg hover:bg-violet-500 transition-colors touch-manipulation">
-                                                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                    </svg>
-                                                </button>
-                                            )}
-                                            {product.isNew && (
-                                                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-cyan-500 rounded-md text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                                                    NEW
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Bottom-right: Best Seller */}
-                                    {bestSellerIds.includes(product.id) && (
-                                        <div className="absolute bottom-2 right-2 z-20">
-                                            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/products?bestSeller=true") }} className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-lg hover:bg-amber-400 transition-colors touch-manipulation">
-                                                <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                {tProducts("bestSeller")}
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {/* Coupon Badge */}
-                                    {couponMap?.[product.id] && (
-                                        <div className="absolute bottom-2 left-2 z-20">
-                                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-orange-500 text-white shadow-lg">
-                                                <Ticket className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                                -{couponMap[product.id].type === "percentage"
-                                                    ? `${couponMap[product.id].value}%`
-                                                    : `${couponMap[product.id].value} ${couponMap[product.id].currency || "EUR"}`}
-                                            </span>
-                                        </div>
-                                    )}
+                                    <ProductImageBadges
+                                        size="sm"
+                                        isNew={product.isNew}
+                                        featured={product.featured}
+                                        bestSeller={bestSellerIds.includes(product.id)}
+                                        onSale={product.onSale}
+                                        discountPercent={computeDiscountPercent(product.price, product.salePrice)}
+                                        hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers)}
+                                        status={product.status}
+                                        coupon={couponMap?.[product.id] ?? null}
+                                    />
 
                                     {/* Quick View — desktop hover bar */}
                                     {quickViewProducts?.[product.id] && (
@@ -390,6 +330,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                         locale={locale}
                         isWishlisted={false}
                         categories={(categories ?? []) as any}
+                        promotedCoupon={couponMap?.[quickViewQVProduct.id] ?? null}
                         onClose={() => setQuickViewQVProduct(null)}
                     />
                 )}

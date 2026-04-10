@@ -43,6 +43,7 @@ interface PromotedCoupon {
     value: string
     currency: string | null
     expiresAt: string | null
+    minPurchase?: number | null
 }
 
 interface SelectedPackage {
@@ -197,11 +198,16 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                                     -{getDiscountLabel(coupon)}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5">
+                            <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
                                 {isDigital ? (
                                     <span className="text-[11px] text-orange-400/70">{t("clickToApply")}</span>
                                 ) : (
                                     <span className="text-[11px] text-orange-400/70">{t("couponMentionInQuote")}</span>
+                                )}
+                                {coupon.minPurchase != null && coupon.minPurchase > 0 && (
+                                    <span className="text-[11px] text-orange-400/60">
+                                        {t("couponMinOrder", { amount: coupon.minPurchase.toFixed(2), currency: coupon.currency || "EUR" })}
+                                    </span>
                                 )}
                                 {expiryText && (
                                     <span className="text-sm text-red-400 flex items-center gap-1 font-mono font-bold animate-sale-blink">

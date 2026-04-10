@@ -3,7 +3,9 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { Heart, ArrowLeft, ShoppingCart, MessageSquare, Package, Bell, Star, Tag, Ticket } from "lucide-react"
+import { Heart, ArrowLeft, ShoppingCart, MessageSquare, Package, Bell } from "lucide-react"
+import { ProductImageBadges } from "../components/ProductBadges"
+import { computeDiscountPercent, computeIsNew } from "@/lib/badgeHelpers"
 import { toast } from "sonner"
 import { Header } from "../components/Header"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
@@ -23,7 +25,10 @@ interface WishlistProduct {
     image: string | null
     fileType: string | null
     featured: boolean
+    bestSeller?: boolean
     status: string
+    createdAt?: string
+    bulkDiscountTiers?: string | null
 }
 
 interface WishlistItem {
@@ -188,10 +193,6 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                 const name = getLocalizedName(product)
                                 const categoryColor = getCategoryColor(product.category)
                                 const categoryName = getCategoryName(product.category)
-                                const discountPercent = product.onSale && product.price && product.salePrice
-                                    ? Math.round((1 - parseFloat(product.salePrice) / parseFloat(product.price)) * 100)
-                                    : 0
-
                                 const formatPrice = () => {
                                     if (product.priceType === "quote") return null
                                     if (!product.price) return null
@@ -218,29 +219,20 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                                 )}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
 
-                                                {/* Badges */}
-                                                <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-                                                    {product.featured && (
-                                                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-amber-500/90 rounded-full flex items-center justify-center shadow-lg">
-                                                            <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white fill-white" />
-                                                        </div>
-                                                    )}
-                                                    {product.onSale && (
-                                                        <>
-                                                            <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-500 text-white">
-                                                                <Tag className="w-3 h-3" />
-                                                            </span>
-                                                            {discountPercent > 0 && (
-                                                                <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-500 text-white">
-                                                                    -{discountPercent}%
-                                                                </span>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
+                                                <ProductImageBadges
+                                                    size="sm"
+                                                    hideTopRight
+                                                    isNew={computeIsNew(product.createdAt)}
+                                                    featured={product.featured}
+                                                    bestSeller={product.bestSeller}
+                                                    onSale={product.onSale}
+                                                    discountPercent={computeDiscountPercent(product.price, product.salePrice)}
+                                                    hasBulkDiscount={false}
+                                                    coupon={couponMap?.[product.id] ?? null}
+                                                />
 
                                                 {/* Remove Button */}
-                                                <div className="absolute top-3 right-3">
+                                                <div className="absolute top-3 right-3 z-10">
                                                     <button
                                                         onClick={(e) => {
                                                             e.preventDefault()
@@ -253,18 +245,6 @@ export function WishlistClient({ items: initialItems, categories, locale, transl
                                                         <Heart className="w-4 h-4 fill-red-400" />
                                                     </button>
                                                 </div>
-
-                                                {/* Coupon Badge */}
-                                                {couponMap?.[product.id] && (
-                                                    <div className="absolute bottom-3 left-3">
-                                                        <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-orange-500 text-white shadow-lg">
-                                                            <Ticket className="w-3 h-3" />
-                                                            -{couponMap[product.id].type === "percentage"
-                                                                ? `${couponMap[product.id].value}%`
-                                                                : `${couponMap[product.id].value} ${couponMap[product.id].currency || "EUR"}`}
-                                                        </span>
-                                                    </div>
-                                                )}
                                             </div>
                                         </Link>
 

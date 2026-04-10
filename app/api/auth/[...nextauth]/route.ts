@@ -43,7 +43,7 @@ const POST = async (req: NextRequest) => {
   const isCredentialsLogin = url.pathname.endsWith("/callback/credentials")
   if (isCredentialsLogin) {
     const ip = getClientIp(req)
-    const { success, resetAt } = rateLimit(`login:${ip}`, {
+    const { success, resetAt } = await rateLimit(`login:${ip}`, {
       limit: 5,
       windowMs: 15 * 60 * 1000,
     })

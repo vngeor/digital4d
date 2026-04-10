@@ -10,7 +10,9 @@ import { ProductDetailClient } from "../../components/ProductDetailClient"
 import { RecentlyViewedTracker } from "../../components/RecentlyViewedTracker"
 import { BackgroundOrbs } from "@/app/components/BackgroundOrbs"
 import { buildProductUrl } from "@/lib/productUrl"
-import { ArrowLeft, Check } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
+import { ProductPanelBadges } from "@/app/components/ProductBadges"
+import { computeHasBulkDiscount } from "@/lib/badgeHelpers"
 import { RelatedProductsCarousel, type RelatedCard } from "@/app/components/RelatedProductsCarousel"
 import { sanitizeHtml } from "@/lib/sanitize"
 import type { Product } from "@prisma/client"
@@ -148,7 +150,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                 { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
             ],
         },
-        select: { code: true, type: true, value: true, currency: true, expiresAt: true, allowOnSale: true },
+        select: { code: true, type: true, value: true, currency: true, expiresAt: true, allowOnSale: true, minPurchase: true },
         take: 3,
     })
 
@@ -161,6 +163,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             value: c.value.toString(),
             currency: c.currency,
             expiresAt: c.expiresAt?.toISOString() || null,
+            minPurchase: c.minPurchase ? Number(c.minPurchase) : null,
         }))
 
     // Fetch the category with parent for breadcrumb display
@@ -192,6 +195,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             include: {
                 brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } },
                 variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+                packages: { select: { bulkDiscountTiers: true } },
             },
             take: 6,
         })
@@ -218,6 +222,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             include: {
                 brand: { select: { slug: true, nameBg: true, nameEn: true, nameEs: true } },
                 variants: { select: { image: true, status: true }, orderBy: { order: "asc" } },
+                packages: { select: { bulkDiscountTiers: true } },
             },
         })
     }
@@ -325,7 +330,10 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         isNew: (Date.now() - new Date(r.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000,
         url: relatedProductUrls[r.id] || `/products/${r.slug}`,
         coupon: relatedCouponMap[r.id] ?? null,
-        bulkDiscountTiers: (r as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",
+        bulkDiscountTiers:
+            (r as { bulkDiscountTiers?: string | null }).bulkDiscountTiers ||
+            (r as { packages?: Array<{ bulkDiscountTiers?: string | null }> }).packages?.find(pkg => pkg.bulkDiscountTiers)?.bulkDiscountTiers ||
+            "",
     }))
 
     const productName = getLocalizedName(product)
@@ -574,33 +582,15 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                         </div>
 
                         {/* Badges */}
-                        <div className="flex flex-wrap gap-1 md:gap-2">
-                            {product.onSale && (
-                                <Link
-                                    href="/products?sale=true"
-                                    className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors cursor-pointer"
-                                >
-                                    {t("products.onSale")}
-                                </Link>
-                            )}
-                            {product.featured && (
-                                <Link
-                                    href="/products?featured=true"
-                                    className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-violet-500/90 text-white shadow-lg hover:bg-violet-500 transition-colors cursor-pointer"
-                                >
-                                    ⭐ {t("products.featured")}
-                                </Link>
-                            )}
-                            {product.bestSeller && (
-                                <Link
-                                    href="/products?bestSeller=true"
-                                    className="flex items-center gap-0.5 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-bold bg-amber-500 text-white shadow-lg hover:bg-amber-400 transition-colors cursor-pointer"
-                                >
-                                    <Check className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                                    {t("products.bestSeller")}
-                                </Link>
-                            )}
-                        </div>
+                        <ProductPanelBadges
+                            onSale={product.onSale}
+                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)}
+                            featured={product.featured}
+                            bestSeller={product.bestSeller}
+                            saleHref="/products?sale=true"
+                            featuredHref="/products?featured=true"
+                            bestSellerHref="/products?bestSeller=true"
+                        />
 
                     </ProductDetailClient>
 
