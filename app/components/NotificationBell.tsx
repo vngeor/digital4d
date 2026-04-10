@@ -753,7 +753,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
           {notifications.length > 0 && (
             <div className="px-4 py-3 border-t border-white/10">
               <Link
-                href="/my-orders"
+                href="/notifications"
                 onClick={() => setIsOpen(false)}
                 className="block text-center text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
               >

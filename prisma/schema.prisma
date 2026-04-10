@@ -597,6 +597,8 @@ model NotificationTemplate {
   couponDuration    Int?              @default(30)
   couponPerUser     Int               @default(1)
   couponProductIds  String[]
+  couponCategoryIds String[]
+  couponBrandIds    String[]
   couponAllowOnSale Boolean           @default(false)
   couponMinPurchase Decimal?          @db.Decimal(10, 2)
   active            Boolean           @default(true)

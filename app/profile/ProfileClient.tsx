@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useLocale } from "next-intl"
 import Image from "next/image"
 import Link from "next/link"
 import { User, Mail, Phone, MapPin, Calendar, Edit2, ArrowLeft, Globe, Building, Cake, Lock, Copy, Check, ShoppingBag } from "lucide-react"
@@ -141,6 +142,7 @@ const SOURCE_MAP: Record<string, { icon: string; labelKey: string }> = {
 }
 
 export function ProfileClient({ user, translations: t, secretDeals }: ProfileClientProps) {
+  const locale = useLocale()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
@@ -162,7 +164,7 @@ export function ProfileClient({ user, translations: t, secretDeals }: ProfileCli
 
   const formatExpiryDate = (expiresAt: string | null) => {
     if (!expiresAt) return null
-    return new Date(expiresAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+    return new Date(expiresAt).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
   }
 
   const formatDate = (dateString: string) => {

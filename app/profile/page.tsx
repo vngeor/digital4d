@@ -57,7 +57,7 @@ export default async function ProfilePage() {
         },
       },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
   })
 
   // Deduplicate by couponId (original + reminder both reference same coupon)

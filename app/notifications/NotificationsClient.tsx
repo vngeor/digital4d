@@ -1,0 +1,598 @@
+"use client"
+
+import { useState, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
+import Link from "next/link"
+import { useLocale } from "next-intl"
+import { sanitizeHtml } from "@/lib/sanitize"
+import {
+  ArrowLeft, Bell, X, MessageSquare, Ticket, Copy, Check, Heart, TrendingDown,
+  Cake, Gift, ExternalLink, Clock, TreePine, PartyPopper, Egg, CalendarDays,
+  Package, CheckCheck, Loader2,
+} from "lucide-react"
+
+interface Notification {
+  id: string
+  type: "quote_offer" | "admin_message" | "coupon" | "wishlist_price_drop" | "wishlist_coupon" | "stock_available" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "coupon_reminder"
+  title: string
+  message: string
+  link: string | null
+  read: boolean
+  quotedPrice: string | null
+  quotedAt: string | null
+  viewedAt: string | null
+  productName: string | null
+  productSlug: string | null
+  productImage: string | null
+  productBrand: string | null
+  couponCode: string | null
+  couponType: string | null
+  couponValue: string | null
+  couponCurrency: string | null
+  couponExpiresAt: string | null
+  couponMinPurchase: string | null
+  createdAt: string
+  isLegacy: boolean
+  quoteId: string | null
+}
+
+interface Props {
+  translations: {
+    title: string
+    markAllRead: string
+    noNotifications: string
+    noOlderNotifications: string
+    notifications: string
+    newQuoteReceived: string
+    justNow: string
+    minutesAgo: string
+    hoursAgo: string
+    daysAgo: string
+    wishlistPriceDrop: string
+    wishlistPriceDropMessage: string
+    wishlistOnSale: string
+    wishlistCoupon: string
+    wishlistCouponPercentage: string
+    wishlistCouponFixed: string
+    quoteOfferTitle: string
+    quoteOfferWithCouponTitle: string
+    quoteOfferMessage: string
+    quoteOfferMessageWithCoupon: string
+    quoteOfferMessageGeneric: string
+    quotePriceMessage: string
+    autoBirthday: string
+    autoHoliday: string
+    autoCustom: string
+    notificationDetails: string
+    visitLink: string
+    couponExpires: string
+    couponTimeLeft: string
+    couponExpired: string
+    couponReminder: string
+    stockAvailable: string
+    couponMinPurchase: string
+    closeModal: string
+  }
+}
+
+function isAutoNotification(type: string): boolean {
+  return type.startsWith("auto_") || type === "coupon_reminder"
+}
+
+export function NotificationsClient({ translations: t }: Props) {
+  const locale = useLocale()
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
+  const [markingAll, setMarkingAll] = useState(false)
+  const [countdownKey, setCountdownKey] = useState(0)
+
+  useEffect(() => {
+    fetch("/api/notifications?all=true")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) setNotifications(data.notifications || [])
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Close modal on Escape
+  useEffect(() => {
+    if (!selectedNotification) return
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setSelectedNotification(null) }
+    document.addEventListener("keydown", h)
+    return () => document.removeEventListener("keydown", h)
+  }, [selectedNotification])
+
+  // iOS scroll lock when modal open
+  useEffect(() => {
+    if (selectedNotification) {
+      const scrollY = window.scrollY
+      document.body.style.position = "fixed"
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = "100%"
+      document.body.style.overflow = "hidden"
+      return () => {
+        document.body.style.position = ""
+        document.body.style.top = ""
+        document.body.style.width = ""
+        document.body.style.overflow = ""
+        window.scrollTo(0, scrollY)
+      }
+    }
+  }, [selectedNotification])
+
+  // Live countdown for coupon expiry
+  useEffect(() => {
+    if (!selectedNotification?.couponExpiresAt) return
+    let interval: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!interval) interval = setInterval(() => setCountdownKey(k => k + 1), 1000) }
+    const stop = () => { if (interval) { clearInterval(interval); interval = null } }
+    const onVisibility = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
+  }, [selectedNotification])
+
+  const markAsRead = useCallback(async (notification: Notification) => {
+    if (notification.read) return
+    try {
+      if (notification.isLegacy) {
+        await fetch(`/api/quotes/${notification.id}/view`, { method: "POST" })
+      } else {
+        await fetch("/api/notifications/read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: notification.id }),
+        })
+      }
+      setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n))
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleMarkAllRead = async () => {
+    setMarkingAll(true)
+    try {
+      await fetch("/api/notifications/read", { method: "PUT" })
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    } catch { /* ignore */ }
+    setMarkingAll(false)
+  }
+
+  const handleItemClick = (notification: Notification) => {
+    markAsRead(notification)
+    setSelectedNotification(notification)
+  }
+
+  const handleCopyCode = async (code: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(null), 2000)
+    } catch { /* ignore */ }
+  }
+
+  const handleCopyCodeModal = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(null), 2000)
+    } catch { /* ignore */ }
+  }
+
+  // ─── helpers ──────────────────────────────────────────────────────────────
+
+  const tryParseJson = (str: string) => { try { return JSON.parse(str) } catch { return null } }
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return ""
+    const date = new Date(dateString)
+    const diffMs = Date.now() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+    if (diffMins < 1) return t.justNow
+    if (diffMins < 60) return t.minutesAgo.replace("{minutes}", String(diffMins))
+    if (diffHours < 24) return t.hoursAgo.replace("{hours}", String(diffHours))
+    if (diffDays < 7) return t.daysAgo.replace("{days}", String(diffDays))
+    return date.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
+  }
+
+  const getLocalizedTitle = (n: Notification): string => {
+    if (n.type === "wishlist_price_drop" || n.type === "stock_available") {
+      const names = tryParseJson(n.title)
+      if (names) return names[locale] || names.en || n.title
+    }
+    if (n.type === "wishlist_coupon") {
+      const data = tryParseJson(n.title)
+      if (data?.code) return t.wishlistCoupon.replace("{code}", data.code)
+    }
+    if (n.type === "quote_offer") return t.quoteOfferTitle
+    if (n.type === "coupon") return t.quoteOfferWithCouponTitle
+    if (n.type.startsWith("auto_") || n.type === "coupon_reminder") {
+      const parsed = tryParseJson(n.title)
+      if (parsed?.[locale]) return parsed[locale]
+      if (parsed?.en) return parsed.en
+      if (n.type === "auto_birthday") return t.autoBirthday
+      if (n.type === "coupon_reminder") return t.couponReminder
+      if (n.type === "auto_custom") return t.autoCustom
+      return t.autoHoliday
+    }
+    return n.title
+  }
+
+  const getLocalizedMessage = (n: Notification): string => {
+    if (n.type === "wishlist_price_drop") {
+      const msgData = tryParseJson(n.message)
+      if (msgData?.newPrice) return t.wishlistPriceDropMessage.replace("{newPrice}", msgData.newPrice).replace("{oldPrice}", msgData.oldPrice || "").replace(/\{currency\}/g, msgData.currency || "")
+      if (msgData?.onSale) { const names = tryParseJson(n.title); return t.wishlistOnSale.replace("{product}", names ? (names[locale] || names.en) : "") }
+    }
+    if (n.type === "wishlist_coupon") {
+      const data = tryParseJson(n.title)
+      if (data?.code) {
+        if (data.type === "percentage") return t.wishlistCouponPercentage.replace("{code}", data.code).replace("{value}", String(data.value))
+        return t.wishlistCouponFixed.replace("{code}", data.code).replace("{value}", String(data.value)).replace("{currency}", data.currency || "")
+      }
+    }
+    if (n.type === "stock_available") {
+      const msgData = tryParseJson(n.message)
+      if (msgData?.[locale] || msgData?.en) return msgData[locale] || msgData.en
+      const names = tryParseJson(n.title)
+      if (names) return t.stockAvailable.replace("{product}", names[locale] || names.en || "")
+    }
+    if (n.type === "quote_offer" || n.type === "coupon") {
+      const msgData = tryParseJson(n.message)
+      if (msgData?.adminMessage) return msgData.adminMessage
+      if (msgData?.price) return (msgData.hasCoupon ? t.quoteOfferMessageWithCoupon : t.quoteOfferMessage).replace("{price}", msgData.price)
+      if (n.quotedPrice) { const price = `€${parseFloat(n.quotedPrice).toFixed(2)}`; return (n.type === "coupon" ? t.quoteOfferMessageWithCoupon : t.quoteOfferMessage).replace("{price}", price) }
+      return t.quoteOfferMessageGeneric
+    }
+    if (n.type.startsWith("auto_") || n.type === "coupon_reminder") {
+      const parsed = tryParseJson(n.message)
+      if (parsed?.[locale]) return parsed[locale]
+      if (parsed?.en) return parsed.en
+    }
+    return n.message
+  }
+
+  const getNotificationIcon = (n: Notification) => {
+    if (n.type === "coupon") return <div className="shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center"><Ticket className="w-5 h-5 text-amber-400" /></div>
+    if (n.type === "admin_message") return <div className="shrink-0 w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center"><MessageSquare className="w-5 h-5 text-purple-400" /></div>
+    if (n.type === "wishlist_price_drop") return n.productImage ? <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-red-500/30 bg-white/5"><img src={n.productImage} alt="" className="w-full h-full object-cover" /></div> : <div className="shrink-0 w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center"><TrendingDown className="w-5 h-5 text-red-400" /></div>
+    if (n.type === "stock_available") { const msgData = tryParseJson(n.message); const img = msgData?.variantImage || n.productImage; return img ? <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-emerald-500/30 bg-white/5"><img src={img} alt="" className="w-full h-full object-cover" /></div> : <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center"><Package className="w-5 h-5 text-emerald-400" /></div> }
+    if (n.type === "wishlist_coupon") return <div className="shrink-0 w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center"><Heart className="w-5 h-5 text-pink-400" /></div>
+    if (n.type === "auto_birthday") return <div className="shrink-0 w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center"><Cake className="w-5 h-5 text-pink-400" /></div>
+    if (n.type === "auto_christmas") return <div className="shrink-0 w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center"><TreePine className="w-5 h-5 text-red-400" /></div>
+    if (n.type === "auto_new_year") return <div className="shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center"><PartyPopper className="w-5 h-5 text-amber-400" /></div>
+    if (n.type === "auto_easter") return <div className="shrink-0 w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center"><Egg className="w-5 h-5 text-purple-400" /></div>
+    if (n.type === "auto_custom") return <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><CalendarDays className="w-5 h-5 text-blue-400" /></div>
+    if (n.type === "coupon_reminder") return <div className="shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center"><Clock className="w-5 h-5 text-amber-400" /></div>
+    if (n.productImage) return <img src={n.productImage} alt={n.productName || ""} className="shrink-0 w-10 h-10 rounded-lg object-cover" />
+    return <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><MessageSquare className="w-5 h-5 text-blue-400" /></div>
+  }
+
+  const getNotificationLink = (n: Notification) => {
+    if ((n.type === "quote_offer" || n.type === "coupon") && n.quoteId) {
+      const base = n.link || "/my-orders"
+      return `${base}${base.includes("?") ? "&" : "?"}quoteId=${n.quoteId}`
+    }
+    if (n.type === "wishlist_coupon") return "/products"
+    if (n.link) return n.link
+    if (n.type === "coupon") return "/products"
+    return "/my-orders"
+  }
+
+  const getModalGradient = (type: string) => {
+    if (type === "auto_birthday") return "from-pink-500 to-rose-500"
+    if (type === "auto_christmas") return "from-red-500 to-rose-600"
+    if (type === "auto_new_year") return "from-amber-500 to-orange-500"
+    if (type === "auto_easter") return "from-purple-500 to-violet-500"
+    if (type === "auto_custom") return "from-blue-500 to-cyan-500"
+    if (type === "coupon_reminder") return "from-amber-500 to-orange-500"
+    if (type === "quote_offer" || type === "coupon") return "from-blue-500 to-indigo-500"
+    if (type === "admin_message") return "from-slate-500 to-blue-500"
+    if (type === "wishlist_price_drop") return "from-red-500 to-rose-500"
+    if (type === "wishlist_coupon") return "from-pink-500 to-rose-500"
+    if (type === "stock_available") return "from-emerald-500 to-cyan-500"
+    return "from-indigo-500 to-purple-500"
+  }
+
+  const getModalContainerClasses = (type: string) => {
+    const base = "relative w-full max-w-md max-h-[95dvh] sm:max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl animate-fade-in-up overflow-hidden"
+    if (type === "auto_birthday") return `${base} bg-[#231620] border border-pink-900/40`
+    if (type === "auto_christmas") return `${base} bg-[#1c1214] border border-red-900/40`
+    if (type === "auto_new_year") return `${base} bg-[#1c1710] border border-amber-900/40`
+    if (type === "auto_easter") return `${base} bg-[#1a1420] border border-purple-900/40`
+    if (type === "auto_custom") return `${base} bg-[#121720] border border-blue-900/40`
+    if (type === "coupon_reminder") return `${base} bg-[#1c1710] border border-amber-900/40`
+    if (type === "quote_offer" || type === "coupon") return `${base} bg-[#121420] border border-blue-900/40`
+    if (type === "admin_message") return `${base} bg-[#12141e] border border-slate-700/40`
+    if (type === "wishlist_price_drop") return `${base} bg-[#1c1214] border border-red-900/40`
+    if (type === "wishlist_coupon") return `${base} bg-[#201420] border border-pink-900/40`
+    if (type === "stock_available") return `${base} bg-[#121e14] border border-emerald-900/40`
+    return `${base} bg-[#14121e] border border-indigo-900/40`
+  }
+
+  const getModalIconBg = (type: string) => {
+    const map: Record<string, string> = { auto_birthday: "bg-pink-500/15", auto_christmas: "bg-red-500/15", auto_new_year: "bg-amber-500/15", auto_easter: "bg-purple-500/15", auto_custom: "bg-blue-500/15", coupon_reminder: "bg-amber-500/15", quote_offer: "bg-blue-500/15", coupon: "bg-blue-500/15", admin_message: "bg-slate-500/15", wishlist_price_drop: "bg-red-500/15", wishlist_coupon: "bg-pink-500/15", stock_available: "bg-emerald-500/15" }
+    return map[type] || "bg-indigo-500/15"
+  }
+
+  const getModalIconColor = (type: string) => {
+    const map: Record<string, string> = { auto_birthday: "text-pink-400", auto_christmas: "text-red-400", auto_new_year: "text-amber-400", auto_easter: "text-purple-400", auto_custom: "text-blue-400", coupon_reminder: "text-amber-400", quote_offer: "text-blue-400", coupon: "text-blue-400", admin_message: "text-slate-300", wishlist_price_drop: "text-red-400", wishlist_coupon: "text-pink-400", stock_available: "text-emerald-400" }
+    return map[type] || "text-indigo-400"
+  }
+
+  const getModalBadgeStyle = (type: string) => {
+    const map: Record<string, string> = { auto_birthday: "bg-pink-500/20 text-pink-400", auto_christmas: "bg-red-500/20 text-red-400", auto_new_year: "bg-amber-500/20 text-amber-400", auto_easter: "bg-purple-500/20 text-purple-400", auto_custom: "bg-blue-500/20 text-blue-400", coupon_reminder: "bg-amber-500/20 text-amber-400", quote_offer: "bg-blue-500/20 text-blue-400", coupon: "bg-blue-500/20 text-blue-400", admin_message: "bg-slate-500/20 text-slate-300", wishlist_price_drop: "bg-red-500/20 text-red-400", wishlist_coupon: "bg-pink-500/20 text-pink-400", stock_available: "bg-emerald-500/20 text-emerald-400" }
+    return map[type] || "bg-indigo-500/20 text-indigo-400"
+  }
+
+  const getTypeLabel = (type: string) => {
+    if (type === "auto_birthday") return t.autoBirthday
+    if (type === "auto_christmas" || type === "auto_new_year" || type === "auto_easter") return t.autoHoliday
+    if (type === "coupon_reminder") return t.couponReminder
+    if (type === "auto_custom") return t.autoCustom
+    if (type === "quote_offer" || type === "coupon") return t.newQuoteReceived
+    if (type === "wishlist_price_drop") return t.wishlistPriceDrop.replace(/[\s:]*\{[^}]+\}.*$/g, "").trim()
+    if (type === "wishlist_coupon") return t.wishlistCoupon.replace(/[\s:]*\{[^}]+\}.*$/g, "").trim()
+    if (type === "stock_available") { const s = t.stockAvailable.replace(/^\{[^}]+\}\s*/g, "").trim(); return s.charAt(0).toUpperCase() + s.slice(1) }
+    return t.notifications
+  }
+
+  const formatCouponExpiry = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(locale === "bg" ? "bg-BG" : locale === "es" ? "es-ES" : "en-GB", { day: "2-digit", month: "short", year: "numeric" })
+  }
+
+  const getCountdownText = (expiresAt: string | null): string | null => {
+    void countdownKey
+    if (!expiresAt) return null
+    const diffMs = new Date(expiresAt).getTime() - Date.now()
+    if (diffMs <= 0) return null
+    const totalSeconds = Math.floor(diffMs / 1000)
+    const days = Math.floor(totalSeconds / 86400)
+    const hours = Math.floor((totalSeconds % 86400) / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    const pad = (n: number) => String(n).padStart(2, "0")
+    if (days > 0) return `${days}d ${hours}h ${pad(minutes)}m`
+    if (hours > 0) return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+    return `${pad(minutes)}:${pad(seconds)}`
+  }
+
+  const isCouponExpired = (expiresAt: string | null) => !!expiresAt && new Date(expiresAt).getTime() <= Date.now()
+  const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim()
+
+  const hasUnread = notifications.some(n => !n.read)
+
+  // ─── render ───────────────────────────────────────────────────────────────
+
+  return (
+    <div className="min-h-screen bg-[#080810]">
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:py-10">
+        {/* Page header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors text-slate-400 hover:text-white">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-emerald-400" />
+              <h1 className="text-xl font-bold text-white">{t.title}</h1>
+              {hasUnread && (
+                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+            </div>
+          </div>
+          {hasUnread && (
+            <button
+              onClick={handleMarkAllRead}
+              disabled={markingAll}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50 touch-manipulation"
+            >
+              {markingAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
+              {t.markAllRead}
+            </button>
+          )}
+        </div>
+
+        {/* List */}
+        <div className="glass rounded-2xl overflow-hidden divide-y divide-white/5">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Bell className="w-10 h-10 text-slate-600" />
+              <p className="text-slate-400 text-sm">{t.noOlderNotifications}</p>
+            </div>
+          ) : (
+            notifications.map((n) => (
+              <div
+                key={n.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleItemClick(n)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleItemClick(n) } }}
+                className={`flex items-start gap-3 px-4 py-3.5 cursor-pointer hover:bg-white/5 transition-colors ${!n.read ? "bg-white/[0.025]" : ""}`}
+              >
+                {getNotificationIcon(n)}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${!n.read ? "text-white" : "text-slate-300"}`}>
+                    {getLocalizedTitle(n)}
+                  </p>
+                  <p className="text-xs text-slate-400 line-clamp-2 mt-0.5">
+                    {stripHtml(getLocalizedMessage(n))}
+                  </p>
+                  {n.couponCode && (
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <code className="text-xs font-mono bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded whitespace-nowrap truncate">
+                        {n.couponCode}
+                      </code>
+                      <button
+                        onClick={(e) => handleCopyCode(n.couponCode!, e)}
+                        className="shrink-0 p-1.5 rounded hover:bg-white/10 transition-colors touch-manipulation"
+                      >
+                        {copiedCode === n.couponCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
+                      </button>
+                    </div>
+                  )}
+                  {n.quotedPrice && (
+                    <p className="text-sm text-emerald-400 font-semibold mt-1">€{parseFloat(n.quotedPrice).toFixed(2)}</p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span className="text-xs text-slate-500">{formatDate(n.createdAt)}</span>
+                  {!n.read && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Detail Modal */}
+      {selectedNotification && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pt-safe pb-safe"
+          onClick={() => setSelectedNotification(null)}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div
+            className={getModalContainerClasses(selectedNotification.type)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`h-1 w-full flex-shrink-0 bg-gradient-to-r ${getModalGradient(selectedNotification.type)}`} />
+            <button
+              onClick={() => setSelectedNotification(null)}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-11 h-11 sm:w-10 sm:h-10 rounded-full glass flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/20 transition-colors z-20 touch-manipulation"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-8" style={{ WebkitOverflowScrolling: "touch" }}>
+              <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${getModalIconBg(selectedNotification.type)} flex items-center justify-center`}>
+                  {(() => {
+                    const iconClass = `w-6 h-6 sm:w-7 sm:h-7 ${getModalIconColor(selectedNotification.type)}`
+                    switch (selectedNotification.type) {
+                      case "auto_birthday": return <Cake className={iconClass} />
+                      case "auto_christmas": return <TreePine className={iconClass} />
+                      case "auto_new_year": return <PartyPopper className={iconClass} />
+                      case "auto_easter": return <Egg className={iconClass} />
+                      case "auto_custom": return <CalendarDays className={iconClass} />
+                      case "coupon_reminder": return <Clock className={iconClass} />
+                      case "quote_offer": case "coupon": return <MessageSquare className={iconClass} />
+                      case "admin_message": return <MessageSquare className={iconClass} />
+                      case "wishlist_price_drop": return <TrendingDown className={iconClass} />
+                      case "wishlist_coupon": return <Heart className={iconClass} />
+                      case "stock_available": return <Package className={iconClass} />
+                      default: return <Gift className={iconClass} />
+                    }
+                  })()}
+                </div>
+                <div className="min-w-0">
+                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getModalBadgeStyle(selectedNotification.type)}`}>
+                    {getTypeLabel(selectedNotification.type)}
+                  </span>
+                  <p className="text-xs text-slate-500 mt-1">{formatDate(selectedNotification.createdAt)}</p>
+                </div>
+              </div>
+
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 break-words">
+                {getLocalizedTitle(selectedNotification)}
+              </h2>
+
+              {selectedNotification.type === "stock_available" && selectedNotification.productImage && (
+                <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-white/5 border border-emerald-500/20">
+                    <img src={selectedNotification.productImage} alt={getLocalizedTitle(selectedNotification)} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{getLocalizedTitle(selectedNotification)}</p>
+                    {selectedNotification.productBrand && <p className="text-xs text-emerald-400 mt-0.5">{selectedNotification.productBrand}</p>}
+                  </div>
+                </div>
+              )}
+
+              <div
+                className="text-sm sm:text-base text-slate-300 leading-relaxed mb-5 sm:mb-6 prose prose-invert max-w-none prose-a:text-emerald-400 prose-a:underline prose-a:hover:text-emerald-300 prose-p:my-2 prose-headings:text-white"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(getLocalizedMessage(selectedNotification)) }}
+              />
+
+              {selectedNotification.couponCode && (
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3 sm:p-4 mb-5 sm:mb-6">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <Ticket className="w-5 h-5 text-amber-400 shrink-0" />
+                      <span className="text-2xl sm:text-3xl font-black text-amber-400 leading-none">
+                        {selectedNotification.couponType === "percentage" ? `${selectedNotification.couponValue}%` : `€${parseFloat(selectedNotification.couponValue || "0").toFixed(2)}`}
+                      </span>
+                    </div>
+                    {selectedNotification.couponMinPurchase && parseFloat(selectedNotification.couponMinPurchase) > 0 && (
+                      <span className="text-xs text-slate-400 shrink-0">{t.couponMinPurchase}: €{parseFloat(selectedNotification.couponMinPurchase).toFixed(2)}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className={`flex-1 text-base sm:text-lg font-mono font-bold text-amber-400 bg-amber-500/10 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-center sm:tracking-wider whitespace-nowrap overflow-hidden text-ellipsis ${isCouponExpired(selectedNotification.couponExpiresAt) ? "opacity-50 line-through" : ""}`}>
+                      {selectedNotification.couponCode}
+                    </code>
+                    <button
+                      onClick={() => handleCopyCodeModal(selectedNotification.couponCode!)}
+                      className="shrink-0 w-10 h-10 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 flex items-center justify-center transition-colors touch-manipulation"
+                    >
+                      {copiedCode === selectedNotification.couponCode ? <Check className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5 text-amber-400" />}
+                    </button>
+                  </div>
+                  {selectedNotification.couponExpiresAt && (() => {
+                    const expired = isCouponExpired(selectedNotification.couponExpiresAt)
+                    const countdownText = expired ? null : getCountdownText(selectedNotification.couponExpiresAt)
+                    return (
+                      <div className="mt-3 space-y-1">
+                        {expired ? (
+                          <div className="flex items-center justify-center gap-1.5 text-sm text-red-400 font-medium"><X className="w-4 h-4" /><span>{t.couponExpired}</span></div>
+                        ) : countdownText ? (
+                          <div className="flex items-center justify-center gap-1.5 text-sm text-red-400 font-mono font-bold animate-sale-blink"><Clock className="w-4 h-4" /><span>{countdownText}</span></div>
+                        ) : null}
+                        <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500">
+                          <span>{t.couponExpires.replace("{date}", formatCouponExpiry(selectedNotification.couponExpiresAt))}</span>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                {(() => {
+                  const link = isAutoNotification(selectedNotification.type) ? selectedNotification.link : getNotificationLink(selectedNotification)
+                  return link ? (
+                    <Link
+                      href={link}
+                      onClick={() => setSelectedNotification(null)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm transition-transform touch-manipulation"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      {t.visitLink}
+                    </Link>
+                  ) : null
+                })()}
+                <button
+                  onClick={() => setSelectedNotification(null)}
+                  className="flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium touch-manipulation"
+                >
+                  {t.closeModal}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
