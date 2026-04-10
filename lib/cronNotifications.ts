@@ -127,7 +127,7 @@ function resolvePlaceholders(
  * Process all active notification templates.
  * Called by the daily cron job.
  */
-export async function processTemplates(overrideDate?: Date): Promise<{
+export async function processTemplates(overrideDate?: Date, templateId?: string): Promise<{
   processed: number
   sent: number
   couponsCreated: number
@@ -136,7 +136,7 @@ export async function processTemplates(overrideDate?: Date): Promise<{
   const result = { processed: 0, sent: 0, couponsCreated: 0, errors: [] as string[] }
 
   const templates = await prisma.notificationTemplate.findMany({
-    where: { active: true },
+    where: { active: true, ...(templateId ? { id: templateId } : {}) },
   })
 
   const today = overrideDate ?? new Date()

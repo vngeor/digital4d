@@ -28,7 +28,7 @@ interface Settings {
   bulkDiscountTiers:      string
 }
 
-type ProductOption = { id: string; nameEn: string; nameBg: string; image: string | null }
+type ProductOption = { id: string; nameEn: string; nameBg: string; image: string | null; status?: string }
 
 export default function SettingsPage() {
   const t = useTranslations("admin.settings")
@@ -141,7 +141,7 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json()
         const products = (Array.isArray(data) ? data : []).map((p: ProductOption) => ({
-          id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image,
+          id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image, status: p.status,
         }))
         globalUpsellAllRef.current = products
         globalUpsellLoadedRef.current = true
@@ -165,7 +165,7 @@ export default function SettingsPage() {
           const data = await res.json()
           setGlobalUpsellResults(
             (Array.isArray(data) ? data : []).slice(0, 20).map((p: ProductOption) => ({
-              id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image,
+              id: p.id, nameEn: p.nameEn, nameBg: p.nameBg, image: p.image, status: p.status,
             }))
           )
         }
@@ -374,24 +374,31 @@ export default function SettingsPage() {
               {/* Selected chips */}
               {selectedGlobalUpsell.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedGlobalUpsell.map(product => (
-                    <span
-                      key={product.id}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-sm"
-                    >
-                      {product.image && (
-                        <img src={product.image} alt="" className="w-5 h-5 rounded object-cover" />
-                      )}
-                      <span className="max-w-[150px] truncate">{product.nameEn}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeGlobalUpsellProduct(product.id)}
-                        className="ml-0.5 hover:text-red-400 transition-colors"
+                  {selectedGlobalUpsell.map(product => {
+                    const unavailable = product.status && !["in_stock", "pre_order"].includes(product.status)
+                    return (
+                      <span
+                        key={product.id}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${
+                          unavailable ? "bg-red-500/20 text-red-300" : "bg-amber-500/20 text-amber-300"
+                        }`}
+                        title={unavailable ? `Unavailable (${product.status?.replace(/_/g, " ")})` : undefined}
                       >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </span>
-                  ))}
+                        {product.image && (
+                          <img src={product.image} alt="" className={`w-5 h-5 rounded object-cover ${unavailable ? "opacity-50" : ""}`} />
+                        )}
+                        <span className="max-w-[150px] truncate">{product.nameEn}</span>
+                        {unavailable && <span className="text-xs opacity-75">⚠</span>}
+                        <button
+                          type="button"
+                          onClick={() => removeGlobalUpsellProduct(product.id)}
+                          className="ml-0.5 hover:text-red-400 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    )
+                  })}
                 </div>
               )}
 
@@ -413,19 +420,25 @@ export default function SettingsPage() {
                   <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-[#1e1e36] border border-white/10 shadow-xl">
                     {globalUpsellResults.map(product => {
                       const isSel = settings.globalUpsellProductIds.includes(product.id)
+                      const unavailable = product.status && !["in_stock", "pre_order"].includes(product.status)
                       return (
                         <button
                           key={product.id}
                           type="button"
                           onClick={() => toggleGlobalUpsellProduct(product)}
                           className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm transition-colors ${
-                            isSel ? "bg-amber-500/10 text-amber-300" : "text-gray-300 hover:bg-white/5"
+                            isSel ? "bg-amber-500/10 text-amber-300" : unavailable ? "text-gray-500 hover:bg-white/5" : "text-gray-300 hover:bg-white/5"
                           }`}
                         >
                           {product.image
-                            ? <img src={product.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                            ? <img src={product.image} alt="" className={`w-8 h-8 rounded object-cover flex-shrink-0 ${unavailable ? "opacity-40" : ""}`} />
                             : <div className="w-8 h-8 rounded bg-white/10 flex-shrink-0" />}
                           <span className="flex-1 truncate">{product.nameEn}</span>
+                          {unavailable && (
+                            <span className="text-xs text-red-400/80 flex-shrink-0 mr-1">
+                              {product.status?.replace(/_/g, " ")}
+                            </span>
+                          )}
                           {isSel && <Check className="w-4 h-4 text-amber-400 flex-shrink-0" />}
                         </button>
                       )

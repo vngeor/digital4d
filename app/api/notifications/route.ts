@@ -55,7 +55,7 @@ export async function GET() {
           },
           include: {
             coupon: {
-              select: { code: true, type: true, value: true, currency: true, expiresAt: true },
+              select: { code: true, type: true, value: true, currency: true, expiresAt: true, minPurchase: true },
             },
           },
           orderBy: { createdAt: "desc" },
@@ -84,11 +84,13 @@ export async function GET() {
       productName: string | null
       productSlug: string | null
       productImage: string | null
+      productBrand: string | null
       couponCode: string | null
       couponType: string | null
       couponValue: string | null
       couponCurrency: string | null
       couponExpiresAt: string | null
+      couponMinPurchase: string | null
       createdAt: string
       isLegacy: boolean
       quoteId: string | null
@@ -113,11 +115,13 @@ export async function GET() {
           productName: n.product?.nameEn || "Quote Request",
           productSlug: n.product?.slug || null,
           productImage: n.product?.image || null,
+          productBrand: null,
           couponCode: null,
           couponType: null,
           couponValue: null,
           couponCurrency: null,
           couponExpiresAt: null,
+          couponMinPurchase: null,
           createdAt: n.quotedAt?.toISOString() || new Date().toISOString(),
           isLegacy: true,
           quoteId: n.id,
@@ -130,13 +134,15 @@ export async function GET() {
       .map(n => n.productId)
       .filter((id): id is string => !!id)
     const productImageMap: Record<string, string> = {}
+    const productBrandMap: Record<string, string> = {}
     if (productIds.length > 0) {
       const products = await prisma.product.findMany({
         where: { id: { in: [...new Set(productIds)] } },
-        select: { id: true, image: true },
+        select: { id: true, image: true, brand: { select: { nameEn: true } } },
       })
       for (const p of products) {
         if (p.image) productImageMap[p.id] = p.image
+        if (p.brand?.nameEn) productBrandMap[p.id] = p.brand.nameEn
       }
     }
 
@@ -166,11 +172,13 @@ export async function GET() {
         productName: null,
         productSlug: null,
         productImage: n.productId ? productImageMap[n.productId] || null : null,
+        productBrand: n.productId ? productBrandMap[n.productId] || null : null,
         couponCode: n.coupon?.code || null,
         couponType: n.coupon?.type || null,
         couponValue: n.coupon?.value?.toString() || null,
         couponCurrency: n.coupon?.currency || null,
         couponExpiresAt: n.coupon?.expiresAt?.toISOString() || null,
+        couponMinPurchase: n.coupon?.minPurchase ? n.coupon.minPurchase.toString() : null,
         createdAt: n.createdAt.toISOString(),
         isLegacy: false,
         quoteId: n.quoteId || null,

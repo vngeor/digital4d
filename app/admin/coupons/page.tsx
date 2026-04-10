@@ -179,38 +179,72 @@ export default function CouponsPage() {
   const [filter, setFilter] = useState<FilterStatus>("all")
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const LIMIT = 20
 
-  const fetchCoupons = async () => {
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  // Reset to page 1 when filter or search changes
+  useEffect(() => { setPage(1) }, [filter, debouncedSearch])
+
+  const fetchCoupons = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams()
+    params.set("page", String(page))
+    params.set("limit", String(LIMIT))
     if (filter === "auto") {
       params.set("source", "auto")
     } else if (filter !== "all") {
       params.set("status", filter)
     }
-    const queryStr = params.toString() ? `?${params.toString()}` : ""
-    const res = await fetch(`/api/admin/coupons${queryStr}`)
+    if (debouncedSearch) params.set("search", debouncedSearch)
+    const res = await fetch(`/api/admin/coupons?${params.toString()}`)
     const data = await res.json()
-    setCoupons(Array.isArray(data.coupons) ? data.coupons : Array.isArray(data) ? data : [])
+    setCoupons(Array.isArray(data.coupons) ? data.coupons : [])
+    setTotalItems(data.total ?? 0)
+    setTotalPages(data.totalPages ?? 1)
     setLoading(false)
-  }
+  }, [page, filter, debouncedSearch])
 
   useEffect(() => {
     fetchCoupons()
-  }, [filter])
+  }, [fetchCoupons])
 
   // Deep link: open edit form when ?edit=<id> is present
   useEffect(() => {
     const editId = searchParams.get("edit")
-    if (editId && coupons.length > 0 && !showForm) {
-      const item = coupons.find((c) => c.id === editId)
-      if (item) {
-        setEditingCoupon(item)
-        setShowForm(true)
-        window.history.replaceState({}, "", "/admin/coupons")
-      }
+    if (!editId || showForm) return
+    // Try to find in current page first
+    const item = coupons.find((c) => c.id === editId)
+    if (item) {
+      setEditingCoupon(item)
+      setShowForm(true)
+      window.history.replaceState({}, "", "/admin/coupons")
+      return
     }
-  }, [searchParams, coupons])
+    // Not on current page — fetch the specific coupon by searching for it
+    if (coupons.length > 0) {
+      fetch(`/api/admin/coupons?page=1&limit=1&search=${encodeURIComponent(editId)}`)
+        .then(r => r.json())
+        .then(data => {
+          const found = data.coupons?.[0]
+          if (found) {
+            setEditingCoupon(found)
+            setShowForm(true)
+            window.history.replaceState({}, "", "/admin/coupons")
+          }
+        })
+        .catch(() => {})
+    }
+  }, [searchParams, coupons, showForm])
 
   const handleCopyCode = (coupon: Coupon) => {
     navigator.clipboard.writeText(coupon.code)
@@ -529,6 +563,33 @@ export default function CouponsPage() {
         )}
       </div>
 
+      {/* Search + total count */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={t("searchPlaceholder")}
+            className="w-full pl-9 pr-9 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white touch-manipulation"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {!loading && (
+          <span className="text-sm text-slate-400 shrink-0">
+            {totalItems} {t("totalCount")}
+          </span>
+        )}
+      </div>
+
       {/* Filter Tabs */}
       <div className="flex gap-2 flex-wrap">
         {filterTabs.map((tab) => (
@@ -553,7 +614,6 @@ export default function CouponsPage() {
         <DataTable
           data={coupons}
           columns={columns}
-          searchPlaceholder={t("searchPlaceholder")}
           emptyMessage={<div className="flex flex-col items-center gap-2"><p className="text-gray-400">{t("noCoupons")}</p><p className="text-xs text-gray-600">Create discount codes to boost sales</p></div>}
           renderMobileCard={(item: Coupon) => {
             const status = getCouponStatus(item)
@@ -641,6 +701,31 @@ export default function CouponsPage() {
             )
           }}
         />
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1 py-2">
+          <p className="text-sm text-slate-400">
+            {t("pageInfo", { page, totalPages, total: totalItems })}
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage(p => p - 1)}
+              className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← {t("prev")}
+            </button>
+            <button
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => p + 1)}
+              className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {t("next")} →
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Create/Edit Modal */}

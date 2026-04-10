@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 })
     }
 
-    const result = await processTemplates(overrideDate)
+    const templateId = body.templateId || undefined
+
+    const result = await processTemplates(overrideDate, templateId)
     const reminderResult = await processReminderNotifications()
 
     return NextResponse.json({

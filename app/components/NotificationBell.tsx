@@ -19,11 +19,13 @@ interface Notification {
   productName: string | null
   productSlug: string | null
   productImage: string | null
+  productBrand: string | null
   couponCode: string | null
   couponType: string | null
   couponValue: string | null
   couponCurrency: string | null
   couponExpiresAt: string | null
+  couponMinPurchase: string | null
   createdAt: string
   isLegacy: boolean
   quoteId: string | null
@@ -61,6 +63,7 @@ interface NotificationBellProps {
     couponExpired: string
     couponReminder: string
     stockAvailable: string
+    couponMinPurchase: string
     closeModal: string
   }
   locale?: string
@@ -476,6 +479,8 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       const separator = baseLink.includes("?") ? "&" : "?"
       return `${baseLink}${separator}quoteId=${notification.quoteId}`
     }
+    // Wishlist coupon notifications should always go to the products page
+    if (notification.type === "wishlist_coupon") return "/products"
     if (notification.link) return notification.link
     if (notification.type === "coupon") return "/products"
     return "/my-orders"
@@ -488,6 +493,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     if (type === "auto_easter") return "from-purple-500 to-violet-500"
     if (type === "auto_custom") return "from-blue-500 to-cyan-500"
     if (type === "coupon_reminder") return "from-amber-500 to-orange-500"
+    if (type === "quote_offer" || type === "coupon") return "from-blue-500 to-indigo-500"
+    if (type === "admin_message") return "from-slate-500 to-blue-500"
+    if (type === "wishlist_price_drop") return "from-red-500 to-rose-500"
+    if (type === "wishlist_coupon") return "from-pink-500 to-rose-500"
+    if (type === "stock_available") return "from-emerald-500 to-cyan-500"
     return "from-indigo-500 to-purple-500"
   }
 
@@ -499,6 +509,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     if (type === "auto_easter") return `${base} bg-[#1a1420] border border-purple-900/40`
     if (type === "auto_custom") return `${base} bg-[#121720] border border-blue-900/40`
     if (type === "coupon_reminder") return `${base} bg-[#1c1710] border border-amber-900/40`
+    if (type === "quote_offer" || type === "coupon") return `${base} bg-[#121420] border border-blue-900/40`
+    if (type === "admin_message") return `${base} bg-[#12141e] border border-slate-700/40`
+    if (type === "wishlist_price_drop") return `${base} bg-[#1c1214] border border-red-900/40`
+    if (type === "wishlist_coupon") return `${base} bg-[#201420] border border-pink-900/40`
+    if (type === "stock_available") return `${base} bg-[#121e14] border border-emerald-900/40`
     return `${base} bg-[#14121e] border border-indigo-900/40`
   }
 
@@ -509,6 +524,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     if (type === "auto_easter") return "bg-purple-500/15"
     if (type === "auto_custom") return "bg-blue-500/15"
     if (type === "coupon_reminder") return "bg-amber-500/15"
+    if (type === "quote_offer" || type === "coupon") return "bg-blue-500/15"
+    if (type === "admin_message") return "bg-slate-500/15"
+    if (type === "wishlist_price_drop") return "bg-red-500/15"
+    if (type === "wishlist_coupon") return "bg-pink-500/15"
+    if (type === "stock_available") return "bg-emerald-500/15"
     return "bg-indigo-500/15"
   }
 
@@ -519,6 +539,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     if (type === "auto_easter") return "text-purple-400"
     if (type === "auto_custom") return "text-blue-400"
     if (type === "coupon_reminder") return "text-amber-400"
+    if (type === "quote_offer" || type === "coupon") return "text-blue-400"
+    if (type === "admin_message") return "text-slate-300"
+    if (type === "wishlist_price_drop") return "text-red-400"
+    if (type === "wishlist_coupon") return "text-pink-400"
+    if (type === "stock_available") return "text-emerald-400"
     return "text-indigo-400"
   }
 
@@ -529,6 +554,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     if (type === "auto_easter") return "bg-purple-500/20 text-purple-400"
     if (type === "auto_custom") return "bg-blue-500/20 text-blue-400"
     if (type === "coupon_reminder") return "bg-amber-500/20 text-amber-400"
+    if (type === "quote_offer" || type === "coupon") return "bg-blue-500/20 text-blue-400"
+    if (type === "admin_message") return "bg-slate-500/20 text-slate-300"
+    if (type === "wishlist_price_drop") return "bg-red-500/20 text-red-400"
+    if (type === "wishlist_coupon") return "bg-pink-500/20 text-pink-400"
+    if (type === "stock_available") return "bg-emerald-500/20 text-emerald-400"
     return "bg-indigo-500/20 text-indigo-400"
   }
 
@@ -536,7 +566,23 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     if (type === "auto_birthday") return t.autoBirthday
     if (type === "auto_christmas" || type === "auto_new_year" || type === "auto_easter") return t.autoHoliday
     if (type === "coupon_reminder") return t.couponReminder
-    return t.autoCustom
+    if (type === "auto_custom") return t.autoCustom
+    // Regular notification types — strip any {placeholder} parts from translation strings
+    if (type === "quote_offer" || type === "coupon") return t.newQuoteReceived
+    if (type === "wishlist_price_drop") {
+      // e.g. "Price drop: {product}" → "Price drop"
+      return t.wishlistPriceDrop.replace(/[\s:]*\{[^}]+\}.*$/g, "").trim()
+    }
+    if (type === "wishlist_coupon") {
+      // e.g. "Нов купон: {code}" → "Нов купон"
+      return t.wishlistCoupon.replace(/[\s:]*\{[^}]+\}.*$/g, "").trim()
+    }
+    if (type === "stock_available") {
+      // e.g. "{product} вече е наличен!" → "Вече е наличен!"
+      const stripped = t.stockAvailable.replace(/^\{[^}]+\}\s*/g, "").trim()
+      return stripped.charAt(0).toUpperCase() + stripped.slice(1)
+    }
+    return t.notifications  // admin_message and unknown fallback
   }
 
   const formatCouponExpiry = (dateStr: string) => {
@@ -647,16 +693,18 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       )
     }
 
-    // All other notifications navigate via Link
+    // All other notifications now open the detail modal instead of navigating directly
     return (
-      <Link
+      <div
         key={notification.id}
-        href={getNotificationLink(notification)}
-        onClick={() => handleRegularNotificationClick(notification)}
-        className={className}
+        role="button"
+        tabIndex={0}
+        onClick={() => handleAutoNotificationClick(notification)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleAutoNotificationClick(notification) } }}
+        className={`${className} w-full text-left cursor-pointer`}
       >
         {content}
-      </Link>
+      </div>
     )
   }
 
@@ -718,7 +766,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
       )}
 
       {/* Notification Detail Modal — portaled to body to escape Header's backdrop-filter containing block */}
-      {selectedNotification && isAutoNotification(selectedNotification.type) && createPortal(
+      {selectedNotification && createPortal(
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pt-safe pb-safe"
           onClick={() => setSelectedNotification(null)}
@@ -756,6 +804,11 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
                       case "auto_easter": return <Egg className={iconClass} />
                       case "auto_custom": return <CalendarDays className={iconClass} />
                       case "coupon_reminder": return <Clock className={iconClass} />
+                      case "quote_offer": case "coupon": return <MessageSquare className={iconClass} />
+                      case "admin_message": return <MessageSquare className={iconClass} />
+                      case "wishlist_price_drop": return <TrendingDown className={iconClass} />
+                      case "wishlist_coupon": return <Heart className={iconClass} />
+                      case "stock_available": return <Package className={iconClass} />
                       default: return <Gift className={iconClass} />
                     }
                   })()}
@@ -775,6 +828,27 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
                 {getLocalizedTitle(selectedNotification)}
               </h2>
 
+              {/* Product card for stock_available — show image and brand */}
+              {selectedNotification.type === "stock_available" && selectedNotification.productImage && (
+                <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-white/5 border border-emerald-500/20">
+                    <img
+                      src={selectedNotification.productImage}
+                      alt={getLocalizedTitle(selectedNotification)}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white truncate">
+                      {getLocalizedTitle(selectedNotification)}
+                    </p>
+                    {selectedNotification.productBrand && (
+                      <p className="text-xs text-emerald-400 mt-0.5">{selectedNotification.productBrand}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Full message */}
               <div
                 className="text-sm sm:text-base text-slate-300 leading-relaxed mb-5 sm:mb-6 prose prose-invert max-w-none prose-a:text-emerald-400 prose-a:underline prose-a:hover:text-emerald-300 prose-p:my-2 prose-headings:text-white"
@@ -784,20 +858,20 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
               {/* Coupon section */}
               {selectedNotification.couponCode && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3 sm:p-4 mb-5 sm:mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Ticket className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-medium text-amber-400 uppercase tracking-wider">
-                      {selectedNotification.couponType === "percentage" ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Percent className="w-3 h-3" />
-                          {selectedNotification.couponValue}%
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1">
-                          €{selectedNotification.couponValue}
-                        </span>
-                      )}
-                    </span>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <Ticket className="w-5 h-5 text-amber-400 shrink-0" />
+                      <span className="text-2xl sm:text-3xl font-black text-amber-400 leading-none">
+                        {selectedNotification.couponType === "percentage"
+                          ? `${selectedNotification.couponValue}%`
+                          : `€${parseFloat(selectedNotification.couponValue || "0").toFixed(2)}`}
+                      </span>
+                    </div>
+                    {selectedNotification.couponMinPurchase && parseFloat(selectedNotification.couponMinPurchase) > 0 && (
+                      <span className="text-xs text-slate-400 shrink-0">
+                        {t.couponMinPurchase}: €{parseFloat(selectedNotification.couponMinPurchase).toFixed(2)}
+                      </span>
+                    )}
                   </div>
 
                   {/* Coupon code + copy */}
@@ -848,21 +922,25 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
 
               {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                {selectedNotification.link && (
-                  <Link
-                    href={selectedNotification.link}
-                    onClick={() => setSelectedNotification(null)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm transition-transform touch-manipulation"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    {t.visitLink}
-                  </Link>
-                )}
+                {(() => {
+                  // For auto notifications use .link directly; for regular use getNotificationLink which builds proper URLs
+                  const link = isAutoNotification(selectedNotification.type)
+                    ? selectedNotification.link
+                    : getNotificationLink(selectedNotification)
+                  return link ? (
+                    <Link
+                      href={link}
+                      onClick={() => setSelectedNotification(null)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm transition-transform touch-manipulation"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      {t.visitLink}
+                    </Link>
+                  ) : null
+                })()}
                 <button
                   onClick={() => setSelectedNotification(null)}
-                  className={`flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium touch-manipulation ${
-                    !selectedNotification.link ? "w-full" : ""
-                  }`}
+                  className="flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium touch-manipulation"
                 >
                   {t.closeModal}
                 </button>
