@@ -103,11 +103,14 @@ function CountdownTimer({ expiresAt }: { expiresAt: string }) {
 }
 
 const SOURCE_MAP: Record<string, { icon: string; labelKey: string }> = {
-  auto_birthday: { icon: "🎂", labelKey: "sourceBirthday" },
-  auto_christmas: { icon: "🎄", labelKey: "sourceChristmas" },
-  auto_new_year: { icon: "🎆", labelKey: "sourceNewYear" },
-  auto_easter: { icon: "🐣", labelKey: "sourceEaster" },
-  auto_custom: { icon: "🎁", labelKey: "sourceCustom" },
+  auto_birthday:   { icon: "🎂", labelKey: "sourceBirthday" },
+  auto_christmas:  { icon: "🎄", labelKey: "sourceChristmas" },
+  auto_new_year:   { icon: "🎆", labelKey: "sourceNewYear" },
+  auto_easter:     { icon: "🐣", labelKey: "sourceEaster" },
+  auto_custom:     { icon: "🎁", labelKey: "sourceCustom" },
+  coupon:          { icon: "🎟️", labelKey: "sourceAdminOffer" },
+  wishlist_coupon: { icon: "❤️",  labelKey: "sourceWishlist" },
+  coupon_reminder: { icon: "⏰",  labelKey: "sourceReminder" },
 }
 
 export function SecretDealsClient({ secretDeals, translations: t }: SecretDealsClientProps) {

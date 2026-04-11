@@ -27,6 +27,7 @@ import {
   Check,
   Gift,
   Users,
+  UserCheck,
   Play,
   CheckCircle2,
   FolderOpen,
@@ -179,6 +180,17 @@ export default function NotificationTemplatesPage() {
   const [testSearching, setTestSearching] = useState(false)
   const [testSending, setTestSending] = useState(false)
   const testSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Send to user (production) state
+  const [showSendUserModal, setShowSendUserModal] = useState(false)
+  const [sendUserTemplateId, setSendUserTemplateId] = useState<string | null>(null)
+  const [sendUserUserId, setSendUserUserId] = useState("")
+  const [sendUserSearch, setSendUserSearch] = useState("")
+  const [sendUserResults, setSendUserResults] = useState<SearchUser[]>([])
+  const [sendUserSearching, setSendUserSearching] = useState(false)
+  const [sendUserLoading, setSendUserLoading] = useState(false)
+  const [sendUserResult, setSendUserResult] = useState<{ sent?: boolean; skipped?: boolean; reason?: string } | null>(null)
+  const sendUserSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Send to all state
   const [showSendAllModal, setShowSendAllModal] = useState(false)
@@ -650,6 +662,67 @@ export default function NotificationTemplatesPage() {
     }
   }
 
+  // Send to User (production) — search helpers reuse the same cached user list
+  const loadSendUserUsers = useCallback(async () => {
+    if (allTestUsersLoadedRef.current) {
+      setSendUserResults(allTestUsers)
+      return
+    }
+    setSendUserSearching(true)
+    try {
+      const res = await fetch("/api/admin/users")
+      if (res.ok) {
+        const data = await res.json()
+        const users = (Array.isArray(data) ? data : []).map((u: SearchUser) => ({
+          id: u.id, name: u.name, email: u.email, image: u.image,
+        }))
+        setAllTestUsers(users)
+        setSendUserResults(users)
+        allTestUsersLoadedRef.current = true
+      }
+    } catch { setSendUserResults([]) } finally { setSendUserSearching(false) }
+  }, [allTestUsers])
+
+  const searchSendUserUsers = useCallback((query: string) => {
+    if (sendUserSearchTimeoutRef.current) clearTimeout(sendUserSearchTimeoutRef.current)
+    if (!query.trim()) {
+      if (allTestUsersLoadedRef.current) setSendUserResults(allTestUsers)
+      return
+    }
+    sendUserSearchTimeoutRef.current = setTimeout(async () => {
+      setSendUserSearching(true)
+      try {
+        const res = await fetch(`/api/admin/users?search=${encodeURIComponent(query)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSendUserResults((Array.isArray(data) ? data : []).slice(0, 20).map((u: SearchUser) => ({
+            id: u.id, name: u.name, email: u.email, image: u.image,
+          })))
+        }
+      } catch { /* empty */ } finally { setSendUserSearching(false) }
+    }, 300)
+  }, [allTestUsers])
+
+  const handleSendToUser = async (force = false) => {
+    if (!sendUserTemplateId || !sendUserUserId) return
+    setSendUserLoading(true)
+    try {
+      const res = await fetch(`/api/admin/notification-templates/${sendUserTemplateId}/send-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: sendUserUserId, force }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed")
+      setSendUserResult(data)
+      if (data.sent) toast.success("Sent successfully")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Send failed")
+    } finally {
+      setSendUserLoading(false)
+    }
+  }
+
   // Get schedule description
   const getScheduleText = (template: Template) => {
     const { trigger, daysBefore, customMonth, customDay, recurring } = template
@@ -799,6 +872,22 @@ export default function NotificationTemplatesPage() {
               <Send className="w-4 h-4" />
             </button>
           )}
+          {can("notifications", "create") && (
+            <button
+              onClick={() => {
+                setSendUserTemplateId(item.id)
+                setSendUserUserId("")
+                setSendUserSearch("")
+                setSendUserResults([])
+                setSendUserResult(null)
+                setShowSendUserModal(true)
+              }}
+              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-sky-400 transition-colors"
+              title="Send to specific user"
+            >
+              <UserCheck className="w-4 h-4" />
+            </button>
+          )}
           {can("notifications", "create") && item.trigger !== "birthday" && (
             <button
               onClick={() => {
@@ -881,6 +970,21 @@ export default function NotificationTemplatesPage() {
               className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-emerald-400 transition-colors"
             >
               <Send className="w-3.5 h-3.5 inline mr-1" /> {t("testSend")}
+            </button>
+          )}
+          {can("notifications", "create") && (
+            <button
+              onClick={() => {
+                setSendUserTemplateId(item.id)
+                setSendUserUserId("")
+                setSendUserSearch("")
+                setSendUserResults([])
+                setSendUserResult(null)
+                setShowSendUserModal(true)
+              }}
+              className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-sky-400 transition-colors"
+            >
+              <UserCheck className="w-3.5 h-3.5 inline mr-1" /> Send to User
             </button>
           )}
           {can("notifications", "create") && item.trigger !== "birthday" && (
@@ -1626,6 +1730,136 @@ export default function NotificationTemplatesPage() {
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {editingTemplate ? t("save") : t("create")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send to User Modal (production send) */}
+      {showSendUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { if (!sendUserLoading) { setShowSendUserModal(false) } }} />
+          <div className="relative bg-[#0d0d1a] border border-white/10 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-sky-400" />
+                Send to User
+              </h2>
+              <button onClick={() => setShowSendUserModal(false)} disabled={sendUserLoading} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors disabled:opacity-50">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-400">
+              Production send — creates a real coupon code, records in send log (dedup-aware). User will see this in their Secret Deals and notification bell.
+            </p>
+
+            {/* User search */}
+            <div className="relative">
+              <label className="block text-sm text-gray-400 mb-1">{t("selectUser")}</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  value={sendUserSearch}
+                  onChange={(e) => {
+                    setSendUserSearch(e.target.value)
+                    setSendUserUserId("")
+                    setSendUserResult(null)
+                    searchSendUserUsers(e.target.value)
+                  }}
+                  onFocus={() => loadSendUserUsers()}
+                  placeholder={t("searchUsers")}
+                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-sky-500/50 transition-colors"
+                />
+              </div>
+
+              {sendUserResults.length > 0 && !sendUserUserId && (
+                <div className="absolute z-10 w-full mt-1 glass-strong rounded-xl border border-white/10 shadow-2xl max-h-48 overflow-y-auto">
+                  {sendUserSearching ? (
+                    <div className="p-4 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto text-gray-400" /></div>
+                  ) : (
+                    sendUserResults.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => {
+                          setSendUserUserId(user.id)
+                          setSendUserSearch(user.name || user.email || user.id)
+                          setSendUserResults([])
+                          setSendUserResult(null)
+                        }}
+                        className="flex items-center gap-3 w-full px-3 py-2 hover:bg-white/5 cursor-pointer transition-colors"
+                      >
+                        {user.image ? (
+                          <img src={user.image} alt="" className="w-6 h-6 rounded-full" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 text-xs">
+                            {(user.name || user.email || "?")[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div className="text-left">
+                          <div className="text-sm text-white">{user.name || user.email}</div>
+                          {user.name && <div className="text-xs text-gray-500">{user.email}</div>}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {sendUserUserId && (
+                <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-sky-500/10 border border-sky-500/30">
+                  <UserCheck className="w-4 h-4 text-sky-400" />
+                  <span className="text-sm text-sky-400">{sendUserSearch}</span>
+                  <button type="button" onClick={() => { setSendUserUserId(""); setSendUserSearch(""); setSendUserResult(null) }} className="ml-auto text-gray-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Result feedback */}
+            {sendUserResult && sendUserResult.sent && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">
+                <Check className="w-4 h-4 shrink-0" />
+                Sent successfully
+              </div>
+            )}
+            {sendUserResult && sendUserResult.skipped && sendUserResult.reason === "ALREADY_SENT" && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm">
+                  <span>⚠</span>
+                  Already sent this year to this user
+                </div>
+                <button
+                  onClick={() => handleSendToUser(true)}
+                  disabled={sendUserLoading}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30 transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {sendUserLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Force Send Anyway
+                </button>
+              </div>
+            )}
+
+            {/* Send button */}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowSendUserModal(false)}
+                disabled={sendUserLoading}
+                className="px-4 py-2.5 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={() => handleSendToUser(false)}
+                disabled={sendUserLoading || !sendUserUserId || !!sendUserResult?.sent}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-medium hover:shadow-lg hover:shadow-sky-500/25 transition-all disabled:opacity-50"
+              >
+                {sendUserLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                <UserCheck className="w-4 h-4" />
+                Send to User
               </button>
             </div>
           </div>
