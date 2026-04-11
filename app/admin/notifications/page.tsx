@@ -87,6 +87,8 @@ const TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
   auto_new_year: { labelKey: "autoNewYear", color: "bg-amber-500/20 text-amber-400" },
   auto_easter: { labelKey: "autoEaster", color: "bg-purple-500/20 text-purple-400" },
   auto_custom: { labelKey: "autoCustom", color: "bg-blue-500/20 text-blue-400" },
+  wishlist_coupon: { labelKey: "wishlistCouponType", color: "bg-pink-500/20 text-pink-400" },
+  wishlist_price_drop: { labelKey: "wishlistPriceDropType", color: "bg-red-500/20 text-red-400" },
 }
 
 const ROLES = ["ADMIN", "EDITOR", "AUTHOR", "SUBSCRIBER"] as const
@@ -111,7 +113,11 @@ export default function NotificationsPage() {
   const getLocalizedText = (text: string): string => {
     const parsed = tryParseJson(text)
     if (parsed) {
-      return parsed[locale] || parsed.en || parsed.bg || text
+      const localized = parsed[locale] ?? parsed.en ?? parsed.bg
+      if (localized !== undefined) return localized || text
+      // Non-locale JSON (e.g. coupon object) — show meaningful fallback
+      if (parsed.code) return `Coupon: ${parsed.code}`
+      return text
     }
     return text
   }
@@ -449,6 +455,10 @@ export default function NotificationsPage() {
     const plainMessage = sendForm.message.replace(/<[^>]*>/g, "").trim()
     if (!plainMessage) {
       toast.error(t("messageRequired"))
+      return
+    }
+    if (sendForm.type === "coupon" && !selectedCoupon) {
+      toast.error(t("couponRequired"))
       return
     }
 
@@ -857,7 +867,7 @@ export default function NotificationsPage() {
                 {t("sendNotification")}
               </h2>
               <button
-                onClick={() => setShowSendModal(false)}
+                onClick={() => { resetSendForm(); setShowSendModal(false) }}
                 className="p-2 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <X className="w-5 h-5 text-gray-400" />
@@ -1034,8 +1044,9 @@ export default function NotificationsPage() {
                   </div>
                 )}
 
-                {/* User Search */}
-                <div className="relative" ref={userPickerRef}>
+                {/* User Search + Results */}
+                <div ref={userPickerRef}>
+                <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
                     type="text"
@@ -1136,6 +1147,7 @@ export default function NotificationsPage() {
                 {selectedUsers.length === 0 && userSearch && userResults.length === 0 && !userSearchLoading && (
                   <p className="text-xs text-gray-500 mt-2">{t("noUsersFound")}</p>
                 )}
+                </div>{/* end userPickerRef */}
               </div>
 
               {/* Type Selector */}
@@ -1366,7 +1378,7 @@ export default function NotificationsPage() {
               <div className="flex gap-2 sm:gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowSendModal(false)}
+                  onClick={() => { resetSendForm(); setShowSendModal(false) }}
                   className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 >
                   {t("cancel")}

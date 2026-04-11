@@ -55,6 +55,9 @@ interface SecretDealsClientProps {
     sourceEaster: string
     sourceCustom: string
     sourceSpecial: string
+    sourceAdminOffer: string
+    sourceWishlist: string
+    sourceReminder: string
   }
 }
 

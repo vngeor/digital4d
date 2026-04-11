@@ -148,6 +148,9 @@ export default async function SecretDealsPage() {
     sourceEaster: t("sourceEaster"),
     sourceCustom: t("sourceCustom"),
     sourceSpecial: t("sourceSpecial"),
+    sourceAdminOffer: t("sourceAdminOffer"),
+    sourceWishlist: t("sourceWishlist"),
+    sourceReminder: t("sourceReminder"),
   }
 
   return (

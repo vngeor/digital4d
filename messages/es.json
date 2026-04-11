@@ -485,6 +485,7 @@
       "deleteFailed": "Error al eliminar la notificación",
       "titleRequired": "El título es obligatorio",
       "messageRequired": "El mensaje es obligatorio",
+      "couponRequired": "Por favor seleccione un cupón",
       "birthdayToday": "Cumpleaños hoy",
       "birthdayThisWeek": "Esta semana",
       "birthdayThisMonth": "Este mes",
@@ -508,7 +509,9 @@
       "autoChristmas": "Navidad",
       "autoNewYear": "Año Nuevo",
       "autoEaster": "Pascua",
-      "autoCustom": "Plantilla"
+      "autoCustom": "Plantilla",
+      "wishlistCouponType": "Lista",
+      "wishlistPriceDropType": "Bajada de precio"
     },
     "notificationTemplates": {
       "title": "Plantillas de Notificaciones",

@@ -485,6 +485,7 @@
       "deleteFailed": "Failed to delete notification",
       "titleRequired": "Title is required",
       "messageRequired": "Message is required",
+      "couponRequired": "Please select a coupon",
       "birthdayToday": "Birthday Today",
       "birthdayThisWeek": "This Week",
       "birthdayThisMonth": "This Month",
@@ -508,7 +509,9 @@
       "autoChristmas": "Christmas",
       "autoNewYear": "New Year",
       "autoEaster": "Easter",
-      "autoCustom": "Template"
+      "autoCustom": "Template",
+      "wishlistCouponType": "Wishlist",
+      "wishlistPriceDropType": "Price Drop"
     },
     "notificationTemplates": {
       "title": "Notification Templates",

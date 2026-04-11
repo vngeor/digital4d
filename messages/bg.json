@@ -485,6 +485,7 @@
       "deleteFailed": "Неуспешно изтриване на известие",
       "titleRequired": "Заглавието е задължително",
       "messageRequired": "Съобщението е задължително",
+      "couponRequired": "Моля изберете купон",
       "birthdayToday": "Рожден ден днес",
       "birthdayThisWeek": "Тази седмица",
       "birthdayThisMonth": "Този месец",
@@ -508,7 +509,9 @@
       "autoChristmas": "Коледа",
       "autoNewYear": "Нова година",
       "autoEaster": "Великден",
-      "autoCustom": "Шаблон"
+      "autoCustom": "Шаблон",
+      "wishlistCouponType": "Желани",
+      "wishlistPriceDropType": "Намаление"
     },
     "notificationTemplates": {
       "title": "Шаблони за известия",
