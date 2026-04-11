@@ -847,7 +847,7 @@ export default function NotificationTemplatesPage() {
       key: "actions" as keyof Template,
       header: t("actions"),
       render: (item: Template) => (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           {can("notifications", "edit") && (
             <button
               onClick={() => openEdit(item)}
@@ -858,56 +858,62 @@ export default function NotificationTemplatesPage() {
             </button>
           )}
           {can("notifications", "create") && (
-            <button
-              onClick={() => {
-                setTestTemplateId(item.id)
-                setTestUserId("")
-                setTestUserSearch("")
-                setTestUserResults([])
-                setShowTestModal(true)
-              }}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-emerald-400 transition-colors"
-              title={t("testSend")}
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          )}
-          {can("notifications", "create") && (
-            <button
-              onClick={() => {
-                setSendUserTemplateId(item.id)
-                setSendUserUserId("")
-                setSendUserSearch("")
-                setSendUserResults([])
-                setSendUserResult(null)
-                setShowSendUserModal(true)
-              }}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-sky-400 transition-colors"
-              title="Send to specific user"
-            >
-              <UserCheck className="w-4 h-4" />
-            </button>
-          )}
-          {can("notifications", "create") && item.trigger !== "birthday" && (
-            <button
-              onClick={() => {
-                setSendAllTemplate({ id: item.id, name: item.name })
-                setShowSendAllModal(true)
-              }}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-violet-400 transition-colors"
-              title="Send to all users now"
-            >
-              <Users className="w-4 h-4" />
-            </button>
+            <>
+              {(can("notifications", "edit") || can("notifications", "delete")) && (
+                <div className="w-px h-4 bg-white/10 mx-0.5" />
+              )}
+              <button
+                onClick={() => {
+                  setTestTemplateId(item.id)
+                  setTestUserId("")
+                  setTestUserSearch("")
+                  setTestUserResults([])
+                  setShowTestModal(true)
+                }}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-emerald-400 transition-colors"
+                title={t("testSend")}
+              >
+                <Send className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setSendUserTemplateId(item.id)
+                  setSendUserUserId("")
+                  setSendUserSearch("")
+                  setSendUserResults([])
+                  setSendUserResult(null)
+                  setShowSendUserModal(true)
+                }}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-sky-400 transition-colors"
+                title="Send to specific user"
+              >
+                <UserCheck className="w-4 h-4" />
+              </button>
+              {item.trigger !== "birthday" && (
+                <button
+                  onClick={() => {
+                    setSendAllTemplate({ id: item.id, name: item.name })
+                    setShowSendAllModal(true)
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-violet-400 transition-colors"
+                  title="Send to all users now"
+                >
+                  <Users className="w-4 h-4" />
+                </button>
+              )}
+            </>
           )}
           {can("notifications", "delete") && (
-            <button
-              onClick={() => setDeleteItem({ id: item.id, name: item.name })}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-red-400 transition-colors"
-              title={t("delete")}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <>
+              <div className="w-px h-4 bg-white/10 mx-0.5" />
+              <button
+                onClick={() => setDeleteItem({ id: item.id, name: item.name })}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-red-400 transition-colors"
+                title={t("delete")}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
           )}
         </div>
       ),

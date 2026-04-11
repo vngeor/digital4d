@@ -72,6 +72,10 @@ interface SearchCoupon {
   code: string
   type: string
   value: number
+  minPurchase?: string | null
+  productNames?: string[]
+  categoryNames?: string[]
+  brandNames?: string[]
 }
 
 const TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
@@ -158,6 +162,7 @@ export default function NotificationsPage() {
   const [filterLoading, setFilterLoading] = useState(false)
   const [showRoleDropdown, setShowRoleDropdown] = useState(false)
   const roleDropdownRef = useRef<HTMLDivElement>(null)
+  const userPickerRef = useRef<HTMLDivElement>(null)
 
   // Coupon selector state
   const [couponSearch, setCouponSearch] = useState("")
@@ -166,6 +171,7 @@ export default function NotificationsPage() {
   const [selectedCoupon, setSelectedCoupon] = useState<SearchCoupon | null>(null)
   const [showCouponDropdown, setShowCouponDropdown] = useState(false)
   const couponSearchTimeout = useRef<NodeJS.Timeout | null>(null)
+  const couponDropdownRef = useRef<HTMLDivElement>(null)
 
   // Permission check
   if (!can("notifications", "view")) {
@@ -224,6 +230,12 @@ export default function NotificationsPage() {
     const handleClickOutside = (e: MouseEvent) => {
       if (roleDropdownRef.current && !roleDropdownRef.current.contains(e.target as Node)) {
         setShowRoleDropdown(false)
+      }
+      if (userPickerRef.current && !userPickerRef.current.contains(e.target as Node)) {
+        setUserResults([])
+      }
+      if (couponDropdownRef.current && !couponDropdownRef.current.contains(e.target as Node)) {
+        setShowCouponDropdown(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -1023,7 +1035,7 @@ export default function NotificationsPage() {
                 )}
 
                 {/* User Search */}
-                <div className="relative">
+                <div className="relative" ref={userPickerRef}>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
                     type="text"
@@ -1191,27 +1203,47 @@ export default function NotificationsPage() {
                     {t("attachCoupon")}
                   </label>
 
-                  {/* Selected Coupon Tag */}
+                  {/* Selected Coupon Tag + Rules */}
                   {selectedCoupon && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
-                        <Ticket className="w-3.5 h-3.5" />
-                        <span className="font-mono font-medium">{selectedCoupon.code}</span>
-                        <span className="text-amber-400/60">
-                          ({selectedCoupon.type === "percentage" ? `${selectedCoupon.value}%` : selectedCoupon.value})
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
+                          <Ticket className="w-3.5 h-3.5" />
+                          <span className="font-mono font-medium">{selectedCoupon.code}</span>
+                          <span className="text-amber-400/60">
+                            ({selectedCoupon.type === "percentage" ? `${selectedCoupon.value}%` : `${selectedCoupon.value} EUR`})
+                          </span>
+                          <button
+                            onClick={() => setSelectedCoupon(null)}
+                            className="hover:text-red-400 transition-colors ml-1"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </span>
-                        <button
-                          onClick={() => setSelectedCoupon(null)}
-                          className="hover:text-red-400 transition-colors ml-1"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
+                      </div>
+                      {/* Coupon restriction rules */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {(!selectedCoupon.productNames?.length && !selectedCoupon.categoryNames?.length && !selectedCoupon.brandNames?.length) && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">🟢 All products</span>
+                        )}
+                        {selectedCoupon.categoryNames?.map((name) => (
+                          <span key={name} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs">🔵 {name}</span>
+                        ))}
+                        {selectedCoupon.brandNames?.map((name) => (
+                          <span key={name} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs">🟣 {name}</span>
+                        ))}
+                        {(selectedCoupon.productNames?.length ?? 0) > 0 && !selectedCoupon.categoryNames?.length && !selectedCoupon.brandNames?.length && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs">⚪ {selectedCoupon.productNames!.length} selected products</span>
+                        )}
+                        {selectedCoupon.minPurchase && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs">Min €{selectedCoupon.minPurchase}</span>
+                        )}
+                      </div>
                     </div>
                   )}
 
                   {!selectedCoupon && (
-                    <div className="relative">
+                    <div className="relative" ref={couponDropdownRef}>
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                       <input
                         type="text"
