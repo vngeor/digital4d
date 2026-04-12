@@ -161,6 +161,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
     const categoryDropdownRef = useRef<HTMLDivElement>(null)
     const categoryListRef = useRef<HTMLDivElement>(null)
+    const sidebarCategoryRef = useRef<HTMLDivElement>(null)
     const [brandDropdownOpen, setBrandDropdownOpen] = useState(false)
     const brandDropdownRef = useRef<HTMLDivElement>(null)
     const [selectedSizes, setSelectedSizes] = useState<string[]>([])
@@ -678,9 +679,38 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
             {/* Category */}
             <FilterSection title={t("category")} isOpen={openSections.has("category")} onToggle={() => toggleSection("category")}>
-                <div className="space-y-0.5 max-h-56 overflow-y-auto pr-1">
-                    {allCategoryNavItems.map((item) => (
-                        <div key={item.id} className={`flex items-center ${item.isChild ? "pl-4" : ""}`}>
+                <div ref={sidebarCategoryRef} className="space-y-0.5 max-h-56 overflow-y-auto pr-1">
+                    {allCategoryNavItems.map((item, idx, arr) => {
+                        const isExpanded = !!item.childCount && expandedCategories.has(item.id)
+                        const isLastChild = item.isChild && (idx === arr.length - 1 || !arr[idx + 1]?.isChild)
+                        const isFirstChild = item.isChild && (idx === 0 || !arr[idx - 1]?.isChild)
+                        if (item.isChild) return (
+                            <div key={item.id}
+                                {...(isFirstChild ? { "data-first-child": arr[idx - 1]?.id } : {})}
+                                className={[
+                                "flex items-center pl-3 border-l-2 border-emerald-500/40 bg-emerald-500/[0.04] animate-category-slide-in",
+                                isLastChild ? "pb-1.5 rounded-b-md mb-0.5" : "",
+                            ].join(" ")}>
+                                <button
+                                    onClick={() => { router.push(item.href); setSidebarOpen(false) }}
+                                    className={`flex-1 text-left py-1 text-sm transition-colors flex items-center gap-1.5
+                                        ${item.isActive ? "text-emerald-400 font-medium" : "text-gray-400 hover:text-white"}`}
+                                >
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.isActive ? "bg-emerald-400" : "bg-gray-600"}`} />
+                                    <span className="truncate">{item.label}</span>
+                                    {item.productCount !== undefined && (
+                                        <span className="text-[10px] ml-auto shrink-0 text-gray-500">({item.productCount})</span>
+                                    )}
+                                </button>
+                            </div>
+                        )
+                        return (
+                        <div key={item.id} className={[
+                            "flex items-center rounded-md transition-colors",
+                            isExpanded
+                                ? "bg-emerald-500/[0.12] border-l-[3px] border-emerald-400/80 pl-1.5 rounded-b-none"
+                                : "hover:bg-white/[0.03]",
+                        ].join(" ")}>
                             <button
                                 onClick={() => {
                                     if (item.id === "_all") { setSelectedCategory(null); router.push("/products") }
@@ -688,28 +718,39 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                     setSidebarOpen(false)
                                 }}
                                 className={`flex-1 text-left py-1.5 text-sm transition-colors flex items-center gap-1.5
-                                    ${item.isActive ? "text-emerald-400 font-medium" : "text-gray-400 hover:text-white"}`}
+                                    ${item.isActive ? "text-emerald-400 font-medium" : isExpanded ? "text-white/90" : "text-gray-400 hover:text-white"}`}
                             >
-                                {item.isChild && <span className="w-1 h-1 rounded-full bg-gray-600 shrink-0" />}
                                 <span className="truncate">{item.label}</span>
-                                {item.productCount !== undefined && !item.childCount && (
-                                    <span className="text-[10px] text-gray-600 ml-auto shrink-0">({item.productCount})</span>
+                                {item.productCount !== undefined && (
+                                    <span className={`text-[10px] ml-auto shrink-0 ${isExpanded ? "text-emerald-400 font-medium" : "text-gray-600"}`}>
+                                        ({item.productCount})
+                                    </span>
                                 )}
                             </button>
                             {item.childCount && (
                                 <button
-                                    onClick={() => setExpandedCategories(prev => {
-                                        const n = new Set(prev)
-                                        n.has(item.id) ? n.delete(item.id) : n.add(item.id)
-                                        return n
-                                    })}
-                                    className="p-1 hover:bg-white/10 rounded transition-colors shrink-0"
+                                    onClick={() => {
+                                        const willExpand = !expandedCategories.has(item.id)
+                                        setExpandedCategories(prev => {
+                                            const n = new Set(prev)
+                                            n.has(item.id) ? n.delete(item.id) : n.add(item.id)
+                                            return n
+                                        })
+                                        if (willExpand) {
+                                            setTimeout(() => {
+                                                const firstChild = sidebarCategoryRef.current?.querySelector(`[data-first-child="${item.id}"]`)
+                                                firstChild?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+                                            }, 60)
+                                        }
+                                    }}
+                                    className={`p-1 rounded transition-colors shrink-0 ${isExpanded ? "text-emerald-400 hover:bg-emerald-500/20" : "text-gray-500 hover:bg-white/10"}`}
                                 >
-                                    <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${expandedCategories.has(item.id) ? "rotate-180" : ""}`} />
+                                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
                                 </button>
                             )}
                         </div>
-                    ))}
+                        )
+                    })}
                 </div>
             </FilterSection>
 
@@ -851,29 +892,41 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             {/* Category — parent items navigate, child items are multi-select checkboxes */}
             <FilterSection title={t("category")} isOpen={openSections.has("category")} onToggle={() => toggleSection("category")}>
                 <div className="space-y-0.5">
-                    {allCategoryNavItems.map((item) => {
+                    {allCategoryNavItems.map((item, idx, arr) => {
                         if (item.isChild) {
                             const childSlug = item.href.split("/").pop() || ""
                             const checked = pendingSubcategories.includes(childSlug)
+                            const isLastChild = idx === arr.length - 1 || !arr[idx + 1]?.isChild
+                            const isFirstChild = idx === 0 || !arr[idx - 1]?.isChild
                             return (
-                                <label key={item.id} className="flex items-center gap-2 cursor-pointer py-1.5 pl-4 group">
+                                <label key={item.id}
+                                    {...(isFirstChild ? { "data-mobile-first-child": arr[idx - 1]?.id } : {})}
+                                    className={[
+                                    "flex items-center gap-2 cursor-pointer py-1.5 pl-3 border-l-2 border-emerald-500/40 bg-emerald-500/[0.04] group animate-category-slide-in",
+                                    isLastChild ? "pb-2 rounded-b-md mb-0.5" : "",
+                                ].join(" ")}>
                                     <input type="checkbox" checked={checked}
                                         onChange={() => setPendingSubcategories(prev =>
                                             prev.includes(childSlug) ? prev.filter(s => s !== childSlug) : [...prev, childSlug]
                                         )}
                                         className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
-                                    <span className="w-1 h-1 rounded-full bg-gray-600 shrink-0" />
                                     <span className={`text-sm transition-colors flex-1 ${checked ? "text-emerald-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
                                         {item.label}
                                     </span>
                                     {item.productCount !== undefined && (
-                                        <span className="text-[10px] text-gray-600 shrink-0">({item.productCount})</span>
+                                        <span className="text-[10px] text-gray-500 shrink-0">({item.productCount})</span>
                                     )}
                                 </label>
                             )
                         }
+                        const isExpanded = !!item.childCount && expandedCategories.has(item.id)
                         return (
-                            <div key={item.id} className="flex items-center">
+                            <div key={item.id} className={[
+                                "flex items-center rounded-md transition-colors",
+                                isExpanded
+                                    ? "bg-emerald-500/[0.12] border-l-[3px] border-emerald-400/80 pl-1.5 rounded-b-none"
+                                    : "hover:bg-white/[0.03]",
+                            ].join(" ")}>
                                 <button
                                     onClick={() => {
                                         if (item.id === "_all") { setSelectedCategory(null); router.push("/products") }
@@ -881,23 +934,32 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                         setSidebarOpen(false)
                                     }}
                                     className={`flex-1 text-left py-1.5 text-sm transition-colors flex items-center gap-1.5
-                                        ${item.isActive ? "text-emerald-400 font-medium" : "text-gray-400 hover:text-white"}`}
+                                        ${item.isActive ? "text-emerald-400 font-medium" : isExpanded ? "text-white/90" : "text-gray-400 hover:text-white"}`}
                                 >
                                     <span className="truncate">{item.label}</span>
-                                    {item.productCount !== undefined && !item.childCount && (
-                                        <span className="text-[10px] text-gray-600 ml-auto shrink-0">({item.productCount})</span>
+                                    {item.productCount !== undefined && (
+                                        <span className={`text-[10px] ml-auto shrink-0 ${isExpanded ? "text-emerald-400 font-medium" : "text-gray-600"}`}>({item.productCount})</span>
                                     )}
                                 </button>
                                 {item.childCount && (
                                     <button
-                                        onClick={() => setExpandedCategories(prev => {
-                                            const n = new Set(prev)
-                                            n.has(item.id) ? n.delete(item.id) : n.add(item.id)
-                                            return n
-                                        })}
-                                        className="p-1 hover:bg-white/10 rounded transition-colors shrink-0"
+                                        onClick={() => {
+                                            const willExpand = !expandedCategories.has(item.id)
+                                            setExpandedCategories(prev => {
+                                                const n = new Set(prev)
+                                                n.has(item.id) ? n.delete(item.id) : n.add(item.id)
+                                                return n
+                                            })
+                                            if (willExpand) {
+                                                setTimeout(() => {
+                                                    document.querySelector(`[data-mobile-first-child="${item.id}"]`)
+                                                        ?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+                                                }, 60)
+                                            }
+                                        }}
+                                        className={`p-1 rounded transition-colors shrink-0 ${isExpanded ? "text-emerald-400 hover:bg-emerald-500/20" : "text-gray-500 hover:bg-white/10"}`}
                                     >
-                                        <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${expandedCategories.has(item.id) ? "rotate-180" : ""}`} />
+                                        <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
                                     </button>
                                 )}
                             </div>

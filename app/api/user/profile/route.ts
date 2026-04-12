@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { validateLength, validateBirthDate, firstError, MAX_PHONE, MAX_CITY, MAX_COUNTRY, MAX_ADDRESS } from "@/lib/validation"
+import { processTemplates } from "@/lib/cronNotifications"
 
 export async function GET() {
   const session = await auth()
@@ -57,6 +58,14 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: lengthError }, { status: 400 })
   }
 
+  // Check if birthDate is being set or changed (fetch current value first)
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { birthDate: true },
+  })
+  const previousBirthDate = currentUser?.birthDate?.toISOString().slice(0, 10) ?? null
+  const newBirthDate = birthDate ?? null
+
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: {
@@ -79,6 +88,12 @@ export async function PUT(request: Request) {
       createdAt: true,
     },
   })
+
+  // Fire-and-forget: if birthDate was just set or changed, immediately check birthday templates
+  // so the user doesn't have to wait for tomorrow's cron.
+  if (newBirthDate && newBirthDate !== previousBirthDate) {
+    processTemplates(undefined, undefined, session.user.id).catch(() => {})
+  }
 
   return NextResponse.json(user)
 }

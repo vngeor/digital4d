@@ -32,6 +32,7 @@ interface Notification {
   couponExpiresAt: string | null
   couponMinPurchase: string | null
   createdAt: string
+  scheduledAt: string | null
   isLegacy: boolean
   quoteId: string | null
 }
@@ -447,7 +448,7 @@ export function NotificationsClient({ translations: t }: Props) {
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className="text-xs text-slate-500">{formatDate(n.createdAt)}</span>
+                  <span className="text-xs text-slate-500">{formatDate(n.scheduledAt ?? n.createdAt)}</span>
                   {!n.read && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
                 </div>
               </div>
@@ -499,7 +500,7 @@ export function NotificationsClient({ translations: t }: Props) {
                   <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getModalBadgeStyle(selectedNotification.type)}`}>
                     {getTypeLabel(selectedNotification.type)}
                   </span>
-                  <p className="text-xs text-slate-500 mt-1">{formatDate(selectedNotification.createdAt)}</p>
+                  <p className="text-xs text-slate-500 mt-1">{formatDate(selectedNotification.scheduledAt ?? selectedNotification.createdAt)}</p>
                 </div>
               </div>
 

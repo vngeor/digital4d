@@ -27,6 +27,7 @@ interface Notification {
   couponExpiresAt: string | null
   couponMinPurchase: string | null
   createdAt: string
+  scheduledAt: string | null
   isLegacy: boolean
   quoteId: string | null
 }
@@ -666,7 +667,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="text-xs text-slate-500 shrink-0">
-            {formatDate(notification.createdAt)}
+            {formatDate(notification.scheduledAt ?? notification.createdAt)}
           </span>
           {!notification.read && (
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -818,7 +819,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
                     {getTypeLabel(selectedNotification.type)}
                   </span>
                   <p className="text-xs text-slate-500 mt-1">
-                    {formatDate(selectedNotification.createdAt)}
+                    {formatDate(selectedNotification.scheduledAt ?? selectedNotification.createdAt)}
                   </p>
                 </div>
               </div>

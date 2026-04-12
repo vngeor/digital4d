@@ -334,6 +334,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
             (r as { bulkDiscountTiers?: string | null }).bulkDiscountTiers ||
             (r as { packages?: Array<{ bulkDiscountTiers?: string | null }> }).packages?.find(pkg => pkg.bulkDiscountTiers)?.bulkDiscountTiers ||
             "",
+        bulkDiscountExpiresAt: (r as { bulkDiscountExpiresAt?: Date | null }).bulkDiscountExpiresAt?.toISOString() || null,
     }))
 
     const productName = getLocalizedName(product)
@@ -455,6 +456,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
         brandSlug: product.brand?.slug || null,
         bulkDiscountTiers: product.bulkDiscountTiers ||
             product.packages?.find((pkg: { bulkDiscountTiers?: string | null }) => pkg.bulkDiscountTiers)?.bulkDiscountTiers || "",
+        bulkDiscountExpiresAt: (product as { bulkDiscountExpiresAt?: Date | null }).bulkDiscountExpiresAt?.toISOString() || null,
         slug: product.slug,
         createdAt: product.createdAt.toISOString(),
         gallery: product.gallery || [],

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import prisma from "@/lib/prisma"
 import { rateLimit, getClientIp } from "@/lib/rateLimit"
 import { validateLength, validateBirthDate, firstError, MAX_NAME, MAX_EMAIL, MAX_PASSWORD } from "@/lib/validation"
+import { processTemplates } from "@/lib/cronNotifications"
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,6 +81,12 @@ export async function POST(request: NextRequest) {
         birthDate: birthDate ? new Date(birthDate) : null,
       },
     })
+
+    // Fire-and-forget: immediately check birthday templates for this user so they don't
+    // have to wait until tomorrow's cron if their birthday falls within the notification window.
+    if (birthDate) {
+      processTemplates(undefined, undefined, user.id).catch(() => {})
+    }
 
     return NextResponse.json({
       id: user.id,

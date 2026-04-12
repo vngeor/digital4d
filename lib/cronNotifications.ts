@@ -126,8 +126,10 @@ function resolvePlaceholders(
 /**
  * Process all active notification templates.
  * Called by the daily cron job.
+ * Pass `userId` to restrict birthday processing to a single user (used after registration
+ * or profile update so the check fires immediately without waiting for the next cron).
  */
-export async function processTemplates(overrideDate?: Date, templateId?: string): Promise<{
+export async function processTemplates(overrideDate?: Date, templateId?: string, userId?: string): Promise<{
   processed: number
   sent: number
   couponsCreated: number
@@ -168,13 +170,18 @@ export async function processTemplates(overrideDate?: Date, templateId?: string)
       }
 
       if (template.trigger === "birthday") {
-        // Birthday: scan full window — different users may have birthdays on different days
+        // Birthday: scan full window — different users may have birthdays on different days.
+        // Start from daysAhead=0 to catch birthdays that are TODAY (e.g. user registered same day,
+        // or the previous cron run was missed).
         const allBirthdayUsers = await prisma.user.findMany({
-          where: { birthDate: { not: null } },
+          where: {
+            birthDate: { not: null },
+            ...(userId ? { id: userId } : {}),
+          },
           select: { id: true, name: true, birthDate: true },
         })
 
-        for (let daysAhead = 1; daysAhead <= maxDays; daysAhead++) {
+        for (let daysAhead = 0; daysAhead <= maxDays; daysAhead++) {
           const candDate = new Date(today)
           candDate.setDate(candDate.getDate() + daysAhead)
           const candMonth = candDate.getMonth()
@@ -360,6 +367,17 @@ export async function processTemplates(overrideDate?: Date, templateId?: string)
             es: resolvePlaceholders(template.messageEs, placeholderData),
           })
 
+          // Compute scheduledAt: the intended delivery date is eventDate minus daysBefore.
+          // If that date is still in the future, schedule for then so the notification
+          // doesn't appear early (e.g. birthday notification created the day before should
+          // only show on the actual birthday). If the intended date is today or past, show immediately.
+          const intendedSendDate = new Date(user.eventDate)
+          intendedSendDate.setDate(intendedSendDate.getDate() - template.daysBefore)
+          // Start of today for comparison (strip time component)
+          const todayStart = new Date(today)
+          todayStart.setHours(0, 0, 0, 0)
+          const scheduledAt = intendedSendDate > todayStart ? intendedSendDate : null
+
           // Create notification
           await prisma.notification.create({
             data: {
@@ -369,6 +387,7 @@ export async function processTemplates(overrideDate?: Date, templateId?: string)
               message,
               link: template.link,
               couponId: couponId || null,
+              scheduledAt,
             },
           })
 

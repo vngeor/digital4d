@@ -96,6 +96,7 @@ export async function GET(request: NextRequest) {
       couponExpiresAt: string | null
       couponMinPurchase: string | null
       createdAt: string
+      scheduledAt: string | null
       isLegacy: boolean
       quoteId: string | null
     }> = []
@@ -127,6 +128,7 @@ export async function GET(request: NextRequest) {
           couponExpiresAt: null,
           couponMinPurchase: null,
           createdAt: n.quotedAt?.toISOString() || new Date().toISOString(),
+          scheduledAt: null,
           isLegacy: true,
           quoteId: n.id,
         })
@@ -184,6 +186,7 @@ export async function GET(request: NextRequest) {
         couponExpiresAt: n.coupon?.expiresAt?.toISOString() || null,
         couponMinPurchase: n.coupon?.minPurchase ? n.coupon.minPurchase.toString() : null,
         createdAt: n.createdAt.toISOString(),
+        scheduledAt: n.scheduledAt?.toISOString() || null,
         isLegacy: false,
         quoteId: n.quoteId || null,
       })

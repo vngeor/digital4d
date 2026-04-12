@@ -137,6 +137,15 @@ button, a, [role="button"] {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes category-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-category-slide-in {
+  animation: category-slide-in 0.18s ease-out both;
+}
+
 @keyframes sale-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }

@@ -31,6 +31,7 @@ export interface RecentlyViewedProduct {
   brandNameEs: string | null
   brandSlug: string | null
   bulkDiscountTiers?: string | null
+  bulkDiscountExpiresAt?: string | null
   slug?: string
   createdAt?: string
   gallery?: string[]
