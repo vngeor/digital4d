@@ -584,7 +584,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
                         {/* Badges */}
                         <ProductPanelBadges
                             onSale={product.onSale}
-                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)}
+                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages, product.bulkDiscountExpiresAt?.toISOString())}
                             featured={product.featured}
                             bestSeller={product.bestSeller}
                             saleHref="/products?sale=true"

@@ -82,7 +82,10 @@ export async function POST(request: NextRequest) {
     if (quantity > 1) {
       const { getActiveTier: getBulkTier, applyBulkDiscount: applyBulk, parseTiers: parseBulkTiers } = await import("@/lib/bulkDiscount")
       const productTiers = parseBulkTiers((product as { bulkDiscountTiers?: string }).bulkDiscountTiers || "")
-      if (productTiers.length > 0) {
+      const productTierExpiry = (product as { bulkDiscountExpiresAt?: Date | null }).bulkDiscountExpiresAt
+      const productTiersActive = productTiers.length > 0 &&
+        (!productTierExpiry || new Date(productTierExpiry) > new Date())
+      if (productTiersActive) {
         const tier = getBulkTier(quantity, productTiers)
         if (tier) {
           priceAmount = applyBulk(priceAmount, tier)

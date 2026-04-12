@@ -199,7 +199,8 @@ model Product {
   status            String           @default("in_stock")
   bestSeller        Boolean          @default(false)
   upsellProductIds  String[]         @default([])
-  bulkDiscountTiers String           @default("")
+  bulkDiscountTiers      String           @default("")
+  bulkDiscountExpiresAt  DateTime?
   brand             Brand?           @relation(fields: [brandId], references: [id])
   createdBy         User?            @relation("ProductCreator", fields: [createdById], references: [id])
   packages          ProductPackage[]

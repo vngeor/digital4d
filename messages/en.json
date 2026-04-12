@@ -511,7 +511,9 @@
       "autoEaster": "Easter",
       "autoCustom": "Template",
       "wishlistCouponType": "Wishlist",
-      "wishlistPriceDropType": "Price Drop"
+      "wishlistPriceDropType": "Price Drop",
+      "stockAvailable": "Back in Stock",
+      "couponReminder": "Coupon Reminder"
     },
     "notificationTemplates": {
       "title": "Notification Templates",
@@ -1105,7 +1107,9 @@
       "selectColor": "— Select Color —",
       "bulkDiscountTiersLabel": "Bulk discounts",
       "addTier": "Add tier",
-      "packageOverride": "overrides product tiers"
+      "packageOverride": "overrides product tiers",
+      "bulkDiscountExpiresAt": "Sale ends at (optional)",
+      "clearExpiry": "No expiry"
     },
     "brands": {
       "title": "Brand Management",
@@ -1489,7 +1493,8 @@
     "showLess": "Show less",
     "bulkDiscountsLabel": "Bulk discounts:",
     "bulkTierUnits": "units",
-    "bulkTierTotalSuffix": "total"
+    "bulkTierTotalSuffix": "total",
+    "bulkDiscountEndsIn": "Sale ends in"
   },
   "quotes": {
     "title": "Request a Quote",

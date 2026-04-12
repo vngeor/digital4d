@@ -7,11 +7,13 @@ import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
 import {
   BellRing,
+  Bell,
   Send,
   Trash2,
   Search,
   MessageSquare,
   Ticket,
+  Package,
   ShieldOff,
   Loader2,
   X,
@@ -47,7 +49,7 @@ interface NotificationCoupon {
 
 interface Notification {
   id: string
-  type: "quote_offer" | "admin_message" | "coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "wishlist_price_drop" | "wishlist_coupon"
+  type: "quote_offer" | "admin_message" | "coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "wishlist_price_drop" | "wishlist_coupon" | "stock_available" | "coupon_reminder"
   title: string
   message: string
   link: string | null
@@ -89,6 +91,8 @@ const TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
   auto_custom: { labelKey: "autoCustom", color: "bg-blue-500/20 text-blue-400" },
   wishlist_coupon: { labelKey: "wishlistCouponType", color: "bg-pink-500/20 text-pink-400" },
   wishlist_price_drop: { labelKey: "wishlistPriceDropType", color: "bg-red-500/20 text-red-400" },
+  stock_available: { labelKey: "stockAvailable", color: "bg-emerald-500/20 text-emerald-400" },
+  coupon_reminder: { labelKey: "couponReminder", color: "bg-amber-500/20 text-amber-400" },
 }
 
 const ROLES = ["ADMIN", "EDITOR", "AUTHOR", "SUBSCRIBER"] as const
@@ -111,12 +115,35 @@ export default function NotificationsPage() {
   }
 
   const getLocalizedText = (text: string): string => {
+    // Translate known notification type literal strings used as titles (e.g. "quote_offer")
+    const TYPE_TITLE_MAP: Record<string, string> = {
+      quote_offer: t("quoteOffer"),
+      coupon: t("couponNotification"),
+      admin_message: t("adminMessage"),
+      auto_birthday: t("autoBirthday"),
+      auto_christmas: t("autoChristmas"),
+      auto_new_year: t("autoNewYear"),
+      auto_easter: t("autoEaster"),
+      auto_custom: t("autoCustom"),
+      wishlist_coupon: t("wishlistCouponType"),
+      wishlist_price_drop: t("wishlistPriceDropType"),
+      stock_available: t("stockAvailable"),
+      coupon_reminder: t("couponReminder"),
+    }
+    if (TYPE_TITLE_MAP[text]) return TYPE_TITLE_MAP[text]
+
     const parsed = tryParseJson(text)
     if (parsed) {
+      // {bg, en, es} — i18n locale object (auto-notifications, wishlist, stock)
       const localized = parsed[locale] ?? parsed.en ?? parsed.bg
       if (localized !== undefined) return localized || text
-      // Non-locale JSON (e.g. coupon object) — show meaningful fallback
+      // {code} — wishlist coupon title object
       if (parsed.code) return `Coupon: ${parsed.code}`
+      // {price, hasCoupon, adminMessage} — quote_offer / coupon message
+      if ("price" in parsed || "adminMessage" in parsed) {
+        if (parsed.adminMessage) return String(parsed.adminMessage)
+        if (parsed.price) return String(parsed.price)
+      }
       return text
     }
     return text
@@ -714,6 +741,8 @@ export default function NotificationsPage() {
     { key: "admin_message", label: t("adminMessage"), icon: MessageSquare },
     { key: "coupon", label: t("couponNotification"), icon: Ticket },
     { key: "quote_offer", label: t("quoteOffer"), icon: BellRing },
+    { key: "stock_available", label: t("stockAvailable"), icon: Package },
+    { key: "coupon_reminder", label: t("couponReminder"), icon: Bell },
     { key: "auto", label: t("auto"), icon: Sparkles },
     { key: "scheduled", label: t("scheduled"), icon: Clock },
   ]

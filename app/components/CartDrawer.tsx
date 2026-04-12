@@ -102,7 +102,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
     fetch(`/api/cart/prices?items=${encodeURIComponent(ids)}`)
       .then((r) => r.json())
-      .then((fresh: Array<{ productId: string; packageId: string | null; price: string | null; salePrice: string | null; onSale: boolean; bulkDiscountTiers: string }>) => {
+      .then((fresh: Array<{ productId: string; packageId: string | null; price: string | null; salePrice: string | null; onSale: boolean; bulkDiscountTiers: string; bulkDiscountExpiresAt: string | null }>) => {
         const cart = getCart()
         let updated = false
         for (const f of fresh) {
@@ -115,6 +115,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
           cart[idx].salePrice = f.salePrice
           cart[idx].onSale = f.onSale
           cart[idx].bulkDiscountTiers = f.bulkDiscountTiers
+          cart[idx].bulkDiscountExpiresAt = f.bulkDiscountExpiresAt ?? null
           updated = true
         }
         if (updated) {
@@ -419,12 +420,14 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
   }
 
   // Compute the bulk-aware effective unit price for a cart item.
-  // Product-level tiers always apply if set; global tiers only if bulkEnabled.
+  // Product-level tiers apply if set and not expired; global tiers only if bulkEnabled.
   const getBulkUnitPrice = (item: CartItem): number => {
     const base = getEffectivePrice(item)  // sale price if on sale, else regular price
     if (item.quantity <= 1) return base
     const productTiers = parseTiers(item.bulkDiscountTiers || "")
-    const activeTiers = productTiers.length > 0 ? productTiers : (bulkEnabled ? globalBulkTiers : [])
+    const productTiersActive = productTiers.length > 0 &&
+      (!item.bulkDiscountExpiresAt || new Date(item.bulkDiscountExpiresAt) > new Date())
+    const activeTiers = productTiersActive ? productTiers : (bulkEnabled ? globalBulkTiers : [])
     if (activeTiers.length === 0) return base
     const tier = getActiveTier(item.quantity, activeTiers)
     return tier ? Math.max(applyBulkDiscount(base, tier), 0.01) : base

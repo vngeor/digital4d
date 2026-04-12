@@ -149,6 +149,9 @@ export async function GET(request: NextRequest) {
         createdAt: p.createdAt.toISOString(),
         coupon: couponMap[p.id] ?? null,
         bulkDiscountTiers: (p as { bulkDiscountTiers?: string | null }).bulkDiscountTiers ?? null,
+        bulkDiscountExpiresAt: (p as { bulkDiscountExpiresAt?: Date | null }).bulkDiscountExpiresAt
+          ? (p as { bulkDiscountExpiresAt: Date }).bulkDiscountExpiresAt.toISOString()
+          : null,
       }))
     )
   } catch {

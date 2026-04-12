@@ -24,6 +24,7 @@ interface SecretDeal {
   brandIds: string[]
   brandNames: LocalizedName[]
   categoryNames: LocalizedName[]
+  productNames: LocalizedName[]
   notificationType: string
   status: "active" | "used" | "expired"
 }
@@ -102,6 +103,57 @@ function CountdownTimer({ expiresAt }: { expiresAt: string }) {
         </div>
       ))}
     </div>
+  )
+}
+
+function ProductsChip({
+  count,
+  productNames,
+  label,
+  getLocalizedName,
+}: {
+  count: number
+  productNames: LocalizedName[]
+  label: string
+  getLocalizedName: (item: LocalizedName) => string
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onClick={() => setOpen(v => !v)}
+        className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-500/10 border border-slate-500/20 text-slate-400 hover:bg-slate-500/20 hover:text-slate-300 hover:border-slate-500/40 transition-colors cursor-default touch-manipulation"
+      >
+        <ShoppingBag className="w-2.5 h-2.5" />
+        {count} {label}
+        {productNames.length > 0 && (
+          <svg className="w-2 h-2 opacity-50" viewBox="0 0 8 8" fill="currentColor">
+            <circle cx="4" cy="4" r="3" />
+          </svg>
+        )}
+      </button>
+      {open && productNames.length > 0 && (
+        <div className="absolute bottom-full left-0 mb-1.5 z-50 min-w-[160px] max-w-[240px] bg-slate-900 border border-white/10 rounded-xl shadow-2xl shadow-black/60 p-2">
+          <ul className="space-y-0.5">
+            {productNames.map((p, i) => (
+              <li key={i} className="flex items-center gap-1.5 text-[11px] text-slate-200 py-0.5 px-1 rounded-lg hover:bg-white/5">
+                <span className="w-1 h-1 rounded-full bg-amber-400/70 shrink-0" />
+                <span className="leading-tight">{getLocalizedName(p)}</span>
+              </li>
+            ))}
+          </ul>
+          {/* Arrow */}
+          <div className="absolute top-full left-3 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-white/10" />
+          <div className="absolute top-full left-[13px] w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-slate-900" />
+        </div>
+      )}
+    </span>
   )
 }
 
@@ -220,12 +272,12 @@ export function SecretDealsClient({ secretDeals, translations: t }: SecretDealsC
                 return (
                   <div
                     key={deal.code}
-                    className={`glass rounded-2xl border p-4 flex flex-col gap-3 transition-opacity ${
+                    className={`glass rounded-2xl border p-4 flex flex-col transition-opacity ${
                       isActive ? "border-amber-500/20 bg-amber-500/5" : "border-white/5 bg-white/[0.02] opacity-55"
                     }`}
                   >
                     {/* Top row: source badge + timer/status */}
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-2 mb-3">
                       <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${isActive ? "bg-amber-500/10 text-amber-300/80" : "bg-white/5 text-slate-500"}`}>
                         <span>{source.icon}</span>
                         <span>{sourceLabel}</span>
@@ -243,12 +295,12 @@ export function SecretDealsClient({ secretDeals, translations: t }: SecretDealsC
                     </div>
 
                     {/* Discount value */}
-                    <div className={`text-4xl font-black leading-none ${isActive ? "text-amber-400" : "text-slate-500"}`}>
+                    <div className={`text-4xl font-black leading-none mb-3 ${isActive ? "text-amber-400" : "text-slate-500"}`}>
                       {discountDisplay}
                     </div>
 
                     {/* Code + copy */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-3">
                       <span className={`flex-1 font-mono text-sm font-bold bg-white/5 border border-white/10 rounded-lg px-3 py-2 truncate ${isActive ? "text-white" : "text-slate-500 line-through"}`}>
                         {deal.code}
                       </span>
@@ -267,8 +319,8 @@ export function SecretDealsClient({ secretDeals, translations: t }: SecretDealsC
                       )}
                     </div>
 
-                    {/* Restriction chips */}
-                    <div className="flex flex-wrap gap-1.5">
+                    {/* Restriction chips — flex-1 pushes footer to bottom */}
+                    <div className="flex flex-wrap gap-1.5 flex-1 content-start mb-3">
                       {!hasRestrictions ? (
                         <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                           <Store className="w-2.5 h-2.5" />
@@ -289,10 +341,12 @@ export function SecretDealsClient({ secretDeals, translations: t }: SecretDealsC
                             </span>
                           ))}
                           {deal.productIds.length > 0 && deal.brandIds.length === 0 && deal.categoryIds.length === 0 && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-500/10 border border-slate-500/20 text-slate-400">
-                              <ShoppingBag className="w-2.5 h-2.5" />
-                              {deal.productIds.length} {t.secretDealsProducts}
-                            </span>
+                            <ProductsChip
+                              count={deal.productIds.length}
+                              productNames={deal.productNames}
+                              label={t.secretDealsProducts}
+                              getLocalizedName={getLocalizedName}
+                            />
                           )}
                         </>
                       )}
@@ -303,11 +357,12 @@ export function SecretDealsClient({ secretDeals, translations: t }: SecretDealsC
                       )}
                     </div>
 
-                    {/* Footer: expiry + CTA */}
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5">
+                    {/* Footer: expiry + CTA — always pinned to bottom */}
+                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/5">
                       <span className={`text-[10px] ${isExpiringSoon ? "text-amber-400 font-semibold" : "text-slate-500"}`}>
-                        {expiryDate ? `${t.secretDealsExpires}: ${expiryDate}` : ""}
-                        {isExpiringSoon ? " ⚡" : ""}
+                        {expiryDate
+                          ? `${t.secretDealsExpires}: ${expiryDate}${isExpiringSoon ? " ⚡" : ""}`
+                          : isActive ? t.secretDealsNoExpiry : ""}
                       </span>
                       {isActive && (
                         <Link

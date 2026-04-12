@@ -166,7 +166,6 @@ export async function POST(request: NextRequest) {
         priceType: data.priceType || "fixed",
         category: data.category,
         tags: data.tags || [],
-        brandId: data.brandId || null,
         image: data.image || null,
         gallery: data.gallery || [],
         relatedProductIds: data.relatedProductIds || [],
@@ -179,8 +178,16 @@ export async function POST(request: NextRequest) {
         status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
         bulkDiscountTiers: sanitizeBulkTiers(data.bulkDiscountTiers),
+        bulkDiscountExpiresAt: data.bulkDiscountExpiresAt
+          ? new Date(data.bulkDiscountExpiresAt)
+          : null,
       },
     })
+
+    // Set brandId via raw SQL — Prisma 7 + Neon HTTP adapter rejects connect/disconnect (triggers transactions)
+    if (data.brandId) {
+      await prisma.$executeRaw`UPDATE "Product" SET "brandId" = ${data.brandId} WHERE id = ${product.id}`
+    }
 
     // Create color variants — Map by original array index for correct packageVariant lookup
     const variantIndexToId = new Map<number, string>()
@@ -325,7 +332,6 @@ export async function PUT(request: NextRequest) {
         priceType: data.priceType || "fixed",
         category: data.category,
         tags: data.tags || [],
-        brandId: data.brandId || null,
         image: data.image || null,
         gallery: data.gallery || [],
         relatedProductIds: data.relatedProductIds || [],
@@ -338,8 +344,14 @@ export async function PUT(request: NextRequest) {
         status: PRODUCT_STATUSES.includes(data.status) ? data.status : "in_stock",
         order: data.order || 0,
         bulkDiscountTiers: sanitizeBulkTiers(data.bulkDiscountTiers),
+        bulkDiscountExpiresAt: data.bulkDiscountExpiresAt
+          ? new Date(data.bulkDiscountExpiresAt)
+          : null,
       },
     })
+
+    // Set brandId via raw SQL — Prisma 7 + Neon HTTP adapter rejects connect/disconnect (triggers transactions)
+    await prisma.$executeRaw`UPDATE "Product" SET "brandId" = ${data.brandId || null} WHERE id = ${data.id}`
 
     // Sync color variants: delete old, create new — Map by original index for packageVariant lookup
     const variantIndexToId = new Map<number, string>()

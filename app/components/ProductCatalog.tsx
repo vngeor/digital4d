@@ -55,6 +55,7 @@ interface Product {
     packages?: ProductPackage[]
     gallery?: string[]
     bulkDiscountTiers?: string | null
+    bulkDiscountExpiresAt?: string | null
 }
 
 interface ProductCategory {
@@ -351,9 +352,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (product.brand && getLocalizedName(product.brand).toLowerCase().includes(searchQuery.toLowerCase()))
-            const hasBulkTiers =
-                parseTiers(product.bulkDiscountTiers || "").length > 0 ||
-                product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)
+            const hasBulkTiers = computeHasBulkDiscount(product.bulkDiscountTiers, product.packages, product.bulkDiscountExpiresAt)
             const matchesSale = !saleFilter || product.onSale || hasBulkTiers
             const matchesFeatured = !featuredFilter || product.featured
             const matchesBestSeller = !bestSellerFilter || product.bestSeller
@@ -473,9 +472,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 getLocalizedName(product).toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (product.brand && getLocalizedName(product.brand).toLowerCase().includes(searchQuery.toLowerCase()))
-            const hasBulkTiers =
-                parseTiers(product.bulkDiscountTiers || "").length > 0 ||
-                product.packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0)
+            const hasBulkTiers = computeHasBulkDiscount(product.bulkDiscountTiers, product.packages, product.bulkDiscountExpiresAt)
             const matchesSale = !pendingSale || product.onSale || hasBulkTiers
             const matchesFeatured = !pendingFeatured || product.featured
             const matchesBestSeller = !pendingBestSeller || product.bestSeller
@@ -1405,7 +1402,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 bestDiscountPkg?.price ?? product.price,
                                                 bestDiscountPkg?.salePrice ?? product.salePrice,
                                             )}
-                                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)}
+                                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages, product.bulkDiscountExpiresAt)}
                                             status={product.status}
                                             showStatusOverlay
                                             coupon={couponMap?.[product.id] ?? null}
@@ -1413,7 +1410,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
 
                                         {/* Top-right: Sale + Wishlist */}
                                         <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
-                                            {(product.onSale || computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)) && (
+                                            {(product.onSale || computeHasBulkDiscount(product.bulkDiscountTiers, product.packages, product.bulkDiscountExpiresAt)) && (
                                                 <div onClick={e => { e.preventDefault(); e.stopPropagation(); router.push("/products?sale=true") }} className="flex gap-1 cursor-pointer">
                                                     <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-red-500 text-white shadow-lg">
                                                         {t("onSale")}

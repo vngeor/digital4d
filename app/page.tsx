@@ -180,6 +180,7 @@ export default async function Home() {
             ),
             bulkDiscountTiers: (product as { bulkDiscountTiers?: string }).bulkDiscountTiers ||
                 product.packages?.find((pkg: { bulkDiscountTiers?: string }) => pkg.bulkDiscountTiers)?.bulkDiscountTiers || "",
+            bulkDiscountExpiresAt: (product as { bulkDiscountExpiresAt?: Date | null }).bulkDiscountExpiresAt?.toISOString() ?? null,
             brandId: product.brandId,
         }
     })
@@ -276,6 +277,7 @@ export default async function Home() {
             })),
             category: p.category,
             bulkDiscountTiers: (p as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",
+            bulkDiscountExpiresAt: (p as { bulkDiscountExpiresAt?: Date | null }).bulkDiscountExpiresAt?.toISOString() ?? null,
         }
     }
     // Serialize categories for client component

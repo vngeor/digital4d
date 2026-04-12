@@ -554,7 +554,7 @@ function BannerForm({
               <select
                 value={formData.type}
                 onChange={(e) => updateField("type", e.target.value)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               >
                 <option value="hero">{t("heroType")}</option>
                 <option value="promo">{t("promoType")}</option>
@@ -569,7 +569,7 @@ function BannerForm({
                 type="number"
                 value={formData.order}
                 onChange={(e) => updateField("order", parseInt(e.target.value) || 0)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
           </div>
@@ -623,7 +623,7 @@ function BannerForm({
                   value={formData.image}
                   onChange={(e) => updateField("image", e.target.value)}
                   placeholder="Paste image URL..."
-                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
               <p className="text-xs text-gray-500">Max 5MB. Supported: JPEG, PNG, GIF, WebP</p>
@@ -649,7 +649,7 @@ function BannerForm({
               value={formData.link}
               onChange={(e) => updateField("link", e.target.value)}
               placeholder="https://..."
-              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
             />
           </div>
 
@@ -681,7 +681,7 @@ function BannerForm({
                   type="text"
                   value={formData[titleKey] as string}
                   onChange={(e) => updateField(titleKey, e.target.value)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
               <div>
@@ -703,7 +703,7 @@ function BannerForm({
                   type="text"
                   value={formData[linkTextKey] as string}
                   onChange={(e) => updateField(linkTextKey, e.target.value)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
             </div>

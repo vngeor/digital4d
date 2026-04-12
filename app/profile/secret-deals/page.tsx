@@ -76,21 +76,26 @@ export default async function SecretDealsPage() {
   const usageMap: Record<string, number> = {}
   for (const u of userUsages) usageMap[u.couponId] = (usageMap[u.couponId] || 0) + 1
 
-  // Collect all brand/category IDs across all coupons for bulk fetch
+  // Collect all brand/category/product IDs across all coupons for bulk fetch
   const allBrandIds = [...new Set(deliveredCoupons.flatMap(n => n.coupon?.brandIds ?? []))]
   const allCategoryIds = [...new Set(deliveredCoupons.flatMap(n => n.coupon?.categoryIds ?? []))]
+  const allProductIds = [...new Set(deliveredCoupons.flatMap(n => n.coupon?.productIds ?? []))]
 
-  const [brands, categories] = await Promise.all([
+  const [brands, categories, products] = await Promise.all([
     allBrandIds.length > 0
       ? prisma.brand.findMany({ where: { id: { in: allBrandIds } }, select: { id: true, nameBg: true, nameEn: true, nameEs: true } })
       : [],
     allCategoryIds.length > 0
       ? prisma.productCategory.findMany({ where: { id: { in: allCategoryIds } }, select: { id: true, nameBg: true, nameEn: true, nameEs: true } })
       : [],
+    allProductIds.length > 0
+      ? prisma.product.findMany({ where: { id: { in: allProductIds } }, select: { id: true, nameBg: true, nameEn: true, nameEs: true } })
+      : [],
   ])
 
   const brandMap = Object.fromEntries(brands.map(b => [b.id, { nameBg: b.nameBg, nameEn: b.nameEn, nameEs: b.nameEs }]))
   const categoryMap = Object.fromEntries(categories.map(c => [c.id, { nameBg: c.nameBg, nameEn: c.nameEn, nameEs: c.nameEs }]))
+  const productMap = Object.fromEntries(products.map(p => [p.id, { nameBg: p.nameBg, nameEn: p.nameEn, nameEs: p.nameEs }]))
 
   // Compute status
   const secretDeals = deliveredCoupons.flatMap(n => {
@@ -114,6 +119,7 @@ export default async function SecretDealsPage() {
       brandIds: c.brandIds,
       brandNames: c.brandIds.map(id => brandMap[id]).filter(Boolean) as { nameBg: string; nameEn: string; nameEs: string }[],
       categoryNames: c.categoryIds.map(id => categoryMap[id]).filter(Boolean) as { nameBg: string; nameEn: string; nameEs: string }[],
+      productNames: c.productIds.map(id => productMap[id]).filter(Boolean) as { nameBg: string; nameEn: string; nameEs: string }[],
       notificationType: n.type,
       status,
     }]

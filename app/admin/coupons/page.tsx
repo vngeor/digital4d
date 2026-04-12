@@ -1143,7 +1143,7 @@ function CouponForm({
                   min={0}
                   max={formData.type === "percentage" ? 100 : undefined}
                   step="any"
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
                 {formData.type === "percentage" && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
@@ -1177,7 +1177,7 @@ function CouponForm({
                 min={0}
                 step="any"
                 placeholder="0.00"
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
             <div>
@@ -1193,7 +1193,7 @@ function CouponForm({
                 }
                 min={0}
                 placeholder={t("unlimited")}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
           </div>
@@ -1209,7 +1209,7 @@ function CouponForm({
                 value={formData.perUserLimit}
                 onChange={(e) => updateField("perUserLimit", parseInt(e.target.value) || 1)}
                 min={1}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
           </div>

@@ -511,7 +511,9 @@
       "autoEaster": "Pascua",
       "autoCustom": "Plantilla",
       "wishlistCouponType": "Lista",
-      "wishlistPriceDropType": "Bajada de precio"
+      "wishlistPriceDropType": "Bajada de precio",
+      "stockAvailable": "De Vuelta en Stock",
+      "couponReminder": "Recordatorio de Cupón"
     },
     "notificationTemplates": {
       "title": "Plantillas de Notificaciones",
@@ -1105,7 +1107,9 @@
       "selectColor": "— Seleccionar color —",
       "bulkDiscountTiersLabel": "Descuentos por volumen",
       "addTier": "Añadir nivel",
-      "packageOverride": "anula los niveles del producto"
+      "packageOverride": "anula los niveles del producto",
+      "bulkDiscountExpiresAt": "Fin de la oferta (opcional)",
+      "clearExpiry": "Sin caducidad"
     },
     "brands": {
       "title": "Gestión de Marcas",
@@ -1489,7 +1493,8 @@
     "showLess": "Ver menos",
     "bulkDiscountsLabel": "Descuentos:",
     "bulkTierUnits": "uds.",
-    "bulkTierTotalSuffix": "total"
+    "bulkTierTotalSuffix": "total",
+    "bulkDiscountEndsIn": "Oferta termina en"
   },
   "quotes": {
     "title": "Solicitar Cotización",

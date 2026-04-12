@@ -511,7 +511,9 @@
       "autoEaster": "Великден",
       "autoCustom": "Шаблон",
       "wishlistCouponType": "Желани",
-      "wishlistPriceDropType": "Намаление"
+      "wishlistPriceDropType": "Намаление",
+      "stockAvailable": "Наличен",
+      "couponReminder": "Напомняне за купон"
     },
     "notificationTemplates": {
       "title": "Шаблони за известия",
@@ -1105,7 +1107,9 @@
       "selectColor": "— Изберете цвят —",
       "bulkDiscountTiersLabel": "Групови отстъпки",
       "addTier": "Добави ниво",
-      "packageOverride": "замества нивата на продукта"
+      "packageOverride": "замества нивата на продукта",
+      "bulkDiscountExpiresAt": "Краен срок на офертата (по желание)",
+      "clearExpiry": "Без краен срок"
     },
     "brands": {
       "title": "Управление на марки",
@@ -1489,7 +1493,8 @@
     "showLess": "Покажи по-малко",
     "bulkDiscountsLabel": "Групови отстъпки:",
     "bulkTierUnits": "бр.",
-    "bulkTierTotalSuffix": "общо"
+    "bulkTierTotalSuffix": "общо",
+    "bulkDiscountEndsIn": "Офертата приключва след"
   },
   "quotes": {
     "title": "Заявка за оферта",
