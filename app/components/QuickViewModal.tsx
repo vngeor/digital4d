@@ -35,6 +35,7 @@ interface Product {
     onSale: boolean
     currency: string
     bulkDiscountTiers?: string | null
+    bulkDiscountExpiresAt?: string | null
     priceType: string
     fileType: string | null
     status: string
@@ -292,7 +293,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                             packageVariantStatusMap={packageVariantStatusMap}
                             isNew={isNew}
                             discountPercent={discountPercent}
-                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)}
+                            hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages, product.bulkDiscountExpiresAt)}
                         />
 
                         {/* RIGHT: Details */}
@@ -315,7 +316,7 @@ export function QuickViewModal({ product, locale, isWishlisted, categories, init
                                     featured={product.featured}
                                     bestSeller={product.bestSeller}
                                     onSale={product.onSale}
-                                    hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages)}
+                                    hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, product.packages, product.bulkDiscountExpiresAt)}
                                 />
                             </div>
 

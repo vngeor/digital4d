@@ -54,6 +54,7 @@
     "profile": "Моят профил",
     "myOrders": "Моите поръчки",
     "myWishlist": "Любими",
+    "mySecretDeals": "Тайни оферти",
     "notifications": "Известия",
     "noNotifications": "Няма нови известия",
     "newQuoteReceived": "Нова оферта получена",
@@ -484,6 +485,7 @@
       "deleteFailed": "Неуспешно изтриване на известие",
       "titleRequired": "Заглавието е задължително",
       "messageRequired": "Съобщението е задължително",
+      "couponRequired": "Моля изберете купон",
       "birthdayToday": "Рожден ден днес",
       "birthdayThisWeek": "Тази седмица",
       "birthdayThisMonth": "Този месец",
@@ -507,7 +509,11 @@
       "autoChristmas": "Коледа",
       "autoNewYear": "Нова година",
       "autoEaster": "Великден",
-      "autoCustom": "Шаблон"
+      "autoCustom": "Шаблон",
+      "wishlistCouponType": "Желани",
+      "wishlistPriceDropType": "Намаление",
+      "stockAvailable": "Наличен",
+      "couponReminder": "Напомняне за купон"
     },
     "notificationTemplates": {
       "title": "Шаблони за известия",
@@ -1101,7 +1107,9 @@
       "selectColor": "— Изберете цвят —",
       "bulkDiscountTiersLabel": "Групови отстъпки",
       "addTier": "Добави ниво",
-      "packageOverride": "замества нивата на продукта"
+      "packageOverride": "замества нивата на продукта",
+      "bulkDiscountExpiresAt": "Краен срок на офертата (по желание)",
+      "clearExpiry": "Без краен срок"
     },
     "brands": {
       "title": "Управление на марки",
@@ -1485,7 +1493,8 @@
     "showLess": "Покажи по-малко",
     "bulkDiscountsLabel": "Групови отстъпки:",
     "bulkTierUnits": "бр.",
-    "bulkTierTotalSuffix": "общо"
+    "bulkTierTotalSuffix": "общо",
+    "bulkDiscountEndsIn": "Офертата приключва след"
   },
   "quotes": {
     "title": "Заявка за оферта",
@@ -1583,7 +1592,17 @@
     "sourceNewYear": "Нова година",
     "sourceEaster": "Великден",
     "sourceCustom": "Специален повод",
+    "sourceAdminOffer": "Специална оферта",
+    "sourceWishlist": "Оферта за желан продукт",
+    "sourceReminder": "Напомняне",
     "sourceSpecial": "Специална оферта",
+    "secretDealsView": "Виж всички оферти",
+    "secretDealsCount": "ваучера",
+    "secretDealsAllProducts": "Всички продукти",
+    "secretDealsProducts": "избрани продукта",
+    "secretDealsEmpty": "Все още няма тайни оферти",
+    "secretDealsEmptySubtitle": "Попълни профила си и се върни — тук ще се появят ексклузивни лични отстъпки.",
+    "backToProfile": "Назад към профила",
     "myOrdersTitle": "Моите поръчки и оферти",
     "myOrdersSubtitle": "Проследете вашите поръчки и заявки за оферти",
     "orderHistory": "История на поръчките",

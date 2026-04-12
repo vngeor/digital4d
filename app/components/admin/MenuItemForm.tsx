@@ -146,7 +146,7 @@ export function MenuItemForm({
                 value={formData.slug}
                 onChange={(e) => updateField("slug", e.target.value)}
                 placeholder="e.g., services"
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
               <p className="text-xs text-gray-500 mt-1">
                 {t("slugHelp")}
@@ -159,7 +159,7 @@ export function MenuItemForm({
               <select
                 value={formData.type}
                 onChange={(e) => updateField("type", e.target.value)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               >
                 <option value="general">{t("typeGeneral")}</option>
                 <option value="services">{t("typeServices")}</option>
@@ -179,7 +179,7 @@ export function MenuItemForm({
                 type="number"
                 value={formData.order}
                 onChange={(e) => updateField("order", parseInt(e.target.value) || 0)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
             <div className="flex flex-col gap-3">
@@ -261,7 +261,7 @@ export function MenuItemForm({
                     e.target.value
                   )
                 }
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
 

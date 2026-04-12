@@ -32,6 +32,7 @@ export interface UpsellProduct {
   createdAt?: string
   coupon?: { type: string; value: string; currency: string | null } | null
   bulkDiscountTiers?: string | null
+  bulkDiscountExpiresAt?: string | null
 }
 
 interface UpsellCardProps {
@@ -127,7 +128,7 @@ export function UpsellCard({ product: p, locale, onClose }: UpsellCardProps) {
           bestSeller={p.bestSeller}
           onSale={p.onSale}
           discountPercent={computeDiscountPercent(p.price, p.salePrice)}
-          hasBulkDiscount={computeHasBulkDiscount(p.bulkDiscountTiers)}
+          hasBulkDiscount={computeHasBulkDiscount(p.bulkDiscountTiers, undefined, p.bulkDiscountExpiresAt)}
           coupon={p.coupon ?? null}
         />
       </Link>

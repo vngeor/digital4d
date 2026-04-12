@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { ProductImageGallery } from "./ProductImageGallery"
 import { ProductActions } from "./ProductActions"
 import { parseTiers } from "@/lib/bulkDiscount"
+import { computeHasBulkDiscount } from "@/lib/badgeHelpers"
 
 interface Variant {
     id: string
@@ -52,6 +53,7 @@ interface Product {
     createdAt?: string
     brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
     bulkDiscountTiers?: string | null
+    bulkDiscountExpiresAt?: string | null
 }
 
 interface PromotedCoupon {
@@ -220,9 +222,11 @@ export function ProductDetailClient({
         ? Math.round((1 - displaySalePrice / displayPrice) * 100)
         : null
 
-    const hasBulkDiscount =
-        parseTiers(product.bulkDiscountTiers || "").length > 0 ||
-        (packages?.some(pkg => parseTiers(pkg.bulkDiscountTiers || "").length > 0) ?? false)
+    const hasBulkDiscount = computeHasBulkDiscount(
+        product.bulkDiscountTiers,
+        packages,
+        product.bulkDiscountExpiresAt
+    )
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">

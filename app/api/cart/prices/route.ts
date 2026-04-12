@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
         salePrice: true,
         onSale: true,
         bulkDiscountTiers: true,
+        bulkDiscountExpiresAt: true,
         currency: true,
       },
     }),
@@ -74,6 +75,9 @@ export async function GET(request: NextRequest) {
         salePrice: salePrice != null ? salePrice.toFixed(2) : null,
         onSale,
         bulkDiscountTiers: (product as { bulkDiscountTiers?: string }).bulkDiscountTiers || "",
+        bulkDiscountExpiresAt: (product as { bulkDiscountExpiresAt?: Date | null }).bulkDiscountExpiresAt
+          ? (product as { bulkDiscountExpiresAt: Date }).bulkDiscountExpiresAt.toISOString()
+          : null,
         currency: product.currency || "EUR",
       }
     })

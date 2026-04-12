@@ -396,7 +396,7 @@ export default function OrdersPage() {
                     name="customerName"
                     defaultValue={editingOrder?.customerName || ""}
                     required
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                   />
                 </div>
                 <div>
@@ -408,7 +408,7 @@ export default function OrdersPage() {
                     name="customerEmail"
                     defaultValue={editingOrder?.customerEmail || ""}
                     required
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                   />
                 </div>
               </div>
@@ -422,7 +422,7 @@ export default function OrdersPage() {
                     type="tel"
                     name="phone"
                     defaultValue={editingOrder?.phone || ""}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                   />
                 </div>
                 <div>
@@ -432,7 +432,7 @@ export default function OrdersPage() {
                   <select
                     name="status"
                     defaultValue={editingOrder?.status || "PENDING"}
-                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                   >
                     <option value="PENDING">{t("statusPending")}</option>
                     <option value="IN_PROGRESS">{t("statusInProgress")}</option>
@@ -451,7 +451,7 @@ export default function OrdersPage() {
                   defaultValue={editingOrder?.description || ""}
                   required
                   rows={3}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
                 />
               </div>
 
@@ -463,7 +463,7 @@ export default function OrdersPage() {
                   name="notes"
                   defaultValue={editingOrder?.notes || ""}
                   rows={2}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
                 />
               </div>
 

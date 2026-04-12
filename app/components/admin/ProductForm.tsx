@@ -80,6 +80,7 @@ interface ProductFormData {
   variants: ProductVariantData[]
   packages: ProductPackageData[]
   bulkDiscountTiers: string
+  bulkDiscountExpiresAt?: string | null
 }
 
 interface ProductCategory {
@@ -141,6 +142,7 @@ interface ProductFormProps {
       packageVariants?: Array<{ variantId: string; status: string }>
     }>
     bulkDiscountTiers?: string | null
+    bulkDiscountExpiresAt?: string | Date | null
   }
   categories: ProductCategory[]
   brands: Array<{ id: string; slug: string; nameBg: string; nameEn: string; nameEs: string }>
@@ -239,6 +241,20 @@ export function ProductForm({
   const [activeTab, setActiveTab] = useState<"bg" | "en" | "es">("bg")
   const [autoSlug, setAutoSlug] = useState(!initialData?.id)
   const [productBulkTiers, setProductBulkTiers] = useState<BulkTier[]>(() => parseTiers(initialData?.bulkDiscountTiers || ""))
+  const [bulkDiscountExpiresAt, setBulkDiscountExpiresAt] = useState<string>(
+    initialData?.bulkDiscountExpiresAt
+      ? new Date(initialData.bulkDiscountExpiresAt).toISOString().slice(0, 16)
+      : ""
+  )
+
+  // Auto-check "В промоция" when bulk discount tiers are added
+  useEffect(() => {
+    if (productBulkTiers.length > 0) {
+      updateField("onSale", true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productBulkTiers.length])
+
   const [formData, setFormData] = useState<ProductFormData>({
     id: initialData?.id,
     slug: initialData?.slug ?? "",
@@ -567,7 +583,7 @@ export function ProductForm({
 
     setLoading(true)
     try {
-      await onSubmit({ ...formData, bulkDiscountTiers: JSON.stringify(productBulkTiers) })
+      await onSubmit({ ...formData, bulkDiscountTiers: JSON.stringify(productBulkTiers), bulkDiscountExpiresAt: bulkDiscountExpiresAt || null })
     } finally {
       setLoading(false)
     }
@@ -802,7 +818,7 @@ export function ProductForm({
                 value={formData.slug}
                 onChange={(e) => updateField("slug", e.target.value)}
                 placeholder={t("slugPlaceholder")}
-                className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none transition-colors ${
                   errors.slug ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
                 }`}
               />
@@ -822,7 +838,7 @@ export function ProductForm({
                   value={formData.sku}
                   onChange={(e) => updateField("sku", e.target.value)}
                   placeholder={t("skuPlaceholder")}
-                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
                 <button
                   type="button"
@@ -914,7 +930,7 @@ export function ProductForm({
               <select
                 value={formData.fileType}
                 onChange={(e) => updateField("fileType", e.target.value)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               >
                 {FILE_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -933,7 +949,7 @@ export function ProductForm({
             <select
               value={formData.brandId}
               onChange={(e) => updateField("brandId", e.target.value)}
-              className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors ${errors.brandId ? "border-red-500/60" : "border-white/10"}`}
+              className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors ${errors.brandId ? "border-red-500/60" : "border-white/10"}`}
             >
               <option value="">{t("noBrand")}</option>
               {brands.map((b) => {
@@ -994,7 +1010,7 @@ export function ProductForm({
                       e.target.value
                     )
                   }
-                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-white focus:outline-none transition-colors ${
+                  className={`w-full px-4 py-2 bg-white/5 border rounded-xl text-base sm:text-sm text-white focus:outline-none transition-colors ${
                     errors[`name${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`] ? "border-red-500" : "border-white/10 focus:border-emerald-500/50"
                   }`}
                 />
@@ -1026,7 +1042,7 @@ export function ProductForm({
                 <select
                   value={formData.priceType}
                   onChange={(e) => updateField("priceType", e.target.value)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                 >
                   {PRICE_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -1045,7 +1061,7 @@ export function ProductForm({
                   value={formData.price}
                   onChange={(e) => updateField("price", e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
               <div>
@@ -1068,7 +1084,7 @@ export function ProductForm({
                   value={formData.salePrice}
                   onChange={(e) => updateField("salePrice", e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
             </div>
@@ -1126,7 +1142,7 @@ export function ProductForm({
                   value={formData.image}
                   onChange={(e) => updateField("image", e.target.value)}
                   placeholder={t("pasteImageUrl")}
-                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                 />
               </div>
               <p className="text-xs text-gray-500">{t("imageUploadHelp")}</p>
@@ -1191,7 +1207,7 @@ export function ProductForm({
                 value={formData.fileUrl}
                 onChange={(e) => updateField("fileUrl", e.target.value)}
                 placeholder="https://..."
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
           )}
@@ -1772,6 +1788,31 @@ export function ProductForm({
             >
               + Add tier
             </button>
+            {productBulkTiers.length > 0 && (
+              <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                <label className="text-xs text-gray-400 sm:whitespace-nowrap">
+                  ⏰ {t("bulkDiscountExpiresAt")}
+                </label>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <input
+                    type="datetime-local"
+                    value={bulkDiscountExpiresAt}
+                    onChange={e => setBulkDiscountExpiresAt(e.target.value)}
+                    min={new Date().toISOString().slice(0, 16)}
+                    className="flex-1 min-w-0 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-base sm:text-sm focus:outline-none focus:border-amber-500/50"
+                  />
+                  {bulkDiscountExpiresAt && (
+                    <button
+                      type="button"
+                      onClick={() => setBulkDiscountExpiresAt("")}
+                      className="shrink-0 text-xs text-gray-500 hover:text-red-400 transition-colors"
+                    >
+                      ✕ {t("clearExpiry")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Settings */}
@@ -1784,7 +1825,7 @@ export function ProductForm({
                 type="number"
                 value={formData.order}
                 onChange={(e) => updateField("order", parseInt(e.target.value) || 0)}
-                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
             </div>
             <div className="flex items-center pt-6">

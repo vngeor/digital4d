@@ -26,6 +26,7 @@ export interface RelatedCard {
   url: string
   coupon: { type: string; value: string; currency: string | null } | null
   bulkDiscountTiers?: string | null
+  bulkDiscountExpiresAt?: string | null
 }
 
 export function RelatedProductsCarousel({ cards }: { cards: RelatedCard[] }) {
@@ -127,7 +128,7 @@ export function RelatedProductsCarousel({ cards }: { cards: RelatedCard[] }) {
                     bestSeller={card.bestSeller}
                     onSale={card.onSale}
                     discountPercent={computeDiscountPercent(card.price, card.salePrice)}
-                    hasBulkDiscount={computeHasBulkDiscount(card.bulkDiscountTiers)}
+                    hasBulkDiscount={computeHasBulkDiscount(card.bulkDiscountTiers, undefined, card.bulkDiscountExpiresAt)}
                     status={card.status}
                     showStatusOverlay
                     coupon={card.coupon ?? null}

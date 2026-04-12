@@ -10,7 +10,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher"
 import { GlobalSearch } from "./GlobalSearch"
 import { locales, localeFlags, type Locale } from "@/i18n/config"
 import { NotificationBell } from "./NotificationBell"
-import { ChevronDown, X, Heart, Cake, ShoppingCart } from "lucide-react"
+import { ChevronDown, X, Heart, Cake, ShoppingCart, Tag } from "lucide-react"
 import { getCartCount, CART_KEY } from "@/lib/cart"
 import { CartDrawer } from "./CartDrawer"
 import { GlobalPromoStrip } from "./GlobalPromoStrip"
@@ -369,6 +369,14 @@ export function Header() {
                                         <Heart className="w-3.5 h-3.5" />
                                         {t("myWishlist")}
                                     </Link>
+                                    <Link
+                                        href="/profile/secret-deals"
+                                        onClick={() => setUserDropdownOpen(false)}
+                                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-amber-300 hover:bg-amber-500/10 hover:text-amber-200 transition-colors"
+                                    >
+                                        <Tag className="w-3.5 h-3.5" />
+                                        {t("mySecretDeals")}
+                                    </Link>
                                     <div className="border-t border-white/10 my-1" />
                                     <button
                                         onClick={() => {
@@ -687,6 +695,20 @@ export function Header() {
                             {t("contact")}
                         </Link>
                     </div>
+
+                    {/* Secret Deals — logged-in users only */}
+                    {session && (
+                        <div className="border-b border-white/5">
+                            <Link
+                                href="/profile/secret-deals"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="flex items-center gap-3 py-4 text-amber-300 hover:text-amber-200 transition-colors touch-manipulation"
+                            >
+                                <Tag className="w-5 h-5 shrink-0" />
+                                <span className="text-lg font-semibold">{t("mySecretDeals")}</span>
+                            </Link>
+                        </div>
+                    )}
 
                     {/* Login button for guests */}
                     {!session && (

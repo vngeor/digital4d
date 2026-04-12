@@ -696,27 +696,27 @@ export default function UsersPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="col-span-2">
                     <label className="text-xs text-gray-500 mb-1 block">{t("name")}</label>
-                    <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">{t("phone")}</label>
-                    <input type="text" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    <input type="text" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">{t("country")}</label>
-                    <input type="text" value={editForm.country} onChange={(e) => setEditForm({ ...editForm, country: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    <input type="text" value={editForm.country} onChange={(e) => setEditForm({ ...editForm, country: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">{t("city")}</label>
-                    <input type="text" value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    <input type="text" value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">{t("birthDate")}</label>
-                    <input type="date" value={editForm.birthDate} onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    <input type="date" value={editForm.birthDate} onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50" />
                   </div>
                   <div className="col-span-2">
                     <label className="text-xs text-gray-500 mb-1 block">{t("address")}</label>
-                    <input type="text" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    <input type="text" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-base sm:text-sm text-white focus:outline-none focus:border-emerald-500/50" />
                   </div>
                 </div>
               ) : (

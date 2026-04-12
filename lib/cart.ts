@@ -27,8 +27,9 @@ export interface CartItem {
   status: string
   quantity: number
   addedAt: number
-  bulkDiscountTiers?: string  // product-level tier JSON; empty = use global
-  _synced?: boolean           // internal: true once item is confirmed by a server pull
+  bulkDiscountTiers?: string       // product-level tier JSON; empty = use global
+  bulkDiscountExpiresAt?: string | null  // ISO string; null = permanent promotion
+  _synced?: boolean                // internal: true once item is confirmed by a server pull
 }
 
 /** Unique key for a cart item — combines productId + packageId so different packages are distinct */

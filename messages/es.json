@@ -54,6 +54,7 @@
     "profile": "Mi Perfil",
     "myOrders": "Mis Pedidos",
     "myWishlist": "Mis Favoritos",
+    "mySecretDeals": "Ofertas Secretas",
     "notifications": "Notificaciones",
     "noNotifications": "No hay nuevas notificaciones",
     "newQuoteReceived": "Nueva cotización recibida",
@@ -484,6 +485,7 @@
       "deleteFailed": "Error al eliminar la notificación",
       "titleRequired": "El título es obligatorio",
       "messageRequired": "El mensaje es obligatorio",
+      "couponRequired": "Por favor seleccione un cupón",
       "birthdayToday": "Cumpleaños hoy",
       "birthdayThisWeek": "Esta semana",
       "birthdayThisMonth": "Este mes",
@@ -507,7 +509,11 @@
       "autoChristmas": "Navidad",
       "autoNewYear": "Año Nuevo",
       "autoEaster": "Pascua",
-      "autoCustom": "Plantilla"
+      "autoCustom": "Plantilla",
+      "wishlistCouponType": "Lista",
+      "wishlistPriceDropType": "Bajada de precio",
+      "stockAvailable": "De Vuelta en Stock",
+      "couponReminder": "Recordatorio de Cupón"
     },
     "notificationTemplates": {
       "title": "Plantillas de Notificaciones",
@@ -1101,7 +1107,9 @@
       "selectColor": "— Seleccionar color —",
       "bulkDiscountTiersLabel": "Descuentos por volumen",
       "addTier": "Añadir nivel",
-      "packageOverride": "anula los niveles del producto"
+      "packageOverride": "anula los niveles del producto",
+      "bulkDiscountExpiresAt": "Fin de la oferta (opcional)",
+      "clearExpiry": "Sin caducidad"
     },
     "brands": {
       "title": "Gestión de Marcas",
@@ -1485,7 +1493,8 @@
     "showLess": "Ver menos",
     "bulkDiscountsLabel": "Descuentos:",
     "bulkTierUnits": "uds.",
-    "bulkTierTotalSuffix": "total"
+    "bulkTierTotalSuffix": "total",
+    "bulkDiscountEndsIn": "Oferta termina en"
   },
   "quotes": {
     "title": "Solicitar Cotización",
@@ -1583,7 +1592,17 @@
     "sourceNewYear": "Año Nuevo",
     "sourceEaster": "Pascua",
     "sourceCustom": "Ocasión especial",
+    "sourceAdminOffer": "Oferta especial",
+    "sourceWishlist": "Oferta de lista",
+    "sourceReminder": "Recordatorio",
     "sourceSpecial": "Oferta especial",
+    "secretDealsView": "Ver todas las ofertas",
+    "secretDealsCount": "vales",
+    "secretDealsAllProducts": "Todos los productos",
+    "secretDealsProducts": "productos seleccionados",
+    "secretDealsEmpty": "Aún no hay ofertas secretas",
+    "secretDealsEmptySubtitle": "Completa tu perfil y vuelve — aquí aparecerán descuentos personales exclusivos.",
+    "backToProfile": "Volver al perfil",
     "myOrdersTitle": "Mis Pedidos y Cotizaciones",
     "myOrdersSubtitle": "Rastrea tus pedidos y solicitudes de cotización",
     "orderHistory": "Historial de Pedidos",

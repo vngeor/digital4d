@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
         for (const item of cartItems) {
           if (item.fileType === "digital") {
-            await createDigitalPurchase(item.productId, customerEmail, session.id)
+            await createDigitalPurchase(item.productId, customerEmail, session.id, session.metadata?.couponId)
             console.log(`Digital purchase created for product ${item.productId}`)
           } else {
             const newOrder = await prisma.order.create({

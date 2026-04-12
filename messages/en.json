@@ -54,6 +54,7 @@
     "profile": "My Profile",
     "myOrders": "My Orders",
     "myWishlist": "My Wishlist",
+    "mySecretDeals": "Secret Deals",
     "notifications": "Notifications",
     "noNotifications": "No new notifications",
     "newQuoteReceived": "New quote received",
@@ -484,6 +485,7 @@
       "deleteFailed": "Failed to delete notification",
       "titleRequired": "Title is required",
       "messageRequired": "Message is required",
+      "couponRequired": "Please select a coupon",
       "birthdayToday": "Birthday Today",
       "birthdayThisWeek": "This Week",
       "birthdayThisMonth": "This Month",
@@ -507,7 +509,11 @@
       "autoChristmas": "Christmas",
       "autoNewYear": "New Year",
       "autoEaster": "Easter",
-      "autoCustom": "Template"
+      "autoCustom": "Template",
+      "wishlistCouponType": "Wishlist",
+      "wishlistPriceDropType": "Price Drop",
+      "stockAvailable": "Back in Stock",
+      "couponReminder": "Coupon Reminder"
     },
     "notificationTemplates": {
       "title": "Notification Templates",
@@ -1101,7 +1107,9 @@
       "selectColor": "— Select Color —",
       "bulkDiscountTiersLabel": "Bulk discounts",
       "addTier": "Add tier",
-      "packageOverride": "overrides product tiers"
+      "packageOverride": "overrides product tiers",
+      "bulkDiscountExpiresAt": "Sale ends at (optional)",
+      "clearExpiry": "No expiry"
     },
     "brands": {
       "title": "Brand Management",
@@ -1485,7 +1493,8 @@
     "showLess": "Show less",
     "bulkDiscountsLabel": "Bulk discounts:",
     "bulkTierUnits": "units",
-    "bulkTierTotalSuffix": "total"
+    "bulkTierTotalSuffix": "total",
+    "bulkDiscountEndsIn": "Sale ends in"
   },
   "quotes": {
     "title": "Request a Quote",
@@ -1583,7 +1592,17 @@
     "sourceNewYear": "New Year",
     "sourceEaster": "Easter",
     "sourceCustom": "Special occasion",
+    "sourceAdminOffer": "Special Offer",
+    "sourceWishlist": "Wishlist Deal",
+    "sourceReminder": "Reminder",
     "sourceSpecial": "Special offer",
+    "secretDealsView": "View all deals",
+    "secretDealsCount": "vouchers",
+    "secretDealsAllProducts": "All products",
+    "secretDealsProducts": "selected products",
+    "secretDealsEmpty": "No secret deals yet",
+    "secretDealsEmptySubtitle": "Complete your profile and come back — exclusive personal discounts will appear here.",
+    "backToProfile": "Back to profile",
     "myOrdersTitle": "My Orders & Quotes",
     "myOrdersSubtitle": "Track your orders and quote requests",
     "orderHistory": "Order History",

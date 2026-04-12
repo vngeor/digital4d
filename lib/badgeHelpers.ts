@@ -13,7 +13,9 @@ export function computeDiscountPercent(
 export function computeHasBulkDiscount(
   bulkDiscountTiers: string | null | undefined,
   packages?: Array<{ bulkDiscountTiers?: string | null }>,
+  expiresAt?: string | Date | null,
 ): boolean {
+  if (expiresAt && new Date(expiresAt) <= new Date()) return false
   return (
     parseTiers(bulkDiscountTiers || "").length > 0 ||
     (packages?.some(p => parseTiers(p.bulkDiscountTiers || "").length > 0) ?? false)

@@ -51,6 +51,7 @@ interface Product {
     brand: { name: string; slug: string } | null
     productUrl: string
     bulkDiscountTiers?: string | null
+    bulkDiscountExpiresAt?: string | null
 }
 
 interface CouponBadge {
@@ -77,6 +78,7 @@ interface QVProduct {
     variants: QVVariant[]
     packages: QVPackage[]
     bulkDiscountTiers?: string | null
+    bulkDiscountExpiresAt?: string | null
 }
 interface QVCategory {
     id: string; slug: string; parentId?: string | null
@@ -215,7 +217,7 @@ export function HomeProductsSection({ products, couponMap, bestSellerIds = [], l
                                         bestSeller={bestSellerIds.includes(product.id)}
                                         onSale={product.onSale}
                                         discountPercent={computeDiscountPercent(product.price, product.salePrice)}
-                                        hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers)}
+                                        hasBulkDiscount={computeHasBulkDiscount(product.bulkDiscountTiers, undefined, product.bulkDiscountExpiresAt)}
                                         status={product.status}
                                         coupon={couponMap?.[product.id] ?? null}
                                     />

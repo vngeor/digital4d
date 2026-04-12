@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       quantity: number
       category: string
       brandId: string | null
+      onSale: boolean
     }> = []
 
     let sharedCurrency: string | null = null
@@ -87,6 +88,7 @@ export async function POST(request: NextRequest) {
 
       // When a packageId is provided, look up the package price and status
       let effectivePrice: number | null = null
+      let itemOnSale = false
       if (packageId) {
         const pkg = await prisma.productPackage.findUnique({ where: { id: packageId } })
         if (!pkg || pkg.productId !== productId) {
@@ -95,10 +97,12 @@ export async function POST(request: NextRequest) {
         if (!["in_stock", "pre_order"].includes(pkg.status)) {
           return NextResponse.json({ error: `Package for "${product.nameEn}" is not available` }, { status: 400 })
         }
+        itemOnSale = pkg.salePrice != null
         effectivePrice = pkg.salePrice
           ? parseFloat(pkg.salePrice.toString())
           : parseFloat(pkg.price.toString())
       } else {
+        itemOnSale = !!(product.onSale && product.salePrice)
         effectivePrice = product.onSale && product.salePrice
           ? parseFloat(product.salePrice.toString())
           : product.price
@@ -111,10 +115,13 @@ export async function POST(request: NextRequest) {
       }
 
       // Apply bulk discount server-side
-      // Product-level tiers override global tiers when non-empty
+      // Product-level tiers override global tiers when non-empty; skip if expired
       if (quantity > 1) {
-        const productTiers = parseTiers((product as { bulkDiscountTiers?: string }).bulkDiscountTiers || "")
-        const activeTiers = productTiers.length > 0 ? productTiers : bulkTiers
+        const productTierRaw = parseTiers((product as { bulkDiscountTiers?: string }).bulkDiscountTiers || "")
+        const productTierExpiry = (product as { bulkDiscountExpiresAt?: Date | null }).bulkDiscountExpiresAt
+        const productTiersActive = productTierRaw.length > 0 &&
+          (!productTierExpiry || new Date(productTierExpiry) > new Date())
+        const activeTiers = productTiersActive ? productTierRaw : bulkTiers
         if (activeTiers.length > 0) {
           const tier = getActiveTier(quantity, activeTiers)
           if (tier) {
@@ -148,6 +155,7 @@ export async function POST(request: NextRequest) {
         quantity,
         category: product.category,
         brandId: product.brandId,
+        onSale: itemOnSale,
       })
     }
 
@@ -239,8 +247,12 @@ export async function POST(request: NextRequest) {
               (coupon.brandIds?.length ?? 0) > 0
 
             let eligibleItems = validatedItems
+            // Exclude on-sale items if coupon doesn't allow stacking with sale prices
+            if (!coupon.allowOnSale) {
+              eligibleItems = eligibleItems.filter(i => !i.onSale)
+            }
             if (hasRestrictions) {
-              eligibleItems = validatedItems.filter(i =>
+              eligibleItems = eligibleItems.filter(i =>
                 isProductEligibleForCoupon(
                   i.productId, i.category ?? "", i.brandId ?? null,
                   coupon.productIds ?? [], coupon.categoryIds ?? [], coupon.brandIds ?? [],

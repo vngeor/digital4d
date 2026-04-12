@@ -7,11 +7,13 @@ import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
 import {
   BellRing,
+  Bell,
   Send,
   Trash2,
   Search,
   MessageSquare,
   Ticket,
+  Package,
   ShieldOff,
   Loader2,
   X,
@@ -47,7 +49,7 @@ interface NotificationCoupon {
 
 interface Notification {
   id: string
-  type: "quote_offer" | "admin_message" | "coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "wishlist_price_drop" | "wishlist_coupon"
+  type: "quote_offer" | "admin_message" | "coupon" | "auto_birthday" | "auto_christmas" | "auto_new_year" | "auto_easter" | "auto_custom" | "wishlist_price_drop" | "wishlist_coupon" | "stock_available" | "coupon_reminder"
   title: string
   message: string
   link: string | null
@@ -72,6 +74,10 @@ interface SearchCoupon {
   code: string
   type: string
   value: number
+  minPurchase?: string | null
+  productNames?: string[]
+  categoryNames?: string[]
+  brandNames?: string[]
 }
 
 const TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
@@ -83,6 +89,10 @@ const TYPE_BADGES: Record<string, { labelKey: string; color: string }> = {
   auto_new_year: { labelKey: "autoNewYear", color: "bg-amber-500/20 text-amber-400" },
   auto_easter: { labelKey: "autoEaster", color: "bg-purple-500/20 text-purple-400" },
   auto_custom: { labelKey: "autoCustom", color: "bg-blue-500/20 text-blue-400" },
+  wishlist_coupon: { labelKey: "wishlistCouponType", color: "bg-pink-500/20 text-pink-400" },
+  wishlist_price_drop: { labelKey: "wishlistPriceDropType", color: "bg-red-500/20 text-red-400" },
+  stock_available: { labelKey: "stockAvailable", color: "bg-emerald-500/20 text-emerald-400" },
+  coupon_reminder: { labelKey: "couponReminder", color: "bg-amber-500/20 text-amber-400" },
 }
 
 const ROLES = ["ADMIN", "EDITOR", "AUTHOR", "SUBSCRIBER"] as const
@@ -105,9 +115,36 @@ export default function NotificationsPage() {
   }
 
   const getLocalizedText = (text: string): string => {
+    // Translate known notification type literal strings used as titles (e.g. "quote_offer")
+    const TYPE_TITLE_MAP: Record<string, string> = {
+      quote_offer: t("quoteOffer"),
+      coupon: t("couponNotification"),
+      admin_message: t("adminMessage"),
+      auto_birthday: t("autoBirthday"),
+      auto_christmas: t("autoChristmas"),
+      auto_new_year: t("autoNewYear"),
+      auto_easter: t("autoEaster"),
+      auto_custom: t("autoCustom"),
+      wishlist_coupon: t("wishlistCouponType"),
+      wishlist_price_drop: t("wishlistPriceDropType"),
+      stock_available: t("stockAvailable"),
+      coupon_reminder: t("couponReminder"),
+    }
+    if (TYPE_TITLE_MAP[text]) return TYPE_TITLE_MAP[text]
+
     const parsed = tryParseJson(text)
     if (parsed) {
-      return parsed[locale] || parsed.en || parsed.bg || text
+      // {bg, en, es} — i18n locale object (auto-notifications, wishlist, stock)
+      const localized = parsed[locale] ?? parsed.en ?? parsed.bg
+      if (localized !== undefined) return localized || text
+      // {code} — wishlist coupon title object
+      if (parsed.code) return `Coupon: ${parsed.code}`
+      // {price, hasCoupon, adminMessage} — quote_offer / coupon message
+      if ("price" in parsed || "adminMessage" in parsed) {
+        if (parsed.adminMessage) return String(parsed.adminMessage)
+        if (parsed.price) return String(parsed.price)
+      }
+      return text
     }
     return text
   }
@@ -158,6 +195,7 @@ export default function NotificationsPage() {
   const [filterLoading, setFilterLoading] = useState(false)
   const [showRoleDropdown, setShowRoleDropdown] = useState(false)
   const roleDropdownRef = useRef<HTMLDivElement>(null)
+  const userPickerRef = useRef<HTMLDivElement>(null)
 
   // Coupon selector state
   const [couponSearch, setCouponSearch] = useState("")
@@ -166,6 +204,7 @@ export default function NotificationsPage() {
   const [selectedCoupon, setSelectedCoupon] = useState<SearchCoupon | null>(null)
   const [showCouponDropdown, setShowCouponDropdown] = useState(false)
   const couponSearchTimeout = useRef<NodeJS.Timeout | null>(null)
+  const couponDropdownRef = useRef<HTMLDivElement>(null)
 
   // Permission check
   if (!can("notifications", "view")) {
@@ -224,6 +263,12 @@ export default function NotificationsPage() {
     const handleClickOutside = (e: MouseEvent) => {
       if (roleDropdownRef.current && !roleDropdownRef.current.contains(e.target as Node)) {
         setShowRoleDropdown(false)
+      }
+      if (userPickerRef.current && !userPickerRef.current.contains(e.target as Node)) {
+        setUserResults([])
+      }
+      if (couponDropdownRef.current && !couponDropdownRef.current.contains(e.target as Node)) {
+        setShowCouponDropdown(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -437,6 +482,10 @@ export default function NotificationsPage() {
     const plainMessage = sendForm.message.replace(/<[^>]*>/g, "").trim()
     if (!plainMessage) {
       toast.error(t("messageRequired"))
+      return
+    }
+    if (sendForm.type === "coupon" && !selectedCoupon) {
+      toast.error(t("couponRequired"))
       return
     }
 
@@ -692,6 +741,8 @@ export default function NotificationsPage() {
     { key: "admin_message", label: t("adminMessage"), icon: MessageSquare },
     { key: "coupon", label: t("couponNotification"), icon: Ticket },
     { key: "quote_offer", label: t("quoteOffer"), icon: BellRing },
+    { key: "stock_available", label: t("stockAvailable"), icon: Package },
+    { key: "coupon_reminder", label: t("couponReminder"), icon: Bell },
     { key: "auto", label: t("auto"), icon: Sparkles },
     { key: "scheduled", label: t("scheduled"), icon: Clock },
   ]
@@ -845,7 +896,7 @@ export default function NotificationsPage() {
                 {t("sendNotification")}
               </h2>
               <button
-                onClick={() => setShowSendModal(false)}
+                onClick={() => { resetSendForm(); setShowSendModal(false) }}
                 className="p-2 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <X className="w-5 h-5 text-gray-400" />
@@ -1022,7 +1073,8 @@ export default function NotificationsPage() {
                   </div>
                 )}
 
-                {/* User Search */}
+                {/* User Search + Results */}
+                <div ref={userPickerRef}>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
@@ -1124,6 +1176,7 @@ export default function NotificationsPage() {
                 {selectedUsers.length === 0 && userSearch && userResults.length === 0 && !userSearchLoading && (
                   <p className="text-xs text-gray-500 mt-2">{t("noUsersFound")}</p>
                 )}
+                </div>{/* end userPickerRef */}
               </div>
 
               {/* Type Selector */}
@@ -1191,27 +1244,47 @@ export default function NotificationsPage() {
                     {t("attachCoupon")}
                   </label>
 
-                  {/* Selected Coupon Tag */}
+                  {/* Selected Coupon Tag + Rules */}
                   {selectedCoupon && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
-                        <Ticket className="w-3.5 h-3.5" />
-                        <span className="font-mono font-medium">{selectedCoupon.code}</span>
-                        <span className="text-amber-400/60">
-                          ({selectedCoupon.type === "percentage" ? `${selectedCoupon.value}%` : selectedCoupon.value})
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
+                          <Ticket className="w-3.5 h-3.5" />
+                          <span className="font-mono font-medium">{selectedCoupon.code}</span>
+                          <span className="text-amber-400/60">
+                            ({selectedCoupon.type === "percentage" ? `${selectedCoupon.value}%` : `${selectedCoupon.value} EUR`})
+                          </span>
+                          <button
+                            onClick={() => setSelectedCoupon(null)}
+                            className="hover:text-red-400 transition-colors ml-1"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </span>
-                        <button
-                          onClick={() => setSelectedCoupon(null)}
-                          className="hover:text-red-400 transition-colors ml-1"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
+                      </div>
+                      {/* Coupon restriction rules */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {(!selectedCoupon.productNames?.length && !selectedCoupon.categoryNames?.length && !selectedCoupon.brandNames?.length) && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">🟢 All products</span>
+                        )}
+                        {selectedCoupon.categoryNames?.map((name) => (
+                          <span key={name} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs">🔵 {name}</span>
+                        ))}
+                        {selectedCoupon.brandNames?.map((name) => (
+                          <span key={name} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs">🟣 {name}</span>
+                        ))}
+                        {(selectedCoupon.productNames?.length ?? 0) > 0 && !selectedCoupon.categoryNames?.length && !selectedCoupon.brandNames?.length && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs">⚪ {selectedCoupon.productNames!.length} selected products</span>
+                        )}
+                        {selectedCoupon.minPurchase && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs">Min €{selectedCoupon.minPurchase}</span>
+                        )}
+                      </div>
                     </div>
                   )}
 
                   {!selectedCoupon && (
-                    <div className="relative">
+                    <div className="relative" ref={couponDropdownRef}>
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                       <input
                         type="text"
@@ -1334,7 +1407,7 @@ export default function NotificationsPage() {
               <div className="flex gap-2 sm:gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowSendModal(false)}
+                  onClick={() => { resetSendForm(); setShowSendModal(false) }}
                   className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all"
                 >
                   {t("cancel")}

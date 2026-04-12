@@ -24,6 +24,7 @@ interface Product {
     status: string
     brand?: { slug: string; nameEn: string; nameBg: string; nameEs: string } | null
     bulkDiscountTiers?: string | null
+    bulkDiscountExpiresAt?: string | Date | null
 }
 
 interface CouponDiscount {
@@ -98,6 +99,26 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         document.addEventListener("visibilitychange", onVisibility)
         return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
     }, [promotedCoupons])
+
+    // Memoized bulk expiry date (avoid recreating Date on every render)
+    const bulkExpiresAt = useMemo(() =>
+        product.bulkDiscountExpiresAt ? new Date(product.bulkDiscountExpiresAt) : null,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [product.bulkDiscountExpiresAt ? String(product.bulkDiscountExpiresAt) : null]
+    )
+
+    // Bulk discount expiry countdown — separate from coupon ticker, shares countdownKey
+    useEffect(() => {
+        if (!bulkExpiresAt) return
+        let interval: ReturnType<typeof setInterval> | null = null
+        const start = () => { if (!interval) interval = setInterval(() => setCountdownKey(k => k + 1), 1000) }
+        const stop = () => { if (interval) { clearInterval(interval); interval = null } }
+        const onVisibility = () => { document.hidden ? stop() : start() }
+        start()
+        document.addEventListener("visibilitychange", onVisibility)
+        return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [!!bulkExpiresAt])
 
     // Helper: format live countdown from expiresAt
     const getCountdownText = (expiresAt: string | null): string | null => {
@@ -353,11 +374,20 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         return () => controller.abort()
     }, [selectedPackage?.bulkDiscountTiers, product.bulkDiscountTiers])
 
-    // Compute active bulk tier and discounted price
-    const activeBulkTier = useMemo(() =>
-        bulkEnabled ? getActiveTier(quantity, bulkTiers) : null,
-        [quantity, bulkTiers, bulkEnabled]
-    )
+    // Whether bulk tiers are currently active (not expired) — rechecked every second via countdownKey
+    const isBulkActive = useMemo(() => {
+        if (!bulkEnabled || bulkTiers.length === 0) return false
+        if (bulkExpiresAt && bulkExpiresAt <= new Date()) return false  // expired at render time
+        return true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [bulkEnabled, bulkTiers.length, countdownKey, !!bulkExpiresAt])
+
+    // Compute active bulk tier and discounted price (render-time expiry check via countdownKey)
+    const activeBulkTier = useMemo(() => {
+        if (!isBulkActive) return null
+        return getActiveTier(quantity, bulkTiers)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [quantity, bulkTiers, isBulkActive, countdownKey])
 
     const effectiveUnitPrice = useMemo(() => {
         if (selectedPackage) {
@@ -399,7 +429,29 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     </button>
                 </div>
             </div>
-            {bulkEnabled && bulkTiers.length > 0 && (
+            {isBulkActive && bulkExpiresAt && (() => {
+                void countdownKey // trigger re-render every second
+                const msLeft = bulkExpiresAt.getTime() - Date.now()
+                if (msLeft <= 0) return null
+                const totalSecs = Math.floor(msLeft / 1000)
+                const d = Math.floor(totalSecs / 86400)
+                const h = Math.floor((totalSecs % 86400) / 3600)
+                const m = Math.floor((totalSecs % 3600) / 60)
+                const s = totalSecs % 60
+                const pad = (n: number) => String(n).padStart(2, "0")
+                const text = d > 0
+                    ? `${d}d ${pad(h)}h ${pad(m)}m`
+                    : h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}`
+                    : `${pad(m)}:${pad(s)}`
+                const urgent = msLeft < 24 * 3600 * 1000
+                return (
+                    <p className={`text-xs font-semibold flex items-center gap-1 ${urgent ? "text-red-400 animate-sale-blink" : "text-amber-400"}`}>
+                        <Clock className="w-3 h-3" />
+                        {t("bulkDiscountEndsIn")}: {text}
+                    </p>
+                )
+            })()}
+            {isBulkActive && (
                 <div className="space-y-2">
                     <p className="text-xs font-bold text-amber-400 uppercase tracking-wide">{t("bulkDiscountsLabel")}</p>
                     <div className="flex flex-wrap gap-2">
@@ -507,6 +559,9 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
             status: product.status,
             // Package tiers override product tiers; CartDrawer recalculates dynamically
             bulkDiscountTiers: selectedPackage?.bulkDiscountTiers || product.bulkDiscountTiers || "",
+            bulkDiscountExpiresAt: product.bulkDiscountExpiresAt
+              ? new Date(product.bulkDiscountExpiresAt).toISOString()
+              : null,
         }
         addToCart(cartItem, quantity)
         window.dispatchEvent(new Event("cart-updated"))
