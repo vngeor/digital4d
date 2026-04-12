@@ -146,10 +146,19 @@ export function Header() {
         setExpandedCategoryMobile(null)
     }, [pathname])
 
-    // Lock body scroll while mobile menu is open
+    // iOS-safe body scroll lock while mobile menu is open
     useEffect(() => {
-        document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
-        return () => { document.body.style.overflow = '' }
+        if (!mobileMenuOpen) return
+        const y = window.scrollY
+        document.body.style.position = 'fixed'
+        document.body.style.top = `-${y}px`
+        document.body.style.width = '100%'
+        return () => {
+            document.body.style.position = ''
+            document.body.style.top = ''
+            document.body.style.width = ''
+            window.scrollTo(0, y)
+        }
     }, [mobileMenuOpen])
 
     // Fallback: if session loading takes > 3s, treat as unauthenticated

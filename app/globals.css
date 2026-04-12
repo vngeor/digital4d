@@ -99,6 +99,9 @@ button, a, [role="button"] {
   .max-h-\[85svh\] {
     max-height: 80vh;
   }
+  .max-h-\[90svh\] {
+    max-height: 85vh;
+  }
 }
 
 /* Hide scrollbar for carousel */

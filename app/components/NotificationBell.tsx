@@ -126,12 +126,15 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isOpen])
 
-  // Measure bell button position to align dropdown
+  // Measure bell button position to align dropdown; recalculate on resize
   useEffect(() => {
-    if (isOpen && dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect()
-      setBellRight(window.innerWidth - rect.right)
+    if (!isOpen || !dropdownRef.current) return
+    const update = () => {
+      if (dropdownRef.current) setBellRight(window.innerWidth - dropdownRef.current.getBoundingClientRect().right)
     }
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
   }, [isOpen])
 
   // Close modal on Escape key
@@ -165,6 +168,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
   // Live countdown timer for coupon expiry in modal, pause when tab hidden
   useEffect(() => {
     if (!selectedNotification?.couponExpiresAt) return
+    if (document.hidden) return  // Don't start if tab is already hidden
     let interval: ReturnType<typeof setInterval> | null = null
     const start = () => { if (!interval) interval = setInterval(() => setCountdownKey(k => k + 1), 1000) }
     const stop = () => { if (interval) { clearInterval(interval); interval = null } }
@@ -172,7 +176,7 @@ export function NotificationBell({ translations: t, locale = "en" }: Notificatio
     start()
     document.addEventListener("visibilitychange", onVisibility)
     return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
-  }, [selectedNotification])
+  }, [selectedNotification?.couponExpiresAt])
 
   const handleNotificationClick = async (notification: Notification) => {
     try {

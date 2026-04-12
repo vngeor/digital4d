@@ -134,10 +134,19 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
     return () => window.removeEventListener("cart-updated", refresh)
   }, [refresh])
 
-  // Body scroll lock when drawer is open
+  // iOS-safe body scroll lock when drawer is open
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : ""
-    return () => { document.body.style.overflow = "" }
+    if (!open) return
+    const y = window.scrollY
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${y}px`
+    document.body.style.width = "100%"
+    return () => {
+      document.body.style.position = ""
+      document.body.style.top = ""
+      document.body.style.width = ""
+      window.scrollTo(0, y)
+    }
   }, [open])
 
   // Reset tab to cart when drawer closes
@@ -479,7 +488,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 pt-safe border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-emerald-400" />
             <span className="font-semibold text-white">{t("title")}</span>
@@ -704,7 +713,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
         {/* Footer — cart tab */}
         {activeTab === "cart" && items && items.length > 0 && (
-          <div className="border-t border-white/10 p-5 shrink-0 space-y-3">
+          <div className="border-t border-white/10 p-5 pb-safe shrink-0 space-y-3">
             {/* Subtotal */}
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400">{t("subtotal")}</span>
@@ -814,7 +823,7 @@ export function CartDrawer({ open, onClose, locale }: CartDrawerProps) {
 
         {/* Footer — upsell tab */}
         {activeTab === "upsell" && items && items.length > 0 && (
-          <div className="border-t border-white/10 px-5 py-4 shrink-0">
+          <div className="border-t border-white/10 px-5 py-4 pb-safe shrink-0">
             <button
               onClick={() => setActiveTab("cart")}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-semibold hover:opacity-90 transition-opacity touch-manipulation"

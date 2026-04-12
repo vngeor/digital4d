@@ -162,6 +162,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
     const categoryDropdownRef = useRef<HTMLDivElement>(null)
     const categoryListRef = useRef<HTMLDivElement>(null)
     const sidebarCategoryRef = useRef<HTMLDivElement>(null)
+    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const [brandDropdownOpen, setBrandDropdownOpen] = useState(false)
     const brandDropdownRef = useRef<HTMLDivElement>(null)
     const [selectedSizes, setSelectedSizes] = useState<string[]>([])
@@ -230,6 +231,21 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
         const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSidebarOpen(false) }
         window.addEventListener("keydown", handleKey)
         return () => window.removeEventListener("keydown", handleKey)
+    }, [sidebarOpen])
+
+    // iOS-safe body scroll lock when mobile filter drawer is open
+    useEffect(() => {
+        if (!sidebarOpen) return
+        const y = window.scrollY
+        document.body.style.position = "fixed"
+        document.body.style.top = `-${y}px`
+        document.body.style.width = "100%"
+        return () => {
+            document.body.style.position = ""
+            document.body.style.top = ""
+            document.body.style.width = ""
+            window.scrollTo(0, y)
+        }
     }, [sidebarOpen])
 
     // Close category dropdown on click outside
@@ -737,7 +753,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                             return n
                                         })
                                         if (willExpand) {
-                                            setTimeout(() => {
+                                            if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
+                                            scrollTimeoutRef.current = setTimeout(() => {
                                                 const firstChild = sidebarCategoryRef.current?.querySelector(`[data-first-child="${item.id}"]`)
                                                 firstChild?.scrollIntoView({ behavior: "smooth", block: "nearest" })
                                             }, 60)
@@ -762,7 +779,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             const subName = getLocalizedName(sub)
                             const checked = selectedSubcategories.includes(sub.slug)
                             return (
-                                <label key={sub.id} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                                <label key={sub.id} className="flex items-center gap-2.5 cursor-pointer py-2 group">
                                     <input type="checkbox" checked={checked} onChange={() => toggleSubcategory(sub.slug)}
                                         className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
                                     <span className={`text-sm transition-colors flex-1 ${checked ? "text-emerald-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
@@ -790,7 +807,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             <button key={id}
                                 onClick={() => toggleColor(id)}
                                 title={name.charAt(0).toUpperCase() + name.slice(1)}
-                                className={`w-8 h-8 rounded-full overflow-hidden transition-all touch-manipulation hover:scale-110 ${selectedColors.includes(id) ? "scale-110" : ""}`}
+                                className={`w-9 h-9 rounded-full overflow-hidden transition-all touch-manipulation hover:scale-110 ${selectedColors.includes(id) ? "scale-110" : ""}`}
                                 style={{
                                     ...(hex2 ? { background: `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)` } : { backgroundColor: hex }),
                                     boxShadow: selectedColors.includes(id)
@@ -814,7 +831,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 <FilterSection title={t("size")} isOpen={openSections.has("size")} onToggle={() => toggleSection("size")}>
                     <div className="space-y-0.5">
                         {uniqueSizes.map(label => (
-                            <label key={label} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                            <label key={label} className="flex items-center gap-2.5 cursor-pointer py-2 group">
                                 <input type="checkbox" checked={selectedSizes.includes(label)}
                                     onChange={() => toggleSize(label)}
                                     className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
@@ -902,7 +919,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 <label key={item.id}
                                     {...(isFirstChild ? { "data-mobile-first-child": arr[idx - 1]?.id } : {})}
                                     className={[
-                                    "flex items-center gap-2 cursor-pointer py-1.5 pl-3 border-l-2 border-emerald-500/40 bg-emerald-500/[0.04] group animate-category-slide-in",
+                                    "flex items-center gap-2 cursor-pointer py-2 pl-3 border-l-2 border-emerald-500/40 bg-emerald-500/[0.04] group animate-category-slide-in",
                                     isLastChild ? "pb-2 rounded-b-md mb-0.5" : "",
                                 ].join(" ")}>
                                     <input type="checkbox" checked={checked}
@@ -951,7 +968,8 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                                 return n
                                             })
                                             if (willExpand) {
-                                                setTimeout(() => {
+                                                if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
+                                                scrollTimeoutRef.current = setTimeout(() => {
                                                     document.querySelector(`[data-mobile-first-child="${item.id}"]`)
                                                         ?.scrollIntoView({ behavior: "smooth", block: "nearest" })
                                                 }, 60)
@@ -976,7 +994,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             const subName = getLocalizedName(sub)
                             const checked = pendingSubcategories.includes(sub.slug)
                             return (
-                                <label key={sub.id} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                                <label key={sub.id} className="flex items-center gap-2.5 cursor-pointer py-2 group">
                                     <input type="checkbox" checked={checked}
                                         onChange={() => setPendingSubcategories(prev => prev.includes(sub.slug) ? prev.filter(s => s !== sub.slug) : [...prev, sub.slug])}
                                         className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
@@ -1001,7 +1019,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             {uniqueBrands.length > 0 && (
                 <FilterSection title={t("brand")} isOpen={openSections.has("brand")} onToggle={() => toggleSection("brand")}>
                     <div className="space-y-0.5">
-                        <label className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                        <label className="flex items-center gap-2.5 cursor-pointer py-2 group">
                             <input type="radio" name="pendingBrand" checked={pendingBrand === null}
                                 onChange={() => setPendingBrand(null)}
                                 className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
@@ -1010,7 +1028,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             </span>
                         </label>
                         {uniqueBrands.map(brand => (
-                            <label key={brand} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                            <label key={brand} className="flex items-center gap-2.5 cursor-pointer py-2 group">
                                 <input type="radio" name="pendingBrand" checked={pendingBrand === brand}
                                     onChange={() => setPendingBrand(brand)}
                                     className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
@@ -1027,21 +1045,21 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
             {/* Quick filters — pending */}
             <FilterSection title={t("filters")} isOpen={openSections.has("quickFilters")} onToggle={() => toggleSection("quickFilters")}>
                 <div className="space-y-1">
-                    <label className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                    <label className="flex items-center gap-2.5 cursor-pointer py-2 group">
                         <input type="checkbox" checked={pendingSale} onChange={() => setPendingSale(p => !p)}
                             className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
                         <span className={`text-sm transition-colors ${pendingSale ? "text-red-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
                             <Tag className="w-3 h-3 inline mr-1" />{t("onSale")}
                         </span>
                     </label>
-                    <label className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                    <label className="flex items-center gap-2.5 cursor-pointer py-2 group">
                         <input type="checkbox" checked={pendingFeatured} onChange={() => setPendingFeatured(p => !p)}
                             className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
                         <span className={`text-sm transition-colors ${pendingFeatured ? "text-violet-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
                             ⭐ {t("featured")}
                         </span>
                     </label>
-                    <label className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                    <label className="flex items-center gap-2.5 cursor-pointer py-2 group">
                         <input type="checkbox" checked={pendingBestSeller} onChange={() => setPendingBestSeller(p => !p)}
                             className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
                         <span className={`text-sm transition-colors ${pendingBestSeller ? "text-amber-400 font-medium" : "text-gray-400 group-hover:text-white"}`}>
@@ -1059,7 +1077,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                             <button key={id}
                                 onClick={() => setPendingColors(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])}
                                 title={name.charAt(0).toUpperCase() + name.slice(1)}
-                                className={`w-8 h-8 rounded-full overflow-hidden transition-all touch-manipulation hover:scale-110 ${pendingColors.includes(id) ? "scale-110" : ""}`}
+                                className={`w-9 h-9 rounded-full overflow-hidden transition-all touch-manipulation hover:scale-110 ${pendingColors.includes(id) ? "scale-110" : ""}`}
                                 style={{
                                     ...(hex2 ? { background: `linear-gradient(135deg, ${hex} 50%, ${hex2} 50%)` } : { backgroundColor: hex }),
                                     boxShadow: pendingColors.includes(id)
@@ -1083,7 +1101,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                 <FilterSection title={t("size")} isOpen={openSections.has("size")} onToggle={() => toggleSection("size")}>
                     <div className="space-y-0.5">
                         {uniqueSizes.map(label => (
-                            <label key={label} className="flex items-center gap-2.5 cursor-pointer py-1.5 group">
+                            <label key={label} className="flex items-center gap-2.5 cursor-pointer py-2 group">
                                 <input type="checkbox" checked={pendingSizes.includes(label)}
                                     onChange={() => setPendingSizes(prev => prev.includes(label) ? prev.filter(s => s !== label) : [...prev, label])}
                                     className="w-4 h-4 accent-emerald-500 cursor-pointer shrink-0" />
@@ -1292,7 +1310,7 @@ export function ProductCatalog({ products, categories, locale, wishlistedProduct
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-4">{mobileSidebarContent}</div>
+                        <div className="p-4 pb-24">{mobileSidebarContent}</div>
                         <div className="sticky bottom-0 p-4 bg-[#0d0d1a] border-t border-white/10">
                             <button onClick={applyMobileFilters}
                                 className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium text-sm hover:shadow-lg hover:shadow-emerald-500/30 transition-all touch-manipulation">

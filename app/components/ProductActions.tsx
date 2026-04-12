@@ -87,19 +87,6 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
     const [couponLoading, setCouponLoading] = useState(false)
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
     const [couponError, setCouponError] = useState("")
-    // Live countdown timer for promoted coupons, pause when tab hidden
-    const [countdownKey, setCountdownKey] = useState(0)
-    useEffect(() => {
-        if (!promotedCoupons?.some(c => c.expiresAt)) return
-        let interval: ReturnType<typeof setInterval> | null = null
-        const start = () => { if (!interval) interval = setInterval(() => setCountdownKey(k => k + 1), 1000) }
-        const stop = () => { if (interval) { clearInterval(interval); interval = null } }
-        const onVisibility = () => { document.hidden ? stop() : start() }
-        start()
-        document.addEventListener("visibilitychange", onVisibility)
-        return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
-    }, [promotedCoupons])
-
     // Memoized bulk expiry date (avoid recreating Date on every render)
     const bulkExpiresAt = useMemo(() =>
         product.bulkDiscountExpiresAt ? new Date(product.bulkDiscountExpiresAt) : null,
@@ -107,9 +94,13 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         [product.bulkDiscountExpiresAt ? String(product.bulkDiscountExpiresAt) : null]
     )
 
-    // Bulk discount expiry countdown — separate from coupon ticker, shares countdownKey
+    // Single countdown timer shared by promoted coupons + bulk discount expiry.
+    // One interval + one visibilitychange listener regardless of how many timers are needed.
+    const [countdownKey, setCountdownKey] = useState(0)
+    const hasCouponExpiry = !!promotedCoupons?.some(c => c.expiresAt)
+    const hasBulkExpiry = !!bulkExpiresAt
     useEffect(() => {
-        if (!bulkExpiresAt) return
+        if (!hasCouponExpiry && !hasBulkExpiry) return
         let interval: ReturnType<typeof setInterval> | null = null
         const start = () => { if (!interval) interval = setInterval(() => setCountdownKey(k => k + 1), 1000) }
         const stop = () => { if (interval) { clearInterval(interval); interval = null } }
@@ -118,7 +109,7 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
         document.addEventListener("visibilitychange", onVisibility)
         return () => { stop(); document.removeEventListener("visibilitychange", onVisibility) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [!!bulkExpiresAt])
+    }, [hasCouponExpiry, hasBulkExpiry])
 
     // Helper: format live countdown from expiresAt
     const getCountdownText = (expiresAt: string | null): string | null => {
@@ -719,7 +710,8 @@ export function ProductActions({ product, initialCouponCode, promotedCoupons, se
                     <div className="flex flex-col sm:flex-row gap-2">
                         <button
                             onClick={handleAddToCart}
-                            className="flex-1 py-3 rounded-xl border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors font-semibold flex items-center justify-center gap-2 touch-manipulation"
+                            disabled={loading}
+                            className="flex-1 py-3 rounded-xl border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 transition-colors font-semibold flex items-center justify-center gap-2 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <ShoppingCart className="w-4 h-4" />
                             {tc("addToCart")}

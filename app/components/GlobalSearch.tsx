@@ -227,7 +227,7 @@ export function GlobalSearch() {
       setRecentSearches(getRecentSearches())
       setTimeout(() => {
         mobileInputRef.current?.focus()
-      }, 50)
+      }, 150)
     } else {
       setQuery("")
       setResults(null)
